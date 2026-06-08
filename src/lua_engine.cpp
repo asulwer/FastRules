@@ -4,7 +4,11 @@
 #include "fastrules/rule_result.hpp"
 #include "fastrules/type_registry.hpp"
 #include "fastrules/action_callback.hpp"
+
+#ifdef FASTRULES_USE_SOL2
 #include <sol/sol.hpp>
+#endif
+
 #include <chrono>
 #include <stdexcept>
 #include <regex>
@@ -349,21 +353,13 @@ lua_State* LuaEngine::luaState() const noexcept {
     return backend_->state();
 }
 
-#ifdef FASTRULES_USE_SOL2
 void LuaEngine::bindTypesToState() {
-    void* native = backend_->nativeState();
-    if (native) {
-        typeRegistry_.bindAll(*static_cast<sol::state*>(native));
-    }
+    backend_->bindTypes(&typeRegistry_);
 }
 
 void LuaEngine::bindActionsToState() {
-    void* native = backend_->nativeState();
-    if (native) {
-        actionCallbacks_.bindToLua(*static_cast<sol::state*>(native));
-    }
+    backend_->bindActions(&actionCallbacks_);
 }
-#endif
 
 // ============================================================================
 // No-globals implementation
@@ -570,14 +566,7 @@ bool LuaEngine::resumeCoroutine(int ref, const std::vector<RuleParameter>& param
     // Set registered object types as globals
     for (const auto& param : parameters) {
         if (typeRegistry_.isRegistered(param.type)) {
-            void* native = backend_->nativeState();
-            if (native) {
-                sol::state& lua = *static_cast<sol::state*>(native);
-                lua[param.name] = typeRegistry_.toLua(lua, param.value);
-            } else {
-                auto lv = backend_->makePointer(std::any_cast<void*>(param.value));
-                backend_->setGlobal(param.name, *lv);
-            }
+            backend_->setRegisteredTypeGlobal(param.name, param.type, param.value, &typeRegistry_);
             auto pit = std::remove_if(pairs.begin(), pairs.end(),
                 [&param](const auto& p) { return p.first == param.name; });
             pairs.erase(pit, pairs.end());
@@ -598,14 +587,7 @@ bool LuaEngine::resumeCoroutine(int ref, const std::vector<RuleParameter>& param
     // Clear object globals
     for (const auto& param : parameters) {
         if (typeRegistry_.isRegistered(param.type)) {
-            void* native = backend_->nativeState();
-            if (native) {
-                sol::state& lua = *static_cast<sol::state*>(native);
-                lua[param.name] = sol::nil;
-            } else {
-                auto lv = backend_->makeNil();
-                backend_->setGlobal(param.name, *lv);
-            }
+            backend_->clearRegisteredTypeGlobal(param.name);
         }
     }
 
@@ -635,17 +617,7 @@ bool LuaEngine::evaluateExpression(int ref, const std::vector<RuleParameter>& pa
     // Set registered object types as globals
     for (const auto& param : parameters) {
         if (typeRegistry_.isRegistered(param.type)) {
-            void* native = backend_->nativeState();
-            if (native) {
-                // sol2 backend: use TypeRegistry for proper userdata with metatable
-                sol::state& lua = *static_cast<sol::state*>(native);
-                lua[param.name] = typeRegistry_.toLua(lua, param.value);
-            } else {
-                // LuaBridge3 backend: push as light userdata
-                // Note: field access won't work without metatable registration
-                auto lv = backend_->makePointer(std::any_cast<void*>(param.value));
-                backend_->setGlobal(param.name, *lv);
-            }
+            backend_->setRegisteredTypeGlobal(param.name, param.type, param.value, &typeRegistry_);
             // Remove from pairs so backend doesn't try to convert it
             auto pit = std::remove_if(pairs.begin(), pairs.end(),
                 [&param](const auto& p) { return p.first == param.name; });
@@ -665,14 +637,7 @@ bool LuaEngine::evaluateExpression(int ref, const std::vector<RuleParameter>& pa
     // Clear object globals
     for (const auto& param : parameters) {
         if (typeRegistry_.isRegistered(param.type)) {
-            void* native = backend_->nativeState();
-            if (native) {
-                sol::state& lua = *static_cast<sol::state*>(native);
-                lua[param.name] = sol::nil;
-            } else {
-                auto lv = backend_->makeNil();
-                backend_->setGlobal(param.name, *lv);
-            }
+            backend_->clearRegisteredTypeGlobal(param.name);
         }
     }
 
@@ -706,14 +671,7 @@ void LuaEngine::executeAction(int ref, const std::vector<RuleParameter>& paramet
     // Set registered object types as globals
     for (const auto& param : parameters) {
         if (typeRegistry_.isRegistered(param.type)) {
-            void* native = backend_->nativeState();
-            if (native) {
-                sol::state& lua = *static_cast<sol::state*>(native);
-                lua[param.name] = typeRegistry_.toLua(lua, param.value);
-            } else {
-                auto lv = backend_->makePointer(std::any_cast<void*>(param.value));
-                backend_->setGlobal(param.name, *lv);
-            }
+            backend_->setRegisteredTypeGlobal(param.name, param.type, param.value, &typeRegistry_);
             auto pit = std::remove_if(pairs.begin(), pairs.end(),
                 [&param](const auto& p) { return p.first == param.name; });
             pairs.erase(pit, pairs.end());
@@ -731,14 +689,7 @@ void LuaEngine::executeAction(int ref, const std::vector<RuleParameter>& paramet
     // Clear object globals
     for (const auto& param : parameters) {
         if (typeRegistry_.isRegistered(param.type)) {
-            void* native = backend_->nativeState();
-            if (native) {
-                sol::state& lua = *static_cast<sol::state*>(native);
-                lua[param.name] = sol::nil;
-            } else {
-                auto lv = backend_->makeNil();
-                backend_->setGlobal(param.name, *lv);
-            }
+            backend_->clearRegisteredTypeGlobal(param.name);
         }
     }
 

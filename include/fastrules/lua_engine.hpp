@@ -128,10 +128,7 @@ public:
     template<typename T>
     void registerType(const std::string& name, typename TypeBinder<T>::BinderFunc binder) {
         typeRegistry_.registerType<T>(name, std::move(binder));
-        // Bind via native state if available (sol2 path)
-        if (void* native = backend_->nativeState(); native != nullptr) {
-            typeRegistry_.bindAll(*static_cast<sol::state*>(native));
-        }
+        backend_->bindTypes(&typeRegistry_);
     }
 
     [[nodiscard]] bool isTypeRegistered(const std::string& name) const {
@@ -140,9 +137,7 @@ public:
 
     void registerAction(const std::string& name, ActionCallbacks::Handler handler) {
         actionCallbacks_.registerHandler(name, std::move(handler));
-        if (void* native = backend_->nativeState(); native != nullptr) {
-            actionCallbacks_.bindToLua(*static_cast<sol::state*>(native));
-        }
+        backend_->bindActions(&actionCallbacks_);
     }
 #else
     template<typename T>

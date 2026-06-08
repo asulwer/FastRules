@@ -10,9 +10,9 @@ struct lua_State;
 
 namespace fastrules {
 
-// ============================================================================
-// Lua value type enumeration
-// ============================================================================
+// Forward declarations for binding methods
+class TypeRegistry;
+class ActionCallbacks;
 enum class LuaType {
     Nil,
     Boolean,
@@ -121,6 +121,19 @@ public:
 
     // ── Table creation ─────────────────────────────────────────────────────
     [[nodiscard]] virtual std::unique_ptr<LuaValue> createTable() = 0;
+
+    // ── Type / Action binding (backend-specific, e.g. sol2 type registration) ──
+    // Bind all registered C++ types to the Lua state. Called by LuaEngine::setupEnvironment().
+    virtual void bindTypes(class TypeRegistry* registry) = 0;
+
+    // Bind all registered action callbacks to the Lua state. Called by LuaEngine::setupEnvironment().
+    virtual void bindActions(class ActionCallbacks* callbacks) = 0;
+
+    // Set a registered C++ type as a global variable. Used for RuleParameter objects.
+    virtual void setRegisteredTypeGlobal(const std::string& name, const std::string& typeName, const std::any& value, class TypeRegistry* registry) = 0;
+
+    // Clear a registered type global (set to nil).
+    virtual void clearRegisteredTypeGlobal(const std::string& name) = 0;
 
     // ── Factory ─────────────────────────────────────────────────────────────
     // Create the default backend (sol2 for now; CMake will select at compile time).

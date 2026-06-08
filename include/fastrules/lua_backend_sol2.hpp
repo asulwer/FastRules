@@ -70,6 +70,12 @@ public:
     [[nodiscard]] std::unique_ptr<LuaValue> makePointer(void* ptr) override;
     [[nodiscard]] std::unique_ptr<LuaValue> createTable() override;
 
+    // Type / Action binding
+    void bindTypes(TypeRegistry* registry) override;
+    void bindActions(ActionCallbacks* callbacks) override;
+    void setRegisteredTypeGlobal(const std::string& name, const std::string& typeName, const std::any& value, TypeRegistry* registry) override;
+    void clearRegisteredTypeGlobal(const std::string& name) override;
+
 private:
     sol::state lua_;
     std::unordered_map<std::string, sol::function> compiled_;

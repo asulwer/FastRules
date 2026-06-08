@@ -1,4 +1,6 @@
 #include "fastrules/lua_backend_sol2.hpp"
+#include "fastrules/type_registry.hpp"
+#include "fastrules/action_callback.hpp"
 #include <sol/sol.hpp>
 #include <stdexcept>
 
@@ -365,6 +367,37 @@ std::unique_ptr<LuaValue> Sol2Backend::makePointer(void* ptr) {
 std::unique_ptr<LuaValue> Sol2Backend::createTable() {
     sol::table t = lua_.create_table();
     return std::make_unique<Sol2Value>(lua_, t);
+}
+
+// ============================================================================
+// Type / Action binding
+// ============================================================================
+
+void Sol2Backend::bindTypes(TypeRegistry* registry) {
+    if (registry) {
+        registry->bindAll(lua_);
+    }
+}
+
+void Sol2Backend::bindActions(ActionCallbacks* callbacks) {
+    if (callbacks) {
+        callbacks->bindToLua(lua_);
+    }
+}
+
+void Sol2Backend::setRegisteredTypeGlobal(const std::string& name, const std::string& typeName, const std::any& value, TypeRegistry* registry) {
+    if (!registry || !value.has_value()) {
+        lua_[name] = sol::nil;
+        return;
+    }
+    // Use TypeRegistry to convert to sol::object
+    auto mutableValue = value; // toLua needs non-const ref
+    sol::object obj = registry->toLua(lua_, mutableValue);
+    lua_[name] = obj;
+}
+
+void Sol2Backend::clearRegisteredTypeGlobal(const std::string& name) {
+    lua_[name] = sol::nil;
 }
 
 } // namespace fastrules

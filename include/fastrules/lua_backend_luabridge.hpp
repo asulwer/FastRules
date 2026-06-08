@@ -74,6 +74,12 @@ public:
     // ── Table creation ─────────────────────────────────────────────────────
     [[nodiscard]] std::unique_ptr<LuaValue> createTable() override;
 
+    // ── Type / Action binding (not implemented for LuaBridge3 yet) ──────────
+    void bindTypes(TypeRegistry* /*registry*/) override {}
+    void bindActions(ActionCallbacks* /*callbacks*/) override {}
+    void setRegisteredTypeGlobal(const std::string& /*name*/, const std::string& /*typeName*/, const std::any& /*value*/, TypeRegistry* /*registry*/) override {}
+    void clearRegisteredTypeGlobal(const std::string& /*name*/) override {}
+
 private:
     struct Impl;
     std::unique_ptr<Impl> pImpl_;
