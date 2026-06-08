@@ -62,7 +62,7 @@ target_link_libraries(your_app PRIVATE fastrules)
 
 ### Copy Sources
 
-Copy `include/` and `src/` into your project, or build `fastrules` as a static library.
+Copy `include/` and `src/` into your project, or build `FastRules` as a static library.
 
 ## Optional Features
 

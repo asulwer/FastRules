@@ -78,8 +78,8 @@ extensions/
 
 Each extension:
 - Builds as a separate CMake target (`fastrules-json`, `fastrules-xml`, `fastrules-db`)
-- Links against `fastrules` core
-- Can be built standalone (finds core via `find_package(fastrules)`)
+- Links against `FastRules` core
+- Can be built standalone (finds core via `find_package(FastRules)`)
 - Exposes namespace `fastrules::ext` for backward compatibility
 
 ## Execution Flow
@@ -132,7 +132,7 @@ Each extension:
 
 ## Performance Characteristics
 
-| Operation | RoslynRules | fastrules |
+| Operation | RoslynRules | FastRules |
 |-----------|-------------|-----------|
 | First compile | ~50ms (Roslyn) | ~1ms (Lua parse) |
 | Subsequent calls | Nanoseconds (IL) | Microseconds (Lua bytecode) |

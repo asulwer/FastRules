@@ -133,7 +133,7 @@ export PATH=$SOCI_ROOT/bin:$PATH
 
 ### vcpkg.json Feature
 
-The `vcpkg.json` in the fastrules root defines the `db` feature with the SOCI dependency:
+The `vcpkg.json` in the FastRules root defines the `db` feature with the SOCI dependency:
 
 ```json
 {

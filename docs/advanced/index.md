@@ -13,7 +13,7 @@ permalink: /advanced/
 
 ## Coroutines and Async/Await
 
-fastrules supports Lua coroutines for long-running or multi-step rules.
+FastRules supports Lua coroutines for long-running or multi-step rules.
 
 ```cpp
 // A coroutine expression that can yield
