@@ -1,16 +1,28 @@
-# Jekyll configuration for GitHub Pages
-# https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll
+# Jekyll configuration for GitHub Pages using just-the-docs theme
+# https://just-the-docs.github.io/just-the-docs/
 
 title: FastRules
 description: >-
   High-performance C++23 business rules engine with Lua expressions.
   Core library is dependency-light; persistence extensions add JSON, XML, or database support as needed.
 
-baseurl: "/fastrules"  # the subpath of your site, e.g. /blog
-url: "https://asulwer.github.io"  # the base hostname for your site
+baseurl: "/fastrules"
+url: "https://asulwer.github.io"
 
-# Minimal theme - built into GitHub Pages, no extra gems needed
-theme: minima
+# just-the-docs theme - installed via remote_theme (GitHub Pages compatible)
+remote_theme: just-the-docs/just-the-docs@v0.10.0
+
+# Color scheme
+# color_scheme: fastrules
+
+# Search enabled
+search_enabled: true
+
+# Navigation structure - top-level pages
+nav_external_links:
+  - title: "GitHub"
+    url: "https://github.com/asulwer/fastrules"
+    hide_icon: false
 
 # Plugins supported by GitHub Pages
 plugins:
@@ -18,20 +30,6 @@ plugins:
   - jekyll-readme-index
   - jekyll-default-layout
   - jekyll-titles-from-headings
-
-# Navigation
-collections:
-  docs:
-    output: true
-    permalink: /:path/
-
-defaults:
-  - scope:
-      path: ""
-      type: "pages"
-    values:
-      layout: default
-      nav_order: 99
 
 # Build settings
 markdown: kramdown
@@ -47,8 +45,19 @@ exclude:
   - vendor/gems/
   - vendor/ruby/
   - "*.gemspec"
+  - "README.md"
 
-# Enable relative links plugin for .md files
-relative_links:
-  enabled: true
-  collections: true
+# Footer
+footer_content: "Copyright &copy; 2026 Aaron Sulwer. Distributed under the MIT license."
+
+# Aux links (top right)
+aux_links:
+  "FastRules on GitHub":
+    - "https://github.com/asulwer/fastrules"
+
+# Back to top link
+back_to_top: true
+back_to_top_text: "Back to top"
+
+# Heading anchor links
+heading_anchors: true
