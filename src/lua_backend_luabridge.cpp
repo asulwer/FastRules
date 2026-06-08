@@ -1,5 +1,7 @@
 #include "fastrules/lua_backend_luabridge.hpp"
 #include "fastrules/lua_backend.hpp"
+#include "fastrules/type_registry.hpp"
+#include "fastrules/action_callback.hpp"
 #include <lua.hpp>
 #include <LuaBridge/LuaBridge.h>
 #include <any>
@@ -683,6 +685,40 @@ std::unique_ptr<LuaValue> LuaBridge3Backend::createTable() {
     auto val = std::make_unique<LuaBridgeValue>(pImpl_->L, -1);
     lua_pop(pImpl_->L, 1);
     return val;
+}
+
+// ============================================================================
+// Type / Action binding — stubs for now (full implementation later)
+// ============================================================================
+
+void LuaBridge3Backend::bindTypes(TypeRegistry* /*registry*/) {
+    // TODO: Implement LuaBridge3 type binding from TypeDescriptor
+}
+
+void LuaBridge3Backend::bindActions(ActionCallbacks* /*callbacks*/) {
+    // TODO: Implement LuaBridge3 action callback binding
+}
+
+void LuaBridge3Backend::setRegisteredTypeGlobal(const std::string& name, const std::string& /*typeName*/, const std::any& value, TypeRegistry* /*registry*/) {
+    if (!value.has_value()) {
+        lua_pushnil(pImpl_->L);
+        lua_setglobal(pImpl_->L, name.c_str());
+        return;
+    }
+    // Push as light userdata (full usertype binding requires implementation)
+    try {
+        void* ptr = std::any_cast<void*>(value);
+        lua_pushlightuserdata(pImpl_->L, ptr);
+        lua_setglobal(pImpl_->L, name.c_str());
+    } catch (...) {
+        lua_pushnil(pImpl_->L);
+        lua_setglobal(pImpl_->L, name.c_str());
+    }
+}
+
+void LuaBridge3Backend::clearRegisteredTypeGlobal(const std::string& name) {
+    lua_pushnil(pImpl_->L);
+    lua_setglobal(pImpl_->L, name.c_str());
 }
 
 } // namespace fastrules
