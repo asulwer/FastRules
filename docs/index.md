@@ -9,19 +9,6 @@ permalink: /
 
 High-performance C++23 business rules engine with Lua expressions. Core library is dependency-light; persistence extensions add JSON, XML, or database support as needed.
 
-> A C++ rewrite of [RoslynRules](https://github.com/asulwer/roslynrules) with Lua instead of C#/Roslyn compilation.
-
-## Why FastRules?
-
-| | RoslynRules | FastRules |
-|---|---|---|
-| **Language** | C# | C++23 |
-| **Expression engine** | Roslyn compiler → IL | Lua → bytecode |
-| **Compile time** | ~50ms first, cached after | ~1ms |
-| **Memory** | ~50MB | ~2MB |
-| **Deployment** | .NET runtime required | Self-contained |
-| **Sandboxing** | Assembly whitelist | Lua environment removal |
-
 ## Architecture
 
 FastRules has a **minimal core** plus **optional persistence extensions**:
@@ -75,6 +62,44 @@ FastRules has a **minimal core** plus **optional persistence extensions**:
 - ✅ **fastrules-xml** — Load/save rules and workflows from XML (pugixml)
 - ✅ **fastrules-db** — Persist rules to PostgreSQL, MySQL, SQLite, etc. via SOCI
 
+## Installation
+
+### vcpkg
+
+```bash
+vcpkg install fastrules              # Core only
+vcpkg install fastrules[extensions]  # Core + JSON + XML
+vcpkg install fastrules[db]          # Core + database support
+vcpkg install fastrules[luajit]      # Use LuaJIT instead of PUC-Rio Lua
+vcpkg install fastrules[tests]       # Build tests
+```
+
+### Conan
+
+```bash
+conan install fastrules/0.1.0                          # Core only
+conan install fastrules/0.1.0 -o build_extensions=True  # + JSON/XML
+conan install fastrules/0.1.0 -o with_db=True            # + database
+conan install fastrules/0.1.0 -o with_luajit=True        # Use LuaJIT
+```
+
+### CMake FetchContent
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(
+    fastrules
+    GIT_REPOSITORY https://github.com/asulwer/fastrules.git
+    GIT_TAG v0.1.0
+)
+FetchContent_MakeAvailable(fastrules)
+
+target_link_libraries(your_target fastrules)
+
+# Optional: add extensions
+target_link_libraries(your_target fastrules fastrules-json)
+```
+
 ## Quick Start
 
 ### Core Only (No Extensions)
@@ -116,44 +141,6 @@ auto results = workflow.execute(engine, params);
 // Load workflow from JSON
 auto jsonStr = readFile("rules.json");
 auto workflow = fastrules::JsonLoader::loadWorkflow(jsonStr);
-```
-
-## Installation
-
-### vcpkg
-
-```bash
-vcpkg install fastrules              # Core only
-vcpkg install fastrules[extensions]  # Core + JSON + XML
-vcpkg install fastrules[db]          # Core + database support
-vcpkg install fastrules[luajit]      # Use LuaJIT instead of PUC-Rio Lua
-vcpkg install fastrules[tests]       # Build tests
-```
-
-### Conan
-
-```bash
-conan install fastrules/0.1.0                          # Core only
-conan install fastrules/0.1.0 -o build_extensions=True  # + JSON/XML
-conan install fastrules/0.1.0 -o with_db=True            # + database
-conan install fastrules/0.1.0 -o with_luajit=True        # Use LuaJIT
-```
-
-### CMake FetchContent
-
-```cmake
-include(FetchContent)
-FetchContent_Declare(
-    fastrules
-    GIT_REPOSITORY https://github.com/asulwer/fastrules.git
-    GIT_TAG v0.1.0
-)
-FetchContent_MakeAvailable(fastrules)
-
-target_link_libraries(your_target fastrules)
-
-# Optional: add extensions
-target_link_libraries(your_target fastrules fastrules-json)
 ```
 
 ## License
