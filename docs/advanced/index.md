@@ -7,8 +7,8 @@ has_children: true
 
 # Advanced Topics
 
-- [Custom C++ Methods](custom-methods.md) — Inject C++ methods and functions into Lua
-- [AOT Compilation and Versioning](aot-and-versioning.md) — Pre-compile workflows, version rules
+- <https://asulwer.github.io/fastrules/advanced/custom-methods.html> — Inject C++ methods and functions into Lua
+- <https://asulwer.github.io/fastrules/advanced/aot-and-versioning.html> — Pre-compile workflows, version rules
 
 ## Coroutines and Async/Await
 

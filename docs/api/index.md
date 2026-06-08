@@ -9,13 +9,13 @@ has_children: true
 
 ## Table of Contents
 
-- [Rule](rule.md) — Single rule definition and execution
-- [Workflow](workflow.md) — Multi-rule orchestration
-- [LuaEngine](lua_engine.md) — Lua compilation and execution
-- [AsyncWorkflow](async_workflow.md) — Parallel execution
-- [TypeRegistry](type_registry.md) — C++ type binding
-- [ActionCallbacks](action_callbacks.md) — C++ callbacks from Lua
-- [JsonLoader](json_loader.md) — JSON serialization
+- <https://asulwer.github.io/fastrules/api/rule.html> — Single rule definition and execution
+- <https://asulwer.github.io/fastrules/api/workflow.html> — Multi-rule orchestration
+- <https://asulwer.github.io/fastrules/api/lua_engine.html> — Lua compilation and execution
+- <https://asulwer.github.io/fastrules/api/async_workflow.html> — Parallel execution
+- <https://asulwer.github.io/fastrules/api/type_registry.html> — C++ type binding
+- <https://asulwer.github.io/fastrules/api/action_callbacks.html> — C++ callbacks from Lua
+- <https://asulwer.github.io/fastrules/api/json_loader.html> — JSON serialization
 
 ## Quick Reference
 

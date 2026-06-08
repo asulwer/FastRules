@@ -155,6 +155,16 @@ target_link_libraries(your_target fastrules)
 target_link_libraries(your_target fastrules fastrules-json)
 ```
 
+## Documentation
+
+- <https://asulwer.github.io/fastrules/GETTING_STARTED.html>
+- <https://asulwer.github.io/fastrules/ARCHITECTURE.html>
+- <https://asulwer.github.io/fastrules/api/index.html>
+- <https://asulwer.github.io/fastrules/security.html>
+- <https://asulwer.github.io/fastrules/performance.html>
+- <https://asulwer.github.io/fastrules/MIGRATION.html>
+- <https://github.com/asulwer/fastrules/blob/main/extensions/README.md>
+
 ## License
 
 MIT

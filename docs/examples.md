@@ -8,12 +8,12 @@ nav_order: 7
 
 ## Table of Contents
 
-- [Simple Example](examples/simple.md) — Basic rules with primitives
-- [JSON Workflow](examples/json.md) — Loading rules from JSON
-- [Typed Parameters](examples/typed.md) — C++ structs in Lua expressions
-- [Custom C++ Methods](examples/custom-methods.md) — Inject C++ methods and callbacks into Lua
-- [Customer Validation](examples/customer.md) — Full business logic with callbacks
-- [REPL](examples/repl.md) — Interactive Lua expression testing
+- <https://asulwer.github.io/fastrules/examples/simple.html> — Basic rules with primitives
+- <https://asulwer.github.io/fastrules/examples/json.html> — Loading rules from JSON
+- <https://asulwer.github.io/fastrules/examples/typed.html> — C++ structs in Lua expressions
+- <https://asulwer.github.io/fastrules/examples/custom-methods.html> — Inject C++ methods and callbacks into Lua
+- <https://asulwer.github.io/fastrules/examples/customer.html> — Full business logic with callbacks
+- <https://asulwer.github.io/fastrules/examples/repl.html> — Interactive Lua expression testing
 
 ## Simple Example
 
