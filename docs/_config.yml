@@ -9,8 +9,8 @@ description: >-
 baseurl: "/fastrules"
 url: "https://asulwer.github.io"
 
-# just-the-docs theme
-theme: just-the-docs
+# just-the-docs theme - supported by GitHub Pages built-in Jekyll builder
+remote_theme: just-the-docs/just-the-docs@v0.10.0
 
 # Color scheme
 # color_scheme: fastrules
