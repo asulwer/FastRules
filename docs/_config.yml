@@ -6,7 +6,7 @@ description: >-
   High-performance C++23 business rules engine with Lua expressions.
   Core library is dependency-light; persistence extensions add JSON, XML, or database support as needed.
 
-baseurl: "/fastrules"
+baseurl: "/FastRules"
 url: "https://asulwer.github.io"
 
 # just-the-docs theme - supported by GitHub Pages built-in Jekyll builder

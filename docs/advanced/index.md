@@ -8,8 +8,8 @@ permalink: /advanced/
 
 # Advanced Topics
 
-- <https://asulwer.github.io/fastrules/advanced/custom-methods.html> — Inject C++ methods and functions into Lua
-- <https://asulwer.github.io/fastrules/advanced/aot-and-versioning.html> — Pre-compile workflows, version rules
+- <https://asulwer.github.io/FastRules/advanced/custom-methods.html> — Inject C++ methods and functions into Lua
+- <https://asulwer.github.io/FastRules/advanced/aot-and-versioning.html> — Pre-compile workflows, version rules
 
 ## Coroutines and Async/Await
 

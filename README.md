@@ -241,7 +241,7 @@ cmake -B build -S . -DFASTRULES_BUILD_EXTENSIONS=ON -DFASTRULES_BUILD_DB_EXT=ON
 
 ## Documentation
 
-Full documentation is available on [GitHub Pages](https://asulwer.github.io/fastrules).
+Full documentation is available on [GitHub Pages](https://asulwer.github.io/FastRules).
 
 ## Building
 

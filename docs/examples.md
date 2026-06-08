@@ -9,12 +9,12 @@ has_children: true
 
 ## Table of Contents
 
-- <https://asulwer.github.io/fastrules/examples/simple.html> — Basic rules with primitives
-- <https://asulwer.github.io/fastrules/examples/json.html> — Loading rules from JSON
-- <https://asulwer.github.io/fastrules/examples/typed.html> — C++ structs in Lua expressions
-- <https://asulwer.github.io/fastrules/examples/custom-methods.html> — Inject C++ methods and callbacks into Lua
-- <https://asulwer.github.io/fastrules/examples/customer.html> — Full business logic with callbacks
-- <https://asulwer.github.io/fastrules/examples/repl.html> — Interactive Lua expression testing
+- <https://asulwer.github.io/FastRules/examples/simple.html> — Basic rules with primitives
+- <https://asulwer.github.io/FastRules/examples/json.html> — Loading rules from JSON
+- <https://asulwer.github.io/FastRules/examples/typed.html> — C++ structs in Lua expressions
+- <https://asulwer.github.io/FastRules/examples/custom-methods.html> — Inject C++ methods and callbacks into Lua
+- <https://asulwer.github.io/FastRules/examples/customer.html> — Full business logic with callbacks
+- <https://asulwer.github.io/FastRules/examples/repl.html> — Interactive Lua expression testing
 
 ## Simple Example
 
