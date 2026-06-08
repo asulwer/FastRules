@@ -54,8 +54,11 @@ set_property(TARGET fastrules-xml PROPERTY FOLDER "Extensions/XML")
 target_include_directories(fastrules-xml PUBLIC
     include
     ${FASTRULES_INCLUDE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+# Add pugixml include directory explicitly for IntelliSense
+target_include_directories(fastrules-xml SYSTEM PUBLIC
+    ${pugixml_SOURCE_DIR}/src
 )
 
 target_link_libraries(fastrules-xml PUBLIC

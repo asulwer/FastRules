@@ -30,7 +30,6 @@ add_library(fastrules-db STATIC
 target_include_directories(fastrules-db PUBLIC
     include
     ${FASTRULES_INCLUDE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${SOCI_INCLUDE_DIRS}
 )
 
