@@ -77,7 +77,7 @@ public:
     // ── Type / Action binding (stubs — full implementation later) ──────────
     void bindTypes(TypeRegistry* registry) override;
     void bindActions(ActionCallbacks* callbacks) override;
-    void setRegisteredTypeGlobal(const std::string& name, const std::string& typeName, const std::any& value, TypeRegistry* registry) override;
+    void setRegisteredTypeGlobal(const std::string& name, const std::type_index& type, const std::any& value, TypeRegistry* registry) override;
     void clearRegisteredTypeGlobal(const std::string& name) override;
 
 private:

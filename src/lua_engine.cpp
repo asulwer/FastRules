@@ -537,8 +537,8 @@ bool LuaEngine::resumeCoroutine(int ref, const std::vector<RuleParameter>& param
     
     // Set registered object types as globals
     for (const auto& param : parameters) {
-        if (typeRegistry_.isRegistered(param.type)) {
-            backend_->setRegisteredTypeGlobal(param.name, param.type, param.value, &typeRegistry_);
+        if (param.type.has_value() && typeRegistry_.isRegistered(param.type.value())) {
+            backend_->setRegisteredTypeGlobal(param.name, param.type.value(), param.value, &typeRegistry_);
             auto pit = std::remove_if(pairs.begin(), pairs.end(),
                 [&param](const auto& p) { return p.first == param.name; });
             pairs.erase(pit, pairs.end());
@@ -558,7 +558,7 @@ bool LuaEngine::resumeCoroutine(int ref, const std::vector<RuleParameter>& param
     }
     // Clear object globals
     for (const auto& param : parameters) {
-        if (typeRegistry_.isRegistered(param.type)) {
+        if (param.type.has_value() && typeRegistry_.isRegistered(param.type.value())) {
             backend_->clearRegisteredTypeGlobal(param.name);
         }
     }
@@ -588,13 +588,12 @@ bool LuaEngine::evaluateExpression(int ref, const std::vector<RuleParameter>& pa
 
     // Set registered object types as globals
     for (const auto& param : parameters) {
-        if (typeRegistry_.isRegistered(param.type)) {
-            backend_->setRegisteredTypeGlobal(param.name, param.type, param.value, &typeRegistry_);
+        if (param.type.has_value() && typeRegistry_.isRegistered(param.type.value())) {
+            backend_->setRegisteredTypeGlobal(param.name, param.type.value(), param.value, &typeRegistry_);
             // Remove from pairs so backend doesn't try to convert it
             auto pit = std::remove_if(pairs.begin(), pairs.end(),
                 [&param](const auto& p) { return p.first == param.name; });
             pairs.erase(pit, pairs.end());
-        } else {
         }
     }
 
@@ -642,8 +641,8 @@ void LuaEngine::executeAction(int ref, const std::vector<RuleParameter>& paramet
 
     // Set registered object types as globals
     for (const auto& param : parameters) {
-        if (typeRegistry_.isRegistered(param.type)) {
-            backend_->setRegisteredTypeGlobal(param.name, param.type, param.value, &typeRegistry_);
+        if (param.type.has_value() && typeRegistry_.isRegistered(param.type.value())) {
+            backend_->setRegisteredTypeGlobal(param.name, param.type.value(), param.value, &typeRegistry_);
             auto pit = std::remove_if(pairs.begin(), pairs.end(),
                 [&param](const auto& p) { return p.first == param.name; });
             pairs.erase(pit, pairs.end());
@@ -660,7 +659,7 @@ void LuaEngine::executeAction(int ref, const std::vector<RuleParameter>& paramet
 
     // Clear object globals
     for (const auto& param : parameters) {
-        if (typeRegistry_.isRegistered(param.type)) {
+        if (param.type.has_value() && typeRegistry_.isRegistered(param.type.value())) {
             backend_->clearRegisteredTypeGlobal(param.name);
         }
     }

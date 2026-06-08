@@ -130,7 +130,7 @@ public:
     virtual void bindActions(class ActionCallbacks* callbacks) = 0;
 
     // Set a registered C++ type as a global variable. Used for RuleParameter objects.
-    virtual void setRegisteredTypeGlobal(const std::string& name, const std::string& typeName, const std::any& value, class TypeRegistry* registry) = 0;
+    virtual void setRegisteredTypeGlobal(const std::string& name, const std::type_index& type, const std::any& value, class TypeRegistry* registry) = 0;
 
     // Clear a registered type global (set to nil).
     virtual void clearRegisteredTypeGlobal(const std::string& name) = 0;

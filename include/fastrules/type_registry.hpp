@@ -62,6 +62,10 @@ public:
         return it != nameToType_.end();
     }
 
+    [[nodiscard]] bool isRegistered(const std::optional<std::type_index>& type) const {
+        return type.has_value() && types_.contains(type.value());
+    }
+
     [[nodiscard]] std::optional<TypeDescriptor> getDescriptor(const std::type_index& type) const {
         auto it = types_.find(type);
         if (it != types_.end()) {

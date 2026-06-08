@@ -19,16 +19,21 @@ class RateLimiter;
 
 struct RuleParameter {
     std::string name;
-    std::string type;
+    std::optional<std::type_index> type;  // set for registered types; nullopt for primitives
     std::any value;
 
     RuleParameter() = default;
 
-    RuleParameter(std::string n, std::string t, std::any v = {})
-        : name(std::move(n)), type(std::move(t)), value(std::move(v)) {}
+    // Template constructor — type inferred from value
+    template<typename T>
+    RuleParameter(std::string n, T v)
+        : name(std::move(n))
+        , type(std::type_index(typeid(T)))
+        , value(std::move(v)) {}
 
-    RuleParameter(const char* n, const char* t, std::any v = {})
-        : name(n), type(t), value(std::move(v)) {}
+    // Explicit constructor for rare cases (e.g. type erasure, void*)
+    RuleParameter(std::string n, std::type_index t, std::any v)
+        : name(std::move(n)), type(t), value(std::move(v)) {}
 
     RuleParameter(RuleParameter&&) noexcept = default;
     RuleParameter& operator=(RuleParameter&&) noexcept = default;

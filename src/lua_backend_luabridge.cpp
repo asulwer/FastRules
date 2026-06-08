@@ -699,7 +699,7 @@ void LuaBridge3Backend::bindActions(ActionCallbacks* /*callbacks*/) {
     // TODO: Implement LuaBridge3 action callback binding
 }
 
-void LuaBridge3Backend::setRegisteredTypeGlobal(const std::string& name, const std::string& /*typeName*/, const std::any& value, TypeRegistry* /*registry*/) {
+void LuaBridge3Backend::setRegisteredTypeGlobal(const std::string& name, const std::type_index& /*type*/, const std::any& value, TypeRegistry* /*registry*/) {
     if (!value.has_value()) {
         lua_pushnil(pImpl_->L);
         lua_setglobal(pImpl_->L, name.c_str());

@@ -410,7 +410,7 @@ void Sol2Backend::bindActions(ActionCallbacks* callbacks) {
     });
 }
 
-void Sol2Backend::setRegisteredTypeGlobal(const std::string& name, const std::string& /*typeName*/, const std::any& value, TypeRegistry* registry) {
+void Sol2Backend::setRegisteredTypeGlobal(const std::string& name, const std::type_index& /*type*/, const std::any& value, TypeRegistry* registry) {
     if (!registry || !value.has_value()) {
         lua_[name] = sol::nil;
         return;
