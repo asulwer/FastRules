@@ -1,6 +1,6 @@
 # FastRules
 
-[![CI](https://github.com/asulwer/fastrules/actions/workflows/ci.yml/badge.svg)](https://github.com/asulwer/fastrules/actions/workflows/ci.yml)
+[![CI](https://github.com/asulwer/fastrules/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/asulwer/fastrules/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/asulwer/fastrules/branch/main/graph/badge.svg)](https://codecov.io/gh/asulwer/fastrules)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://asulwer.github.io/fastrules)
 
@@ -241,13 +241,7 @@ cmake -B build -S . -DFASTRULES_BUILD_EXTENSIONS=ON -DFASTRULES_BUILD_DB_EXT=ON
 
 ## Documentation
 
-- [Architecture Overview](docs/ARCHITECTURE.md)
-- [API Reference](docs/api.md)
-- [Security Guide](docs/security.md)
-- [Performance Tuning](docs/performance.md)
-- [Migration from RoslynRules](docs/MIGRATION.md)
-- [Changelog](CHANGELOG.md)
-- [Extension Development](extensions/README.md)
+Full documentation is available on [GitHub Pages](https://asulwer.github.io/fastrules).
 
 ## Building
 

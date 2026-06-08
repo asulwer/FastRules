@@ -249,6 +249,7 @@ set(FASTRULES_CORE_SOURCES
     src/async_registry.cpp
     src/async_workflow.cpp
     src/lua_engine.cpp
+    src/logger.cpp
     src/rule.cpp
     src/rule_context.cpp
     src/workflow.cpp

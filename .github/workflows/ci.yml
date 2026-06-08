@@ -40,11 +40,8 @@ jobs:
       - name: Test Core
         run: .\build\Release\fastrules_tests.exe
 
-      - name: Test DB Extension
-        run: .\build\extensions\db\tests\Release\fastrules-db-tests.exe
-
-      - name: Test XML Extension
-        run: .\build\extensions\xml\tests\Release\fastrules-xml-tests.exe
+      - name: Test JSON Extension
+        run: .\build\extensions\json\tests\Release\fastrules-json-tests.exe
 
   build-ubuntu:
     runs-on: ubuntu-latest

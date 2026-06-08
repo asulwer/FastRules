@@ -61,4 +61,10 @@ private:
     LogLevel minLevel_ = LogLevel::Trace;  // Default: log everything
 };
 
+// Global logger for core/extension use.  Set once at startup.
+// Usage:  fastrules::setGlobalLogger([](const LogEntry& e){ std::cerr << e.message << "\n"; });
+Logger& globalLogger() noexcept;
+void setGlobalLogger(Logger::Handler handler);
+void clearGlobalLogger();
+
 } // namespace fastrules
