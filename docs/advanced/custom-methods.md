@@ -91,7 +91,7 @@ Customer customer{"Alice", 25, false, true, 100.0};
 
 std::vector<fastrules::RuleParameter> params;
 // Pass pointer — Lua can mutate the original C++ object
-params.emplace_back("customer", "Customer", std::any(&customer));
+params.emplace_back("customer", &customer);
 
 auto results = workflow.execute(engine, params);
 // customer.processed may now be true (if action ran)
@@ -237,10 +237,10 @@ If your struct lacks `==`, `<=`, `<`, sol2's automagic won't work:
 
 ```cpp
 // WRONG: Lua gets a copy, mutations don't affect original
-params.emplace_back("customer", "Customer", std::any(customer));
+params.emplace_back("customer", customer);
 
 // RIGHT: Lua gets pointer, mutations affect original
-params.emplace_back("customer", "Customer", std::any(&customer));
+params.emplace_back("customer", &customer);
 ```
 
 **Fix**: Pass `&customer` (pointer) when you want mutations.

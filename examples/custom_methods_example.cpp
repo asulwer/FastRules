@@ -228,7 +228,7 @@ int main() {
 
             std::vector<fastrules::RuleParameter> params;
             // Pass pointer — allows Lua to mutate the original C++ object
-            params.emplace_back("customer", "Customer", std::any(&customer));
+            params.emplace_back("customer", &customer);
 
             auto results = workflow.execute(engine, params);
 

@@ -59,7 +59,7 @@ TEST_CASE("Lua coroutine compilation", "[async][coroutine]") {
         
         RuleContext context;
         std::vector<RuleParameter> params;
-        params.emplace_back("x", "int", std::any(10));
+        params.emplace_back("x", 10);
         
         auto status = engine.resumeCoroutine(ref.value(), params, context);
         REQUIRE(status == true);

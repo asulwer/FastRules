@@ -52,8 +52,8 @@ int main() {
 
     // 3. Execute — you'll see log output on console
     std::vector<RuleParameter> params;
-    params.emplace_back("age", "int", std::any(25));
-    params.emplace_back("name", "string", std::any(std::string("Alice")));
+    params.emplace_back("age", 25);
+    params.emplace_back("name", std::string("Alice"));
 
     auto results = workflow.execute(engine, params);
 

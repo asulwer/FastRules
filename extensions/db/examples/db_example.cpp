@@ -95,8 +95,8 @@ int main() {
         double amount = 3000;
         bool verified = true;
         std::vector<RuleParameter> params;
-        params.emplace_back("amount", "double", std::any(&amount));
-        params.emplace_back("verified", "bool", std::any(&verified));
+        params.emplace_back("amount", &amount);
+        params.emplace_back("verified", &verified);
 
         auto results = workflow.execute(engine, params);
         for (const auto& result : results) {

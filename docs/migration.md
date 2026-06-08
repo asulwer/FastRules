@@ -41,7 +41,7 @@ RuleParameter("customer", typeof(Customer))
 engine.registerType<Customer>("Customer", [](auto& ut) {
     ut["age"] = &Customer::age;
 });
-params.emplace_back("customer", "Customer", customer);
+params.emplace_back("customer", customer);
 // Expression: customer.age > 18
 ```
 

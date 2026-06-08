@@ -47,7 +47,7 @@ rule->action = "customer.processed = true";  // Direct mutation!
 
 Customer customer{"Alice", 25};
 std::vector<fastrules::RuleParameter> params;
-params.emplace_back("customer", "Customer", std::any(&customer));
+params.emplace_back("customer", &customer);
 
 auto result = rule->execute(engine, params);
 // customer.processed == true (if age >= 18)

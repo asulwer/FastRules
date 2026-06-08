@@ -61,8 +61,8 @@ int main() {
 
         Customer customer{25, 720};
         std::vector<RuleParameter> params;
-        params.emplace_back("age", "int", std::any(&customer.age));
-        params.emplace_back("creditScore", "int", std::any(&customer.creditScore));
+        params.emplace_back("age", &customer.age);
+        params.emplace_back("creditScore", &customer.creditScore);
 
         auto results = workflow.execute(engine, params);
         for (const auto& result : results) {

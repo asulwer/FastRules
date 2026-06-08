@@ -60,7 +60,7 @@ int main() {
 
         Customer customer{"Alice", 25, false};
         std::vector<fastrules::RuleParameter> params;
-        params.emplace_back("customer", "Customer", std::any(&customer));
+        params.emplace_back("customer", &customer);
 
         auto results = workflow.execute(engine, params);
 

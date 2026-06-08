@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
             // 5. CREATE PARAMETERS - per execution
             // Different customer each time, same parameter name
             std::vector<fastrules::RuleParameter> params;
-            params.emplace_back("customer", "Customer", std::any(&customer));
+            params.emplace_back("customer", &customer);
 
             // 6. EXECUTE - evaluate rules for this customer
             auto results = workflow.execute(engine, params);

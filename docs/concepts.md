@@ -82,7 +82,7 @@ For typed objects:
 
 ```cpp
 Customer customer{"Alice", 25};
-params.emplace_back("customer", "Customer", std::any(&customer));
+params.emplace_back("customer", &customer);
 ```
 
 ## Dependencies

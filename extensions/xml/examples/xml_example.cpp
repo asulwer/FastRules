@@ -70,9 +70,9 @@ int main() {
         std::vector<RuleParameter> params;
         int quantity = 5, stock = 10;
         bool addressValid = true;
-        params.emplace_back("quantity", "int", std::any(&quantity));
-        params.emplace_back("stock", "int", std::any(&stock));
-        params.emplace_back("addressValid", "bool", std::any(&addressValid));
+        params.emplace_back("quantity", &quantity);
+        params.emplace_back("stock", &stock);
+        params.emplace_back("addressValid", &addressValid);
 
         auto results = workflow.execute(engine, params);
         for (const auto& result : results) {

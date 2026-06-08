@@ -80,7 +80,7 @@ int main() {
         std::cout << "\n--- Valid Customer (Adult, Good Credit) ---" << std::endl;
         Customer customer1{1, "Alice", 30, 720};
         std::vector<RuleParameter> params;
-        params.emplace_back("customer", "Customer", std::any(&customer1));
+        params.emplace_back("customer", &customer1);
 
         auto results = workflow.execute(engine, params);
         for (const auto& r : results) {
@@ -97,7 +97,7 @@ int main() {
         std::cout << "\n--- Invalid Customer (Minor) ---" << std::endl;
         Customer customer2{2, "Bob", 16, 800};
         params.clear();
-        params.emplace_back("customer", "Customer", std::any(&customer2));
+        params.emplace_back("customer", &customer2);
 
         results = workflow.execute(engine, params);
         for (const auto& r : results) {
@@ -114,7 +114,7 @@ int main() {
         std::cout << "\n--- Parallel Execution ---" << std::endl;
         Customer customer3{3, "Charlie", 25, 680};
         params.clear();
-        params.emplace_back("customer", "Customer", std::any(&customer3));
+        params.emplace_back("customer", &customer3);
 
         auto parResults = workflow.executeParallel(engine, params);
         for (const auto& r : parResults) {
@@ -127,7 +127,7 @@ int main() {
         std::cout << "\n--- Streaming Results ---" << std::endl;
         Customer customer4{4, "Diana", 40, 750};
         params.clear();
-        params.emplace_back("customer", "Customer", std::any(&customer4));
+        params.emplace_back("customer", &customer4);
 
         auto stream = workflow.executeStreaming(engine, params);
         for (const auto& result : stream) {
@@ -153,7 +153,7 @@ int main() {
 
         Customer customer5{5, "Eve", 35, 600};
         params.clear();
-        params.emplace_back("customer", "Customer", std::any(&customer5));
+        params.emplace_back("customer", &customer5);
 
         auto priorityResults = priorityWorkflow.execute(engine, params);
         for (const auto& r : priorityResults) {
@@ -168,7 +168,7 @@ int main() {
         std::cout << "\n--- Action Results ---" << std::endl;
         Customer customer6{6, "Frank", 28, 700};
         params.clear();
-        params.emplace_back("customer", "Customer", std::any(&customer6));
+        params.emplace_back("customer", &customer6);
 
         (void)workflow.execute(engine, params);
 

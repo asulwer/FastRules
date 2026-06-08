@@ -60,7 +60,7 @@ TEST_CASE("Benchmark simple rule execution", "[benchmark][execution]") {
     RuleContext ctx;
     std::vector<RuleParameter> params;
     int x = 42;
-    params.emplace_back("x", "int", std::any(&x));
+    params.emplace_back("x", &x);
 
     BENCHMARK("execute simple rule") {
         return rule.execute(engine, ctx, params);
@@ -85,7 +85,7 @@ TEST_CASE("Benchmark rule with type registration", "[benchmark][execution]") {
     RuleContext ctx;
     Point point{3.0, 4.0};
     std::vector<RuleParameter> params;
-    params.emplace_back("point", "Point", std::any(&point));
+    params.emplace_back("point", &point);
 
     BENCHMARK("execute rule with C++ type") {
         return rule.execute(engine, ctx, params);
@@ -112,7 +112,7 @@ TEST_CASE("Benchmark sequential workflow execution", "[benchmark][execution]") {
 
     int x = 100;
     std::vector<RuleParameter> params;
-    params.emplace_back("x", "int", std::any(&x));
+    params.emplace_back("x", &x);
 
     BENCHMARK("execute 5-rule sequential workflow") {
         return workflow.execute(engine, params);
@@ -135,7 +135,7 @@ TEST_CASE("Benchmark parallel workflow execution", "[benchmark][execution]") {
 
     int x = 100;
     std::vector<RuleParameter> params;
-    params.emplace_back("x", "int", std::any(&x));
+    params.emplace_back("x", &x);
 
     BENCHMARK("execute 5-rule parallel workflow") {
         return workflow.executeParallel(engine, params);
@@ -177,7 +177,7 @@ TEST_CASE("Benchmark workflow memory scaling", "[benchmark][memory]") {
     BENCHMARK("workflow memory: execute 50 rules") {
         int x = 100;
         std::vector<RuleParameter> params;
-        params.emplace_back("x", "int", std::any(&x));
+        params.emplace_back("x", &x);
         return workflow.execute(engine, params).size();
     };
 }
@@ -199,7 +199,7 @@ TEST_CASE("Benchmark cached vs uncached execution", "[benchmark][cache]") {
     RuleContext ctx;
     int x = 42;
     std::vector<RuleParameter> params;
-    params.emplace_back("x", "int", std::any(&x));
+    params.emplace_back("x", &x);
 
     // Warm up cache
     rule.execute(engine, ctx, params);

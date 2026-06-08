@@ -111,7 +111,7 @@ engine.registerType<Customer>("Customer", [](auto& ut) {
 
 Customer customer{"Alice", 25};
 std::vector<fastrules::RuleParameter> params;
-params.emplace_back("customer", "Customer", std::any(&customer));
+params.emplace_back("customer", &customer);
 
 // In Lua: customer.age >= 18  -- works!
 auto rule = fastrules::Rule::create("check", "customer.age >= 18", true);

@@ -30,7 +30,7 @@ int main() {
 
         std::cout << "Setting up params..." << std::endl;
         std::vector<fastrules::RuleParameter> params;
-        params.emplace_back("age", "int", std::any(25));
+        params.emplace_back("age", 25);
         std::cout << "Executing..." << std::endl;
 
         auto results = workflow.execute(engine, params);
@@ -41,7 +41,7 @@ int main() {
 
         // Test failing case
         params.clear();
-        params.emplace_back("age", "int", std::any(15));
+        params.emplace_back("age", 15);
         results = workflow.execute(engine, params);
         for (const auto& r : results) {
             std::cout << "Rule: " << r.ruleId

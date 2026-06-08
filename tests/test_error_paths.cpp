@@ -435,7 +435,7 @@ TEST_CASE("Wrong parameter type causes execution failure", "[rule][errors][types
     RuleContext ctx;
     std::string wrongType = "not a number";
     std::vector<RuleParameter> params;
-    params.emplace_back("x", "string", std::any(&wrongType));
+    params.emplace_back("x", &wrongType);
 
     auto result = rule.execute(engine, ctx, params);
 
@@ -489,7 +489,7 @@ TEST_CASE("LuaEngine handles boolean string conversion", "[lua][edge]") {
     RuleContext ctx;
     bool value = true;
     std::vector<RuleParameter> params;
-    params.emplace_back("x", "bool", std::any(&value));
+    params.emplace_back("x", &value);
 
     auto result = rule.execute(engine, ctx, params);
     // Booleans through sol2 may not compare exactly; just verify no crash

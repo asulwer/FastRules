@@ -34,8 +34,8 @@ int main() {
         // Execute for adult customer
         std::cout << "=== Adult Customer ===" << std::endl;
         std::vector<fastrules::RuleParameter> params;
-        params.emplace_back("age", "int", std::any(25));
-        params.emplace_back("name", "string", std::any(std::string("Alice")));
+        params.emplace_back("age", 25);
+        params.emplace_back("name", std::string("Alice"));
         auto results = workflow.execute(engine, params);
         for (const auto& result : results) {
             std::cout << "Rule: " << result.ruleId
@@ -52,8 +52,8 @@ int main() {
         // Execute for minor customer
         std::cout << "\n=== Minor Customer ===" << std::endl;
         params.clear();
-        params.emplace_back("age", "int", std::any(15));
-        params.emplace_back("name", "string", std::any(std::string("Bob")));
+        params.emplace_back("age", 15);
+        params.emplace_back("name", std::string("Bob"));
 
         results = workflow.execute(engine, params);
 
@@ -66,8 +66,8 @@ int main() {
         // Demonstrate parallel execution
         std::cout << "\n=== Parallel Execution ===" << std::endl;
         params.clear();
-        params.emplace_back("age", "int", std::any(30));
-        params.emplace_back("name", "string", std::any(std::string("Charlie")));
+        params.emplace_back("age", 30);
+        params.emplace_back("name", std::string("Charlie"));
 
         auto parResults = workflow.executeParallel(engine, params);
         for (const auto& result : parResults) {

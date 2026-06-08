@@ -123,7 +123,7 @@ workflow.rules.push_back(rule.build());
 workflow.compile(engine);
 
 std::vector<RuleParameter> params;
-params.emplace_back("age", "int", std::any(25));
+params.emplace_back("age", 25);
 
 auto results = workflow.execute(engine, params);
 // results[0].isSuccess() == true

@@ -63,7 +63,7 @@ int main() {
 
     // 5. Execute with parameters
     std::vector<RuleParameter> params;
-    params.emplace_back("age", "int", std::any(25));
+    params.emplace_back("age", 25);
 
     auto results = workflow.execute(engine, params);
 
@@ -91,8 +91,8 @@ workflow.rules = {emailCheck, ageCheck};
 workflow.compile(engine);
 
 std::vector<RuleParameter> params;
-params.emplace_back("email", "string", std::any(std::string("user@example.com")));
-params.emplace_back("age", "int", std::any(25));
+params.emplace_back("email", std::string("user@example.com"));
+params.emplace_back("age", 25);
 
 auto results = workflow.execute(engine, params);
 ```

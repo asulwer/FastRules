@@ -89,8 +89,8 @@ int main() {
             std::cout << "  Order minTotal: " << test.order->minTotal << ", Status: " << test.order->status << std::endl;
 
             std::vector<fastrules::RuleParameter> params;
-            params.emplace_back("customer", "Customer", std::any(test.customer));
-            params.emplace_back("order", "Order", std::any(test.order));
+            params.emplace_back("customer", test.customer);
+            params.emplace_back("order", test.order);
 
             auto results = workflow.execute(engine, params);
 

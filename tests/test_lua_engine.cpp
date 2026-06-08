@@ -71,7 +71,7 @@ TEST_CASE("LuaEngine expression evaluation", "[lua]") {
     SECTION("Comparison with parameter") {
         auto ref = engine.compileExpression("value >= 18");
         std::vector<RuleParameter> params;
-        params.emplace_back("value", "double", std::any(25.0));
+        params.emplace_back("value", 25.0);
         bool result = engine.evaluateExpression(ref.value(), params, ctx);
         REQUIRE(result == true);
         engine.releaseRef(ref.value());
@@ -94,7 +94,7 @@ TEST_CASE("LuaEngine predicate functions", "[lua]") {
     SECTION("isEmpty string") {
         auto ref = engine.compileExpression("isEmpty(str)");
         std::vector<RuleParameter> params;
-        params.emplace_back("str", "string", std::any(std::string("")));
+        params.emplace_back("str", std::string(""));
         bool result = engine.evaluateExpression(ref.value(), params, ctx);
         REQUIRE(result == true);
         engine.releaseRef(ref.value());
@@ -103,7 +103,7 @@ TEST_CASE("LuaEngine predicate functions", "[lua]") {
     SECTION("startsWith") {
         auto ref = engine.compileExpression("startsWith(str, \"Hello\")");
         std::vector<RuleParameter> params;
-        params.emplace_back("str", "string", std::any(std::string("Hello World")));
+        params.emplace_back("str", std::string("Hello World"));
         bool result = engine.evaluateExpression(ref.value(), params, ctx);
         REQUIRE(result == true);
         engine.releaseRef(ref.value());
@@ -112,7 +112,7 @@ TEST_CASE("LuaEngine predicate functions", "[lua]") {
     SECTION("inRange") {
         auto ref = engine.compileExpression("inRange(val, 0, 100)");
         std::vector<RuleParameter> params;
-        params.emplace_back("val", "double", std::any(50.0));
+        params.emplace_back("val", 50.0);
         bool result = engine.evaluateExpression(ref.value(), params, ctx);
         REQUIRE(result == true);
         engine.releaseRef(ref.value());
@@ -151,7 +151,7 @@ TEST_CASE("LuaEngine coroutine support", "[lua][coroutine]") {
     SECTION("Resume coroutine with parameters") {
         auto ref = engine.compileCoroutine("x > 10");
         std::vector<RuleParameter> params;
-        params.emplace_back("x", "int", std::any(15));
+        params.emplace_back("x", 15);
         
         auto status = engine.resumeCoroutine(ref.value(), params, ctx);
         REQUIRE(status == true);

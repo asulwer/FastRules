@@ -49,7 +49,7 @@ Throws `RuleCompilationException` if exceeded.
 
 ```cpp
 std::vector<RuleParameter> params;
-params.emplace_back("age", "int", std::string("not an int"));  // Wrong!
+params.emplace_back("age", "not an int");  // Wrong! String passed where int expected
 
 ParameterValidator::validateTypes(params);
 // Throws ParameterTypeException

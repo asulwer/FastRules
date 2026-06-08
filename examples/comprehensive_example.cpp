@@ -76,7 +76,7 @@ int main() {
         app.creditScore = 720;
 
         std::vector<RuleParameter> params;
-        params.emplace_back("app", "LoanApplication", std::any(&app));
+        params.emplace_back("app", &app);
 
         workflow.compile(engine);
         auto results = workflow.execute(engine, params);
@@ -131,7 +131,7 @@ int main() {
         app2.creditScore = 720;
 
         std::vector<RuleParameter> xmlParams;
-        xmlParams.emplace_back("app", "LoanApplication", std::any(&app2));
+        xmlParams.emplace_back("app", &app2);
 
         auto xmlResults = xmlWorkflow.execute(engine, xmlParams);
         for (const auto& result : xmlResults) {

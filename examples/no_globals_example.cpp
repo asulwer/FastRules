@@ -103,7 +103,7 @@ void demo_current_api() {
     // Execute
     Customer customer{"Alice", 25};
     std::vector<fastrules::RuleParameter> params;
-    params.emplace_back("customer", "Customer", std::any(&customer));
+    params.emplace_back("customer", &customer);
 
     auto context = fastrules::RuleContext();
     auto result = rule->execute(engine, context, params);

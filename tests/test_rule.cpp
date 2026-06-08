@@ -136,7 +136,7 @@ TEST_CASE("Rule cache memoization", "[rule]") {
     rule->compile(engine);
 
     std::vector<RuleParameter> params;
-    params.emplace_back("value", "int", std::any(42));
+    params.emplace_back("value", 42);
 
     // First execution
     auto result1 = rule->execute(engine, ctx, params);
@@ -164,7 +164,7 @@ TEST_CASE("Rule cache expires", "[rule]") {
     rule->compile(engine);
 
     std::vector<RuleParameter> params;
-    params.emplace_back("value", "int", std::any(42));
+    params.emplace_back("value", 42);
 
     // First execution
     auto result1 = rule->execute(engine, ctx, params);
