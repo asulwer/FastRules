@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/asulwer/fastrules/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/asulwer/fastrules/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/asulwer/fastrules/branch/main/graph/badge.svg)](https://codecov.io/gh/asulwer/fastrules)
-[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://asulwer.github.io/fastrules)
+[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://asulwer.github.io/FastRules)
 
 High-performance C++23 business rules engine with Lua expressions. Core library is dependency-light; persistence extensions add JSON, XML, or database support as needed.
 
