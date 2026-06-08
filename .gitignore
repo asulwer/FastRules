@@ -3,6 +3,7 @@ build/
 build_*/
 out/
 .vs/
+CMakeFiles/
 
 # Visual Studio user settings
 *.user
