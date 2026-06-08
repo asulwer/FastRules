@@ -1,0 +1,41 @@
+{
+  "id": "dependency-example",
+  "description": "Workflow with rule dependencies",
+  "isActive": true,
+  "rules": [
+    {
+      "id": "validate-input",
+      "description": "Validate input parameters",
+      "expression": "isNotNull(customer) and isNotEmpty(customer.name)",
+      "isActive": true,
+      "priority": 0,
+      "dependsOnRuleId": null,
+      "childRules": [],
+      "timeout": null,
+      "cacheDuration": null
+    },
+    {
+      "id": "check-age",
+      "description": "Check age requirement",
+      "expression": "customer.age >= 21",
+      "isActive": true,
+      "priority": 1,
+      "dependsOnRuleId": "validate-input",
+      "childRules": [],
+      "timeout": null,
+      "cacheDuration": null
+    },
+    {
+      "id": "process-customer",
+      "description": "Process the customer",
+      "expression": "context.getResult('check-age').success",
+      "action": "customer.processed = true",
+      "isActive": true,
+      "priority": 2,
+      "dependsOnRuleId": "check-age",
+      "childRules": [],
+      "timeout": null,
+      "cacheDuration": null
+    }
+  ]
+}

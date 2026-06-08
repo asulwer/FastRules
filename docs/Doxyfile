@@ -1,0 +1,39 @@
+# Doxyfile for FastRules API Documentation
+
+PROJECT_NAME           = "FastRules"
+PROJECT_NUMBER         = "0.1.0"
+PROJECT_BRIEF          = "High-performance C++23 business rules engine"
+
+OUTPUT_DIRECTORY       = _site/api
+CREATE_SUBDIRS         = NO
+
+INPUT                  = ../include/fastrules ../src ../extensions/json/include ../extensions/xml/include ../extensions/db/include
+RECURSIVE              = YES
+FILE_PATTERNS          = *.hpp *.cpp
+
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = YES
+
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+
+HTML_OUTPUT            = html
+HTML_FILE_EXTENSION    = .html
+
+USE_MDFILE_AS_MAINPAGE = ../README.md
+
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+
+# C++ specific
+OPTIMIZE_OUTPUT_FOR_C  = NO
+CPP_CLI_SUPPORT        = NO
+
+# Call graphs
+HAVE_DOT               = YES
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES

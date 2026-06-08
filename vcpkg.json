@@ -1,0 +1,32 @@
+{
+  "name": "fastrules",
+  "version": "0.1.0",
+  "description": "High-performance C++23 business rules engine with Lua expressions",
+  "homepage": "https://github.com/asulwer/fastrules",
+  "license": "MIT",
+  "dependencies": [
+    "lua",
+    "catch2",
+    "nlohmann-json",
+    "sol2"
+  ],
+  "features": {
+    "xml": {
+      "description": "XML persistence support",
+      "dependencies": ["pugixml"]
+    },
+    "db": {
+      "description": "Database persistence via SOCI with SQLite3",
+      "dependencies": [
+        {
+          "name": "soci",
+          "features": ["sqlite3"]
+        }
+      ]
+    },
+    "tests": {
+      "description": "Build test suite",
+      "dependencies": ["catch2"]
+    }
+  }
+}

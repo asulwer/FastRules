@@ -1,0 +1,39 @@
+name: Coverage
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  coverage:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install OpenCppCoverage
+        run: choco install opencppcoverage
+
+      - name: Configure with Coverage
+        run: |
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug -DFASTRULES_BUILD_COVERAGE=ON -DFASTRULES_BUILD_EXTENSIONS=ON
+
+      - name: Build
+        run: cmake --build build --config Debug
+
+      - name: Run Coverage
+        run: |
+          cmake --build build --target coverage
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: build/coverage/
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: build/coverage/cobertura.xml
+          fail_ci_if_error: false

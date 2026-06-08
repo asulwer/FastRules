@@ -1,0 +1,61 @@
+{
+  "id": "customer-validation",
+  "description": "Customer validation with typed objects",
+  "isActive": true,
+  "rules": [
+    {
+      "id": "adult-processing",
+      "expression": "context.getResult('age-check').success == true and context.getResult('name-check').success == true",
+      "action": "customer.processed = true",
+      "isActive": true,
+      "priority": 2,
+      "parameterNames": ["customer"],
+      "childRules": [
+        {
+          "id": "age-check",
+          "expression": "customer.age >= 18",
+          "isActive": true,
+          "parameterNames": ["customer"]
+        },
+        {
+          "id": "name-check",
+          "expression": "isNotEmpty(customer.name)",
+          "isActive": true,
+          "parameterNames": ["customer"]
+        }
+      ]
+    },
+    {
+      "id": "minor-processing",
+      "expression": "context.getResult('minor-age-check').success == true",
+      "action": "customer.processed = false",
+      "isActive": true,
+      "priority": 0,
+      "parameterNames": ["customer"],
+      "childRules": [
+        {
+          "id": "minor-age-check",
+          "expression": "customer.age < 18",
+          "isActive": true,
+          "parameterNames": ["customer"]
+        }
+      ]
+    },
+    {
+      "id": "vip-processing",
+      "expression": "context.getResult('vip-status-check').success == true",
+      "action": "customer.processed = true",
+      "isActive": false,
+      "priority": 1,
+      "parameterNames": ["customer"],
+      "childRules": [
+        {
+          "id": "vip-status-check",
+          "expression": "customer.age >= 50",
+          "isActive": true,
+          "parameterNames": ["customer"]
+        }
+      ]
+    }
+  ]
+}

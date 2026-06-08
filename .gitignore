@@ -1,0 +1,46 @@
+# Build directories
+build/
+build_*/
+out/
+.vs/
+
+# Visual Studio user settings
+*.user
+CMakeSettings.json
+
+# vcpkg - uncomment if you want to ignore installed packages
+# vcpkg_installed/
+
+# Test artifacts
+*.db
+*.sqlite
+*.sqlite3
+rules.db
+rules.xml
+
+# Benchmark outputs
+benchmarks/
+baseline.txt
+current.txt
+
+# Coverage
+coverage/
+*.gcov
+*.gcda
+*.gcno
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.log

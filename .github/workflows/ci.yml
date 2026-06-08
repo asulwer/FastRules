@@ -1,0 +1,88 @@
+# CI/CD: FastRules GitHub Actions
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        lua-backend: [lua54, luajit]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MSVC
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Install vcpkg dependencies
+        run: |
+          vcpkg install --triplet x64-windows
+
+      - name: Configure (Lua 5.4)
+        if: matrix.lua-backend == 'lua54'
+        run: |
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DFASTRULES_BUILD_EXTENSIONS=ON -DFASTRULES_BUILD_DB=ON -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
+
+      - name: Configure (LuaJIT)
+        if: matrix.lua-backend == 'luajit'
+        run: |
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DFASTRULES_BUILD_EXTENSIONS=ON -DFASTRULES_BUILD_DB=ON -DFASTRULES_USE_LUAJIT=ON -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Test Core
+        run: .\build\Release\fastrules_tests.exe
+
+      - name: Test DB Extension
+        run: .\build\extensions\db\tests\Release\fastrules-db-tests.exe
+
+      - name: Test XML Extension
+        run: .\build\extensions\xml\tests\Release\fastrules-xml-tests.exe
+
+  build-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y liblua5.4-dev catch2 nlohmann-json3-dev
+
+      - name: Configure
+        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DFASTRULES_BUILD_EXTENSIONS=ON
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Test
+        run: ./build/Release/fastrules_tests
+
+  benchmark:
+    runs-on: windows-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build current
+        run: |
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release --target fastrules_tests
+          .\build\Release\fastrules_tests.exe "[benchmark]" --reporter=console > benchmarks\current.txt
+
+      - name: Get baseline from main
+        run: |
+          git show main:benchmarks\baseline.txt > benchmarks\baseline.txt
+
+      - name: Compare benchmarks
+        run: |
+          python scripts\benchmark_json.py benchmarks\current.txt --baseline benchmarks\baseline.txt --regression-threshold 10.0

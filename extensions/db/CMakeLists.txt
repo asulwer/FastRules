@@ -1,0 +1,76 @@
+cmake_minimum_required(VERSION 3.28)
+project(fastrules-db LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# SOCI backend selection
+set(FASTRULES_DB_BACKEND "sqlite3" CACHE STRING "Database backend: postgresql, mysql, sqlite3, odbc")
+set_property(CACHE FASTRULES_DB_BACKEND PROPERTY STRINGS postgresql mysql sqlite3 odbc)
+
+# Determine if we're building standalone or as part of fastrules
+if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+    # Standalone build — need to find fastrules and SOCI
+    find_package(fastrules REQUIRED CONFIG)
+    find_package(SOCI REQUIRED COMPONENTS core ${FASTRULES_DB_BACKEND})
+    set(FASTRULES_CORE_TARGET fastrules::fastrules)
+    set(FASTRULES_INCLUDE_DIR "")
+else()
+    # Building as part of fastrules — use the in-tree target
+    set(FASTRULES_CORE_TARGET fastrules)
+    set(FASTRULES_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
+    # SOCI must be available
+    find_package(SOCI REQUIRED COMPONENTS core ${FASTRULES_DB_BACKEND})
+endif()
+
+add_library(fastrules-db STATIC
+    src/db_repository.cpp
+)
+
+target_include_directories(fastrules-db PUBLIC
+    include
+    ${FASTRULES_INCLUDE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${SOCI_INCLUDE_DIRS}
+)
+
+target_link_libraries(fastrules-db PUBLIC
+    ${FASTRULES_CORE_TARGET}
+    SOCI::soci_core
+)
+
+# Try to find backend library
+find_library(SOCI_SQLITE3_LIB
+    NAMES soci_sqlite3_4_0 soci_sqlite3
+    PATHS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib"
+          "${CMAKE_PREFIX_PATH}/lib"
+          "C:/tools/vcpkg/installed/x64-windows/lib"
+)
+
+if(SOCI_SQLITE3_LIB)
+    target_link_libraries(fastrules-db PUBLIC ${SOCI_SQLITE3_LIB})
+elseif(TARGET SOCI::soci_sqlite3)
+    target_link_libraries(fastrules-db PUBLIC SOCI::soci_sqlite3)
+endif()
+
+# Examples
+option(FASTRULES_DB_BUILD_EXAMPLES "Build DB extension examples" ON)
+if(FASTRULES_DB_BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif()
+
+# Tests
+option(FASTRULES_DB_BUILD_TESTS "Build DB extension tests" ON)
+if(FASTRULES_DB_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
+
+# Install
+include(GNUInstallDirs)
+install(TARGETS fastrules-db
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+install(DIRECTORY include/fastrules
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)

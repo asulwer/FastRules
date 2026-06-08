@@ -1,0 +1,53 @@
+# Jekyll configuration for GitHub Pages
+# https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll
+
+title: FastRules
+description: >-
+  High-performance C++23 business rules engine with Lua expressions.
+  Core library is dependency-light; persistence extensions add JSON, XML, or database support as needed.
+
+baseurl: "/fastrules"  # the subpath of your site, e.g. /blog
+url: "https://asulwer.github.io"  # the base hostname for your site
+
+# Minimal theme - built into GitHub Pages, no extra gems needed
+theme: minima
+
+# Plugins supported by GitHub Pages
+plugins:
+  - jekyll-relative-links
+  - jekyll-readme-index
+  - jekyll-default-layout
+  - jekyll-titles-from-headings
+
+# Navigation
+collections:
+  docs:
+    output: true
+    permalink: /:path/
+
+defaults:
+  - scope:
+      path: ""
+      type: "docs"
+    values:
+      layout: default
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Exclude files from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+  - "*.gemspec"
+
+# Enable relative links plugin for .md files
+relative_links:
+  enabled: true
+  collections: true
