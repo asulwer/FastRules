@@ -113,16 +113,13 @@ using namespace fastrules;
 LuaEngine engine;
 
 // Create a rule in pure C++
-Rule rule;
-rule.id = "adult-check";
-rule.expression = "age >= 18";
-rule.action = "eligible = true";
-rule.priority = 0;
+auto rule = Rule::create("adult-check", "age >= 18");
+rule.withAction("eligible = true");
 
 // Compile and execute
 Workflow workflow;
 workflow.description = "Simple validation";
-workflow.rules.push_back(rule);
+workflow.rules.push_back(rule.build());
 workflow.compile(engine);
 
 std::vector<RuleParameter> params;
@@ -141,6 +138,28 @@ auto results = workflow.execute(engine, params);
 // Load workflow from JSON
 auto jsonStr = readFile("rules.json");
 auto workflow = fastrules::JsonLoader::loadWorkflow(jsonStr);
+```
+
+### With XML Extension
+
+```cpp
+#include <fastrules/xml_loader.hpp>
+#include <fastrules.hpp>
+
+// Load workflow from XML
+auto xmlStr = readFile("rules.xml");
+auto workflow = fastrules::XmlLoader::loadWorkflow(xmlStr);
+```
+
+### With Database Extension
+
+```cpp
+#include <fastrules/db_repository.hpp>
+#include <fastrules.hpp>
+
+// Load workflow from database
+fastrules::DbRepository repo("connection_string");
+auto workflow = repo.loadWorkflow("workflow-1");
 ```
 
 ## License

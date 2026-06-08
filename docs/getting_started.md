@@ -48,26 +48,28 @@ int main() {
     // 1. Create a Lua engine
     LuaEngine engine;
 
-    // 2. Define a rule
-    Rule rule;
-    rule.id = "age-check";
-    rule.expression = "age >= 18";
-    rule.action = "eligible = true";
-    rule.parameterNames = {"age"};
+    // 2. Define a rule using the Builder
+    auto rule = Rule::create("age-check", "age >= 18")
+        .withAction("eligible = true")
+        .build();
 
-    // 3. Compile the rule (one-time setup)
-    rule.compile(engine);
+    // 3. Create a workflow and add the rule
+    Workflow workflow;
+    workflow.id = "signup-validation";
+    workflow.rules.push_back(rule);
 
-    // 4. Execute with parameters
-    RuleContext ctx;
+    // 4. Compile the workflow (one-time setup)
+    workflow.compile(engine);
+
+    // 5. Execute with parameters
     std::vector<RuleParameter> params;
     params.emplace_back("age", "int", std::any(25));
 
-    auto result = rule.execute(engine, ctx, params);
+    auto results = workflow.execute(engine, params);
 
-    // 5. Check result
-    std::cout << "Rule " << result.ruleId 
-              << (result.isSuccess() ? " passed" : " failed") 
+    // 6. Check result
+    std::cout << "Rule " << results[0].ruleId 
+              << (results[0].isSuccess() ? " passed" : " failed") 
               << "\n";
 
     return 0;
@@ -82,18 +84,15 @@ Multiple rules execute in sequence:
 Workflow workflow;
 workflow.id = "signup-validation";
 
-auto emailCheck = std::make_shared<Rule>();
-emailCheck->id = "email-valid";
-emailCheck->expression = "string.find(email, '@') ~= nil";
-emailCheck->parameterNames = {"email"};
-
-auto ageCheck = std::make_shared<Rule>();
-ageCheck->id = "age-valid";
-ageCheck->expression = "age >= 13";
-ageCheck->parameterNames = {"age"};
+auto emailCheck = Rule::create("email-valid", "string.find(email, '@') ~= nil").build();
+auto ageCheck = Rule::create("age-valid", "age >= 13").build();
 
 workflow.rules = {emailCheck, ageCheck};
 workflow.compile(engine);
+
+std::vector<RuleParameter> params;
+params.emplace_back("email", "string", std::any(std::string("user@example.com")));
+params.emplace_back("age", "int", std::any(25));
 
 auto results = workflow.execute(engine, params);
 ```
@@ -103,19 +102,16 @@ auto results = workflow.execute(engine, params);
 Child rules execute first. Parent only runs if all children pass:
 
 ```cpp
-Rule parent;
-parent.id = "credit-check";
-parent.expression = "score > 650";
+auto parent = Rule::create("credit-check", "score > 650").build();
 
-auto child1 = std::make_shared<Rule>();
-child1->id = "identity-verified";
-child1->expression = "verified == true";
+auto child1 = Rule::create("identity-verified", "verified == true").build();
+auto child2 = Rule::create("income-sufficient", "income >= 50000").build();
 
-auto child2 = std::make_shared<Rule>();
-child2->id = "income-sufficient";
-child2->expression = "income >= 50000";
+parent->childRules = {child1, child2};
 
-parent.childRules = {child1, child2};
+Workflow workflow;
+workflow.rules.push_back(parent);
+workflow.compile(engine);
 ```
 
 ## Type Registration
@@ -128,19 +124,19 @@ struct Point {
     double y;
 };
 
-engine.registerType<Point>("Point", [](auto& ut) {
-    ut["x"] = &Point::x;
-    ut["y"] = &Point::y;
+engine.registerType<Point>("Point", {
+    {"x", offsetof(Point, x), "double"},
+    {"y", offsetof(Point, y), "double"}
 });
 
 Rule rule;
+rule.id = "distance-check";
 rule.expression = "math.sqrt(point.x^2 + point.y^2) < 100";
-rule.parameterNames = {"point"};
 ```
 
 ## Next Steps
 
-- [JSON Persistence](JSON_EXTENSION.md)
-- [XML Persistence](XML_EXTENSION.md)
+- [JSON Persistence](json_extension.md)
+- [XML Persistence](xml_extension.md)
 - [Database Setup](db_extension_setup.md)
 - [Architecture Overview](architecture.md)
