@@ -8,87 +8,84 @@ permalink: /api/
 
 # API Reference
 
+Quick reference for core classes. See child pages for full details.
 
-## Quick Reference
+## LuaEngine
 
-### LuaEngine
-
-The core engine that compiles and executes Lua expressions.
+Compiles and executes Lua expressions. Backend-agnostic (sol2 or LuaBridge3).
 
 ```cpp
-LuaEngine engine;  // Opens a fresh Lua state with sandboxed environment
+LuaEngine engine;
 
 // Compile
-auto ref = engine.compileExpression("value > 10", {"value"});
-auto actionRef = engine.compileAction("result = true", {});
+auto ref = engine.compileExpression("age >= 18");
 
-// Execute
-RuleContext ctx;
-bool result = engine.evaluateExpression(ref.value(), params, ctx);
-engine.executeAction(actionRef.value(), params, ctx);
+// Execute with parameters
+std::vector<RuleParameter> params;
+params.emplace_back("age", 25);
+bool pass = engine.evaluateExpression(ref.value(), params, context);
 ```
 
-### Type Registration
+## Rule
 
 ```cpp
-struct Customer {
-    int age;
-    std::string name;
-};
-
-engine.registerType<Customer>("Customer", [](auto& ut) {
-    ut["age"] = &Customer::age;
-    ut["name"] = &Customer::name;
-});
+auto rule = Rule::create("check-age", "age >= 18")
+    .withAction("eligible = true")
+    .withPriority(10)
+    .withTimeout(std::chrono::milliseconds(100))
+    .build();
 ```
 
-### Enum Registration
-
-```cpp
-enum class Status { Active, Inactive };
-registerEnum<Status>(engine.state(), "Status", {
-    {Status::Active, "Active"},
-    {Status::Inactive, "Inactive"}
-});
-```
-
-### Rule
-
-```cpp
-auto rule = std::make_shared<Rule>();
-rule->id = "check-age";
-rule->expression = "customer.age >= 18";
-rule->action = "eligible = true";
-rule->parameterNames = {"customer"};
-rule->timeout = std::chrono::milliseconds(100);
-rule->cacheDuration = std::chrono::milliseconds(5000);
-rule->priority = 10;
-
-rule->compile(engine);
-auto result = rule->execute(engine, ctx, params);
-```
-
-### Workflow
+## Workflow
 
 ```cpp
 Workflow workflow;
-workflow.id = "my-workflow";
+workflow.id = "validation";
 workflow.rules.push_back(rule1);
 workflow.rules.push_back(rule2);
 
 workflow.validate();
+workflow.compile(engine);
 auto results = workflow.execute(engine, params);
 ```
 
-### JSON Loading
+## RuleParameter
+
+```cpp
+// Primitive — type inferred automatically
+params.emplace_back("age", 25);
+params.emplace_back("name", std::string("Alice"));
+params.emplace_back("verified", true);
+
+// Registered C++ type
+params.emplace_back("customer", Customer{"Alice", 30});
+```
+
+## Type Registration
+
+```cpp
+struct Customer { int age; std::string name; };
+
+engine.registerType<Customer>("Customer", {
+    {"age",  offsetof(Customer, age),  "int"},
+    {"name", offsetof(Customer, name), "string"}
+});
+```
+
+## Action Callbacks
+
+```cpp
+engine.registerAction("sendEmail", [](const std::any& target, const std::vector<std::any>& args) {
+    auto email = std::any_cast<std::string>(args[0]);
+    std::cout << "Sending email to: " << email << "\n";
+});
+```
+
+## JSON Extension
 
 ```cpp
 #include <fastrules/json_loader.hpp>
 
-auto workflow = fastrules::JsonLoader::loadWorkflowFromFile("rules.json");
-std::string json = fastrules::JsonLoader::saveWorkflowPretty(workflow);
+auto json = readFile("rules.json");
+auto workflow = fastrules::JsonLoader::loadWorkflow(json);
 ```
-
----
-
-*See child pages for detailed API documentation.*

@@ -2,7 +2,7 @@
 layout: default
 title: AsyncWorkflow
 parent: API Reference
-nav_order: 2
+nav_order: 7
 ---
 
 # AsyncWorkflow
@@ -11,65 +11,35 @@ nav_order: 2
 #include <fastrules/async_workflow.hpp>
 ```
 
-Provides parallel execution of independent rules using thread-safe LuaEngine clones.
+Parallel and streaming execution variants of `Workflow`.
 
-## Construction
+## executeStreaming
 
-```cpp
-fastrules::LuaEngine engine;
-fastrules::Workflow workflow;
-// ... add rules ...
-
-fastrules::AsyncWorkflow async(engine, workflow);
-```
-
-## Methods
-
-### execute
+Process results as they arrive:
 
 ```cpp
-std::vector<RuleResult> execute(
-    const std::vector<RuleParameter>& parameters = {});
-```
-
-Executes rules in parallel where possible, respecting dependencies.
-
-- Rules with `dependsOnRuleId` wait for their parent
-- Independent rules run concurrently via `std::async`
-- Each thread gets a cloned LuaEngine
-
-### getExecutionOrder
-
-```cpp
-std::vector<std::vector<std::shared_ptr<Rule>>> getExecutionOrder() const;
-```
-
-Returns rules grouped by dependency level (for inspection).
-
-## Example
-
-```cpp
-fastrules::LuaEngine engine;
-
-auto rule1 = fastrules::Rule::create("check-a", "a > 10", true);
-auto rule2 = fastrules::Rule::create("check-b", "b < 5", true);
-auto rule3 = fastrules::Rule::create("check-c", "c == true", true);
-
-fastrules::Workflow workflow;
-workflow.rules = {rule1, rule2, rule3};
-workflow.compile(engine);
-
-fastrules::AsyncWorkflow async(engine, workflow);
-auto results = async.execute({
-    {"a", std::any(20)},
-    {"b", std::any(3)},
-    {"c", std::any(true)}
+workflow.executeStreaming(engine, params, [](const RuleResult& r) {
+    std::cout << r.ruleId << ": " << (r.isSuccess() ? "PASS" : "FAIL") << "\n";
 });
-
-// check-a and check-b run in parallel
-// check-c runs in parallel (no dependencies)
 ```
 
-## Thread Safety
+## executeParallelAsync
 
-`AsyncWorkflow` creates independent `LuaEngine` clones for each thread via `LuaEngine::clone()`. Each clone has its own Lua state, registry, and type bindings.
+Execute rules in parallel, get all results via future:
+
+```cpp
+auto future = workflow.executeParallelAsync(engine, params, 4);  // max 4 concurrent
+auto results = future.get();
+```
+
+## AsyncRegistry
+
+Register workflows for async dispatch:
+
+```cpp
+AsyncRegistry registry;
+registry.registerWorkflow("validation", std::move(workflow));
+
+auto future = registry.executeAsync("validation", engine, params);
+auto results = future.get();
+```

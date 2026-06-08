@@ -2,7 +2,7 @@
 layout: default
 title: Workflow
 parent: API Reference
-nav_order: 7
+nav_order: 2
 ---
 
 # Workflow
@@ -14,22 +14,29 @@ nav_order: 7
 ## Construction
 
 ```cpp
-fastrules::Workflow workflow;
-workflow.description = "Customer validation";
+Workflow workflow;
+workflow.id = "customer-validation";
+workflow.description = "Full customer validation pipeline";
 ```
 
 ## Properties
 
 | Property | Type | Description |
-|----------|------|-------------|
+|---|---|---|
 | `id` | `std::string` | Unique identifier |
 | `description` | `std::string` | Human-readable description |
-| `isActive` | `bool` | Master switch |
 | `rules` | `std::vector<std::shared_ptr<Rule>>` | Top-level rules |
-| `compiledExpressionRefs` | `std::vector<int>` | Internal compiled refs |
-| `compiledActionRefs` | `std::vector<std::optional<int>>` | Internal action refs |
+| `isActive` | `bool` | Master switch (default true) |
 
 ## Methods
+
+### validate
+
+```cpp
+void validate();
+```
+
+Checks for duplicate IDs, missing dependencies, circular dependencies. Throws `RuleValidationException` on failure.
 
 ### compile
 
@@ -37,7 +44,7 @@ workflow.description = "Customer validation";
 void compile(LuaEngine& engine);
 ```
 
-Compiles all rules in the workflow.
+Compiles all rules. Calls `validate()` first if not already validated.
 
 ### execute
 
@@ -47,63 +54,61 @@ std::vector<RuleResult> execute(
     const std::vector<RuleParameter>& parameters = {});
 ```
 
-Executes all rules respecting dependencies and priorities.
+Executes rules in priority order, respecting dependencies.
 
-**Rules with `dependsOnRuleId`** run after their parent.
+Rules with `dependsOnRuleId` only run if the dependency succeeded.
 
-### executeChildRules
+**Returns:** Vector of results for active rules (skipped rules omitted).
+
+### executeStreaming
 
 ```cpp
-std::vector<RuleResult> executeChildRules(
+void executeStreaming(
     LuaEngine& engine,
-    const std::vector<RuleParameter>& parameters = {});
+    const std::vector<RuleParameter>& parameters,
+    std::function<void(const RuleResult&)> onResult);
 ```
 
-Executes only child rules (useful for nesting).
+Executes rules and calls `onResult` for each result as it completes.
 
-### validate
+### executeParallelAsync
 
 ```cpp
-void validate() const;
+std::future<std::vector<RuleResult>> executeParallelAsync(
+    LuaEngine& engine,
+    const std::vector<RuleParameter>& parameters,
+    std::size_t maxConcurrent = std::thread::hardware_concurrency());
 ```
 
-Checks for circular dependencies across all rules.
+Executes rules in parallel up to `maxConcurrent` threads.
 
-### toJson
+## Builder
 
 ```cpp
-[[nodiscard]] nlohmann::json toJson() const;
+static Workflow::Builder Workflow::create(const std::string& id);
 ```
-
-Serializes to JSON.
-
-### fromJson
 
 ```cpp
-static std::shared_ptr<Workflow> fromJson(const nlohmann::json& j);
+auto workflow = Workflow::create("validation")
+    .withDescription("Customer validation")
+    .withRule(Rule::create("age-check", "age >= 18").build())
+    .withRule(Rule::create("email-check", "#email > 0").build())
+    .build();
 ```
 
-Deserializes from JSON.
+## JSON/XML Persistence
 
-## JSON Schema
+Workflows are loaded/saved via extensions, not core:
 
-```json
-{
-    "id": "customer-validation",
-    "description": "Customer validation workflow",
-    "isActive": true,
-    "rules": [
-        {
-            "id": "adult-check",
-            "expression": "customer.age >= 18",
-            "action": "callbacks.setProcessed(customer, true)",
-            "isActive": true,
-            "priority": 1,
-            "dependsOnRuleId": null,
-            "childRules": [],
-            "timeout": null,
-            "cacheDuration": null
-        }
-    ]
-}
+```cpp
+// JSON — requires fastrules-json
+auto workflow = fastrules::JsonLoader::loadWorkflow(jsonString);
+
+// XML — requires fastrules-xml  
+auto workflow = fastrules::XmlLoader::loadWorkflow(xmlString);
+
+// DB — requires fastrules-db
+auto workflow = repo.loadWorkflow("workflow-id");
 ```
+
+Core `Workflow` has no `fromJson()` or `toJson()` methods.

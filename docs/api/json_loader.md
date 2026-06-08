@@ -2,7 +2,7 @@
 layout: default
 title: JsonLoader
 parent: API Reference
-nav_order: 3
+nav_order: 6
 ---
 
 # JsonLoader
@@ -11,100 +11,66 @@ nav_order: 3
 #include <fastrules/json_loader.hpp>
 ```
 
-## Functions
+Requires linking `fastrules-json`.
 
-### parseRule
-
-```cpp
-static std::shared_ptr<Rule> parseRule(const nlohmann::json& j);
-```
-
-Parses a single rule from JSON.
-
-### parseWorkflow
+## Loading
 
 ```cpp
-static std::shared_ptr<Workflow> parseWorkflow(const nlohmann::json& j);
+// From string
+std::string json = readFile("rules.json");
+auto workflow = fastrules::JsonLoader::loadWorkflow(json);
+
+// From nlohmann::json
+nlohmann::json j = ...;
+auto workflow = fastrules::JsonLoader::loadWorkflow(j);
 ```
 
-Parses a workflow with all its rules.
-
-### toJson
+## Saving
 
 ```cpp
-static nlohmann::json toJson(const Workflow& workflow);
-static nlohmann::json toJson(const Rule& rule);
-```
+// To string
+std::string json = fastrules::JsonLoader::saveWorkflow(workflow);
 
-Serializes to JSON.
+// To file
+std::ofstream("rules.json") << json;
+```
 
 ## JSON Format
 
-### Rule
-
 ```json
 {
-    "id": "adult-check",
-    "description": "Adult customer check",
-    "expression": "customer.age >= 18",
-    "action": "callbacks.setProcessed(customer, true)",
-    "isActive": true,
-    "priority": 1,
-    "dependsOnRuleId": null,
-    "childRules": [],
-    "timeout": null,
-    "cacheDuration": null
+  "id": "validation",
+  "description": "Customer validation workflow",
+  "rules": [
+    {
+      "id": "age-check",
+      "expression": "age >= 18",
+      "action": "eligible = true",
+      "priority": 1,
+      "active": true
+    },
+    {
+      "id": "name-check",
+      "expression": "string.len(name) > 0",
+      "priority": 2
+    }
+  ]
 }
 ```
 
-### Workflow
+## Schema Reference
 
-```json
-{
-    "id": "customer-validation",
-    "description": "Customer validation workflow",
-    "isActive": true,
-    "rules": [
-        {
-            "id": "adult-check",
-            "expression": "customer.age >= 18",
-            "action": "callbacks.setProcessed(customer, true)",
-            "isActive": true,
-            "priority": 1,
-            "dependsOnRuleId": null,
-            "childRules": [],
-            "timeout": null,
-            "cacheDuration": null
-        },
-        {
-            "id": "name-check",
-            "expression": "isNotEmpty(customer.name)",
-            "isActive": true,
-            "priority": 2,
-            "dependsOnRuleId": null,
-            "childRules": [],
-            "timeout": null,
-            "cacheDuration": null
-        }
-    ]
-}
-```
-
-## Example
-
-```cpp
-#include <fastrules/json_loader.hpp>
-#include <nlohmann/json.hpp>
-#include <fstream>
-
-// Load from file
-std::ifstream file("rules.json");
-nlohmann::json j;
-file >> j;
-
-auto workflow = fastrules::JsonLoader::parseWorkflow(j);
-
-// Serialize
-auto json = fastrules::JsonLoader::toJson(*workflow);
-std::cout << json.dump(2) << std::endl;
-```
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `id` | string | Yes | Workflow identifier |
+| `description` | string | No | Description |
+| `rules` | array | Yes | List of rules |
+| `rules[].id` | string | Yes | Rule identifier |
+| `rules[].expression` | string | Yes | Lua expression |
+| `rules[].action` | string | No | Lua action |
+| `rules[].priority` | int | No | Order (lower first) |
+| `rules[].active` | bool | No | Enabled (default true) |
+| `rules[].dependsOnRuleId` | string | No | Dependency rule ID |
+| `rules[].childRules` | array | No | Nested child rules |
+| `rules[].timeoutMs` | int | No | Timeout in ms |
+| `rules[].cacheDurationMs` | int | No | Cache duration in ms |

@@ -2,7 +2,7 @@
 layout: default
 title: Rule
 parent: API Reference
-nav_order: 5
+nav_order: 1
 ---
 
 # Rule
@@ -11,29 +11,45 @@ nav_order: 5
 #include <fastrules/rule.hpp>
 ```
 
-## Factory
+## Construction
+
+### Builder Pattern (Recommended)
 
 ```cpp
-static std::shared_ptr<Rule> create(
-    const std::string& id,
-    const std::string& expression,
-    bool isActive = true);
+auto rule = Rule::create("check-age", "age >= 18")
+    .withAction("eligible = true")
+    .withPriority(10)
+    .withTimeout(std::chrono::milliseconds(100))
+    .withCacheDuration(std::chrono::milliseconds(5000))
+    .active(true)
+    .build();
+```
+
+### Manual Construction
+
+```cpp
+Rule rule;
+rule.id = "check-age";
+rule.expression = "age >= 18";
+rule.action = "eligible = true";
+rule.priority = 10;
+rule.isActive = true;
 ```
 
 ## Properties
 
 | Property | Type | Description |
-|----------|------|-------------|
+|---|---|---|
 | `id` | `std::string` | Unique identifier |
 | `expression` | `std::string` | Lua expression to evaluate |
-| `action` | `std::string` | Optional Lua action |
+| `action` | `std::string` | Optional Lua action executed on success |
 | `description` | `std::string` | Human-readable description |
-| `isActive` | `bool` | If false, always returns true |
-| `priority` | `int` | Execution order within a level (lower = earlier) |
-| `dependsOnRuleId` | `std::optional<std::string>` | Parent rule ID |
-| `childRules` | `std::vector<std::shared_ptr<Rule>>` | Nested rules |
-| `timeout` | `std::optional<std::size_t>` | Not yet implemented |
-| `cacheDuration` | `std::optional<std::size_t>` | Not yet implemented |
+| `isActive` | `bool` | If false, skipped during execution |
+| `priority` | `int` | Execution order (lower = earlier) |
+| `dependsOnRuleId` | `std::optional<std::string>` | Must succeed before this rule runs |
+| `childRules` | `std::vector<std::shared_ptr<Rule>>` | Child rules execute first (bubble-up) |
+| `timeout` | `std::optional<std::chrono::milliseconds>` | Per-rule timeout |
+| `cacheDuration` | `std::optional<std::chrono::milliseconds>` | Cache successful results |
 
 ## Methods
 
@@ -43,24 +59,24 @@ static std::shared_ptr<Rule> create(
 void compile(LuaEngine& engine);
 ```
 
-Compiles expression and action into Lua functions. Cached on the engine.
+Compiles expression and action into Lua functions. One-time setup.
 
 ### validate
 
 ```cpp
-void validate(const std::vector<Rule>& allRules);
+void validate(const std::vector<std::reference_wrapper<const Rule>>& allRules);
 ```
 
-Checks for circular dependencies and missing parent rules.
+Checks for circular dependencies and missing dependencies.
 
 ### execute
 
 ```cpp
-RuleResult execute(LuaEngine& engine, 
+RuleResult execute(LuaEngine& engine, RuleContext& context, 
     const std::vector<RuleParameter>& parameters);
 ```
 
-Executes the rule with given parameters.
+Executes the rule. Child rules run first. Parent only evaluates if all children pass.
 
 **Returns:** `RuleResult`
 
@@ -70,26 +86,25 @@ Executes the rule with given parameters.
 struct RuleResult {
     std::string ruleId;
     bool success = false;
-    std::optional<std::any> value;
-    std::optional<std::exception_ptr> exception;
+    bool skipped = false;
+    std::optional<RuleException> exception;
+    std::chrono::steady_clock::time_point executedAt;
+    std::vector<RuleResult> childResults;
 
-    bool isSuccess() const noexcept { return success; }
+    [[nodiscard]] bool isSuccess() const noexcept;
 };
 ```
 
-## JSON Schema
+## Convenience Factories
 
-```json
-{
-    "id": "adult-check",
-    "description": "Adult customer check",
-    "expression": "customer.age >= 18",
-    "action": "callbacks.setProcessed(customer, true)",
-    "isActive": true,
-    "priority": 1,
-    "dependsOnRuleId": null,
-    "childRules": [],
-    "timeout": null,
-    "cacheDuration": null
-}
+```cpp
+// Rule::create returns a Builder
+Rule::Builder Rule::create(const std::string& id, 
+    const std::string& expression, bool active = true);
+
+// Pre-built common rules
+static Rule contains(const std::string& param, const std::string& substring);
+static Rule equals(const std::string& param, int value);
+static Rule range(const std::string& param, int min, int max);
+static Rule regex(const std::string& param, const std::string& pattern);
 ```

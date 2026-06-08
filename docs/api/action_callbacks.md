@@ -2,7 +2,7 @@
 layout: default
 title: ActionCallbacks
 parent: API Reference
-nav_order: 1
+nav_order: 5
 ---
 
 # ActionCallbacks
@@ -11,48 +11,68 @@ nav_order: 1
 #include <fastrules/action_callback.hpp>
 ```
 
-**Deprecated**: Actions can now mutate C++ objects directly via Lua expressions.
-Use `customer.processed = true` instead of `callbacks.setProcessed(customer, true)`.
+Backend-neutral storage for C++ callback handlers. Used by `LuaEngine` and bound to Lua by `LuaBackend` implementations.
 
-ActionCallbacks are still available for advanced use cases where you need
-C++ logic in your actions, but they are no longer required for basic object mutation.
-
-## When to Use ActionCallbacks
-
-Use callbacks only when you need:
-- Complex C++ logic in an action
-- Access to external systems (databases, network, etc.)
-- Thread-safe operations that require C++ synchronization
-
-## Example (Advanced Use)
+## Handler Signature
 
 ```cpp
-// Register a callback for complex operations
-engine.registerAction("logAudit", [](sol::object target, const auto& args) {
-    auto* customer = target.as<Customer*>();
-    std::string action = args[0].as<std::string>();
-    AuditLogger::log(customer->id, action);
+using Handler = std::function<void(const std::any& target, const std::vector<std::any>& args)>;
+```
+
+- `target` — the object being acted upon (often empty)
+- `args` — arguments passed from Lua
+
+## Usage
+
+Register via `LuaEngine`:
+
+```cpp
+engine.registerAction("sendEmail", [](const std::any&, const std::vector<std::any>& args) {
+    auto recipient = std::any_cast<std::string>(args[0]);
+    auto subject = std::any_cast<std::string>(args[1]);
+    std::cout << "Email: " << recipient << " / " << subject << "\n";
 });
 ```
 
-## JSON Usage
+Lua action usage:
+```lua
+-- In a rule action string:
+callbacks.sendEmail("alice@example.com", "Welcome")
+```
 
-```json
-{
-    "action": "callbacks.logAudit(customer, 'adult_check_passed')"
+## Direct Access (Advanced)
+
+```cpp
+ActionCallbacks callbacks;
+
+// Register
+callbacks.registerHandler("log", [](const std::any&, const std::vector<std::any>& args) {
+    auto msg = std::any_cast<std::string>(args[0]);
+    std::cout << "[LOG] " << msg << "\n";
+});
+
+// Check if registered
+if (callbacks.hasHandler("log")) {
+    callbacks.execute("log", {}, {std::any(std::string("hello"))});
 }
+
+// Iterate handlers (used by backends)
+callbacks.forEachHandler([](const std::string& name, const Handler& handler) {
+    std::cout << "Handler: " << name << "\n";
+});
+
+// Clear all
+callbacks.clear();
 ```
 
-## Migration
+## Methods
 
-**Old (callbacks required):**
-```json
-{"action": "callbacks.setProcessed(customer, true)"}
-```
-
-**New (direct mutation):**
-```json
-{"action": "customer.processed = true"}
-```
-
-Direct mutation is simpler, faster, and requires no C++ registration.
+| Method | Description |
+|---|---|
+| `registerHandler(name, handler)` | Add a callback |
+| `hasHandler(name)` | Check if registered |
+| `execute(name, target, args)` | Execute a callback |
+| `forEachHandler(fn)` | Iterate all handlers |
+| `getHandlerNames()` | List all handler names |
+| `clear()` | Remove all handlers |
+| `registerStub(name)` | Add no-op stub (prevents Lua errors) |

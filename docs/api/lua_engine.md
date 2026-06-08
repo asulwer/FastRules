@@ -2,7 +2,7 @@
 layout: default
 title: LuaEngine
 parent: API Reference
-nav_order: 4
+nav_order: 3
 ---
 
 # LuaEngine
@@ -17,15 +17,15 @@ nav_order: 4
 fastrules::LuaEngine engine;
 ```
 
-Opens Lua base libs: base, string, table, math, coroutine, package.
+Opens a fresh Lua state with sandboxed environment (base, string, table, math, coroutine libs).
 
 ## Type Registration
 
-Register C++ structs for use in Lua expressions.
+Register C++ structs for field access in Lua expressions.
 
 ```cpp
 template<typename T>
-void registerType(const std::string& name, typename TypeBinder<T>::BinderFunc binder);
+void registerType(const std::string& name, std::vector<TypeField> fields);
 ```
 
 **Example:**
@@ -34,67 +34,64 @@ void registerType(const std::string& name, typename TypeBinder<T>::BinderFunc bi
 struct Customer {
     std::string name;
     int age;
-    bool processed;
+    double balance;
 };
 
-engine.registerType<Customer>("Customer", [](auto& ut) {
-    ut["name"] = &Customer::name;
-    ut["age"] = &Customer::age;
-    ut["processed"] = &Customer::processed;
+engine.registerType<Customer>("Customer", {
+    {"name",     offsetof(Customer, name),     "string"},
+    {"age",      offsetof(Customer, age),      "int"},
+    {"balance",  offsetof(Customer, balance),  "double"}
 });
+
+// In Lua: customer.age >= 18 and customer.balance >= 1000
 ```
 
-Now in expressions: `customer.age >= 18`
+**Fields:**
+- `name` — field name exposed to Lua
+- `offset` — byte offset from struct base (`offsetof`)
+- `luaType` — primitive type tag ("int", "double", "string", "bool")
 
 ## Action Registration
 
 Register C++ callbacks for Lua actions.
 
 ```cpp
-void registerAction(const std::string& name, 
-    std::function<void(sol::object target, const std::vector<sol::object>& args)> handler);
+void registerAction(const std::string& name, ActionCallbacks::Handler handler);
 ```
 
 **Example:**
 
 ```cpp
-engine.registerAction("setProcessed", [](sol::object target, const auto& args) {
-    if (target.is<Customer*>() && !args.empty()) {
-        target.as<Customer*>()->processed = args[0].as<bool>();
-    }
+engine.registerAction("sendEmail", [](const std::any& target, const std::vector<std::any>& args) {
+    auto email = std::any_cast<std::string>(args[0]);
+    std::cout << "Emailing: " << email << "\n";
 });
-```
 
-Lua usage: `callbacks.setProcessed(customer, true)`
+// In Lua action: callbacks.sendEmail("alice@example.com")
+```
 
 ## Compilation
 
 ```cpp
-std::optional<int> compileExpression(
-    const std::string& expression, 
-    const std::vector<std::string>& parameterNames = {});
-
-std::optional<int> compileAction(
-    const std::string& action,
-    const std::vector<std::string>& parameterNames = {});
-
-std::optional<int> compileCoroutine(
-    const std::string& expression,
-    const std::vector<std::string>& parameterNames = {});
+std::optional<int> compileExpression(const std::string& expression);
+std::optional<int> compileAction(const std::string& action);
+std::optional<int> compileCoroutine(const std::string& expression);
 ```
 
-Returns a registry reference (int) or nullopt on failure.
+Returns a registry reference (`int`) on success, `std::nullopt` on failure.
 
 ## Execution
 
 ```cpp
 bool evaluateExpression(int ref, 
     const std::vector<RuleParameter>& parameters, 
-    RuleContext& context);
+    RuleContext& context,
+    std::optional<std::chrono::milliseconds> timeout = std::nullopt);
 
 void executeAction(int ref, 
     const std::vector<RuleParameter>& parameters, 
-    RuleContext& context);
+    RuleContext& context,
+    std::optional<std::chrono::milliseconds> timeout = std::nullopt);
 ```
 
 ## Coroutines
@@ -104,7 +101,7 @@ bool resumeCoroutine(int ref,
     const std::vector<RuleParameter>& parameters, 
     RuleContext& context);
 
-std::optional<sol::object> await(int ref, 
+std::optional<std::any> await(int ref, 
     const std::vector<RuleParameter>& parameters, 
     RuleContext& context);
 
@@ -118,18 +115,24 @@ void setGlobal(const std::string& name, const std::any& value);
 void clearGlobals();
 ```
 
-## Clone
+## Engine Management
 
 ```cpp
-std::unique_ptr<LuaEngine> clone() const;
+void resetState();              // Reset Lua state, keep compiled refs
+void collectGarbage();          // Force Lua GC
+size_t getMemoryUsageKB();      // Current Lua memory
+
+void setAutoResetThreshold(size_t kb);  // Auto-reset when memory exceeds
+size_t getAutoResetThreshold() const;
+size_t getCompileCount() const;         // Number of compilations
+size_t getGeneration() const;           // State generation (increments on reset)
 ```
 
-Creates a thread-safe copy with independent Lua state.
-
-## Raw Access
+## Backend Access
 
 ```cpp
-sol::state& state() noexcept;
+// Raw lua_State (works with both sol2 and LuaBridge3 backends)
+lua_State* luaState() const noexcept;
 ```
 
-Access the underlying sol2 state. Use with care.
+`sol::state&` accessor removed — use `luaState()` for interop.

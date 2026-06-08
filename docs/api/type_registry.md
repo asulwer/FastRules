@@ -2,7 +2,7 @@
 layout: default
 title: TypeRegistry
 parent: API Reference
-nav_order: 6
+nav_order: 4
 ---
 
 # TypeRegistry
@@ -11,53 +11,72 @@ nav_order: 6
 #include <fastrules/type_registry.hpp>
 ```
 
-Maps C++ types to Lua usertypes via sol2.
+Backend-neutral storage for C++ type descriptors. Used by `LuaEngine` and consumed by `LuaBackend` implementations.
 
-## LuaEngine.registerType
+## TypeField
 
 ```cpp
-template<typename T>
-void LuaEngine::registerType(
-    const std::string& name, 
-    typename TypeBinder<T>::BinderFunc binder);
+struct TypeField {
+    std::string name;
+    size_t offset;
+    std::string luaType;  // "int", "double", "string", "bool"
+};
 ```
 
-**Parameters:**
-- `name` — Lua type name (e.g., "Customer")
-- `binder` — Lambda that binds properties: `[](sol::usertype<T>& ut) { ... }`
-
-## Example
+## TypeDescriptor
 
 ```cpp
-struct Customer {
+struct TypeDescriptor {
     std::string name;
-    int age;
-    bool processed = false;
+    std::type_index type;
+    std::vector<TypeField> fields;
+    size_t size = 0;
 };
+```
 
-engine.registerType<Customer>("Customer", [](auto& ut) {
-    ut["name"] = &Customer::name;
-    ut["age"] = &Customer::age;
-    ut["processed"] = &Customer::processed;
+## Usage
+
+`TypeRegistry` is owned by `LuaEngine`. You interact with it indirectly via `engine.registerType()`.
+
+```cpp
+struct Point { double x, y; };
+
+engine.registerType<Point>("Point", {
+    {"x", offsetof(Point, x), "double"},
+    {"y", offsetof(Point, y), "double"}
+});
+```
+
+## Direct Access (Advanced)
+
+```cpp
+TypeRegistry registry;
+
+// Register a type
+registry.registerType<Point>("Point", {
+    {"x", offsetof(Point, x), "double"},
+    {"y", offsetof(Point, y), "double"}
 });
 
-// Expressions access properties directly
-auto rule = fastrules::Rule::create("check", "customer.age >= 18", true);
-rule->action = "customer.processed = true";  // Direct mutation!
+// Check if registered
+if (registry.isRegistered(std::type_index(typeid(Point)))) {
+    auto desc = registry.getDescriptor(std::type_index(typeid(Point)));
+    std::cout << "Type: " << desc->name << " has " << desc->fields.size() << " fields\n";
+}
 
-Customer customer{"Alice", 25};
-std::vector<fastrules::RuleParameter> params;
-params.emplace_back("customer", &customer);
-
-auto result = rule->execute(engine, params);
-// customer.processed == true (if age >= 18)
+// Iterate all registered types
+for (const auto& [typeIndex, descriptor] : registry.allTypes()) {
+    std::cout << descriptor.name << "\n";
+}
 ```
 
-## Notes
+## Methods
 
-- Types no longer need comparison operators (==,<=,<) - automagic is disabled
-- Actions can mutate C++ objects directly via Lua expressions
-- No callback registration needed for object mutation
-- Pointers are passed as light userdata: `std::any(&customer)`
-- The type name in `RuleParameter` must match the registered name
-- Types are bound to each LuaEngine clone automatically
+| Method | Description |
+|---|---|
+| `registerType<T>(name, fields)` | Register a C++ struct |
+| `isRegistered(std::type_index)` | Check by C++ type |
+| `isRegistered(std::string)` | Check by name |
+| `getDescriptor(std::type_index)` | Get descriptor by type |
+| `getDescriptor(std::string)` | Get descriptor by name |
+| `allTypes()` | Iterate all registered types |
