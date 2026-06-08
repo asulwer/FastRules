@@ -269,11 +269,56 @@ elseif(FASTRULES_LUA_BACKEND STREQUAL "luabridge3")
     list(APPEND FASTRULES_CORE_SOURCES src/lua_backend_factory.cpp src/lua_backend_luabridge.cpp)
 endif()
 
+# Collect public headers so they appear in Visual Studio projects
+set(FASTRULES_PUBLIC_HEADERS
+    include/fastrules/action_callback.hpp
+    include/fastrules/aot_compiler.hpp
+    include/fastrules/async_registry.hpp
+    include/fastrules/async_workflow.hpp
+    include/fastrules/enum_registry.hpp
+    include/fastrules/execution_tracer.hpp
+    include/fastrules/expression_validator.hpp
+    include/fastrules/fastrules.hpp
+    include/fastrules/logger.hpp
+    include/fastrules/lua_backend.hpp
+    include/fastrules/lua_backend_sol2.hpp
+    include/fastrules/lua_backend_luabridge.hpp
+    include/fastrules/lua_engine.hpp
+    include/fastrules/parameter_validator.hpp
+    include/fastrules/performance_counters.hpp
+    include/fastrules/rate_limiter.hpp
+    include/fastrules/rule.hpp
+    include/fastrules/rule_context.hpp
+    include/fastrules/rule_result.hpp
+    include/fastrules/rule_versioning.hpp
+    include/fastrules/streaming_result.hpp
+    include/fastrules/type_registry.hpp
+    include/fastrules/workflow.hpp
+)
+
 # ============================================================================
 # fastrules library
 # ============================================================================
 add_library(fastrules ${FASTRULES_CORE_SOURCES})
 set_property(TARGET fastrules PROPERTY FOLDER "Core")
+
+# Mark headers as PUBLIC_HEADER for install and source_group
+set_target_properties(fastrules PROPERTIES PUBLIC_HEADER "${FASTRULES_PUBLIC_HEADERS}")
+
+# Create a header-only interface target so VS shows headers in the project
+add_library(fastrules_headers INTERFACE)
+set_property(TARGET fastrules_headers PROPERTY FOLDER "Core")
+target_sources(fastrules_headers INTERFACE
+    FILE_SET HEADERS
+    BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+    FILES ${FASTRULES_PUBLIC_HEADERS}
+)
+
+# Also add headers to the main library so they appear in VS Solution Explorer
+target_sources(fastrules PRIVATE ${FASTRULES_PUBLIC_HEADERS})
+
+# Organize headers in a "Header Files" folder in Visual Studio
+source_group("Header Files" FILES ${FASTRULES_PUBLIC_HEADERS})
 
 # Coverage instrumentation for MSVC
 if(FASTRULES_BUILD_COVERAGE AND MSVC)
