@@ -155,16 +155,6 @@ target_link_libraries(your_target fastrules)
 target_link_libraries(your_target fastrules fastrules-json)
 ```
 
-## Documentation
-
-- [Getting Started](GETTING_STARTED.md)
-- [Architecture Overview](ARCHITECTURE.md)
-- [API Reference](api.md)
-- [Security Guide](security.md)
-- [Performance Tuning](performance.md)
-- [Migration from RoslynRules](MIGRATION.md)
-- [Extension Development](https://github.com/asulwer/fastrules/blob/main/extensions/README.md)
-
 ## License
 
 MIT
