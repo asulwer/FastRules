@@ -4,11 +4,11 @@ title: Architecture
 nav_order: 4
 ---
 
-# fastrules Architecture
+# FastRules Architecture
 
 ## Core Design
 
-fastrules replaces RoslynRules' Roslyn C# compilation with **embedded Lua** for expressions and actions. This dramatically reduces complexity while maintaining sufficient performance for most business rules scenarios.
+FastRules replaces RoslynRules' Roslyn C# compilation with **embedded Lua** for expressions and actions. This dramatically reduces complexity while maintaining sufficient performance for most business rules scenarios.
 
 ## Component Diagram
 
