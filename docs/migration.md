@@ -26,7 +26,7 @@ nav_order: 9
 | `workflow.ExecuteAsync(params)` | `async.executeParallelAsync(engine, params);` |
 | `workflow.ExecuteStreaming(params)` | `workflow.executeStreaming(engine, params);` |
 | `JsonRuleLoader.LoadWorkflow()` | `JsonLoader::loadWorkflow(json);` |
-| `RuleParameter("name", typeof(int), value)` | `RuleParameter("name", "int", any(value));` |
+| `RuleParameter("name", typeof(int), value)` | `RuleParameter("name", value);` |
 
 ## Type Registration
 

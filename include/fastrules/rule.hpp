@@ -31,10 +31,6 @@ struct RuleParameter {
         , type(std::type_index(typeid(T)))
         , value(std::move(v)) {}
 
-    // Explicit constructor for rare cases (e.g. type erasure, void*)
-    RuleParameter(std::string n, std::type_index t, std::any v)
-        : name(std::move(n)), type(t), value(std::move(v)) {}
-
     RuleParameter(RuleParameter&&) noexcept = default;
     RuleParameter& operator=(RuleParameter&&) noexcept = default;
     RuleParameter(const RuleParameter&) = default;
