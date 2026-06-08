@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Security Guide
-nav_order: 9
+nav_order: 8
 ---
 
 # Security Guide

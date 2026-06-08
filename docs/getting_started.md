@@ -9,32 +9,83 @@ has_children: false
 
 ## Installation
 
-### Prerequisites
+### Requirements
 
-- CMake 3.28+
-- C++23 compiler (GCC 13+, Clang 17+, MSVC 2022+)
-- Git
+| Tool | Minimum Version | Notes |
+|---|---|---|
+| CMake | 3.28+ | FetchContent for dependencies |
+| C++ Compiler | C++23 | Visual Studio 2022, GCC 13+, Clang 17+ |
+| Git | 2.30+ | For submodule-like FetchContent |
 
-### Quick Install
+### Quick Start (Default Build)
 
-**Via vcpkg:**
+```bash
+git clone https://github.com/asulwer/fastrules.git
+cd fastrules
+cmake -B build -S .
+cmake --build build --config Release
+ctest --output-on-failure
+```
+
+Core library (`fastrules`) builds with zero manual dependency installation. CMake FetchContent downloads sol2 and nlohmann/json automatically.
+
+### Platform-Specific
+
+**Windows (Visual Studio 2022):**
+```powershell
+cmake -B build -S . -G "Visual Studio 17 2022" -A x64
+cmake --build build --config Release --parallel
+```
+
+**Linux:**
+```bash
+sudo apt install cmake g++ git
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel $(nproc)
+```
+
+**macOS:**
+```bash
+xcode-select --install
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel $(sysctl -n hw.ncpu)
+```
+
+### Package Managers
+
+**vcpkg:**
 ```bash
 vcpkg install fastrules
 ```
 
-**Via Conan:**
+**Conan:**
 ```bash
 conan install fastrules/0.1.0
 ```
 
-**From source:**
-```bash
-git clone https://github.com/asulwer/fastrules.git
-cd fastrules
-cmake -B build -S . -DFASTRULES_BUILD_TESTS=ON
-cmake --build build --config Release
-cmake --install build --prefix /usr/local
+**CMake FetchContent:**
+```cmake
+include(FetchContent)
+FetchContent_Declare(
+    fastrules
+    GIT_REPOSITORY https://github.com/asulwer/fastrules.git
+    GIT_TAG        master
+)
+FetchContent_MakeAvailable(fastrules)
+target_link_libraries(your_app PRIVATE fastrules)
 ```
+
+### Build Options
+
+| Option | Default | Description |
+|---|---|---|
+| `FASTRULES_BUILD_TESTS` | `ON` | Catch2 test suite |
+| `FASTRULES_BUILD_EXAMPLES` | `ON` | Example programs |
+| `FASTRULES_BUILD_EXTENSIONS` | `OFF` | JSON, XML, DB extensions |
+| `FASTRULES_BUILD_DB` | `OFF` | Database extension (requires SOCI) |
+| `FASTRULES_LUA_BACKEND` | `sol2` | `sol2` or `luabridge3` |
+
+---
 
 ## Your First Rule
 
@@ -45,40 +96,56 @@ cmake --install build --prefix /usr/local
 using namespace fastrules;
 
 int main() {
-    // 1. Create a Lua engine
     LuaEngine engine;
 
-    // 2. Define a rule using the Builder
     auto rule = Rule::create("age-check", "age >= 18")
         .withAction("eligible = true")
         .build();
 
-    // 3. Create a workflow and add the rule
     Workflow workflow;
     workflow.id = "signup-validation";
     workflow.rules.push_back(rule);
-
-    // 4. Compile the workflow (one-time setup)
     workflow.compile(engine);
 
-    // 5. Execute with parameters
     std::vector<RuleParameter> params;
     params.emplace_back("age", 25);
 
     auto results = workflow.execute(engine, params);
 
-    // 6. Check result
-    std::cout << "Rule " << results[0].ruleId 
-              << (results[0].isSuccess() ? " passed" : " failed") 
-              << "\n";
+    std::cout << "Rule " << results[0].ruleId
+              << (results[0].isSuccess() ? " passed" : " failed") << "\n";
 
     return 0;
 }
 ```
 
+---
+
+## Multiple Parameters
+
+Pass any number of parameters. All become Lua globals before execution:
+
+```cpp
+std::vector<RuleParameter> params;
+params.emplace_back("age", 25);                          // int
+params.emplace_back("name", std::string("Alice"));      // string
+params.emplace_back("verified", true);                  // bool
+params.emplace_back("score", 720.5);                    // double
+params.emplace_back("customer", Customer{"Alice", 30}); // registered type
+
+// In Lua expressions:
+//   age >= 18 and verified == true
+//   customer.age >= 18 and score > 650
+//   string.len(name) > 0
+
+auto results = workflow.execute(engine, params);
+```
+
+---
+
 ## Workflows
 
-Multiple rules execute in sequence:
+Multiple rules execute in sequence, respecting priority and dependencies:
 
 ```cpp
 Workflow workflow;
@@ -97,26 +164,41 @@ params.emplace_back("age", 25);
 auto results = workflow.execute(engine, params);
 ```
 
+---
+
 ## Child Rules (Bubble-Up)
 
-Child rules execute first. Parent only runs if all children pass:
+Child rules execute first. Parent only evaluates if all children pass:
 
 ```cpp
-auto parent = Rule::create("credit-check", "score > 650").build();
+auto parent = Rule::create("credit-check", "customer.balance >= minBalance")
+    .withAction("approved = true")
+    .build();
 
-auto child1 = Rule::create("identity-verified", "verified == true").build();
-auto child2 = Rule::create("income-sufficient", "income >= 50000").build();
+auto identity = Rule::create("identity-verified", "verified == true").build();
+auto income = Rule::create("income-sufficient", "income >= minIncome").build();
 
-parent->childRules = {child1, child2};
+parent->childRules = {identity, income};
 
 Workflow workflow;
 workflow.rules.push_back(parent);
 workflow.compile(engine);
+
+std::vector<RuleParameter> params;
+params.emplace_back("customer", Customer{"Alice", 30, 5000.0});
+params.emplace_back("verified", true);
+params.emplace_back("income", 75000.0);
+params.emplace_back("minBalance", 1000.0);
+params.emplace_back("minIncome", 40000.0);
+
+auto results = workflow.execute(engine, params);
 ```
+
+---
 
 ## Type Registration
 
-Register C++ structs for use in Lua:
+Register C++ structs for field access in Lua:
 
 ```cpp
 struct Point {
@@ -134,11 +216,11 @@ rule.id = "distance-check";
 rule.expression = "math.sqrt(point.x^2 + point.y^2) < 100";
 ```
 
+---
+
 ## Next Steps
 
 - [Architecture Overview](architecture.md)
 - [Core Concepts](concepts.md)
 - [Examples](examples.md)
-- [JSON Extension](extensions/json.md)
-- [XML Extension](extensions/xml.md)
-- [Database Extension](extensions/db.md)
+- [Extensions](extensions/)
