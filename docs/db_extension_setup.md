@@ -1,7 +1,8 @@
 ---
 layout: default
 title: Database Extension Setup
-nav_order: 11
+parent: Extensions
+nav_order: 4
 ---
 
 # Database Extension Setup Guide

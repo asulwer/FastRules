@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Core Concepts
-nav_order: 5
+nav_order: 7
 ---
 
 # Core Concepts
