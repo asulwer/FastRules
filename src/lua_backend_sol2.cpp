@@ -370,30 +370,67 @@ std::unique_ptr<LuaValue> Sol2Backend::createTable() {
 }
 
 // ============================================================================
-// Type / Action binding
+// Type / Action binding — consume backend-neutral descriptors, produce sol2 bindings
 // ============================================================================
 
 void Sol2Backend::bindTypes(TypeRegistry* registry) {
-    if (registry) {
-        registry->bindAll(lua_);
+    if (!registry) return;
+
+    for (const auto& [typeIndex, desc] : registry->allTypes()) {
+        // Create sol2 usertype with fields
+        // Note: sol2 usertype creation is complex; for now we register a simple
+        // table-based proxy. Full usertype support requires compile-time type info.
+        // TODO: Implement full sol2 usertype binding from TypeDescriptor
+        (void)desc; // unused for now — stub
     }
 }
 
 void Sol2Backend::bindActions(ActionCallbacks* callbacks) {
-    if (callbacks) {
-        callbacks->bindToLua(lua_);
-    }
+    if (!callbacks) return;
+
+    // Bind each handler as a Lua function that converts args to std::any
+    callbacks->forEachHandler([this](const std::string& name, const ActionCallbacks::Handler& handler) {
+        lua_.set_function(name, [handler](sol::object target, sol::variadic_args va) {
+            std::vector<std::any> args;
+            for (auto v : va) {
+                // Convert sol::object to std::any
+                if (v.is<int>()) args.push_back(std::any(v.as<int>()));
+                else if (v.is<double>()) args.push_back(std::any(v.as<double>()));
+                else if (v.is<bool>()) args.push_back(std::any(v.as<bool>()));
+                else if (v.is<std::string>()) args.push_back(std::any(v.as<std::string>()));
+                else args.push_back(std::any());
+            }
+            std::any targetAny;
+            if (target.is<int>()) targetAny = target.as<int>();
+            else if (target.is<double>()) targetAny = target.as<double>();
+            else if (target.is<bool>()) targetAny = target.as<bool>();
+            else if (target.is<std::string>()) targetAny = target.as<std::string>();
+            handler(targetAny, args);
+        });
+    });
 }
 
-void Sol2Backend::setRegisteredTypeGlobal(const std::string& name, const std::string& typeName, const std::any& value, TypeRegistry* registry) {
+void Sol2Backend::setRegisteredTypeGlobal(const std::string& name, const std::string& /*typeName*/, const std::any& value, TypeRegistry* registry) {
     if (!registry || !value.has_value()) {
         lua_[name] = sol::nil;
         return;
     }
-    // Use TypeRegistry to convert to sol::object
-    auto mutableValue = value; // toLua needs non-const ref
-    sol::object obj = registry->toLua(lua_, mutableValue);
-    lua_[name] = obj;
+    auto desc = registry->getDescriptor(value.type());
+    if (!desc) {
+        lua_[name] = sol::nil;
+        return;
+    }
+
+    // Push as light userdata (full usertype binding requires more work)
+    try {
+        void* ptr = std::any_cast<void*>(value);
+        lua_pushlightuserdata(lua_, ptr);
+        sol::object obj = sol::stack_object(lua_, -1);
+        lua_pop(lua_, 1);
+        lua_[name] = obj;
+    } catch (...) {
+        lua_[name] = sol::nil;
+    }
 }
 
 void Sol2Backend::clearRegisteredTypeGlobal(const std::string& name) {

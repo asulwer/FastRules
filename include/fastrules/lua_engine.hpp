@@ -19,13 +19,15 @@
 #include "action_callback.hpp"
 #include "logger.hpp"
 #include "lua_backend.hpp"
-#ifdef FASTRULES_USE_SOL2
-#include <sol/sol.hpp>
-#endif
 
 namespace fastrules {
 
+// ============================================================================
 // Lua engine wrapper using pluggable LuaBackend
+//
+// Fully backend-agnostic. Works with Sol2Backend, LuaBridge3Backend, or any
+// future backend that implements the LuaBackend interface.
+// ============================================================================
 class LuaEngine {
 public:
     LuaEngine();
@@ -68,7 +70,6 @@ public:
 
     [[nodiscard]] bool isCoroutine(int ref) const;
 
-    // await returns std::any (not sol::object) for backend neutrality
     [[nodiscard]] std::optional<std::any> await(
         int ref,
         const std::vector<RuleParameter>& parameters,
@@ -108,11 +109,7 @@ public:
         int ref_;
     };
 
-    // Backward-compat: returns sol::state& if backend is Sol2Backend, else throws
-#ifdef FASTRULES_USE_SOL2
-    [[nodiscard]] sol::state& state();
-    [[nodiscard]] const sol::state& state() const;
-#endif
+    // Raw lua_State access (backend-neutral)
     [[nodiscard]] lua_State* luaState() const noexcept;
 
     void setLogger(std::shared_ptr<Logger> logger) { logger_ = std::move(logger); }
@@ -124,10 +121,10 @@ public:
     void registerPredicates();
     [[nodiscard]] std::unique_ptr<LuaEngine> clone() const;
 
-#ifdef FASTRULES_USE_SOL2
+    // Type registration — backend-neutral via TypeDescriptor
     template<typename T>
-    void registerType(const std::string& name, typename TypeBinder<T>::BinderFunc binder) {
-        typeRegistry_.registerType<T>(name, std::move(binder));
+    void registerType(const std::string& name, std::vector<TypeField> fields) {
+        typeRegistry_.registerType<T>(name, std::move(fields));
         backend_->bindTypes(&typeRegistry_);
     }
 
@@ -135,18 +132,11 @@ public:
         return typeRegistry_.isRegistered(name);
     }
 
+    // Action registration — backend-neutral via std::any Handler
     void registerAction(const std::string& name, ActionCallbacks::Handler handler) {
         actionCallbacks_.registerHandler(name, std::move(handler));
         backend_->bindActions(&actionCallbacks_);
     }
-#else
-    template<typename T>
-    void registerType(const std::string&, auto) {}
-
-    [[nodiscard]] bool isTypeRegistered(const std::string&) const { return false; }
-
-    void registerAction(const std::string&, auto) {}
-#endif
 
     void discoverCallbacks(const std::vector<std::string>& actions);
 

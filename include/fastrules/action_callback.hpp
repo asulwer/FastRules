@@ -1,26 +1,23 @@
 #pragma once
 
-#ifdef FASTRULES_USE_SOL2
-#include <sol/sol.hpp>
-#endif
 #include <string>
 #include <vector>
+#include <any>
 #include <functional>
 #include <unordered_map>
-#include <any>
 
 namespace fastrules {
 
 // ============================================================================
-// Action Callback System
-// Allows C++ code to register handlers for Lua actions
+// Action Callback System — backend-neutral
+//
+// Handlers receive std::any instead of sol::object. Backends convert
+// between their native Lua values and std::any as needed.
 // ============================================================================
-
-#ifdef FASTRULES_USE_SOL2
 
 class ActionCallbacks {
 public:
-    using Handler = std::function<void(sol::object target, const std::vector<sol::object>& args)>;
+    using Handler = std::function<void(const std::any& target, const std::vector<std::any>& args)>;
 
     ActionCallbacks() = default;
 
@@ -32,15 +29,20 @@ public:
         return handlers_.contains(name);
     }
 
-    void execute(const std::string& name, sol::object target, const std::vector<sol::object>& args) {
+    void execute(const std::string& name, const std::any& target, const std::vector<std::any>& args) {
         auto it = handlers_.find(name);
         if (it != handlers_.end()) {
             it->second(target, args);
         }
     }
 
-    void bindToLua(sol::state& lua);
-    void registerStub(const std::string& name);
+    void registerStub(const std::string& name) {
+        if (!hasHandler(name)) {
+            registerHandler(name, [](const std::any&, const std::vector<std::any>&) {
+                // Stub: does nothing, prevents Lua error on unregistered callback
+            });
+        }
+    }
 
     [[nodiscard]] std::vector<std::string> getHandlerNames() const {
         std::vector<std::string> names;
@@ -54,32 +56,15 @@ public:
         handlers_.clear();
     }
 
-private:
-    std::unordered_map<std::string, Handler> handlers_;
-};
-
-#else  // !FASTRULES_USE_SOL2
-
-// Stub ActionCallbacks for non-sol2 backends
-class ActionCallbacks {
-public:
-    using Handler = std::function<void(void)>;  // dummy signature
-
-    ActionCallbacks() = default;
-
-    void registerHandler(const std::string&, auto) {}
-    [[nodiscard]] bool hasHandler(const std::string&) const { return false; }
-    void execute(const std::string&, auto, auto) {}
-    void bindToLua(auto&) {}
-    void registerStub(const std::string&) {}
-
-    [[nodiscard]] std::vector<std::string> getHandlerNames() const { return {}; }
-    void clear() {}
+    // Allow backends to iterate handlers for binding
+    void forEachHandler(const std::function<void(const std::string&, const Handler&)>& fn) const {
+        for (const auto& [name, handler] : handlers_) {
+            fn(name, handler);
+        }
+    }
 
 private:
     std::unordered_map<std::string, Handler> handlers_;
 };
-
-#endif // FASTRULES_USE_SOL2
 
 } // namespace fastrules

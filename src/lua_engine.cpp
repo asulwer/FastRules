@@ -2,12 +2,6 @@
 #include "fastrules/rule.hpp"
 #include "fastrules/rule_context.hpp"
 #include "fastrules/rule_result.hpp"
-#include "fastrules/type_registry.hpp"
-#include "fastrules/action_callback.hpp"
-
-#ifdef FASTRULES_USE_SOL2
-#include <sol/sol.hpp>
-#endif
 
 #include <chrono>
 #include <stdexcept>
@@ -326,28 +320,6 @@ void LuaEngine::registerPredicates() {
         return false;
     });
 }
-
-// ============================================================================
-// sol::state accessor for backward compatibility
-// ============================================================================
-
-#ifdef FASTRULES_USE_SOL2
-sol::state& LuaEngine::state() {
-    void* native = backend_->nativeState();
-    if (!native) {
-        throw std::runtime_error("Backend does not expose sol::state");
-    }
-    return *static_cast<sol::state*>(native);
-}
-
-const sol::state& LuaEngine::state() const {
-    void* native = backend_->nativeState();
-    if (!native) {
-        throw std::runtime_error("Backend does not expose sol::state");
-    }
-    return *static_cast<const sol::state*>(native);
-}
-#endif
 
 lua_State* LuaEngine::luaState() const noexcept {
     return backend_->state();
