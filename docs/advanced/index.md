@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Advanced Topics
-nav_order: 14
+nav_order: 12
 has_children: true
 permalink: /advanced/
 ---

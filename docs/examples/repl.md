@@ -2,7 +2,7 @@
 layout: default
 title: REPL Example
 parent: Examples
-nav_order: 8
+nav_order: 1
 ---
 
 # REPL Example

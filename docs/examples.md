@@ -1,8 +1,8 @@
 ---
 layout: default
 title: Examples
-nav_order: 7
-has_children: false
+nav_order: 3
+has_children: true
 ---
 
 # Examples
