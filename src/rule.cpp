@@ -547,4 +547,14 @@ Rule Rule::contains(const std::string& parameterName, const std::string& substri
     return rule;
 }
 
+// ============================================================================
+// Builder factory
+// ============================================================================
+
+Rule::Builder Rule::create(const std::string& id, const std::string& expression, bool active) {
+    return Builder(id)
+        .withExpression(expression)
+        .active(active);
+}
+
 } // namespace fastrules

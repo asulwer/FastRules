@@ -142,5 +142,5 @@ rule.parameterNames = {"point"};
 
 - [JSON Persistence](JSON_EXTENSION.md)
 - [XML Persistence](XML_EXTENSION.md)
-- [Database Setup](DB_EXTENSION_SETUP.md)
+- [Database Setup](db_extension_setup.md)
 - [Architecture Overview](architecture.md)
