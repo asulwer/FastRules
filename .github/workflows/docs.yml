@@ -2,7 +2,7 @@ name: Documentation
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
     paths:
       - 'docs/**'
       - 'README.md'
@@ -24,17 +24,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
         with:
-          enablement: true
+          ruby-version: '3.2'
+          bundler-cache: true
+          working-directory: './docs'
 
-      - name: Build with Jekyll
-        uses: actions/jekyll-build-pages@v1
-        with:
-          source: ./docs
-          destination: ./_site
-          future: false
+      - name: Build Jekyll site
+        run: |
+          cd docs
+          bundle exec jekyll build --baseurl "/fastrules" --destination ../_site
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

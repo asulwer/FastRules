@@ -9,8 +9,8 @@ description: >-
 baseurl: "/fastrules"
 url: "https://asulwer.github.io"
 
-# just-the-docs theme - installed via remote_theme (GitHub Pages compatible)
-remote_theme: just-the-docs/just-the-docs@v0.10.0
+# just-the-docs theme
+theme: just-the-docs
 
 # Color scheme
 # color_scheme: fastrules
