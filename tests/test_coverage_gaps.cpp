@@ -15,7 +15,6 @@ TEST_CASE("Rule builder basic construction", "[rule][builder]") {
         .withDescription("Verify age requirement")
         .withExpression("age >= 18")
         .withAction("setStatus('adult')")
-        .withParameterNames({"age"})
         .withTimeout(std::chrono::milliseconds(1000))
         .withCacheDuration(std::chrono::milliseconds(5000))
         .withPriority(10)
@@ -26,7 +25,6 @@ TEST_CASE("Rule builder basic construction", "[rule][builder]") {
     REQUIRE(rule->description == "Verify age requirement");
     REQUIRE(rule->expression == "age >= 18");
     REQUIRE(rule->action == "setStatus('adult')");
-    REQUIRE(rule->parameterNames.size() == 1);
     REQUIRE(rule->timeout == std::chrono::milliseconds(1000));
     REQUIRE(rule->cacheDuration == std::chrono::milliseconds(5000));
     REQUIRE(rule->priority == 10);
@@ -40,7 +38,6 @@ TEST_CASE("Rule builder defaults", "[rule][builder]") {
     REQUIRE(rule->description.empty());
     REQUIRE(rule->expression.empty());
     REQUIRE(rule->action.empty());
-    REQUIRE(rule->parameterNames.empty());
     REQUIRE(rule->timeout == std::nullopt);
     REQUIRE(rule->cacheDuration == std::nullopt);
     REQUIRE(rule->priority == 0);

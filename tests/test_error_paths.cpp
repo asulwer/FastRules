@@ -140,7 +140,6 @@ TEST_CASE("Rule execution handles missing parameter", "[rule][errors]") {
     Rule rule;
     rule.id = "missing-param";
     rule.expression = "x > 0";
-    rule.parameterNames = {"x"};
     rule.compile(engine);
 
     RuleContext ctx;
@@ -427,7 +426,6 @@ TEST_CASE("Wrong parameter type causes execution failure", "[rule][errors][types
     Rule rule;
     rule.id = "type-check";
     rule.expression = "x > 0";
-    rule.parameterNames = {"x"};
     rule.compile(engine);
 
     RuleContext ctx;
@@ -482,7 +480,6 @@ TEST_CASE("LuaEngine handles boolean string conversion", "[lua][edge]") {
     Rule rule;
     rule.id = "bool-string";
     rule.expression = "x == true";
-    rule.parameterNames = {"x"};
     rule.compile(engine);
 
     RuleContext ctx;

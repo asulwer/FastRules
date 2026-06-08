@@ -6,7 +6,7 @@ using namespace fastrules;
 TEST_CASE("LuaEngine state reset clears compiled refs", "[lua_engine][cleanup]") {
     LuaEngine engine;
 
-    auto ref = engine.compileExpression("true", {});
+    auto ref = engine.compileExpression("true");
     REQUIRE(ref.has_value());
 
     engine.resetState();
@@ -45,12 +45,13 @@ TEST_CASE("LuaEngine compile count tracking", "[lua_engine][cleanup]") {
 
     REQUIRE(engine.getCompileCount() == 0);
 
-    auto ref1 = engine.compileExpression("true", {});
+    auto ref1 = engine.compileExpression("true");
     REQUIRE(engine.getCompileCount() == 1);
 
-    auto ref2 = engine.compileAction("x = 1", {});
+    auto ref2 = engine.compileAction("x = 1");
     REQUIRE(engine.getCompileCount() == 2);
 
     engine.resetState();
     REQUIRE(engine.getCompileCount() == 0);
 }
+

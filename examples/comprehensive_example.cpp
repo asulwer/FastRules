@@ -31,16 +31,14 @@ int main() {
                     "action": "incomeOk = true",
                     "isActive": true,
                     "priority": 10,
-                    "parameterNames": ["app"]
-                },
+                                    },
                 {
                     "id": "debt-ratio-check",
                     "expression": "app.debtRatio <= 0.43",
                     "action": "debtOk = true",
                     "isActive": true,
                     "priority": 5,
-                    "parameterNames": ["app"],
-                    "dependsOnRuleId": "income-check"
+                                        "dependsOnRuleId": "income-check"
                 },
                 {
                     "id": "credit-score-check",
@@ -48,8 +46,7 @@ int main() {
                     "action": "creditOk = true",
                     "isActive": true,
                     "priority": 3,
-                    "parameterNames": ["app"]
-                }
+                                    }
             ]
         })";
 
@@ -182,3 +179,5 @@ int main() {
         return 1;
     }
 }
+
+

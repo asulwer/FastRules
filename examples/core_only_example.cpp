@@ -44,14 +44,12 @@ int main() {
         adultCheck->id = "adult-check";
         adultCheck->expression = "customer.age >= 18";
         adultCheck->action = "isAdult = true";
-        adultCheck->parameterNames = {"customer"};
         adultCheck->timeout = std::chrono::milliseconds(100);
 
         auto creditCheck = std::make_shared<Rule>();
         creditCheck->id = "credit-check";
         creditCheck->expression = "customer.creditScore >= 650";
         creditCheck->action = "isCreditWorthy = true";
-        creditCheck->parameterNames = {"customer"};
         creditCheck->dependsOnRuleId = "adult-check";  // Runs after adult-check
         creditCheck->timeout = std::chrono::milliseconds(200);
 
@@ -59,7 +57,6 @@ int main() {
         nameCheck->id = "name-check";
         nameCheck->expression = "isNotEmpty(customer.name)";
         nameCheck->action = "hasValidName = true";
-        nameCheck->parameterNames = {"customer"};
 
         // ================================================================
         // 4. Build workflow
@@ -199,3 +196,5 @@ int main() {
         return 1;
     }
 }
+
+

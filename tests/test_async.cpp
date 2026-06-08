@@ -42,7 +42,7 @@ TEST_CASE("Lua coroutine compilation", "[async][coroutine]") {
     LuaEngine engine;
     
     SECTION("Compile simple coroutine") {
-        auto ref = engine.compileCoroutine("true", {});
+        auto ref = engine.compileCoroutine("true");
         REQUIRE(ref.has_value());
         REQUIRE(engine.isCoroutine(ref.value()));
         
@@ -54,7 +54,7 @@ TEST_CASE("Lua coroutine compilation", "[async][coroutine]") {
     }
     
     SECTION("Compile coroutine with parameters") {
-        auto ref = engine.compileCoroutine("x > 5", {"x"});
+        auto ref = engine.compileCoroutine("x > 5");
         REQUIRE(ref.has_value());
         
         RuleContext context;
@@ -68,8 +68,8 @@ TEST_CASE("Lua coroutine compilation", "[async][coroutine]") {
     }
     
     SECTION("Coroutine vs regular function") {
-        auto coroRef = engine.compileCoroutine("true", {});
-        auto funcRef = engine.compileExpression("true", {});
+        auto coroRef = engine.compileCoroutine("true");
+        auto funcRef = engine.compileExpression("true");
         
         REQUIRE(engine.isCoroutine(coroRef.value()));
         REQUIRE_FALSE(engine.isCoroutine(funcRef.value()));
@@ -173,7 +173,7 @@ TEST_CASE("Thread-safe LuaEngine cloning", "[async][thread-safety]") {
     LuaEngine engine;
     
     // Compile something in the original engine
-    auto ref = engine.compileExpression("true", {});
+    auto ref = engine.compileExpression("true");
     REQUIRE(ref.has_value());
     
     // Clone the engine
@@ -184,7 +184,7 @@ TEST_CASE("Thread-safe LuaEngine cloning", "[async][thread-safety]") {
     REQUIRE(cloned->luaState() != engine.luaState());
     
     SECTION("Clone can compile independently") {
-        auto clonedRef = cloned->compileExpression("false", {});
+        auto clonedRef = cloned->compileExpression("false");
         REQUIRE(clonedRef.has_value());
         
         RuleContext ctx;
@@ -257,3 +257,4 @@ TEST_CASE("Performance: parallel vs sequential", "[async][performance]") {
         INFO("Sequential: " << seqDuration << "ms, Parallel: " << parDuration << "ms");
     }
 }
+

@@ -269,7 +269,6 @@ AotBundle::CompiledRule AotCompiler::compileRule(const Rule& rule, LuaEngine& en
     compiled.ruleId = rule.id;
     compiled.expression = rule.expression;
     compiled.action = rule.action;
-    compiled.parameterNames = rule.parameterNames;
     
     if (!rule.expression.empty()) {
         auto bc = dumpBytecode(engine, rule.expression);

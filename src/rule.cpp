@@ -86,7 +86,7 @@ void Rule::compile(LuaEngine& engine) {
             throw RuleCompilationException(oss.str());
         }
         try {
-            compiledExpressionRef = engine.compileExpression(expression, parameterNames);
+            compiledExpressionRef = engine.compileExpression(expression);
         } catch (const std::exception& e) {
             throw RuleCompilationException(
                 "Rule '" + id + "': Failed to compile expression\n  Expression: " + expression + "\n  Error: " + e.what()
@@ -107,7 +107,7 @@ void Rule::compile(LuaEngine& engine) {
             throw RuleCompilationException(oss.str());
         }
         try {
-            compiledActionRef = engine.compileAction(action, parameterNames);
+            compiledActionRef = engine.compileAction(action);
         } catch (const std::exception& e) {
             throw RuleCompilationException(
                 "Rule '" + id + "': Failed to compile action\n  Action: " + action + "\n  Error: " + e.what()

@@ -273,7 +273,6 @@ ctest --test-dir build --build-config Release
       "id": "adult-check",
       "expression": "customer.age >= 18",
       "action": "eligible = true",
-      "parameterNames": ["customer"],
       "timeout": 100,
       "priority": 0
     }

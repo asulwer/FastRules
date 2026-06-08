@@ -207,7 +207,6 @@ TEST_CASE("LuaEngine handles numeric edge cases", "[security][fuzz]") {
     
     auto rule = Rule::Builder("fuzz-nan")
         .withExpression("x == x")
-        .withParameterNames({"x"})
         .build();
     rule->compile(engine);
     
@@ -234,7 +233,6 @@ TEST_CASE("LuaEngine handles string edge cases", "[security][fuzz]") {
     
     auto rule = Rule::Builder("fuzz-string")
         .withExpression("string.len(name) > 0")
-        .withParameterNames({"name"})
         .build();
     rule->compile(engine);
     

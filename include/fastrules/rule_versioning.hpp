@@ -23,7 +23,6 @@ struct RuleVersion {
     std::string ruleId;          // Original rule ID
     std::string expression;
     std::string action;
-    std::vector<std::string> parameterNames;
     int priority = 0;
     bool isActive = true;
     

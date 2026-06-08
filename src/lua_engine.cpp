@@ -370,18 +370,15 @@ void LuaEngine::bindActionsToState() {
 // Parameters are extracted from expressions and passed as globals via backend
 // ============================================================================
 
-std::string LuaEngine::wrapExpression(const std::string& expression, const std::vector<std::string>& parameterNames) {
-    (void)parameterNames; // Backend uses globals, not function args
+std::string LuaEngine::wrapExpression(const std::string& expression) {
     return expression;
 }
 
-std::string LuaEngine::wrapAction(const std::string& action, const std::vector<std::string>& parameterNames) {
-    (void)parameterNames;
+std::string LuaEngine::wrapAction(const std::string& action) {
     return action;
 }
 
-std::string LuaEngine::wrapCoroutine(const std::string& expression, const std::vector<std::string>& parameterNames) {
-    (void)parameterNames;
+std::string LuaEngine::wrapCoroutine(const std::string& expression) {
     return expression;
 }
 
@@ -389,16 +386,14 @@ std::string LuaEngine::makeBackendId(int ref) const {
     return "ref_" + std::to_string(ref);
 }
 
-std::optional<int> LuaEngine::compileExpression(const std::string& expression, const std::vector<std::string>& parameterNames) {
+std::optional<int> LuaEngine::compileExpression(const std::string& expression) {
     if (maxExpressionLength_ > 0 && expression.size() > maxExpressionLength_) {
         throw RuleCompilationException(
             "Expression exceeds maximum length of " + std::to_string(maxExpressionLength_) + 
             " characters (was " + std::to_string(expression.size()) + ")");
     }
 
-    std::vector<std::string> params = parameterNames.empty()
-        ? extractParameterNames(expression)
-        : parameterNames;
+    std::vector<std::string> params = extractParameterNames(expression);
 
     int ref;
     std::string backendId;
@@ -429,7 +424,7 @@ std::optional<int> LuaEngine::compileExpression(const std::string& expression, c
     return ref;
 }
 
-std::optional<int> LuaEngine::compileAction(const std::string& action, const std::vector<std::string>& parameterNames) {
+std::optional<int> LuaEngine::compileAction(const std::string& action) {
     if (action.empty()) {
         return std::nullopt;
     }
@@ -440,9 +435,7 @@ std::optional<int> LuaEngine::compileAction(const std::string& action, const std
             " characters (was " + std::to_string(action.size()) + ")");
     }
 
-    std::vector<std::string> params = parameterNames.empty()
-        ? extractParameterNames(action)
-        : parameterNames;
+    std::vector<std::string> params = extractParameterNames(action);
 
     int ref;
     std::string backendId;
@@ -473,14 +466,12 @@ std::optional<int> LuaEngine::compileAction(const std::string& action, const std
     return ref;
 }
 
-std::optional<int> LuaEngine::compileCoroutine(const std::string& expression, const std::vector<std::string>& parameterNames) {
+std::optional<int> LuaEngine::compileCoroutine(const std::string& expression) {
     if (expression.empty()) {
         return std::nullopt;
     }
 
-    std::vector<std::string> params = parameterNames.empty()
-        ? extractParameterNames(expression)
-        : parameterNames;
+    std::vector<std::string> params = extractParameterNames(expression);
 
     int ref;
     std::string backendId;

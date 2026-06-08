@@ -38,12 +38,10 @@ public:
     LuaEngine& operator=(LuaEngine&&) noexcept;
 
     [[nodiscard]] std::optional<int> compileExpression(
-        const std::string& expression,
-        const std::vector<std::string>& parameterNames = {});
+        const std::string& expression);
 
     [[nodiscard]] std::optional<int> compileAction(
-        const std::string& action,
-        const std::vector<std::string>& parameterNames = {});
+        const std::string& action);
 
     [[nodiscard]] bool evaluateExpression(
         int ref,
@@ -61,8 +59,7 @@ public:
     void clearGlobals();
 
     [[nodiscard]] std::optional<int> compileCoroutine(
-        const std::string& expression,
-        const std::vector<std::string>& parameterNames = {});
+        const std::string& expression);
 
     [[nodiscard]] bool resumeCoroutine(
         int ref,
@@ -198,9 +195,9 @@ private:
     void setupEnvironment();
     void setupContextTable(RuleContext& context);
     [[nodiscard]] std::string makeBackendId(int ref) const;
-    [[nodiscard]] std::string wrapExpression(const std::string& expression, const std::vector<std::string>& parameterNames);
-    [[nodiscard]] std::string wrapAction(const std::string& action, const std::vector<std::string>& parameterNames);
-    [[nodiscard]] std::string wrapCoroutine(const std::string& expression, const std::vector<std::string>& parameterNames);
+    [[nodiscard]] std::string wrapExpression(const std::string& expression);
+    [[nodiscard]] std::string wrapAction(const std::string& action);
+    [[nodiscard]] std::string wrapCoroutine(const std::string& expression);
 
     [[nodiscard]] std::vector<std::pair<std::string, std::any>> buildParamPairs(
         int ref,

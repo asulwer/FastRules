@@ -12,10 +12,11 @@ TEST_CASE("Async registry basic", "[async]") {
     // registry.bindToLua(engine.luaState());  // API uses sol::state&
     
     // Just verify engine works
-    auto ref = engine.compileExpression("1 + 1", {});
+    auto ref = engine.compileExpression("1 + 1");
     REQUIRE(ref.has_value());
     
     RuleContext ctx;
     auto result = engine.evaluateExpression(ref.value(), {}, ctx);
     REQUIRE(result == true);  // 1 + 1 = 2 (truthy)
 }
+

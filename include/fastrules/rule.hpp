@@ -57,8 +57,6 @@ public:
     std::string expression;
     std::string action;
 
-    std::vector<std::string> parameterNames;
-
     std::optional<Id> dependsOnRuleId;
     std::vector<std::shared_ptr<Rule>> childRules;
     std::weak_ptr<Rule> parentRule;
@@ -132,10 +130,6 @@ public:
         }
         Builder& withAction(const std::string& act) {
             rule_->action = act;
-            return *this;
-        }
-        Builder& withParameterNames(const std::vector<std::string>& names) {
-            rule_->parameterNames = names;
             return *this;
         }
         Builder& withTimeout(std::chrono::milliseconds ms) {

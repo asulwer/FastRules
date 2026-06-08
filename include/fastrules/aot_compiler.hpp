@@ -23,7 +23,6 @@ public:
         std::string ruleId;
         std::string expression;
         std::string action;
-        std::vector<std::string> parameterNames;
         
         // Lua bytecode (binary blob)
         std::string expressionBytecode;

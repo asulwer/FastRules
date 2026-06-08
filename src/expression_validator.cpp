@@ -15,7 +15,7 @@ bool ExpressionValidator::isValidLua(const std::string& expression, LuaEngine& e
     
     // Then try actual compilation via sol2
     try {
-        auto ref = engine.compileExpression(expression, {});
+        auto ref = engine.compileExpression(expression);
         if (ref.has_value()) {
             engine.releaseRef(ref.value());
             return true;

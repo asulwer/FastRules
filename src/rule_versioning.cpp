@@ -64,7 +64,6 @@ Rule RuleVersionHistory::rollbackTo(const std::string& versionId) const {
     rule.id = version.ruleId;
     rule.expression = version.expression;
     rule.action = version.action;
-    rule.parameterNames = version.parameterNames;
     rule.priority = version.priority;
     rule.isActive = version.isActive;
     
@@ -97,9 +96,6 @@ std::vector<std::string> RuleVersionHistory::diff(
     }
     if (from.action != to.action) {
         differences.push_back("Action changed");
-    }
-    if (from.parameterNames != to.parameterNames) {
-        differences.push_back("Parameter names changed");
     }
     if (from.priority != to.priority) {
         differences.push_back("Priority changed: " + std::to_string(from.priority) + 
@@ -141,7 +137,6 @@ void RuleVersionManager::snapshotRule(const Rule& rule, const std::string& autho
     version.ruleId = rule.id;
     version.expression = rule.expression;
     version.action = rule.action;
-    version.parameterNames = rule.parameterNames;
     version.priority = rule.priority;
     version.isActive = rule.isActive;
     version.createdAt = std::chrono::system_clock::now();

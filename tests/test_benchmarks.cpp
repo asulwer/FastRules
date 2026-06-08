@@ -21,7 +21,6 @@ TEST_CASE("Benchmark rule compilation", "[benchmark][compilation]") {
     rule.id = "benchmark-rule";
     rule.expression = "x > 0 and y < 100";
     rule.action = "result = x + y";
-    rule.parameterNames = {"x", "y"};
 
     BENCHMARK("compile simple rule") {
         rule.compile(engine);
@@ -37,7 +36,6 @@ TEST_CASE("Benchmark workflow compilation", "[benchmark][compilation]") {
         auto rule = std::make_shared<Rule>();
         rule->id = "rule-" + std::to_string(i);
         rule->expression = "x > " + std::to_string(i);
-        rule->parameterNames = {"x"};
         workflow.rules.push_back(rule);
     }
 
@@ -57,7 +55,6 @@ TEST_CASE("Benchmark simple rule execution", "[benchmark][execution]") {
     rule.id = "simple";
     rule.expression = "x > 0";
     rule.action = "result = x * 2";
-    rule.parameterNames = {"x"};
     rule.compile(engine);
 
     RuleContext ctx;
@@ -83,7 +80,6 @@ TEST_CASE("Benchmark rule with type registration", "[benchmark][execution]") {
     rule.id = "point-distance";
     rule.expression = "math.sqrt(point.x * point.x + point.y * point.y) < 100";
     rule.action = "distance = math.sqrt(point.x * point.x + point.y * point.y)";
-    rule.parameterNames = {"point"};
     rule.compile(engine);
 
     RuleContext ctx;
@@ -109,7 +105,6 @@ TEST_CASE("Benchmark sequential workflow execution", "[benchmark][execution]") {
         auto rule = std::make_shared<Rule>();
         rule->id = "rule-" + std::to_string(i);
         rule->expression = "x > " + std::to_string(i);
-        rule->parameterNames = {"x"};
         workflow.rules.push_back(rule);
     }
 
@@ -133,7 +128,6 @@ TEST_CASE("Benchmark parallel workflow execution", "[benchmark][execution]") {
         auto rule = std::make_shared<Rule>();
         rule->id = "rule-" + std::to_string(i);
         rule->expression = "x > " + std::to_string(i);
-        rule->parameterNames = {"x"};
         workflow.rules.push_back(rule);
     }
 
@@ -159,8 +153,7 @@ TEST_CASE("Benchmark rule memory footprint", "[benchmark][memory]") {
             Rule rule;
             rule.id = "mem-test";
             rule.expression = "x > 0";
-            rule.parameterNames = {"x"};
-            return rule.id.length();
+                    return rule.id.length();
         });
     };
 }
@@ -176,7 +169,6 @@ TEST_CASE("Benchmark workflow memory scaling", "[benchmark][memory]") {
         auto rule = std::make_shared<Rule>();
         rule->id = "rule-" + std::to_string(i);
         rule->expression = "x > " + std::to_string(i);
-        rule->parameterNames = {"x"};
         workflow.rules.push_back(rule);
     }
     
@@ -201,7 +193,6 @@ TEST_CASE("Benchmark cached vs uncached execution", "[benchmark][cache]") {
     rule.id = "cached";
     rule.expression = "x > 0";
     rule.action = "result = x";
-    rule.parameterNames = {"x"};
     rule.cacheDuration = std::chrono::milliseconds(1000);
     rule.compile(engine);
 
@@ -221,10 +212,10 @@ TEST_CASE("Benchmark cached vs uncached execution", "[benchmark][cache]") {
     uncachedRule.id = "uncached";
     uncachedRule.expression = "x > 0";
     uncachedRule.action = "result = x";
-    uncachedRule.parameterNames = {"x"};
     uncachedRule.compile(engine);
 
     BENCHMARK("execute uncached rule") {
         return uncachedRule.execute(engine, ctx, params);
     };
 }
+
