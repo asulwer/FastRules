@@ -80,12 +80,6 @@ std::string XmlSerialization::serialize(const RuleVersionHistory& history) {
         appendTextChild(ver, "ruleId", v.ruleId);
         appendTextChild(ver, "expression", v.expression);
         appendTextChild(ver, "action", v.action);
-
-        auto params = ver.append_child("parameterNames");
-        for (const auto& pn : v.parameterNames) {
-            appendTextChild(params, "param", pn);
-        }
-
         appendTextChild(ver, "priority", v.priority);
         appendTextChild(ver, "isActive", v.isActive);
         appendTextChild(ver, "createdAt", timePointToString(v.createdAt));
@@ -123,11 +117,6 @@ std::optional<RuleVersionHistory> XmlSerialization::deserializeRuleVersionHistor
             v.author = ver.child("author").text().as_string("");
             v.changeSummary = ver.child("changeSummary").text().as_string("");
             v.parentVersionId = ver.child("parentVersionId").text().as_string("");
-
-            auto params = ver.child("parameterNames");
-            for (auto p : params.children("param")) {
-                v.parameterNames.push_back(p.text().as_string(""));
-            }
 
             auto createdAtStr = ver.child("createdAt").text().as_string("");
             if (createdAtStr != nullptr && createdAtStr[0] != '\0') {

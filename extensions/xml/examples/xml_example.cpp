@@ -24,13 +24,11 @@ int main() {
         inventoryCheck->id = "inventory-check";
         inventoryCheck->expression = "quantity <= stock";
         inventoryCheck->action = "inStock = true";
-        inventoryCheck->parameterNames = {"quantity", "stock"};
 
         auto shippingRule = std::make_shared<Rule>();
         shippingRule->id = "shipping-check";
         shippingRule->expression = "addressValid == true";
         shippingRule->action = "canShip = true";
-        shippingRule->parameterNames = {"addressValid"};
         shippingRule->dependsOnRuleId = "inventory-check";
 
         workflow.rules.push_back(inventoryCheck);
@@ -53,7 +51,6 @@ int main() {
         if (loadedRule) {
             std::cout << "Loaded rule: " << loadedRule->id << "\n";
             std::cout << "  Expression: " << loadedRule->expression << "\n";
-            std::cout << "  Parameters: " << loadedRule->parameterNames.size() << "\n";
         }
 
         auto allRules = repo.findAll();

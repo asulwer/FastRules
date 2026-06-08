@@ -46,13 +46,6 @@ static std::shared_ptr<Rule> parseRule(const pugi::xml_node& ruleNode) {
         rule->dependsOnRuleId = dependsNode.text().as_string("");
     }
 
-    auto paramsNode = ruleNode.child("parameterNames");
-    if (paramsNode) {
-        for (auto param : paramsNode.children("param")) {
-            rule->parameterNames.push_back(param.text().as_string(""));
-        }
-    }
-
     auto childrenNode = ruleNode.child("childRules");
     if (childrenNode) {
         for (auto child : childrenNode.children("rule")) {
@@ -91,13 +84,6 @@ static void serializeRule(pugi::xml_node& parent, const Rule& rule) {
     if (rule.dependsOnRuleId.has_value()) {
         auto dep = node.append_child("dependsOnRuleId");
         dep.text().set(rule.dependsOnRuleId.value().c_str());
-    }
-    if (!rule.parameterNames.empty()) {
-        auto params = node.append_child("parameterNames");
-        for (const auto& p : rule.parameterNames) {
-            auto param = params.append_child("param");
-            param.text().set(p.c_str());
-        }
     }
     if (!rule.childRules.empty()) {
         auto children = node.append_child("childRules");

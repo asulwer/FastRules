@@ -70,13 +70,6 @@ void DbRuleRepository::insertRule(const Rule& rule) {
         "VALUES (:id, :expr, :act, :desc, :active, :prio, :timeout, :cache, :dep)",
         soci::use(rule.id), soci::use(rule.expression), soci::use(rule.action), soci::use(rule.description),
         soci::use(isActive), soci::use(rule.priority), soci::use(timeoutMs), soci::use(cacheMs), soci::use(dependsOn);
-    
-    for (size_t i = 0; i < rule.parameterNames.size(); ++i) {
-        *session_ <<
-            "INSERT INTO rule_parameters (rule_id, param_name, param_order) "
-            "VALUES (:rid, :pname, :porder)",
-            soci::use(rule.id), soci::use(rule.parameterNames[i]), soci::use(static_cast<int>(i));
-    }
 }
 
 void DbRuleRepository::updateRule(const Rule& rule) {
@@ -94,15 +87,6 @@ void DbRuleRepository::updateRule(const Rule& rule) {
         soci::use(rule.expression), soci::use(rule.action), soci::use(rule.description),
         soci::use(isActive), soci::use(rule.priority),
         soci::use(timeoutMs), soci::use(cacheMs), soci::use(dependsOn), soci::use(rule.id);
-    
-    *session_ << "DELETE FROM rule_parameters WHERE rule_id = :id", soci::use(rule.id);
-    
-    for (size_t i = 0; i < rule.parameterNames.size(); ++i) {
-        *session_ <<
-            "INSERT INTO rule_parameters (rule_id, param_name, param_order) "
-            "VALUES (:rid, :pname, :porder)",
-            soci::use(rule.id), soci::use(rule.parameterNames[i]), soci::use(static_cast<int>(i));
-    }
 }
 
 std::optional<Rule> DbRuleRepository::findById(const std::string& id) {
@@ -167,13 +151,6 @@ Rule DbRuleRepository::rowToRule(soci::row& row) {
     
     std::string dependsOn = row.get<std::string>(8);
     if (!dependsOn.empty()) rule.dependsOnRuleId = dependsOn;
-    
-    soci::rowset<soci::row> paramRs = ((*session_).prepare <<
-        "SELECT param_name FROM rule_parameters WHERE rule_id = :id ORDER BY param_order",
-        soci::use(rule.id));
-    for (auto& pr : paramRs) {
-        rule.parameterNames.push_back(pr.get<std::string>(0));
-    }
     
     return rule;
 }

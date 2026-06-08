@@ -20,7 +20,6 @@ namespace ext {
  *     "isActive": true,
  *     "priority": 0,
  *     "timeout": 100,
- *     "parameterNames": ["age"],
  *     "dependencyChain": [],
  *     "childRuleIds": [],
  *     "version": "1.0.0"

@@ -125,12 +125,6 @@ void XmlRuleRepository::ruleToXml(const Rule& rule, pugi::xml_node& parent) cons
     auto act = node.append_child("action");
     act.append_child(pugi::node_pcdata).set_value(rule.action.c_str());
     
-    auto params = node.append_child("parameters");
-    for (const auto& p : rule.parameterNames) {
-        auto param = params.append_child("param");
-        param.append_child(pugi::node_pcdata).set_value(p.c_str());
-    }
-    
     if (rule.dependsOnRuleId) {
         auto deps = node.append_child("dependencies");
         auto dep = deps.append_child("dep");
@@ -148,11 +142,6 @@ Rule XmlRuleRepository::xmlToRule(const pugi::xml_node& node) const {
     rule.priority = node.attribute("priority").as_int(0);
     if (node.attribute("timeout")) {
         rule.timeout = std::chrono::milliseconds(node.attribute("timeout").as_int(100));
-    }
-    
-    auto params = node.child("parameters");
-    for (auto p = params.child("param"); p; p = p.next_sibling("param")) {
-        rule.parameterNames.push_back(p.child_value());
     }
     
     auto deps = node.child("dependencies");

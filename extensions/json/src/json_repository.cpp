@@ -110,7 +110,6 @@ nlohmann::json JsonRuleRepository::ruleToJson(const Rule& rule) const {
     if (rule.timeout) {
         j["timeout"] = rule.timeout->count();
     }
-    j["parameterNames"] = rule.parameterNames;
     if (rule.dependsOnRuleId) {
         j["dependsOn"] = *rule.dependsOnRuleId;
     }
@@ -139,13 +138,6 @@ Rule JsonRuleRepository::jsonToRule(const nlohmann::json& j) const {
             }
             if (j.contains("timeout") && j["timeout"].is_number_integer()) {
                 rule.timeout = std::chrono::milliseconds(j["timeout"].get<int>());
-            }
-            if (j.contains("parameterNames") && j["parameterNames"].is_array()) {
-                for (const auto& item : j["parameterNames"]) {
-                    if (item.is_string()) {
-                        rule.parameterNames.push_back(item.get<std::string>());
-                    }
-                }
             }
             if (j.contains("dependsOn") && j["dependsOn"].is_string()) {
                 rule.dependsOnRuleId = j["dependsOn"].get<std::string>();

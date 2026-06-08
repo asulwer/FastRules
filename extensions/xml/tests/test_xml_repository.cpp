@@ -18,7 +18,6 @@ TEST_CASE("XmlRuleRepository basic CRUD", "[xml]") {
         rule.action = "eligible = true";
         rule.isActive = true;
         rule.priority = 10;
-        rule.parameterNames = {"age", "name"};
         
         repo.save(rule);
         repo.flush();
@@ -27,8 +26,6 @@ TEST_CASE("XmlRuleRepository basic CRUD", "[xml]") {
         REQUIRE(found.has_value());
         REQUIRE(found->id == "test-1");
         REQUIRE(found->expression == "age >= 18");
-        REQUIRE(found->parameterNames.size() == 2);
-        REQUIRE(found->parameterNames[0] == "age");
     }
     
     SECTION("Update existing rule") {

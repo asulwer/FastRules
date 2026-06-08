@@ -48,14 +48,6 @@ std::shared_ptr<Rule> JsonLoader::parseRule(const json& j) {
         rule->action = j["action"];
     }
 
-    if (j.contains("parameterNames") && j["parameterNames"].is_array()) {
-        for (const auto& name : j["parameterNames"]) {
-            if (name.is_string()) {
-                rule->parameterNames.push_back(name);
-            }
-        }
-    }
-
     if (j.contains("dependsOnRuleId") && !j["dependsOnRuleId"].is_null()) {
         if (j["dependsOnRuleId"].is_string()) {
             rule->dependsOnRuleId = j["dependsOnRuleId"];
@@ -118,8 +110,6 @@ json JsonLoader::serializeRule(const Rule& rule) {
     } else {
         j["dependsOnRuleId"] = nullptr;
     }
-
-    j["parameterNames"] = rule.parameterNames;
 
     if (rule.timeout.has_value()) {
         j["timeout"] = rule.timeout->count();

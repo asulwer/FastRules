@@ -27,7 +27,6 @@ int main() {
             .withExpression("amount < 10000")
             .withAction("flagged = false")
             .withDescription("Fraud detection rule")
-            .withParameterNames({"amount"})
             .withPriority(100)
             .active(true)
             .build();
@@ -36,7 +35,6 @@ int main() {
             .withExpression("verified == true")
             .withAction("compliant = true")
             .withDescription("KYC verification rule")
-            .withParameterNames({"verified"})
             .withPriority(50)
             .active(true)
             .dependsOn("fraud-check")

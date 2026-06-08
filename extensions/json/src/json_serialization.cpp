@@ -25,7 +25,6 @@ std::string JsonSerialization::serialize(const RuleVersionHistory& history) {
         ver["ruleId"] = v.ruleId;
         ver["expression"] = v.expression;
         ver["action"] = v.action;
-        ver["parameterNames"] = v.parameterNames;
         ver["priority"] = v.priority;
         ver["isActive"] = v.isActive;
         
@@ -58,12 +57,6 @@ std::optional<RuleVersionHistory> JsonSerialization::deserializeRuleVersionHisto
             v.ruleId = ver.value("ruleId", "");
             v.expression = ver.value("expression", "");
             v.action = ver.value("action", "");
-            
-            if (ver.contains("parameterNames") && ver["parameterNames"].is_array()) {
-                for (const auto& pn : ver["parameterNames"]) {
-                    v.parameterNames.push_back(pn.get<std::string>());
-                }
-            }
             
             v.priority = ver.value("priority", 0);
             v.isActive = ver.value("isActive", true);

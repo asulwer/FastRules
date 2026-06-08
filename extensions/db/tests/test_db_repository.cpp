@@ -80,15 +80,12 @@ TEST_CASE("DbRuleRepository with SQLite", "[db]") {
         auto rule = Rule::Builder("complex-1")
             .withExpression("age >= 18")
             .withAction("eligible = true")
-            .withParameterNames({"age", "name"})
             .dependsOn("base-rule")
             .build();
         
         repo.save(*rule);
         
         auto found = repo.findById("complex-1");
-        REQUIRE(found->parameterNames.size() == 2);
-        REQUIRE(found->parameterNames[0] == "age");
         REQUIRE(found->dependsOnRuleId.has_value());
         REQUIRE(found->dependsOnRuleId.value() == "base-rule");
     }

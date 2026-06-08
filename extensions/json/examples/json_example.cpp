@@ -31,8 +31,7 @@ int main() {
                     "action": "isAdult = true",
                     "isActive": true,
                     "priority": 10,
-                    "timeout": 100,
-                    "parameterNames": ["age"]
+                    "timeout": 100
                 },
                 {
                     "id": "credit-check",
@@ -42,7 +41,6 @@ int main() {
                     "isActive": true,
                     "priority": 5,
                     "timeout": 200,
-                    "parameterNames": ["creditScore"],
                     "dependencyChain": ["adult-check"]
                 }
             ]

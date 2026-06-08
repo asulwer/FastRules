@@ -9,19 +9,16 @@
       "action": "customer.processed = true",
       "isActive": true,
       "priority": 2,
-      "parameterNames": ["customer"],
       "childRules": [
         {
           "id": "age-check",
           "expression": "customer.age >= 18",
-          "isActive": true,
-          "parameterNames": ["customer"]
+          "isActive": true
         },
         {
           "id": "name-check",
           "expression": "isNotEmpty(customer.name)",
-          "isActive": true,
-          "parameterNames": ["customer"]
+          "isActive": true
         }
       ]
     },
@@ -31,13 +28,11 @@
       "action": "customer.processed = false",
       "isActive": true,
       "priority": 0,
-      "parameterNames": ["customer"],
       "childRules": [
         {
           "id": "minor-age-check",
           "expression": "customer.age < 18",
-          "isActive": true,
-          "parameterNames": ["customer"]
+          "isActive": true
         }
       ]
     },
@@ -47,13 +42,11 @@
       "action": "customer.processed = true",
       "isActive": false,
       "priority": 1,
-      "parameterNames": ["customer"],
       "childRules": [
         {
           "id": "vip-status-check",
           "expression": "customer.age >= 50",
-          "isActive": true,
-          "parameterNames": ["customer"]
+          "isActive": true
         }
       ]
     }
