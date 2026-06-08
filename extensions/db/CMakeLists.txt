@@ -25,6 +25,15 @@ endif()
 
 add_library(fastrules-db STATIC
     src/db_repository.cpp
+    include/fastrules/db_bool.hpp
+    include/fastrules/db_repository.hpp
+)
+set_property(TARGET fastrules-db PROPERTY FOLDER "Extensions/DB")
+
+# Organize headers in VS
+source_group("Header Files" FILES
+    include/fastrules/db_bool.hpp
+    include/fastrules/db_repository.hpp
 )
 
 target_include_directories(fastrules-db PUBLIC

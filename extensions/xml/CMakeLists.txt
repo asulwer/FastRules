@@ -48,8 +48,18 @@ add_library(fastrules-xml STATIC
     src/xml_repository.cpp
     src/xml_loader.cpp
     src/xml_serialization.cpp
+    include/fastrules/xml_loader.hpp
+    include/fastrules/xml_repository.hpp
+    include/fastrules/xml_serialization.hpp
 )
 set_property(TARGET fastrules-xml PROPERTY FOLDER "Extensions/XML")
+
+# Organize headers in VS
+source_group("Header Files" FILES
+    include/fastrules/xml_loader.hpp
+    include/fastrules/xml_repository.hpp
+    include/fastrules/xml_serialization.hpp
+)
 
 target_include_directories(fastrules-xml PUBLIC
     include

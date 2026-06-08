@@ -34,8 +34,18 @@ add_library(fastrules-json STATIC
     src/json_loader.cpp
     src/json_repository.cpp
     src/json_serialization.cpp
+    include/fastrules/json_loader.hpp
+    include/fastrules/json_repository.hpp
+    include/fastrules/json_serialization.hpp
 )
 set_property(TARGET fastrules-json PROPERTY FOLDER "Extensions/JSON")
+
+# Organize headers in VS
+source_group("Header Files" FILES
+    include/fastrules/json_loader.hpp
+    include/fastrules/json_repository.hpp
+    include/fastrules/json_serialization.hpp
+)
 
 target_compile_definitions(fastrules-json PUBLIC FASTRULES_HAS_JSON_LOADER)
 
