@@ -136,7 +136,9 @@ rule.expression = "math.sqrt(point.x^2 + point.y^2) < 100";
 
 ## Next Steps
 
-- [JSON Persistence](json_extension.md)
-- [XML Persistence](xml_extension.md)
-- [Database Setup](db_extension_setup.md)
 - [Architecture Overview](architecture.md)
+- [Core Concepts](concepts.md)
+- [Examples](examples.md)
+- [JSON Extension](extensions/json.md)
+- [XML Extension](extensions/xml.md)
+- [Database Extension](extensions/db.md)
