@@ -5,22 +5,12 @@
 #include <memory>
 #include <optional>
 #include <functional>
-
-#include <optional>
+#include <filesystem>
 
 #include "rule.hpp"
 #include "rule_result.hpp"
 #include "streaming_result.hpp"
 #include "execution_tracer.hpp"
-
-#include <optional>
-#include <filesystem>
-
-#ifdef FASTRULES_HAS_JSON_LOADER
-namespace fastrules {
-    class JsonLoader;
-}
-#endif
 
 namespace fastrules {
 
@@ -71,15 +61,6 @@ public:
 
     // Get all action strings from all rules (for callback discovery)
     [[nodiscard]] std::vector<std::string> getAllActions() const;
-
-    // Convenience: load workflow from JSON string
-    // Requires the JSON extension (fastrules-json). If unavailable, returns std::nullopt.
-    [[nodiscard]] static std::optional<Workflow> fromJson(const std::string& jsonString) {
-        // Requires the JSON extension (fastrules-json).
-        // Call JsonLoader::loadWorkflow directly from code that links fastrules-json.
-        (void)jsonString;
-        return std::nullopt;
-    }
 
     // Builder pattern for fluent construction
     class Builder {
