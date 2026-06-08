@@ -11,8 +11,6 @@
 
 namespace fastrules {
 
-//using json = nlohmann::json;
-
 namespace {
     // Thread-safe ID generation
     std::atomic<int> ruleIdCounter{0};
