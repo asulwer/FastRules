@@ -32,7 +32,7 @@ public:
     [[nodiscard]] static std::string saveRulePretty(const Rule& rule);
 
 private:
-    [[nodiscard]] static std::shared_ptr<Rule> parseRule(const class nlohmann::json& j);
+    [[nodiscard]] static std::shared_ptr<Rule> parseRule(const nlohmann::json& j);
     [[nodiscard]] static nlohmann::json serializeRule(const Rule& rule);
 };
 

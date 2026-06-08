@@ -11,14 +11,14 @@
 
 namespace fastrules {
 
-using json = nlohmann::json;
+//using json = nlohmann::json;
 
 namespace {
     // Thread-safe ID generation
     std::atomic<int> ruleIdCounter{0};
 }
 
-std::shared_ptr<Rule> JsonLoader::parseRule(const json& j) {
+std::shared_ptr<Rule> JsonLoader::parseRule(const nlohmann::json& j) {
     auto rule = std::make_shared<Rule>();
 
     if (j.contains("id") && j["id"].is_string()) {
@@ -96,8 +96,8 @@ std::shared_ptr<Rule> JsonLoader::parseRule(const json& j) {
     return rule;
 }
 
-json JsonLoader::serializeRule(const Rule& rule) {
-    json j;
+nlohmann::json JsonLoader::serializeRule(const Rule& rule) {
+    nlohmann::json j;
     j["id"] = rule.id;
     j["description"] = rule.description;
     j["isActive"] = rule.isActive;
@@ -123,7 +123,7 @@ json JsonLoader::serializeRule(const Rule& rule) {
         j["cacheDuration"] = nullptr;
     }
 
-    j["childRules"] = json::array();
+    j["childRules"] = nlohmann::json::array();
     for (const auto& child : rule.childRules) {
         j["childRules"].push_back(serializeRule(*child));
     }
@@ -134,7 +134,7 @@ json JsonLoader::serializeRule(const Rule& rule) {
 Workflow JsonLoader::loadWorkflow(const std::string& jsonString) {
     Workflow workflow;
 
-    json j = json::parse(jsonString);
+    nlohmann::json j = nlohmann::json::parse(jsonString);
 
     if (j.contains("id") && j["id"].is_string()) {
         workflow.id = j["id"];
@@ -172,16 +172,16 @@ Workflow JsonLoader::loadWorkflowFromFile(const std::string& filePath) {
 }
 
 std::shared_ptr<Rule> JsonLoader::loadRule(const std::string& jsonString) {
-    json j = json::parse(jsonString);
+    nlohmann::json j = nlohmann::json::parse(jsonString);
     return parseRule(j);
 }
 
 std::string JsonLoader::saveWorkflow(const Workflow& workflow) {
-    json j;
+    nlohmann::json j;
     j["id"] = workflow.id;
     j["description"] = workflow.description;
     j["isActive"] = workflow.isActive;
-    j["rules"] = json::array();
+    j["rules"] = nlohmann::json::array();
 
     for (const auto& rule : workflow.rules) {
         j["rules"].push_back(serializeRule(*rule));
@@ -191,11 +191,11 @@ std::string JsonLoader::saveWorkflow(const Workflow& workflow) {
 }
 
 std::string JsonLoader::saveWorkflowPretty(const Workflow& workflow) {
-    json j;
+    nlohmann::json j;
     j["id"] = workflow.id;
     j["description"] = workflow.description;
     j["isActive"] = workflow.isActive;
-    j["rules"] = json::array();
+    j["rules"] = nlohmann::json::array();
 
     for (const auto& rule : workflow.rules) {
         j["rules"].push_back(serializeRule(*rule));
