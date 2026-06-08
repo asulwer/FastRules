@@ -8,15 +8,6 @@ permalink: /api/
 
 # API Reference
 
-## Table of Contents
-
-- <https://asulwer.github.io/FastRules/api/rule.html> — Single rule definition and execution
-- <https://asulwer.github.io/FastRules/api/workflow.html> — Multi-rule orchestration
-- <https://asulwer.github.io/FastRules/api/lua_engine.html> — Lua compilation and execution
-- <https://asulwer.github.io/FastRules/api/async_workflow.html> — Parallel execution
-- <https://asulwer.github.io/FastRules/api/type_registry.html> — C++ type binding
-- <https://asulwer.github.io/FastRules/api/action_callbacks.html> — C++ callbacks from Lua
-- <https://asulwer.github.io/FastRules/api/json_loader.html> — JSON serialization
 
 ## Quick Reference
 

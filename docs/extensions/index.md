@@ -48,8 +48,3 @@ target_link_libraries(your_target
 )
 ```
 
-## Child Pages
-
-- [JSON Extension](json.md)
-- [XML Extension](xml.md)
-- [Database Extension](db.md)
