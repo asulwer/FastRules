@@ -29,6 +29,10 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg.json")
     message(STATUS "vcpkg manifest mode enabled")
 endif()
 
+# Ensure our lua.hpp wrapper is found before any fetched Lua sources.
+# PUC-Rio Lua doesn't ship lua.hpp, but LuaBridge3 requires it.
+include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 # Collect requested vcpkg features based on build options
 set(VCPKG_MANIFEST_FEATURES "")
 if(FASTRULES_BUILD_TESTS)
