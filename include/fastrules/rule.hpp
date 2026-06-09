@@ -111,16 +111,10 @@ public:
     [[nodiscard]] bool hasCircularDependency(const std::vector<std::reference_wrapper<const Rule>>& allRules) const;
     [[nodiscard]] std::vector<Id> getDependencyChain(const std::vector<std::reference_wrapper<const Rule>>& allRules) const;
 
-private:
-    // Execution (only Workflow and friends can execute rules)
+    // Execution (typically through Workflow, but also available for direct use)
     RuleResult execute(class LuaEngine& engine, RuleContext& context, const std::vector<RuleParameter>& parameters);
 
 public:
-    // Internal accessor for async/coroutine execution (not for general use)
-    [[nodiscard]] RuleResult executeInternal(class LuaEngine& engine, RuleContext& context, const std::vector<RuleParameter>& parameters) {
-        return execute(engine, context, parameters);
-    }
-
     // Static factories
     static Rule isNotNull(const std::string& parameterName, const std::string& description = "");
     static Rule greaterThan(const std::string& parameterName, double value, const std::string& description = "");

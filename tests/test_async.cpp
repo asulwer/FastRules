@@ -100,8 +100,8 @@ TEST_CASE("Parallel workflow execution", "[async][parallel]") {
     // Rule 3: Depends on rule-1
     auto rule3 = std::make_shared<Rule>();
     rule3->id = 1;
-    rule3->expression = "context.getResult('rule-1').success";
-    rule3->dependsOnRuleId = "rule-1";
+    rule3->expression = "context.getResult(1).success";
+    rule3->dependsOnRuleId = 1;
     workflow.rules.push_back(rule3);
     
     SECTION("Sequential execution") {
@@ -119,9 +119,9 @@ TEST_CASE("Parallel workflow execution", "[async][parallel]") {
         // Find results by rule ID
         bool foundRule1 = false, foundRule2 = false, foundRule3 = false;
         for (const auto& result : results) {
-            if (result.ruleId == "rule-1") foundRule1 = result.isSuccess();
-            if (result.ruleId == "rule-2") foundRule2 = result.isSuccess();
-            if (result.ruleId == "rule-3") foundRule3 = result.isSuccess();
+            if (result.ruleId == 1) foundRule1 = result.isSuccess();
+            if (result.ruleId == 4) foundRule2 = result.isSuccess();
+            if (result.ruleId == 5) foundRule3 = result.isSuccess();
         }
         REQUIRE(foundRule1);
         REQUIRE(foundRule2);
@@ -143,14 +143,14 @@ TEST_CASE("Parallel execution with dependencies", "[async][parallel]") {
     
     auto ruleB = std::make_shared<Rule>();
     ruleB->id = 1;
-    ruleB->expression = "context.getResult('A').success";
-    ruleB->dependsOnRuleId = "A";
+    ruleB->expression = "context.getResult(2).success";
+    ruleB->dependsOnRuleId = 2;
     workflow.rules.push_back(ruleB);
     
     auto ruleC = std::make_shared<Rule>();
     ruleC->id = 1;
-    ruleC->expression = "context.getResult('B').success";
-    ruleC->dependsOnRuleId = "B";
+    ruleC->expression = "context.getResult(3).success";
+    ruleC->dependsOnRuleId = 3;
     workflow.rules.push_back(ruleC);
     
     auto ruleD = std::make_shared<Rule>();
@@ -234,7 +234,7 @@ TEST_CASE("Performance: parallel vs sequential", "[async][performance]") {
     // Create multiple independent rules that sleep
     for (int i = 0; i < 5; ++i) {
         auto rule = std::make_shared<Rule>();
-        rule->id = 1 + std::to_string(i);
+        rule->id = 100 + i;
         rule->expression = "true";
         workflow.rules.push_back(rule);
     }

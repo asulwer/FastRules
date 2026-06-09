@@ -12,7 +12,7 @@ using namespace fastrules;
 // ============================================================================
 
 TEST_CASE("Rule builder basic construction", "[rule][builder]") {
-    auto rule = Rule::Builder("check-age")
+    auto rule = Rule::Builder(1)
         .withDescription("Verify age requirement")
         .withExpression("age >= 18")
         .withAction("setStatus('adult')")
@@ -33,7 +33,7 @@ TEST_CASE("Rule builder basic construction", "[rule][builder]") {
 }
 
 TEST_CASE("Rule builder defaults", "[rule][builder]") {
-    auto rule = Rule::Builder("simple-check").build();
+    auto rule = Rule::Builder(2).build();
     
     REQUIRE(rule->id == "simple-check");
     REQUIRE(rule->description.empty());
@@ -228,11 +228,11 @@ TEST_CASE("ExecutionTracer recording", "[tracing]") {
     ExecutionTracer tracer;
     
     tracer.start();  // Must start before recording
-    tracer.record("rule1", "evaluate", true, "passed");
+    tracer.record(1, "evaluate", true, "passed");
     
     auto trace = tracer.getTrace();
     REQUIRE(trace.steps.size() == 1);
-    REQUIRE(trace.steps[0].ruleId == "rule1");
+    REQUIRE(trace.steps[0].ruleId == 1);
     REQUIRE(trace.steps[0].stage == "evaluate");
     REQUIRE(trace.steps[0].success == true);
 }
@@ -241,7 +241,7 @@ TEST_CASE("ExecutionTracer failure recording", "[tracing]") {
     ExecutionTracer tracer;
     
     tracer.start();  // Must start before recording
-    tracer.record("rule1", "evaluate", false, "failed");
+    tracer.record(1, "evaluate", false, "failed");
     
     auto trace = tracer.getTrace();
     REQUIRE(trace.steps.size() == 1);
@@ -252,7 +252,7 @@ TEST_CASE("ExecutionTracer clear", "[tracing]") {
     ExecutionTracer tracer;
     
     tracer.start();  // Must start before recording
-    tracer.record("rule1", "evaluate");
+    tracer.record(1, "evaluate");
     
     auto trace = tracer.getTrace();
     // steps is const access; just verify it was recorded
@@ -270,17 +270,17 @@ TEST_CASE("ExecutionTracer clear", "[tracing]") {
 
 TEST_CASE("RuleResult construction", "[result]") {
     RuleResult result;
-    result.ruleId = "test-rule";
+    result.ruleId = 3;
     result.success = true;
     
-    REQUIRE(result.ruleId == "test-rule");
+    REQUIRE(result.ruleId == 3);
     REQUIRE(result.success == true);
     REQUIRE_FALSE(result.exception.has_value());
 }
 
 TEST_CASE("RuleResult with exception", "[result]") {
     RuleResult result;
-    result.ruleId = "test-rule";
+    result.ruleId = 3;
     result.success = false;
     result.exception = RuleException("Something went wrong");
     
@@ -326,26 +326,26 @@ TEST_CASE("RuleContext result management", "[context]") {
     RuleContext ctx;
     
     RuleResult result;
-    result.ruleId = "rule1";
+    result.ruleId = 1;
     result.success = true;
-    ctx.setResult("rule1", result);
+    ctx.setResult(1, result);
     
-    auto retrieved = ctx.getResult("rule1");
+    auto retrieved = ctx.getResult(1);
     REQUIRE(retrieved.has_value());
     REQUIRE(retrieved->success == true);
     
-    auto missing = ctx.getResult("rule2");
+    auto missing = ctx.getResult(2);
     REQUIRE_FALSE(missing.has_value());
 }
 
 TEST_CASE("RuleContext last error", "[context]") {
     RuleContext ctx;
     
-    ctx.setLastError("rule1", "Error message");
+    ctx.setLastError(1, "Error message");
     
     auto error = ctx.getLastError();
     REQUIRE(error.has_value());
-    REQUIRE(error.value().first == "rule1");
+    REQUIRE(error.value().first == 1);
     REQUIRE(error.value().second == "Error message");
 }
 
@@ -413,8 +413,8 @@ TEST_CASE("Workflow execution order", "[workflow][execution]") {
     
     REQUIRE(results.size() >= 2);
     if (results.size() >= 2) {
-        REQUIRE(results[0].ruleId == "first");
-        REQUIRE(results[1].ruleId == "second");
+        REQUIRE(results[0].ruleId == 1);
+        REQUIRE(results[1].ruleId == 2);
     }
 }
 
@@ -479,7 +479,7 @@ TEST_CASE("Single rule workflow", "[workflow][edge]") {
     auto results = workflow.execute(engine, params);
     
     REQUIRE(results.size() == 1);
-    REQUIRE(results[0].ruleId == "only");
+    REQUIRE(results[0].ruleId == 1);
 }
 
 TEST_CASE("Rule with empty expression always succeeds", "[rule][edge]") {

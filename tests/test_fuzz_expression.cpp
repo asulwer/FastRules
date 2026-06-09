@@ -205,7 +205,7 @@ TEST_CASE("LuaEngine handles numeric edge cases", "[security][fuzz]") {
     RuleContext ctx;
     std::vector<RuleParameter> params;
     
-    auto rule = Rule::Builder("fuzz-nan")
+    auto rule = Rule::Builder(1)
         .withExpression("x == x")
         .build();
     rule->compile(engine);
@@ -231,7 +231,7 @@ TEST_CASE("LuaEngine handles string edge cases", "[security][fuzz]") {
     RuleContext ctx;
     std::vector<RuleParameter> params;
     
-    auto rule = Rule::Builder("fuzz-string")
+    auto rule = Rule::Builder(2)
         .withExpression("string.len(name) > 0")
         .build();
     rule->compile(engine);
@@ -264,7 +264,7 @@ TEST_CASE("LuaEngine handles stack overflow via deep nesting", "[security][fuzz]
         expr = "(" + expr + ")";
     }
     
-    auto rule = Rule::Builder("fuzz-deep")
+    auto rule = Rule::Builder(3)
         .withExpression(expr)
         .build();
     
@@ -285,7 +285,7 @@ TEST_CASE("Workflow handles large rule sets", "[security][fuzz]") {
     workflow.id = 1;
     
     for (int i = 0; i < 1000; ++i) {
-        auto rule = Rule::Builder("rule-" + std::to_string(i))
+        auto rule = Rule::Builder(4 + std::to_string(i))
             .withExpression("true")
             .withPriority(i)
             .build();
@@ -302,12 +302,12 @@ TEST_CASE("Workflow handles large rule sets", "[security][fuzz]") {
 }
 
 TEST_CASE("Workflow handles circular dependencies gracefully", "[security][fuzz]") {
-    auto rule1 = Rule::Builder("A")
+    auto rule1 = Rule::Builder(5)
         .withExpression("true")
         .dependsOn("B")
         .build();
     
-    auto rule2 = Rule::Builder("B")
+    auto rule2 = Rule::Builder(6)
         .withExpression("true")
         .dependsOn("A")
         .build();

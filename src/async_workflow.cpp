@@ -150,7 +150,7 @@ std::vector<AsyncRuleResult> AsyncWorkflow::executeParallelAsync(
                         }
                         
                         // Use engine directly (thread-safe via shared_lock in registry)
-                        asyncResult.result = rule->executeInternal(engine, context, parameters);
+                        asyncResult.result = rule->execute(engine, context, parameters);
                     } catch (...) {
                         asyncResult.exception = std::current_exception();
                     }
@@ -184,7 +184,7 @@ AsyncRulePromise coExecuteRule(std::shared_ptr<Rule> rule,
     // It wraps rule execution in a coroutine-friendly way
     AsyncRuleResult asyncResult;
     try {
-        asyncResult.result = rule->executeInternal(engine, context, parameters);
+        asyncResult.result = rule->execute(engine, context, parameters);
     } catch (...) {
         asyncResult.exception = std::current_exception();
     }
@@ -251,7 +251,7 @@ static std::vector<RuleResult> executeWorkflowLevels(
                 }
             }
 
-            auto result = rule->executeInternal(engine, context, parameters);
+            auto result = rule->execute(engine, context, parameters);
             results.push_back(result);
         }
     }
