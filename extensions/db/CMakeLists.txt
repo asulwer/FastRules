@@ -20,7 +20,11 @@ else()
     set(FASTRULES_CORE_TARGET fastrules)
     set(FASTRULES_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
     # SOCI must be available
-    find_package(SOCI REQUIRED COMPONENTS core ${FASTRULES_DB_BACKEND})
+    find_package(SOCI COMPONENTS core ${FASTRULES_DB_BACKEND})
+    if(NOT SOCI_FOUND)
+        message(WARNING "SOCI not found. DB extension will not be built. Install SOCI via vcpkg: vcpkg install soci[core,sqlite3]:x64-windows")
+        return()
+    endif()
 endif()
 
 add_library(fastrules-db STATIC

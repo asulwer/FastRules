@@ -18,4 +18,8 @@ endif()
 
 if(FASTRULES_BUILD_DB_EXT)
     add_subdirectory(db)
+    # Check if db subdirectory actually created the target
+    if(NOT TARGET fastrules-db)
+        message(WARNING "DB extension was requested but not built — SOCI not found. Skipping.")
+    endif()
 endif()
