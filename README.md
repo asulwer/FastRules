@@ -10,7 +10,7 @@ High-performance C++23 business rules engine with Lua expressions. Core library 
 
 ## Why FastRules?
 
-| | RoslynRules | FastRules |
+| | [RoslynRules](https://github.com/asulwer/roslynrules) | FastRules |
 |---|---|---|
 | **Language** | C# | C++23 |
 | **Expression engine** | Roslyn compiler → IL | Lua → bytecode |
