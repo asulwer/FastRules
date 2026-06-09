@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script generates a complete Visual Studio 2022 solution including:
       - Core fastrules library
-      - All extensions (JSON, XML, DB when SOCI available)
+      - Extensions (JSON, XML; DB when SOCI available and -BuildDB passed)
       - Test suite (fastrules_tests)
       - All examples
       - All dependencies (fetched automatically)
@@ -25,13 +25,20 @@
 .PARAMETER NoTest
     Skip running tests after build.
 
+.PARAMETER BuildDB
+    Enable database persistence extension (requires SOCI installed).
+
 .EXAMPLE
     .\build.ps1
-    Generates solution with default settings (sol2 backend).
+    Generates solution with default settings (LuaBridge3 backend).
 
 .EXAMPLE
     .\build.ps1 -Clean
     Clean all build dirs and regenerate from scratch.
+
+.EXAMPLE
+    .\build.ps1 -BuildDB
+    Enable DB extension (requires SOCI).
 
 .EXAMPLE
     .\build.ps1 -UseLuaJIT
@@ -42,7 +49,8 @@ param(
     [switch]$Clean,
     [switch]$UseLuaJIT,
     [switch]$NoBuild,
-    [switch]$NoTest
+    [switch]$NoTest,
+    [switch]$BuildDB
 )
 
 $ErrorActionPreference = 'Stop'
@@ -109,6 +117,7 @@ Write-Host "  C++ Standard:   23"
 Write-Host "  Tests:          ON"
 Write-Host "  Examples:       ON"
 Write-Host "  Extensions:     ON"
+Write-Host "  DB Extension:   $(if ($BuildDB) { 'ON (requires SOCI)' } else { 'OFF' })"
 Write-Host "  LuaJIT:         $(if ($UseLuaJIT) { 'ON' } else { 'OFF' })"
 Write-Host ""
 
@@ -125,11 +134,14 @@ $cmakeArgs = @(
     '-DFASTRULES_BUILD_TESTS=ON'
     '-DFASTRULES_BUILD_EXAMPLES=ON'
     '-DFASTRULES_BUILD_EXTENSIONS=ON'
-    '-DFASTRULES_BUILD_DB=ON'
 )
 
 if ($UseLuaJIT) {
     $cmakeArgs += '-DFASTRULES_USE_LUAJIT=ON'
+}
+
+if ($BuildDB) {
+    $cmakeArgs += '-DFASTRULES_BUILD_DB=ON'
 }
 
 # ============================================================================
@@ -190,9 +202,14 @@ Write-Host "  - fastrules           : Core library"
 Write-Host "  - fastrules_tests     : Test suite"
 Write-Host "  - fastrules-json      : JSON persistence extension"
 Write-Host "  - fastrules-xml       : XML persistence extension"
-Write-Host "  - fastrules-db        : Database persistence extension (needs SOCI)"
+if ($BuildDB) {
+    Write-Host "  - fastrules-db        : Database persistence extension"
+}
 Write-Host "  - All examples        : simple, core_only, workflow, json, xml, etc."
 Write-Host ""
 Write-Host "Other options:"
 Write-Host "  .\build.ps1 -UseLuaJIT"
+if (-not $BuildDB) {
+    Write-Host "  .\build.ps1 -BuildDB    (requires SOCI)"
+}
 Write-Host ""
