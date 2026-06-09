@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Lua Version Compatibility
-nav_order: 10
+nav_order: 11
 ---
 
 # Lua Version Compatibility
