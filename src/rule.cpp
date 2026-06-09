@@ -398,8 +398,8 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
             // Preference: parent only evaluates if ALL children pass
             for (const auto& childResult : result.childResults) {
                 if (!childResult.isSuccess()) {
-                    log.info("Child rule '" + childResult.ruleId + "' failed — parent aborted", id);
-                    setFailure(result, "Child rule '" + childResult.ruleId + "' failed");
+                    log.info("Child rule " + std::to_string(childResult.ruleId) + " failed — parent aborted", id);
+                    setFailure(result, "Child rule " + std::to_string(childResult.ruleId) + " failed");
                     storeInCache(parameters, result);
                     context.setResult(id, result);
                     return result;
@@ -551,7 +551,7 @@ Rule Rule::contains(const std::string& parameterName, const std::string& substri
 // Builder factory
 // ============================================================================
 
-Rule::Builder Rule::create(const std::string& id, const std::string& expression, bool active) {
+Rule::Builder Rule::create(const Id& id, const std::string& expression, bool active) {
     return Builder(id)
         .withExpression(expression)
         .active(active);

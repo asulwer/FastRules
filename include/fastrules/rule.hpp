@@ -39,7 +39,7 @@ struct RuleParameter {
 
 class Rule {
 public:
-    using Id = std::string;
+    using Id = int;
 
     Rule() = default;
     ~Rule() = default;
@@ -50,7 +50,7 @@ public:
 
     // --- Public fields ---
 
-    Id id;
+    Id id = 0;
     std::string description;
     bool isActive = true;
     int priority = 0;
@@ -101,11 +101,13 @@ public:
 
     // Circular dependency detection
     [[nodiscard]] bool hasCircularDependency(const std::vector<std::reference_wrapper<const Rule>>& allRules) const;
-    [[nodiscard]] std::vector<std::string> getDependencyChain(const std::vector<std::reference_wrapper<const Rule>>& allRules) const;
+    [[nodiscard]] std::vector<Id> getDependencyChain(const std::vector<std::reference_wrapper<const Rule>>& allRules) const;
 
-    // Execution
+private:
+    // Execution (only Workflow and friends can execute rules)
     RuleResult execute(class LuaEngine& engine, RuleContext& context, const std::vector<RuleParameter>& parameters);
 
+public:
     // Static factories
     static Rule isNotNull(const std::string& parameterName, const std::string& description = "");
     static Rule greaterThan(const std::string& parameterName, double value, const std::string& description = "");
@@ -145,11 +147,11 @@ public:
             rule_->priority = p;
             return *this;
         }
-        Builder& dependsOn(const std::string& ruleId) {
+        Builder& dependsOn(const Id& ruleId) {
             rule_->dependsOnRuleId = ruleId;
             return *this;
         }
-        Builder& dependsOn(const std::string& ruleId, const std::vector<std::reference_wrapper<const Rule>>& allRules) {
+        Builder& dependsOn(const Id& ruleId, const std::vector<std::reference_wrapper<const Rule>>& allRules) {
             rule_->dependsOnRuleId = ruleId;
             // Temporarily add this rule to allRules for validation
             std::vector<std::reference_wrapper<const Rule>> allWithThis = allRules;
@@ -184,7 +186,7 @@ public:
         std::shared_ptr<Rule> rule_;
     };
 
-    static Builder create(const std::string& id, const std::string& expression, bool active = true);
+    static Builder create(const Id& id, const std::string& expression, bool active = true);
 
 private:
     bool isCompiled = false;

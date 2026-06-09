@@ -28,13 +28,13 @@ enum class ExecutionMode {
 
 class Workflow {
 public:
-    using Id = std::string;
+    using Id = int;
 
     Workflow() = default;
     ~Workflow() = default;
 
     // Properties
-    Id id;
+    Id id = 0;
     std::string description;
     bool isActive = true;
     std::vector<std::shared_ptr<Rule>> rules;

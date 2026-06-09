@@ -24,7 +24,7 @@ enum class LogLevel {
 struct LogEntry {
     LogLevel level;
     std::string message;
-    std::string ruleId;
+    int ruleId = 0;
     std::chrono::steady_clock::time_point timestamp;
 };
 
@@ -43,18 +43,18 @@ public:
     void setMinLevel(LogLevel level) { minLevel_ = level; }
     [[nodiscard]] LogLevel getMinLevel() const { return minLevel_; }
 
-    void log(LogLevel level, const std::string& message, const std::string& ruleId = "") {
+    void log(LogLevel level, const std::string& message, int ruleId = 0) {
         if (handler_ && level >= minLevel_) {
             handler_({level, message, ruleId, std::chrono::steady_clock::now()});
         }
     }
 
-    void trace(const std::string& msg, const std::string& ruleId = "") { log(LogLevel::Trace, msg, ruleId); }
-    void debug(const std::string& msg, const std::string& ruleId = "") { log(LogLevel::Debug, msg, ruleId); }
-    void info(const std::string& msg, const std::string& ruleId = "") { log(LogLevel::Info, msg, ruleId); }
-    void warning(const std::string& msg, const std::string& ruleId = "") { log(LogLevel::Warning, msg, ruleId); }
-    void error(const std::string& msg, const std::string& ruleId = "") { log(LogLevel::Error, msg, ruleId); }
-    void fatal(const std::string& msg, const std::string& ruleId = "") { log(LogLevel::Fatal, msg, ruleId); }
+    void trace(const std::string& msg, int ruleId = 0) { log(LogLevel::Trace, msg, ruleId); }
+    void debug(const std::string& msg, int ruleId = 0) { log(LogLevel::Debug, msg, ruleId); }
+    void info(const std::string& msg, int ruleId = 0) { log(LogLevel::Info, msg, ruleId); }
+    void warning(const std::string& msg, int ruleId = 0) { log(LogLevel::Warning, msg, ruleId); }
+    void error(const std::string& msg, int ruleId = 0) { log(LogLevel::Error, msg, ruleId); }
+    void fatal(const std::string& msg, int ruleId = 0) { log(LogLevel::Fatal, msg, ruleId); }
 
 private:
     Handler handler_;

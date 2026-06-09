@@ -66,7 +66,7 @@ public:
 };
 
 struct RuleResult {
-    std::string ruleId;
+    int ruleId = 0;
     bool success = false;
     bool skipped = false;  // True if rule was inactive and skipped
     std::optional<std::any> value;
