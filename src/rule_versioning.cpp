@@ -195,7 +195,13 @@ std::string RuleVersionManager::generateVersionId() const {
     auto time_t = std::chrono::system_clock::to_time_t(now);
     
     std::stringstream ss;
+#ifdef _WIN32
+    std::tm tm;
+    gmtime_s(&tm, &time_t);
+    ss << std::put_time(&tm, "%Y%m%d-%H%M%S");
+#else
     ss << std::put_time(std::gmtime(&time_t), "%Y%m%d-%H%M%S");
+#endif
     ss << "-" << std::hex << (++counter);
     return ss.str();
 }

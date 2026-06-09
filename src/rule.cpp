@@ -64,7 +64,7 @@ std::string Rule::buildCacheKey(const std::vector<RuleParameter>& parameters) co
 }
 
 void Rule::compile(LuaEngine& engine) {
-    if (isCompiled) {
+    if (engineExpressionRefs_.count(&engine) > 0 || engineActionRefs_.count(&engine) > 0) {
         return;
     }
 
@@ -491,17 +491,43 @@ std::vector<RuleResult> Rule::executeChildRules(LuaEngine& engine, RuleContext& 
 }
 
 bool Rule::evaluateExpression(LuaEngine& engine, RuleContext& context, const std::vector<RuleParameter>& parameters) {
-    if (!compiledExpressionRef.has_value()) {
+    auto ref = getExpressionRef(engine);
+    if (ref == -1) {
         return true; // No expression = pass
     }
-    return engine.evaluateExpression(compiledExpressionRef.value(), parameters, context, timeout);
+    return engine.evaluateExpression(ref, parameters, context, timeout);
 }
 
 void Rule::executeAction(LuaEngine& engine, RuleContext& context, const std::vector<RuleParameter>& parameters) {
-    if (!compiledActionRef.has_value()) {
+    auto ref = getActionRef(engine);
+    if (ref == -1) {
         return;
     }
-    engine.executeAction(compiledActionRef.value(), parameters, context, timeout);
+    engine.executeAction(ref, parameters, context, timeout);
+}
+
+int Rule::getExpressionRef(LuaEngine& engine) {
+    auto it = engineExpressionRefs_.find(&engine);
+    if (it != engineExpressionRefs_.end()) {
+        return it->second;
+    }
+    // Fallback to the default compiled ref
+    if (compiledExpressionRef.has_value()) {
+        return compiledExpressionRef.value();
+    }
+    return -1;
+}
+
+int Rule::getActionRef(LuaEngine& engine) {
+    auto it = engineActionRefs_.find(&engine);
+    if (it != engineActionRefs_.end()) {
+        return it->second;
+    }
+    // Fallback to the default compiled ref
+    if (compiledActionRef.has_value()) {
+        return compiledActionRef.value();
+    }
+    return -1;
 }
 
 // Static factory methods for predicates

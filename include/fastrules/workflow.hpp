@@ -6,15 +6,19 @@
 #include <optional>
 #include <functional>
 #include <filesystem>
+#include <mutex>
 
 #include "rule.hpp"
 #include "rule_result.hpp"
 #include "streaming_result.hpp"
 #include "execution_tracer.hpp"
 
+// Include for unique_ptr<LuaEngine> destructor
+#include "fastrules/lua_engine.hpp"
+
 namespace fastrules {
 
-// Forward declarations
+// Forward declarations (now redundant due to lua_engine.hpp include, but kept for clarity)
 class LuaEngine;
 class RuleContext;
 
@@ -31,7 +35,13 @@ public:
     using Id = int;
 
     Workflow() = default;
-    ~Workflow() = default;
+    ~Workflow();  // Defined in .cpp where LuaEngine is complete
+    
+    // Non-copyable (due to std::mutex), but movable
+    Workflow(const Workflow&) = delete;
+    Workflow& operator=(const Workflow&) = delete;
+    Workflow(Workflow&&) = default;
+    Workflow& operator=(Workflow&&) = default;
 
     // Properties
     Id id = 0;
@@ -86,6 +96,12 @@ private:
     bool compiled_ = false;
     bool validated_ = false;
 
+    // Engine clone pool for parallel execution optimization
+    // Pre-created and pre-compiled clones avoid per-task allocation overhead
+    std::vector<std::unique_ptr<LuaEngine>> enginePool_;
+    std::unique_ptr<std::mutex> poolMutex_;
+    size_t poolNextIndex_ = 0;
+
     // Helper: topological sort for dependency-aware execution
     [[nodiscard]] std::vector<std::vector<std::shared_ptr<Rule>>> buildDependencyLevels() const;
 
@@ -94,6 +110,10 @@ private:
 
     // Helper: recursively collect actions from rules and child rules
     void collectActions(const std::vector<std::shared_ptr<Rule>>& ruleList, std::vector<std::string>& out) const;
+    
+    // Helper: get next available engine from the pool (round-robin)
+    LuaEngine* acquireEngine();
+    void releaseEngine(LuaEngine* engine);
 };
 
 } // namespace fastrules

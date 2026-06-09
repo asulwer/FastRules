@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 
+#include "test_helpers.hpp"
 #include "fastrules/async_workflow.hpp"
 #include "fastrules/lua_engine.hpp"
 #include "fastrules/rule.hpp"
@@ -10,6 +11,7 @@
 #include <chrono>
 #include <thread>
 #include <future>
+#include <lauxlib.h>
 
 using namespace fastrules;
 
@@ -39,7 +41,7 @@ TEST_CASE("AsyncWorkflow with workflow", "[async]") {
 }
 
 TEST_CASE("Lua coroutine compilation", "[async][coroutine]") {
-    LuaEngine engine;
+    auto engine = makeTestEngine();
     
     SECTION("Compile simple coroutine") {
         auto ref = engine.compileCoroutine("true");
@@ -80,7 +82,7 @@ TEST_CASE("Lua coroutine compilation", "[async][coroutine]") {
 }
 
 TEST_CASE("Parallel workflow execution", "[async][parallel]") {
-    LuaEngine engine;
+    auto engine = makeTestEngine();
     
     Workflow workflow;
     workflow.description = "Parallel test";
@@ -93,13 +95,13 @@ TEST_CASE("Parallel workflow execution", "[async][parallel]") {
     
     // Rule 2: Independent
     auto rule2 = std::make_shared<Rule>();
-    rule2->id = 1;
+    rule2->id = 2;
     rule2->expression = "true";
     workflow.rules.push_back(rule2);
     
     // Rule 3: Depends on rule-1
     auto rule3 = std::make_shared<Rule>();
-    rule3->id = 1;
+    rule3->id = 3;
     rule3->expression = "context.getResult(1).success";
     rule3->dependsOnRuleId = 1;
     workflow.rules.push_back(rule3);
@@ -120,8 +122,8 @@ TEST_CASE("Parallel workflow execution", "[async][parallel]") {
         bool foundRule1 = false, foundRule2 = false, foundRule3 = false;
         for (const auto& result : results) {
             if (result.ruleId == 1) foundRule1 = result.isSuccess();
-            if (result.ruleId == 4) foundRule2 = result.isSuccess();
-            if (result.ruleId == 5) foundRule3 = result.isSuccess();
+            if (result.ruleId == 2) foundRule2 = result.isSuccess();
+            if (result.ruleId == 3) foundRule3 = result.isSuccess();
         }
         REQUIRE(foundRule1);
         REQUIRE(foundRule2);
@@ -130,7 +132,7 @@ TEST_CASE("Parallel workflow execution", "[async][parallel]") {
 }
 
 TEST_CASE("Parallel execution with dependencies", "[async][parallel]") {
-    LuaEngine engine;
+    auto engine = makeTestEngine();
     
     Workflow workflow;
     workflow.description = "Dependency chain test";
@@ -142,19 +144,19 @@ TEST_CASE("Parallel execution with dependencies", "[async][parallel]") {
     workflow.rules.push_back(ruleA);
     
     auto ruleB = std::make_shared<Rule>();
-    ruleB->id = 1;
-    ruleB->expression = "context.getResult(2).success";
-    ruleB->dependsOnRuleId = 2;
+    ruleB->id = 2;
+    ruleB->expression = "context.getResult(1).success";
+    ruleB->dependsOnRuleId = 1;
     workflow.rules.push_back(ruleB);
     
     auto ruleC = std::make_shared<Rule>();
-    ruleC->id = 1;
-    ruleC->expression = "context.getResult(3).success";
-    ruleC->dependsOnRuleId = 3;
+    ruleC->id = 3;
+    ruleC->expression = "context.getResult(2).success";
+    ruleC->dependsOnRuleId = 2;
     workflow.rules.push_back(ruleC);
     
     auto ruleD = std::make_shared<Rule>();
-    ruleD->id = 1;
+    ruleD->id = 4;
     ruleD->expression = "true";
     workflow.rules.push_back(ruleD);
     
@@ -170,7 +172,7 @@ TEST_CASE("Parallel execution with dependencies", "[async][parallel]") {
 }
 
 TEST_CASE("Thread-safe LuaEngine cloning", "[async][thread-safety]") {
-    LuaEngine engine;
+    auto engine = makeTestEngine();
     
     // Compile something in the original engine
     auto ref = engine.compileExpression("true");
@@ -194,7 +196,7 @@ TEST_CASE("Thread-safe LuaEngine cloning", "[async][thread-safety]") {
 }
 
 TEST_CASE("AsyncWorkflow parallel async execution", "[async][parallel][asyncworkflow]") {
-    LuaEngine engine;
+    auto engine = makeTestEngine();
     
     Workflow workflow;
     workflow.description = "Async parallel test";
@@ -205,7 +207,7 @@ TEST_CASE("AsyncWorkflow parallel async execution", "[async][parallel][asyncwork
     workflow.rules.push_back(rule1);
     
     auto rule2 = std::make_shared<Rule>();
-    rule2->id = 1;
+    rule2->id = 2;
     rule2->expression = "true";
     workflow.rules.push_back(rule2);
     

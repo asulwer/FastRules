@@ -18,7 +18,7 @@ class LuaBridgeValue : public LuaValue {
 public:
     LuaBridgeValue() : L_(nullptr), ref_(LUA_REFNIL) {}
     explicit LuaBridgeValue(lua_State* L, int stackIndex) : L_(L) {
-        if (L_ && stackIndex != -1) {
+        if (L_) {
             lua_pushvalue(L_, stackIndex);
             ref_ = luaL_ref(L_, LUA_REGISTRYINDEX);
         } else {
@@ -457,9 +457,6 @@ void* LuaBridge3Backend::createCoroutine(const std::string& id) {
     // Push compiled function onto thread stack
     lua_rawgeti(thread, LUA_REGISTRYINDEX, it->second);
 
-    // Move function from main state to thread
-    lua_xmove(pImpl_->L, thread, 1);
-
     void* handle = thread;
     pImpl_->coroutines_[handle] = thread;
     return handle;
@@ -533,10 +530,8 @@ void LuaBridge3Backend::registerFunction(const std::string& name, LuaNativeFunc 
     // Store function pointer in registry (light userdata approach)
     // Use a C closure with the function name as upvalue
     lua_pushstring(pImpl_->L, name.c_str());
-    lua_pushlightuserdata(pImpl_->L, const_cast<char*>(name.c_str()));
     lua_pushcclosure(pImpl_->L, [](lua_State* L) -> int {
-        // Get the backend pointer from the state's extra space or use a different approach
-        // For simplicity, we use a global table to map names to functions
+        // Get the function name from upvalue
         const char* funcName = lua_tostring(L, lua_upvalueindex(1));
         if (!funcName) return 0;
 
@@ -883,7 +878,12 @@ void LuaBridge3Backend::bindActions(ActionCallbacks* callbacks) {
             }
             
             try {
-                (*backend)->pImpl_->actionHandlers_[hId](params);
+                std::any target;
+                std::vector<std::any> args;
+                for (const auto& kv : params) {
+                    args.push_back(kv.second);
+                }
+                (*backend)->pImpl_->actionHandlers_[hId](target, args);
             } catch (const std::exception& e) {
                 luaL_error(L, "Action handler error: %s", e.what());
                 return 0;

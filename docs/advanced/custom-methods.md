@@ -28,7 +28,7 @@ Bind C++ struct/ class fields and methods to Lua so they can be used directly in
 
 ### C++ Struct Requirements
 
-Your struct needs comparison operators for sol2's automagic support:
+Your struct needs comparison operators for LuaBridge3's automagic support:
 
 ```cpp
 struct Customer {
@@ -37,7 +37,7 @@ struct Customer {
     bool processed = false;
     double balance = 0.0;
 
-    // Required by sol2 automagic
+    // Required by LuaBridge3 automagic
     bool operator==(const Customer& other) const { /* ... */ }
     bool operator<=(const Customer& other) const { /* ... */ }
     bool operator<(const Customer& other) const { /* ... */ }
@@ -130,7 +130,7 @@ void sendEmail(const std::string& to, const std::string& subject,
 
 ```cpp
 engine.registerAction("sendEmail",
-    [](sol::object target, const std::vector<sol::object>& args) {
+    [](fastrules::LuaRef target, const std::vector<fastrules::LuaRef>& args) {
         // args[0] = to, args[1] = subject, args[2] = body
         if (args.size() >= 3) {
             sendEmail(
@@ -156,7 +156,7 @@ rule->action = R"(
 ### Callback Signature
 
 ```cpp
-void callback(sol::object target, const std::vector<sol::object>& args);
+void callback(fastrules::LuaRef target, const std::vector<fastrules::LuaRef>& args);
 ```
 
 - `target`: First argument from Lua (often the object the action operates on)
@@ -205,10 +205,10 @@ cmake --build build --target custom_methods_example
 | `customer.IsPremium()` | `customer:isPremium()` |
 | `SendEmail(to, subject, body)` | `callbacks.sendEmail(to, subject, body)` |
 | `customer.AddBalance(100)` | `customer:addBalance(100)` |
-| Compile-time type checking | Runtime via sol2 usertype |
+| Compile-time type checking | Runtime via LuaBridge3 usertype |
 | ~50ms compile | ~1ms compile |
 
-The key difference: RoslynRules compiles to IL delegates with direct method calls. FastRules uses Lua as the expression language, so C++ methods are bridged through sol2's usertype system. The methods become Lua userdata methods that call back into C++.
+The key difference: RoslynRules compiles to IL delegates with direct method calls. FastRules uses Lua as the expression language, so C++ methods are bridged through LuaBridge3's usertype system. The methods become Lua userdata methods that call back into C++.
 
 ---
 
@@ -216,7 +216,7 @@ The key difference: RoslynRules compiles to IL delegates with direct method call
 
 ### 1. Missing Comparison Operators
 
-If your struct lacks `==`, `<=`, `<`, sol2's automagic won't work:
+If your struct lacks `==`, `<=`, `<`, LuaBridge3's automagic won't work:
 
 ```
 [error] lua: error: [string "..."]:1: attempt to compare two userdata values

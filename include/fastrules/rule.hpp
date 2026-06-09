@@ -211,9 +211,11 @@ private:
     bool isCompiled = false;
     bool isValidated = false;
 
-    // Compiled refs cached by compile()
+    // Compiled refs cached by compile() - per-engine for parallel execution support
     std::optional<int> compiledExpressionRef;
     std::optional<int> compiledActionRef;
+    std::unordered_map<const LuaEngine*, int> engineExpressionRefs_;
+    std::unordered_map<const LuaEngine*, int> engineActionRefs_;
 
     struct CacheEntry {
         std::shared_ptr<RuleResult> result;
@@ -228,6 +230,11 @@ private:
     std::vector<RuleResult> executeChildRules(LuaEngine& engine, RuleContext& context, const std::vector<RuleParameter>& parameters);
     bool evaluateExpression(LuaEngine& engine, RuleContext& context, const std::vector<RuleParameter>& parameters);
     void executeAction(LuaEngine& engine, RuleContext& context, const std::vector<RuleParameter>& parameters);
+    
+    // Get or compile expression ref for a specific engine
+    int getExpressionRef(LuaEngine& engine);
+    // Get or compile action ref for a specific engine
+    int getActionRef(LuaEngine& engine);
 };
 
 } // namespace fastrules

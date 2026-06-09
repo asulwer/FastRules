@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.28)
-project(fastrules VERSION 0.1.0 LANGUAGES CXX)
+project(fastrules VERSION 0.1.0 LANGUAGES C CXX)
+
+# CMP0091: MSVC runtime library flags are selected by the MSVC_RUNTIME_LIBRARY target property
+# Must be set before any targets are created
+cmake_policy(SET CMP0091 NEW)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -24,8 +28,8 @@ option(FASTRULES_BUILD_EXTENSIONS "Build optional persistence extensions" OFF)
 option(FASTRULES_BUILD_DB "Build database persistence extension (requires SOCI)" OFF)
 option(FASTRULES_BUILD_COVERAGE "Build with coverage instrumentation" OFF)
 option(FASTRULES_USE_LUAJIT "Use LuaJIT instead of PUC-Rio Lua (requires manual build on Windows)" OFF)
-set(FASTRULES_LUA_BACKEND "sol2" CACHE STRING "Lua binding backend: sol2 or luabridge3")
-set_property(CACHE FASTRULES_LUA_BACKEND PROPERTY STRINGS sol2 luabridge3)
+# LuaBridge3 backend only
+set(FASTRULES_LUA_BACKEND "luabridge3" CACHE STRING "Lua binding backend")
 
 # Suppress CTest dashboard targets from all dependencies
 set_property(GLOBAL PROPERTY CTEST_TARGETS_ADDED 1)
@@ -51,14 +55,6 @@ FetchContent_Declare(
 )
 
 FetchContent_Declare(
-    sol2
-    GIT_REPOSITORY https://github.com/ThePhD/sol2.git
-    GIT_TAG v3.3.1
-    GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE
-)
-
-FetchContent_Declare(
     spdlog
     GIT_REPOSITORY https://github.com/gabime/spdlog.git
     GIT_TAG v1.14.1
@@ -74,16 +70,13 @@ FetchContent_Declare(
     GIT_PROGRESS TRUE
 )
 
-# LuaBridge3 - only fetch if needed
-if(FASTRULES_LUA_BACKEND STREQUAL "luabridge3")
-    FetchContent_Declare(
-        luabridge3
-        GIT_REPOSITORY https://github.com/kunitoki/LuaBridge3.git
-        GIT_TAG master
-        GIT_SHALLOW TRUE
-        GIT_PROGRESS TRUE
-    )
-endif()
+FetchContent_Declare(
+    luabridge3
+    GIT_REPOSITORY https://github.com/kunitoki/LuaBridge3.git
+    GIT_TAG master
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+)
 
 # LuaJIT option — fetch and build automatically if requested
 if(FASTRULES_USE_LUAJIT)
@@ -184,18 +177,12 @@ if(FASTRULES_USE_LUAJIT)
         message(STATUS "Using LuaJIT (make build)")
     endif()
     
-    # Always fetch sol2, json, catch2 even when using LuaJIT
-    FetchContent_MakeAvailable(json sol2 catch2)
-    if(FASTRULES_LUA_BACKEND STREQUAL "luabridge3")
-        FetchContent_MakeAvailable(luabridge3)
-    endif()
+    # Fetch dependencies
+    FetchContent_MakeAvailable(json luabridge3 catch2)
 
     # Organize external targets in VS solution
     if(TARGET nlohmann_json)
         set_target_properties(nlohmann_json PROPERTIES FOLDER "ThirdParty")
-    endif()
-    if(TARGET sol2)
-        set_target_properties(sol2 PROPERTIES FOLDER "ThirdParty")
     endif()
     if(TARGET spdlog)
         set_target_properties(spdlog PROPERTIES FOLDER "ThirdParty")
@@ -210,17 +197,11 @@ if(FASTRULES_USE_LUAJIT)
         set_target_properties(luabridge3 PROPERTIES FOLDER "ThirdParty")
     endif()
 else()
-    FetchContent_MakeAvailable(lua json sol2 spdlog catch2)
-    if(FASTRULES_LUA_BACKEND STREQUAL "luabridge3")
-        FetchContent_MakeAvailable(luabridge3)
-    endif()
+    FetchContent_MakeAvailable(lua json luabridge3 spdlog catch2)
 
     # Organize external targets in VS solution
     if(TARGET nlohmann_json)
         set_target_properties(nlohmann_json PROPERTIES FOLDER "ThirdParty")
-    endif()
-    if(TARGET sol2)
-        set_target_properties(sol2 PROPERTIES FOLDER "ThirdParty")
     endif()
     if(TARGET spdlog)
         set_target_properties(spdlog PROPERTIES FOLDER "ThirdParty")
@@ -251,17 +232,11 @@ if(NOT FASTRULES_USE_LUAJIT)
     add_library(lua_static STATIC ${LUA_SRCS})
     set_target_properties(lua_static PROPERTIES FOLDER "ThirdParty")
     target_include_directories(lua_static PUBLIC ${lua_SOURCE_DIR})
-    
-    # Match MSVC runtime library with the rest of the project
-    if(MSVC)
-        set_property(TARGET lua_static PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
-    endif()
 endif()
 
 # === fastrules library ===
 set(FASTRULES_CORE_SOURCES
     src/action_callback.cpp
-    src/async_registry.cpp
     src/async_workflow.cpp
     src/lua_engine.cpp
     src/rule.cpp
@@ -277,25 +252,18 @@ set(FASTRULES_CORE_SOURCES
 )
 
 # Backend-specific sources
-if(FASTRULES_LUA_BACKEND STREQUAL "sol2")
-    list(APPEND FASTRULES_CORE_SOURCES src/lua_backend_factory.cpp src/lua_backend_sol2.cpp)
-elseif(FASTRULES_LUA_BACKEND STREQUAL "luabridge3")
-    list(APPEND FASTRULES_CORE_SOURCES src/lua_backend_factory.cpp src/lua_backend_luabridge.cpp)
-endif()
+list(APPEND FASTRULES_CORE_SOURCES src/lua_backend_factory.cpp src/lua_backend_luabridge.cpp)
 
 # Collect public headers so they appear in Visual Studio projects
 set(FASTRULES_PUBLIC_HEADERS
     include/fastrules/action_callback.hpp
     include/fastrules/aot_compiler.hpp
-    include/fastrules/async_registry.hpp
     include/fastrules/async_workflow.hpp
-    include/fastrules/enum_registry.hpp
     include/fastrules/execution_tracer.hpp
     include/fastrules/expression_validator.hpp
     include/fastrules/fastrules.hpp
     include/fastrules/logger.hpp
     include/fastrules/lua_backend.hpp
-    include/fastrules/lua_backend_sol2.hpp
     include/fastrules/lua_backend_luabridge.hpp
     include/fastrules/lua_engine.hpp
     include/fastrules/parameter_validator.hpp
@@ -353,32 +321,20 @@ target_link_libraries(fastrules
         spdlog::spdlog
 )
 
-if(FASTRULES_LUA_BACKEND STREQUAL "sol2")
-    target_link_libraries(fastrules PUBLIC sol2)
-elseif(FASTRULES_LUA_BACKEND STREQUAL "luabridge3")
-    target_include_directories(fastrules PRIVATE ${luabridge3_SOURCE_DIR}/Source)
-endif()
+target_include_directories(fastrules PRIVATE ${luabridge3_SOURCE_DIR}/Source)
 
 if(MSVC)
     target_compile_options(fastrules PRIVATE /W4 /WX-)
     if(FASTRULES_USE_LUAJIT)
         target_compile_definitions(fastrules PRIVATE FASTRULES_USE_LUAJIT)
     endif()
-    if(FASTRULES_LUA_BACKEND STREQUAL "sol2")
-        target_compile_definitions(fastrules PUBLIC FASTRULES_USE_SOL2)
-    elseif(FASTRULES_LUA_BACKEND STREQUAL "luabridge3")
-        target_compile_definitions(fastrules PUBLIC FASTRULES_USE_LUABRIDGE3)
-    endif()
+    target_compile_definitions(fastrules PUBLIC FASTRULES_USE_LUABRIDGE3)
 else()
     target_compile_options(fastrules PRIVATE -Wall -Wextra -Wpedantic)
     if(FASTRULES_USE_LUAJIT)
         target_compile_definitions(fastrules PRIVATE FASTRULES_USE_LUAJIT)
     endif()
-    if(FASTRULES_LUA_BACKEND STREQUAL "sol2")
-        target_compile_definitions(fastrules PUBLIC FASTRULES_USE_SOL2)
-    elseif(FASTRULES_LUA_BACKEND STREQUAL "luabridge3")
-        target_compile_definitions(fastrules PUBLIC FASTRULES_USE_LUABRIDGE3)
-    endif()
+    target_compile_definitions(fastrules PUBLIC FASTRULES_USE_LUABRIDGE3)
 endif()
 
 # === Tests ===
@@ -399,8 +355,6 @@ if(FASTRULES_BUILD_TESTS)
         tests/test_async.cpp
         tests/test_security_features.cpp
         tests/test_new_features.cpp
-        tests/test_async_registry.cpp
-        tests/test_state_cleanup.cpp
         tests/test_execution_tracing.cpp
         tests/test_coverage_gaps.cpp
         tests/test_benchmarks.cpp
@@ -538,6 +492,7 @@ install(TARGETS fastrules
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fastrules
 )
 
 # Install headers
@@ -553,20 +508,11 @@ if(EXISTS ${json_SOURCE_DIR}/single_include/nlohmann)
     )
 endif()
 
-if(FASTRULES_LUA_BACKEND STREQUAL "sol2")
-    if(EXISTS ${sol2_SOURCE_DIR}/include/sol)
-        install(DIRECTORY
-            ${sol2_SOURCE_DIR}/include/sol
-            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        )
-    endif()
-elseif(FASTRULES_LUA_BACKEND STREQUAL "luabridge3")
-    if(EXISTS ${luabridge3_SOURCE_DIR}/Source/LuaBridge)
-        install(DIRECTORY
-            ${luabridge3_SOURCE_DIR}/Source/LuaBridge
-            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        )
-    endif()
+if(EXISTS ${luabridge3_SOURCE_DIR}/Source/LuaBridge)
+    install(DIRECTORY
+        ${luabridge3_SOURCE_DIR}/Source/LuaBridge
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
 endif()
 
 if(NOT FASTRULES_USE_LUAJIT)

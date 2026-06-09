@@ -1,6 +1,8 @@
 // test_benchmarks.cpp
 // Performance benchmarks for FastRules core operations.
 // These are micro-benchmarks using Catch2's benchmarking support.
+// Note: Benchmarks are skipped in Debug builds because unoptimized code
+// produces meaningless results and runs very slowly.
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/benchmark/catch_benchmark.hpp>
@@ -10,11 +12,20 @@
 
 using namespace fastrules;
 
+// Skip benchmarks in Debug builds - they run too slow and produce
+// meaningless results without compiler optimizations.
+#ifdef _DEBUG
+    #define SKIP_IN_DEBUG() SKIP("Benchmarks skipped in Debug builds")
+#else
+    #define SKIP_IN_DEBUG()
+#endif
+
 // ============================================================================
 // Rule compilation benchmarks
 // ============================================================================
 
 TEST_CASE("Benchmark rule compilation", "[benchmark][compilation]") {
+    SKIP_IN_DEBUG();
     LuaEngine engine;
 
     Rule rule;
@@ -28,6 +39,7 @@ TEST_CASE("Benchmark rule compilation", "[benchmark][compilation]") {
 }
 
 TEST_CASE("Benchmark workflow compilation", "[benchmark][compilation]") {
+    SKIP_IN_DEBUG();
     LuaEngine engine;
     Workflow workflow;
     workflow.id = 1;
@@ -49,6 +61,7 @@ TEST_CASE("Benchmark workflow compilation", "[benchmark][compilation]") {
 // ============================================================================
 
 TEST_CASE("Benchmark simple rule execution", "[benchmark][execution]") {
+    SKIP_IN_DEBUG();
     LuaEngine engine;
 
     Rule rule;
@@ -68,6 +81,7 @@ TEST_CASE("Benchmark simple rule execution", "[benchmark][execution]") {
 }
 
 TEST_CASE("Benchmark rule with type registration", "[benchmark][execution]") {
+    SKIP_IN_DEBUG();
     LuaEngine engine;
 
     struct Point { double x = 0; double y = 0; };
@@ -97,6 +111,7 @@ TEST_CASE("Benchmark rule with type registration", "[benchmark][execution]") {
 // ============================================================================
 
 TEST_CASE("Benchmark sequential workflow execution", "[benchmark][execution]") {
+    SKIP_IN_DEBUG();
     LuaEngine engine;
     Workflow workflow;
     workflow.id = 1;
@@ -120,6 +135,7 @@ TEST_CASE("Benchmark sequential workflow execution", "[benchmark][execution]") {
 }
 
 TEST_CASE("Benchmark parallel workflow execution", "[benchmark][execution]") {
+    SKIP_IN_DEBUG();
     LuaEngine engine;
     Workflow workflow;
     workflow.id = 1;
@@ -146,6 +162,7 @@ TEST_CASE("Benchmark parallel workflow execution", "[benchmark][execution]") {
 // Memory / allocation benchmarks
 // ============================================================================
 TEST_CASE("Benchmark rule memory footprint", "[benchmark][memory]") {
+    SKIP_IN_DEBUG();
     LuaEngine engine;
     
     BENCHMARK_ADVANCED("rule memory: create & compile")(Catch::Benchmark::Chronometer meter) {
@@ -159,6 +176,7 @@ TEST_CASE("Benchmark rule memory footprint", "[benchmark][memory]") {
 }
 
 TEST_CASE("Benchmark workflow memory scaling", "[benchmark][memory]") {
+    SKIP_IN_DEBUG();
     LuaEngine engine;
     
     // Pre-build workflow outside benchmark
@@ -187,6 +205,7 @@ TEST_CASE("Benchmark workflow memory scaling", "[benchmark][memory]") {
 // ============================================================================
 
 TEST_CASE("Benchmark cached vs uncached execution", "[benchmark][cache]") {
+    SKIP_IN_DEBUG();
     LuaEngine engine;
 
     Rule rule;

@@ -4,7 +4,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <fastrules.hpp>
 #include <fastrules/rate_limiter.hpp>
+#ifdef FASTRULES_USE_SOL2
 #include <sol/sol.hpp>
+#endif
 #include <thread>
 #include <chrono>
 
@@ -218,8 +220,8 @@ TEST_CASE("Self-dependency detected", "[rule][validation][circular]") {
 }
 
 TEST_CASE("No circular dependency passes validation", "[rule][validation][circular]") {
-    Rule a; a.id = 1; a.dependsOnRuleId = 3;
-    Rule b; b.id = 1;
+    Rule a; a.id = 1; a.dependsOnRuleId = 2;
+    Rule b; b.id = 2;
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b};
 
@@ -231,8 +233,8 @@ TEST_CASE("Circular dependency via child rules detected", "[rule][validation][ci
     Rule parent; parent.id = 1;
     
     auto child = std::make_shared<Rule>();
-    child->id = 1;
-    child->dependsOnRuleId = 6; // Child depends on parent
+    child->id = 2;
+    child->dependsOnRuleId = 1; // Child depends on parent
     
     parent.childRules.push_back(child);
 
@@ -243,9 +245,9 @@ TEST_CASE("Circular dependency via child rules detected", "[rule][validation][ci
 
 TEST_CASE("Diamond dependency passes validation", "[rule][validation][circular]") {
     Rule top;    top.id = 1;
-    Rule left;   left.id = 1;  left.dependsOnRuleId = 7;
-    Rule right;  right.id = 1; right.dependsOnRuleId = 7;
-    Rule bottom; bottom.id = 1; bottom.dependsOnRuleId = 8;
+    Rule left;   left.id = 2;  left.dependsOnRuleId = 1;
+    Rule right;  right.id = 3; right.dependsOnRuleId = 1;
+    Rule bottom; bottom.id = 4; bottom.dependsOnRuleId = 2;
 
     std::vector<std::reference_wrapper<const Rule>> all = {top, left, right, bottom};
 
@@ -291,7 +293,7 @@ TEST_CASE("Rate limiter blocks excessive calls", "[rule][rate-limit]") {
     auto limiter = std::make_shared<RateLimiter>();
 
     RateLimiter::Config config;
-    config.ruleId = "limited";
+    config.ruleId = "1";
     config.maxExecutionsPerSecond = 2;
     limiter->configure(config);
 
@@ -310,6 +312,7 @@ TEST_CASE("Rate limiter blocks excessive calls", "[rule][rate-limit]") {
     auto r2 = rule.execute(engine, ctx, params);
     REQUIRE(r2.isSuccess());
 
+    // Third call should be blocked
     auto r3 = rule.execute(engine, ctx, params);
     REQUIRE_FALSE(r3.isSuccess());
 }
@@ -322,7 +325,7 @@ TEST_CASE("Parent rule executes child rules", "[rule][children]") {
     LuaEngine engine;
 
     auto child = std::make_shared<Rule>();
-    child->id = 1;
+    child->id = 2;
     child->expression = "true";
     child->compile(engine);
 
@@ -348,7 +351,7 @@ TEST_CASE("Parent fails when child fails", "[rule][children]") {
     LuaEngine engine;
 
     auto child = std::make_shared<Rule>();
-    child->id = 1;
+    child->id = 2;
     child->expression = "false";
     child->compile(engine);
 
@@ -503,7 +506,7 @@ TEST_CASE("LuaEngine handles boolean string conversion", "[lua][edge]") {
 TEST_CASE("hasCircularDependency detects self-dependency", "[rule][circular-dependency]") {
     Rule a;
     a.id = 1;
-    a.dependsOnRuleId = 4;
+    a.dependsOnRuleId = 1;
 
     std::vector<std::reference_wrapper<const Rule>> all = {a};
 
@@ -511,8 +514,8 @@ TEST_CASE("hasCircularDependency detects self-dependency", "[rule][circular-depe
 }
 
 TEST_CASE("hasCircularDependency detects A -> B -> A", "[rule][circular-dependency]") {
-    Rule a; a.id = 1; a.dependsOnRuleId = 3;
-    Rule b; b.id = 1; b.dependsOnRuleId = 4;
+    Rule a; a.id = 1; a.dependsOnRuleId = 2;
+    Rule b; b.id = 2; b.dependsOnRuleId = 1;
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b};
 
@@ -521,9 +524,9 @@ TEST_CASE("hasCircularDependency detects A -> B -> A", "[rule][circular-dependen
 }
 
 TEST_CASE("hasCircularDependency detects A -> B -> C -> A", "[rule][circular-dependency]") {
-    Rule a; a.id = 1; a.dependsOnRuleId = 3;
-    Rule b; b.id = 1; b.dependsOnRuleId = 5;
-    Rule c; c.id = 1; c.dependsOnRuleId = 4;
+    Rule a; a.id = 1; a.dependsOnRuleId = 2;
+    Rule b; b.id = 2; b.dependsOnRuleId = 3;
+    Rule c; c.id = 3; c.dependsOnRuleId = 1;
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b, c};
 
@@ -533,10 +536,10 @@ TEST_CASE("hasCircularDependency detects A -> B -> C -> A", "[rule][circular-dep
 }
 
 TEST_CASE("hasCircularDependency returns false for long chain without cycle", "[rule][circular-dependency]") {
-    Rule a; a.id = 1; a.dependsOnRuleId = 3;
-    Rule b; b.id = 1; b.dependsOnRuleId = 5;
-    Rule c; c.id = 1; c.dependsOnRuleId = 10;
-    Rule d; d.id = 1; // No dependency
+    Rule a; a.id = 1; a.dependsOnRuleId = 2;
+    Rule b; b.id = 2; b.dependsOnRuleId = 3;
+    Rule c; c.id = 3; c.dependsOnRuleId = 4;
+    Rule d; d.id = 4; // No dependency
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b, c, d};
 
@@ -580,8 +583,8 @@ TEST_CASE("getDependencyChain returns just ID for no dependency", "[rule][circul
 }
 
 TEST_CASE("getDependencyChain returns chain for single dependency", "[rule][circular-dependency]") {
-    Rule a; a.id = 1; a.dependsOnRuleId = 3;
-    Rule b; b.id = 1; // No dependency
+    Rule a; a.id = 1; a.dependsOnRuleId = 2;
+    Rule b; b.id = 2; // No dependency
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b};
 
@@ -594,10 +597,10 @@ TEST_CASE("getDependencyChain returns chain for single dependency", "[rule][circ
 }
 
 TEST_CASE("getDependencyChain returns full chain for long chain", "[rule][circular-dependency]") {
-    Rule a; a.id = 1; a.dependsOnRuleId = 3;
-    Rule b; b.id = 1; b.dependsOnRuleId = 5;
-    Rule c; c.id = 1; c.dependsOnRuleId = 10;
-    Rule d; d.id = 1; // No dependency
+    Rule a; a.id = 1; a.dependsOnRuleId = 2;
+    Rule b; b.id = 2; b.dependsOnRuleId = 3;
+    Rule c; c.id = 3; c.dependsOnRuleId = 4;
+    Rule d; d.id = 4; // No dependency
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b, c, d};
 
@@ -612,7 +615,7 @@ TEST_CASE("getDependencyChain returns full chain for long chain", "[rule][circul
 }
 
 TEST_CASE("getDependencyChain handles self-dependency cycle", "[rule][circular-dependency]") {
-    Rule a; a.id = 1; a.dependsOnRuleId = 4;
+    Rule a; a.id = 1; a.dependsOnRuleId = 1;
 
     std::vector<std::reference_wrapper<const Rule>> all = {a};
 
@@ -627,8 +630,8 @@ TEST_CASE("getDependencyChain handles self-dependency cycle", "[rule][circular-d
 }
 
 TEST_CASE("getDependencyChain handles A -> B -> A cycle", "[rule][circular-dependency]") {
-    Rule a; a.id = 1; a.dependsOnRuleId = 3;
-    Rule b; b.id = 1; b.dependsOnRuleId = 4;
+    Rule a; a.id = 1; a.dependsOnRuleId = 2;
+    Rule b; b.id = 2; b.dependsOnRuleId = 1;
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b};
 
@@ -663,7 +666,7 @@ TEST_CASE("Builder dependsOn with validation throws on self-dependency", "[rule]
 
     // Building "A" that depends on "A" should throw when validation is enabled
     REQUIRE_THROWS_AS(
-        Rule::Builder(4).dependsOn(1, all),
+        Rule::Builder(1).dependsOn(1, all),
         RuleValidationException
     );
 }
@@ -681,7 +684,7 @@ TEST_CASE("Builder dependsOn with validation throws on A -> B -> A", "[rule][bui
 
 TEST_CASE("Builder dependsOn with validation passes for valid chain", "[rule][builder][circular-dependency]") {
     Rule b; b.id = 1; b.dependsOnRuleId = 5;
-    Rule c; c.id = 1; // No dependency
+    Rule c; c.id = 2; // No dependency
     std::vector<std::reference_wrapper<const Rule>> all = {b, c};
 
     // Building "A" that depends on "B" should succeed (A -> B -> C, no cycle)
@@ -691,13 +694,13 @@ TEST_CASE("Builder dependsOn with validation passes for valid chain", "[rule][bu
 
 TEST_CASE("Builder dependsOn with validation passes for long chain", "[rule][builder][circular-dependency]") {
     Rule b; b.id = 1; b.dependsOnRuleId = 5;
-    Rule c; c.id = 1; c.dependsOnRuleId = 10;
-    Rule d; d.id = 1; d.dependsOnRuleId = 11;
-    Rule e; e.id = 1; // No dependency
+    Rule c; c.id = 2; c.dependsOnRuleId = 10;
+    Rule d; d.id = 3; d.dependsOnRuleId = 11;
+    Rule e; e.id = 4; // No dependency
     std::vector<std::reference_wrapper<const Rule>> all = {b, c, d, e};
 
     // Building "A" that depends on "B" should succeed (A -> B -> C -> D -> E, no cycle)
-    auto ruleA = Rule::Builder(4).dependsOn(2, all).build();
-    REQUIRE(ruleA->dependsOnRuleId == 2);
+    auto ruleA = Rule::Builder(6).dependsOn(1, all).build();
+    REQUIRE(ruleA->dependsOnRuleId == 1);
 }
 

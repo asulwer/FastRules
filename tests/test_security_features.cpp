@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <fastrules.hpp>
-#include <fastrules/enum_registry.hpp>
 #include <spdlog/sinks/ostream_sink.h>
+#include <iostream>
 #include <thread>
 
 using namespace fastrules;

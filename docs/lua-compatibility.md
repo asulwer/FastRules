@@ -8,45 +8,43 @@ nav_order: 11
 
 ## Supported Versions
 
-FastRules supports **Lua 5.1 through 5.4** and **LuaJIT**.
+FastRules supports **Lua 5.1 through 5.4** and **LuaJIT** via LuaBridge3.
 
-## Why Not Lua 5.5?
+## LuaBridge3 Backend
 
-Lua 5.5 is **not supported** because our Lua binding library, **sol2**, does not yet support it.
+FastRules uses **LuaBridge3** as its Lua binding library. LuaBridge3 provides:
 
-sol2 uses compile-time version detection to match Lua ABI compatibility:
+- Clean C++ template-based bindings
+- Support for custom types, functions, and coroutines
+- Header-only (no separate compilation needed)
+- Active maintenance and Lua 5.1–5.4 compatibility
+
+### Technical Details
+
+LuaBridge3 wraps the Lua C API to provide type-safe C++ access:
 
 ```cpp
-// sol2 compatibility check
-#if !defined(SOL_LUA_VERSION) || (SOL_LUA_VERSION < 501 || SOL_LUA_VERSION > 504)
-    #error "unsupported Lua version (i.e. not Lua 5.1, 5.2, 5.3, or 5.4)"
-#endif
+// LuaBridge3 usage example
+luabridge::LuaRef func = luabridge::getGlobal(L, "myFunction");
+auto result = func(arg1, arg2);
 ```
 
-### Technical Reason
-
-sol2's C++ template machinery is tightly coupled to Lua's C API. Each Lua minor version introduces breaking changes in:
-- `lua_resume()` signature (coroutine API)
-- `lua_load()` behavior
-- Thread/extra space layout (`lua_getextraspace()`)
-- Internal stack manipulation macros
-
-Adding Lua 5.5 support requires upstream changes in sol2, not FastRules.
+Unlike sol2's compile-time template machinery, LuaBridge3 uses runtime type checking with clean error messages.
 
 ## What This Means for Users
 
 ### If using vcpkg
 
-The vcpkg registry currently defaults to Lua 5.5. FastRules pins Lua to **5.4** via our manifest to avoid this incompatibility.
+FastWorks uses FetchContent to manage dependencies. CMake fetches Lua 5.4 directly from the official Lua GitHub mirror.
 
 ```json
-// vcpkg.json — Lua 5.4 is fetched via FetchContent, not vcpkg
+// vcpkg.json
 {
-  "dependencies": ["lua", "catch2", "nlohmann-json", "sol2"]
+  "dependencies": ["lua", "catch2", "nlohmann-json"]
 }
 ```
 
-Our CMake fetches Lua 5.4 directly from the official Lua GitHub mirror, bypassing vcpkg's 5.5 package.
+LuaBridge3 is fetched via CMake's FetchContent.
 
 ### If using system packages
 
@@ -55,13 +53,12 @@ Ensure your system Lua is 5.1–5.4:
 ```bash
 # Ubuntu/Debian
 apt install liblua5.4-dev   # ✅
-apt install liblua5.5-dev   # ❌ not supported
 
 # macOS
-brew install lua@5.4        # ✅
+brew install lua@5.4          # ✅
 
 # Windows with vcpkg
-vcpkg install lua            # Currently 5.5 — use FetchContent instead
+vcpkg install lua            # Use 5.4
 ```
 
 ### If using LuaJIT
@@ -75,17 +72,15 @@ LuaJIT is supported and often preferred for production:
 LuaJIT provides:
 - Near-native execution speed via JIT compilation
 - Smaller memory footprint
-- Deterministic `FFI` for C++ interop
+- Deterministic FFI for C++ interop
 
-## Timeline for Lua 5.5
+## Timeline for New Lua Versions
 
-Support will be added once **sol2** releases a compatible version. Track upstream:
+Support for new Lua versions will be added once LuaBridge3 supports them. Track upstream:
 
-- sol2 GitHub: `https://github.com/ThePhD/sol2`
-- Lua 5.5 changelog: `https://lua.org/work/doc/`
-
-No FastRules code changes are needed — only updating the sol2 dependency version.
+- LuaBridge3 GitHub: `https://github.com/kunitoki/LuaBridge3`
+- Lua changelog: `https://lua.org/work/doc/`
 
 ---
 
-*Last updated: 2026-06-07*
+*Last updated: 2026-06-09*

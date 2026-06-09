@@ -179,6 +179,9 @@ private:
     std::atomic<size_t> generation_{1};
     size_t autoResetThresholdKB_ = 0;
 
+    // Thread-local context for parallel execution
+    static thread_local RuleContext* currentContext_;
+
     void setupEnvironment();
     void setupContextTable(RuleContext& context);
     [[nodiscard]] std::string makeBackendId(int ref) const;

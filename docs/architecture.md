@@ -29,7 +29,7 @@ FastRules replaces RoslynRules' Roslyn C# compilation with **embedded Lua** for 
 │  └───────────────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │                   LuaEngine                          │  │
-│  │  sol::state ──▶ compileExpr(), compileAct()         │  │
+│  │  LuaState* ──▶ compileExpr(), compileAct()         │  │
 │  │  registerType<T>() ──▶ bind C++ structs to Lua    │  │
 │  │  registerEnum<T>() ──▶ bind C++ enums to Lua       │  │
 │  └───────────────────────────────────────────────────────┘  │
@@ -128,7 +128,7 @@ Each extension:
 - `Rule` is not sealed (C++ doesn't have the concept), but `isCompiled` flag prevents modification
 - `RuleContext` uses `shared_mutex` for thread-safe result storage
 - `LuaEngine` registry manages Lua reference lifetime
-- sol2 handles Lua stack management automatically
+- LuaBridge3 provides type-safe C++ bindings
 
 ## Performance Characteristics
 
@@ -138,8 +138,19 @@ Each extension:
 | Subsequent calls | Nanoseconds (IL) | Microseconds (Lua bytecode) |
 | Rule evaluation | Near-native | Fast enough for 10K+ rules/sec |
 | Memory per rule | Assembly bytes | Lua function reference |
+| Parallel execution | True parallel | True parallel via per-thread engine clones |
 
-For the target use case (business rules that change frequently but execute many times), Lua provides excellent compile-time performance and acceptable runtime performance.
+### Parallel Execution
+
+`Workflow::executeParallel()` groups rules by dependency level and executes rules within each level in parallel using `std::async`. Each worker thread receives its own cloned `LuaEngine` with compiled expressions, enabling true parallel evaluation without Lua state contention.
+
+Key characteristics:
+- **Dependency ordering preserved**: Levels execute sequentially (lower levels complete before higher levels start)
+- **True intra-level parallelism**: Rules within a level execute simultaneously on separate LuaEngine clones
+- **Thread-safe context**: `RuleContext` uses `std::shared_mutex` for concurrent result access
+- **Pre-compiled clone pool**: `Workflow::compile()` creates `hardware_concurrency()` cloned engines with all rules pre-compiled, eliminating per-task allocation overhead
+
+For the target use case (business rules that change frequently but execute many times), this provides excellent throughput for independent rule evaluation.
 
 ## Extension APIs
 
@@ -193,7 +204,7 @@ auto found = repo.findById("rule-id");
 
 1. **LuaJIT Support**: Compile-time option for near-native speed
 2. **Bytecode Caching**: Save compiled Lua bytecode to disk
-3. **Parallel Execution**: `std::async` or thread pool per dependency level
+3. ~~**Parallel Execution**: `std::async` or thread pool per dependency level~~ ✅ Implemented - pre-compiled engine clone pool
 4. **Async/Await**: Coroutine-based async rule evaluation
 5. **Per-Rule Cache**: Memoization with TTL
 6. **REST API**: HTTP interface for rule management

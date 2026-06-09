@@ -190,11 +190,11 @@ TEST_CASE("Rule child rules execution", "[rule]") {
     parent->expression = "true";
 
     auto child1 = std::make_shared<Rule>();
-    child1->id = 1;
+    child1->id = 2;
     child1->expression = "true";
 
     auto child2 = std::make_shared<Rule>();
-    child2->id = 1;
+    child2->id = 3;
     child2->expression = "true";
 
     parent->childRules.push_back(child1);

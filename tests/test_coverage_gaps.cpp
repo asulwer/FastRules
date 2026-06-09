@@ -375,7 +375,7 @@ TEST_CASE("Workflow sequential execution", "[workflow][execution]") {
     workflow.rules.push_back(rule1);
     
     auto rule2 = std::make_shared<Rule>();
-    rule2->id = 1;
+    rule2->id = 2;
     rule2->expression = "true";
     workflow.rules.push_back(rule2);
     
@@ -403,7 +403,7 @@ TEST_CASE("Workflow execution order", "[workflow][execution]") {
     workflow.rules.push_back(rule1);
     
     auto rule2 = std::make_shared<Rule>();
-    rule2->id = 1;
+    rule2->id = 2;
     rule2->expression = "false";
     workflow.rules.push_back(rule2);
     

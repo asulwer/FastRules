@@ -76,6 +76,7 @@ for (auto& result : workflow.executeStreaming(engine, params)) {
 
 ```cpp
 // Rules with no dependencies execute concurrently
+// Workflow::compile() pre-creates a pool of cloned engines for parallel execution
 auto results = workflow.executeParallel(engine, params);
 ```
 
@@ -87,6 +88,7 @@ auto results = workflow.executeParallel(engine, params);
 | Lua state (with types) | ~256KB |
 | Compiled expression | ~2KB |
 | Workflow (10 rules) | ~50KB |
+| Engine clone pool (per workflow) | `hardware_concurrency()` × ~320KB |
 | Per-execution overhead | ~1KB |
 
 ## Profiling

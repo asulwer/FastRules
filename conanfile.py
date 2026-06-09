@@ -46,7 +46,7 @@ class FastRulesConan(ConanFile):
             self.requires("luajit/2.1.0-beta3")
         else:
             self.requires("lua/5.4.6")
-        self.requires("sol2/3.3.0")
+        # LuaBridge3 is header-only and fetched via CMake FetchContent
         if self.options.with_json:
             self.requires("nlohmann_json/3.11.3")
         if self.options.with_xml:

@@ -52,7 +52,7 @@ engine.registerType<Customer>("Customer", [](auto& ut) {
 });
 
 // Register action callbacks
-engine.registerAction("setProcessed", [](sol::object target, const auto& args) {
+engine.registerAction("setProcessed", [](fastrules::LuaRef target, const auto& args) {
     target.as<Customer*>()->processed = args[0].as<bool>();
 });
 ```

@@ -27,7 +27,7 @@ cmake --build build --config Release
 ctest --output-on-failure
 ```
 
-Core library (`fastrules`) builds with zero manual dependency installation. CMake FetchContent downloads sol2 and nlohmann/json automatically.
+Core library (`fastrules`) builds with zero manual dependency installation. CMake FetchContent downloads nlohmann/json and LuaBridge3 automatically.
 
 ### Platform-Specific
 
@@ -83,7 +83,7 @@ target_link_libraries(your_app PRIVATE fastrules)
 | `FASTRULES_BUILD_EXAMPLES` | `ON` | Example programs |
 | `FASTRULES_BUILD_EXTENSIONS` | `OFF` | JSON, XML, DB extensions |
 | `FASTRULES_BUILD_DB` | `OFF` | Database extension (requires SOCI) |
-| `FASTRULES_LUA_BACKEND` | `sol2` | `sol2` or `luabridge3` |
+| `FASTRULES_LUA_BACKEND` | `luabridge3` | Lua binding backend (luabridge3 only) |
 
 ---
 

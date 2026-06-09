@@ -15,6 +15,8 @@
 
 namespace fastrules {
 
+Workflow::~Workflow() = default;
+
 void Workflow::validate() {
     auto log = fastrules::logger();
     if (validated_) {
@@ -73,12 +75,32 @@ void Workflow::compile(LuaEngine& engine) {
         engine.discoverCallbacks(actions);
     }
 
-    // Compile each rule
+    // Compile each rule in the main engine
     for (auto& rule : rules) {
         rule->compile(engine);
     }
 
-    log->info("Workflow {} compiled successfully", id);
+    // Pre-create engine clone pool for parallel execution
+    // Pool size = number of threads or hardware concurrency, min 2
+    size_t poolSize = std::thread::hardware_concurrency();
+    if (poolSize < 2) poolSize = 2;
+    
+    log->debug("Creating engine clone pool with {} clones for workflow {}", poolSize, id);
+    enginePool_.clear();
+    enginePool_.reserve(poolSize);
+    poolMutex_ = std::make_unique<std::mutex>();
+    
+    for (size_t i = 0; i < poolSize; ++i) {
+        auto clone = engine.clone();
+        // Pre-compile all rules into the clone
+        for (auto& rule : rules) {
+            rule->compile(*clone);
+        }
+        enginePool_.push_back(std::move(clone));
+    }
+    poolNextIndex_ = 0;
+
+    log->info("Workflow {} compiled successfully ({} engine clones ready)", id, poolSize);
     compiled_ = true;
 }
 
@@ -219,7 +241,7 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
     // Build dependency levels
     auto dependencyLevels = buildDependencyLevels();
 
-    // Execute each level in parallel
+    // Execute each level in parallel using pre-compiled engine clones from the pool
     for (const auto& level : dependencyLevels) {
         std::vector<std::future<std::pair<int, RuleResult>>> futures;
 
@@ -229,7 +251,10 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
             }
 
             futures.push_back(
-                std::async(std::launch::async, [&engine, &context, &parameters, rule]() {
+                std::async(std::launch::async, [&context, &parameters, rule, this]() {
+                    // Acquire a pre-compiled engine clone from the pool
+                    auto* threadEngine = acquireEngine();
+                    
                     // Check dependency before execution
                     if (rule->dependsOnRuleId.has_value()) {
                         auto depResult = context.getResult(rule->dependsOnRuleId.value());
@@ -238,12 +263,17 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
                             skipResult.ruleId = rule->id;
                             skipResult.success = false;
                             skipResult.exception = RuleException("Dependency failed: " + std::to_string(rule->dependsOnRuleId.value()));
+                            releaseEngine(threadEngine);
                             return std::make_pair(rule->id, skipResult);
                         }
                     }
 
-                    // Use the engine directly (it's thread-safe for concurrent reads via shared_lock)
-                    auto result = rule->execute(engine, context, parameters);
+                    // Execute with the cloned engine (no mutex contention!)
+                    auto result = rule->execute(*threadEngine, context, parameters);
+                    
+                    // Release engine back to the pool
+                    releaseEngine(threadEngine);
+                    
                     return std::make_pair(rule->id, result);
                 })
             );
@@ -262,6 +292,23 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
     }
 
     return results;
+}
+
+LuaEngine* Workflow::acquireEngine() {
+    std::lock_guard<std::mutex> lock(*poolMutex_);
+    if (enginePool_.empty()) {
+        return nullptr;
+    }
+    // Round-robin distribution
+    auto* engine = enginePool_[poolNextIndex_].get();
+    poolNextIndex_ = (poolNextIndex_ + 1) % enginePool_.size();
+    return engine;
+}
+
+void Workflow::releaseEngine(LuaEngine* /*engine*/) {
+    // Currently a no-op since engines are stateless after execution
+    // and the round-robin distribution handles reuse
+    // Future: could track in-use status for more sophisticated pooling
 }
 
 StreamingResult Workflow::executeStreaming(LuaEngine& engine, const std::vector<RuleParameter>& parameters) {
@@ -352,8 +399,8 @@ std::vector<std::vector<std::shared_ptr<Rule>>> Workflow::buildDependencyLevels(
         std::vector<std::shared_ptr<Rule>> level;
 
         // Find all rules with in-degree 0
-        for (const auto& [id, rule] : ruleMap) {
-            if (inDegree[id] == 0) {
+        for (const auto& [ruleId, rule] : ruleMap) {
+            if (inDegree[ruleId] == 0) {
                 level.push_back(rule);
             }
         }
@@ -372,8 +419,8 @@ std::vector<std::vector<std::shared_ptr<Rule>>> Workflow::buildDependencyLevels(
             ruleMap.erase(rule->id);
 
             // Decrease in-degree for rules depending on this one
-            for (const auto& [id, r] : ruleMap) {
-                (void)id;
+            for (const auto& [remainingId, r] : ruleMap) {
+                (void)remainingId;
                 if (r->dependsOnRuleId == rule->id) {
                     inDegree[r->id]--;
                 }
@@ -397,8 +444,8 @@ void Workflow::checkCircularDependencies() const {
     enum class VisitState { Unvisited, Visiting, Visited };
     std::unordered_map<int, VisitState> state;
 
-    for (const auto& [id, _] : ruleMap) {
-        state[id] = VisitState::Unvisited;
+    for (const auto& [ruleId, _] : ruleMap) {
+        state[ruleId] = VisitState::Unvisited;
     }
 
     std::function<bool(int)> dfs = [&](int ruleId) -> bool {
@@ -419,8 +466,8 @@ void Workflow::checkCircularDependencies() const {
         return false;
     };
 
-    for (const auto& [id, _] : ruleMap) {
-        if (state[id] == VisitState::Unvisited && dfs(id)) {
+    for (const auto& [ruleId, _] : ruleMap) {
+        if (state[ruleId] == VisitState::Unvisited && dfs(ruleId)) {
             throw RuleValidationException("Circular dependency detected");
         }
     }

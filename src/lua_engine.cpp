@@ -26,6 +26,9 @@ namespace {
 
 namespace fastrules {
 
+// Thread-local context for parallel execution
+thread_local RuleContext* LuaEngine::currentContext_ = nullptr;
+
 namespace {
 
 // Extract parameter names from a Lua expression
@@ -192,6 +195,12 @@ std::unique_ptr<LuaEngine> LuaEngine::clone() const {
     auto engine = std::make_unique<LuaEngine>();
     engine->typeRegistry_ = typeRegistry_;
     engine->actionCallbacks_ = actionCallbacks_;
+    // NOTE: Do NOT copy refToBackendId_ or paramNames_ - these are tied to
+    // the original Lua state. The cloned engine will compile its own refs.
+    engine->maxExpressionLength_ = maxExpressionLength_;
+    engine->compileCount_.store(compileCount_.load());
+    engine->generation_.store(generation_.load());
+    engine->autoResetThresholdKB_ = autoResetThresholdKB_;
     engine->bindTypesToState();
     engine->bindActionsToState();
     return engine;
@@ -223,15 +232,23 @@ void LuaEngine::setupEnvironment() {
 }
 
 void LuaEngine::setupContextTable(RuleContext& context) {
+    // Set the thread-local context for this execution
+    currentContext_ = &context;
+    
     // Register context_getResult as a global function
-    backend_->registerFunction("context_getResult", [&context, this](lua_State* /*L*/, const std::vector<std::unique_ptr<LuaValue>>& args) -> std::vector<std::unique_ptr<LuaValue>> {
+    backend_->registerFunction("context_getResult", [this](lua_State* /*L*/, const std::vector<std::unique_ptr<LuaValue>>& args) -> std::vector<std::unique_ptr<LuaValue>> {
         std::vector<std::unique_ptr<LuaValue>> results;
-        if (args.empty() || !args[0]->isString()) {
+        if (args.empty() || currentContext_ == nullptr) {
             return results;
         }
-        std::string ruleIdStr = args[0]->toString();
-        int ruleId = std::stoi(ruleIdStr);
-        auto result = context.getResult(ruleId);
+        int ruleId = 0;
+        if (args[0]->isString()) {
+            std::string ruleIdStr = args[0]->toString();
+            ruleId = std::stoi(ruleIdStr);
+        } else {
+            ruleId = static_cast<int>(args[0]->toNumber());
+        }
+        auto result = currentContext_->getResult(ruleId);
         auto tbl = backend_->createTable();
         if (result.has_value()) {
             tbl->set("success", *backend_->makeBool(result->success));
@@ -244,10 +261,18 @@ void LuaEngine::setupContextTable(RuleContext& context) {
         return results;
     });
     
-    // Set context.getResult
+    // Always set context.getResult (context table may have been recreated)
     auto ctxTbl = backend_->getGlobal("context");
-    if (ctxTbl) {
-        ctxTbl->set("getResult", *backend_->getGlobal("context_getResult"));
+    
+    // If context table doesn't exist or isn't a table, recreate it
+    if (!ctxTbl || !ctxTbl->isTable()) {
+        ctxTbl = backend_->createTable();
+        backend_->setGlobal("context", *ctxTbl);
+    }
+    
+    auto getResultFunc = backend_->getGlobal("context_getResult");
+    if (ctxTbl && ctxTbl->isTable() && getResultFunc && !getResultFunc->isNil()) {
+        ctxTbl->set("getResult", *getResultFunc);
     }
 }
 
@@ -697,7 +722,6 @@ std::optional<std::any> LuaEngine::await(int ref, const std::vector<RuleParamete
     if (handleIt == coroutineHandles_.end() || !handleIt->second) {
         return std::nullopt;
     }
-    void* handle = handleIt->second;
     
     // Resume one more time to get the final return value
     // Actually, the coroutine is already dead after the loop above.
