@@ -377,11 +377,24 @@ void Sol2Backend::bindTypes(TypeRegistry* registry) {
     if (!registry) return;
 
     for (const auto& [typeIndex, desc] : registry->allTypes()) {
-        // Create sol2 usertype with fields
-        // Note: sol2 usertype creation is complex; for now we register a simple
-        // table-based proxy. Full usertype support requires compile-time type info.
-        // TODO: Implement full sol2 usertype binding from TypeDescriptor
-        (void)desc; // unused for now — stub
+        // sol2 usertype binding from TypeDescriptor
+        // Creates a sol2 usertype with the registered fields
+        auto ut = lua_.new_usertype<void>(desc.name,
+            sol::no_constructor,
+            sol::meta_function::index, [this, desc](void* obj, const std::string& key) -> sol::object {
+                for (const auto& field : desc.fields) {
+                    if (field.name == key) {
+                        void* fieldPtr = static_cast<char*>(obj) + field.offset;
+                        if (field.luaType == "int") return sol::make_object(lua_, *static_cast<int*>(fieldPtr));
+                        if (field.luaType == "double") return sol::make_object(lua_, *static_cast<double*>(fieldPtr));
+                        if (field.luaType == "string") return sol::make_object(lua_, *static_cast<std::string*>(fieldPtr));
+                        if (field.luaType == "bool") return sol::make_object(lua_, *static_cast<bool*>(fieldPtr));
+                    }
+                }
+                return sol::nil;
+            }
+        );
+        (void)ut;
     }
 }
 

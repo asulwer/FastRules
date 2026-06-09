@@ -4,12 +4,12 @@
 
 namespace fastrules {
 
-void RuleContext::setResult(const std::string& ruleId, const RuleResult& result) {
+void RuleContext::setResult(int ruleId, const RuleResult& result) {
     std::unique_lock lock(mutex_);
     results_[ruleId] = result;
 }
 
-std::optional<RuleResult> RuleContext::getResult(const std::string& ruleId) const {
+std::optional<RuleResult> RuleContext::getResult(int ruleId) const {
     std::shared_lock lock(mutex_);
     auto it = results_.find(ruleId);
     if (it != results_.end()) {
@@ -18,7 +18,7 @@ std::optional<RuleResult> RuleContext::getResult(const std::string& ruleId) cons
     return std::nullopt;
 }
 
-bool RuleContext::hasResult(const std::string& ruleId) const {
+bool RuleContext::hasResult(int ruleId) const {
     std::shared_lock lock(mutex_);
     return results_.contains(ruleId);
 }
@@ -44,12 +44,12 @@ void RuleContext::clear() {
     lastError_.reset();
 }
 
-void RuleContext::setLastError(const std::string& ruleId, const std::string& error) {
+void RuleContext::setLastError(int ruleId, const std::string& error) {
     std::unique_lock lock(mutex_);
     lastError_ = {ruleId, error};
 }
 
-std::optional<std::pair<std::string, std::string>> RuleContext::getLastError() const {
+std::optional<std::pair<int, std::string>> RuleContext::getLastError() const {
     std::shared_lock lock(mutex_);
     return lastError_;
 }

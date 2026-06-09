@@ -5,11 +5,11 @@ using namespace fastrules;
 
 TEST_CASE("Rule basic creation", "[rule]") {
     Rule rule;
-    rule.id = "test-rule";
+    rule.id = 1;
     rule.description = "Test rule";
     rule.expression = "true";
 
-    REQUIRE(rule.id == "test-rule");
+    REQUIRE(rule.id == 1);
     REQUIRE(rule.description == "Test rule");
     REQUIRE(rule.isActive == true);
     REQUIRE(rule.priority == 0);

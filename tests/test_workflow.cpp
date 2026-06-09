@@ -5,10 +5,10 @@ using namespace fastrules;
 
 TEST_CASE("Workflow basic creation", "[workflow]") {
     Workflow workflow;
-    workflow.id = "test-workflow";
+    workflow.id = 1;
     workflow.description = "Test workflow";
 
-    REQUIRE(workflow.id == "test-workflow");
+    REQUIRE(workflow.id == 1);
     REQUIRE(workflow.description == "Test workflow");
     REQUIRE(workflow.isActive == true);
     REQUIRE(workflow.rules.empty());
@@ -20,15 +20,15 @@ TEST_CASE("Workflow execution order", "[workflow]") {
     workflow.description = "Priority test";
 
     auto rule1 = std::make_shared<Rule>();
-    rule1->id = "rule-1";
+    rule1->id = 1;
     rule1->priority = 2;
 
     auto rule2 = std::make_shared<Rule>();
-    rule2->id = "rule-2";
+    rule2->id = 2;
     rule2->priority = 1;
 
     auto rule3 = std::make_shared<Rule>();
-    rule3->id = "rule-3";
+    rule3->id = 3;
     rule3->priority = 0;
 
     workflow.rules.push_back(rule1);
@@ -38,9 +38,9 @@ TEST_CASE("Workflow execution order", "[workflow]") {
     auto order = workflow.resolveExecutionOrder();
 
     REQUIRE(order.size() == 3);
-    REQUIRE(order[0]->id == "rule-3"); // Lowest priority first
-    REQUIRE(order[1]->id == "rule-2");
-    REQUIRE(order[2]->id == "rule-1"); // Highest priority last
+    REQUIRE(order[0]->id == 3); // Lowest priority first
+    REQUIRE(order[1]->id == 2);
+    REQUIRE(order[2]->id == 1); // Highest priority last
 }
 
 TEST_CASE("Workflow dependency resolution", "[workflow]") {
@@ -48,13 +48,13 @@ TEST_CASE("Workflow dependency resolution", "[workflow]") {
     workflow.description = "Dependency test";
 
     auto baseRule = std::make_shared<Rule>();
-    baseRule->id = "base";
+    baseRule->id = 1;
     baseRule->priority = 0;
 
     auto dependentRule = std::make_shared<Rule>();
-    dependentRule->id = "dependent";
+    dependentRule->id = 2;
     dependentRule->priority = 1;
-    dependentRule->dependsOnRuleId = "base";
+    dependentRule->dependsOnRuleId = 1;
 
     workflow.rules.push_back(dependentRule); // Add in wrong order
     workflow.rules.push_back(baseRule);
@@ -62,8 +62,8 @@ TEST_CASE("Workflow dependency resolution", "[workflow]") {
     auto order = workflow.resolveExecutionOrder();
 
     REQUIRE(order.size() == 2);
-    REQUIRE(order[0]->id == "base"); // Dependency comes first
-    REQUIRE(order[1]->id == "dependent");
+    REQUIRE(order[0]->id == 1); // Dependency comes first
+    REQUIRE(order[1]->id == 2);
 }
 
 TEST_CASE("Workflow circular dependency detection", "[workflow]") {
@@ -71,12 +71,12 @@ TEST_CASE("Workflow circular dependency detection", "[workflow]") {
     workflow.description = "Circular dependency test";
 
     auto rule1 = std::make_shared<Rule>();
-    rule1->id = "rule1";
-    rule1->dependsOnRuleId = "rule2";
+    rule1->id = 1;
+    rule1->dependsOnRuleId = 2;
 
     auto rule2 = std::make_shared<Rule>();
-    rule2->id = "rule2";
-    rule2->dependsOnRuleId = "rule1";
+    rule2->id = 2;
+    rule2->dependsOnRuleId = 1;
 
     workflow.rules.push_back(rule1);
     workflow.rules.push_back(rule2);
@@ -91,12 +91,12 @@ TEST_CASE("Workflow compile and execute", "[workflow]") {
     workflow.description = "Execution test";
 
     auto rule1 = std::make_shared<Rule>();
-    rule1->id = "success-rule";
+    rule1->id = 1;
     rule1->expression = "true";
     workflow.rules.push_back(rule1);
 
     auto rule2 = std::make_shared<Rule>();
-    rule2->id = "fail-rule";
+    rule2->id = 2;
     rule2->expression = "false";
     workflow.rules.push_back(rule2);
 
