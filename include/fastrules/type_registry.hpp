@@ -25,7 +25,7 @@ struct TypeField {
 // ============================================================================
 struct TypeDescriptor {
     std::string name;
-    std::type_index type;
+    std::optional<std::type_index> type;
     std::vector<TypeField> fields;
     size_t size = 0;
 };
@@ -45,12 +45,13 @@ public:
     void registerType(const std::string& name, std::vector<TypeField> fields) {
         TypeDescriptor desc;
         desc.name = name;
-        desc.type = std::type_index(typeid(T));
+        auto t = std::type_index(typeid(T));
+        desc.type = t;
         desc.fields = std::move(fields);
         desc.size = sizeof(T);
-        types_[desc.type] = std::move(desc);
-        types_[std::type_index(typeid(T*))] = types_[desc.type]; // pointer alias
-        nameToType_[name] = desc.type;
+        types_[t] = std::move(desc);
+        types_[std::type_index(typeid(T*))] = types_.at(t); // pointer alias
+        nameToType_[name] = t;
     }
 
     [[nodiscard]] bool isRegistered(const std::type_index& type) const {
@@ -59,7 +60,7 @@ public:
 
     [[nodiscard]] bool isRegistered(const std::string& name) const {
         auto it = nameToType_.find(name);
-        return it != nameToType_.end();
+        return it != nameToType_.end() && it->second.has_value();
     }
 
     [[nodiscard]] bool isRegistered(const std::optional<std::type_index>& type) const {
@@ -76,8 +77,8 @@ public:
 
     [[nodiscard]] std::optional<TypeDescriptor> getDescriptor(const std::string& name) const {
         auto it = nameToType_.find(name);
-        if (it != nameToType_.end()) {
-            return getDescriptor(it->second);
+        if (it != nameToType_.end() && it->second.has_value()) {
+            return getDescriptor(it->second.value());
         }
         return std::nullopt;
     }
@@ -88,7 +89,7 @@ public:
 
 private:
     std::unordered_map<std::type_index, TypeDescriptor> types_;
-    std::unordered_map<std::string, std::type_index> nameToType_;
+    std::unordered_map<std::string, std::optional<std::type_index>> nameToType_;
 };
 
 } // namespace fastrules

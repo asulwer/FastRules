@@ -37,6 +37,18 @@ struct RuleParameter {
         , type(std::type_index(typeid(T)))
         , value(std::move(v)) {}
 
+    // Constructor for primitive types (string type tag + value)
+    template<typename T>
+    RuleParameter(std::string n, std::string typeTag, T v)
+        : name(std::move(n))
+        , value(std::move(v)) {
+        if (typeTag == "int") type = std::type_index(typeid(int));
+        else if (typeTag == "double") type = std::type_index(typeid(double));
+        else if (typeTag == "bool") type = std::type_index(typeid(bool));
+        else if (typeTag == "string") type = std::type_index(typeid(std::string));
+        else type = std::type_index(typeid(T));
+    }
+
     RuleParameter(RuleParameter&&) noexcept = default;
     RuleParameter& operator=(RuleParameter&&) noexcept = default;
     RuleParameter(const RuleParameter&) = default;

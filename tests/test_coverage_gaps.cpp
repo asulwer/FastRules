@@ -1,3 +1,4 @@
+#include <iostream>
 #include <catch2/catch_test_macros.hpp>
 #include <fastrules.hpp>
 #include <fastrules/rate_limiter.hpp>
@@ -22,7 +23,7 @@ TEST_CASE("Rule builder basic construction", "[rule][builder]") {
         .active(true)
         .build();
 
-    REQUIRE(rule->id == "check-age");
+    REQUIRE(rule->id == 1);
     REQUIRE(rule->description == "Verify age requirement");
     REQUIRE(rule->expression == "age >= 18");
     REQUIRE(rule->action == "setStatus('adult')");
@@ -35,7 +36,7 @@ TEST_CASE("Rule builder basic construction", "[rule][builder]") {
 TEST_CASE("Rule builder defaults", "[rule][builder]") {
     auto rule = Rule::Builder(2).build();
     
-    REQUIRE(rule->id == "simple-check");
+    REQUIRE(rule->id == 2);
     REQUIRE(rule->description.empty());
     REQUIRE(rule->expression.empty());
     REQUIRE(rule->action.empty());
@@ -53,9 +54,9 @@ TEST_CASE("TypeRegistry unregistered type returns nil", "[types]") {
     LuaEngine engine;
 
     struct Point { int x = 0; int y = 0; };
-    engine.registerType<Point>("Point", [](auto& ut) {
-        ut["x"] = &Point::x;
-        ut["y"] = &Point::y;
+    engine.registerType<Point>("Point", {
+        {"x", offsetof(Point, x), "int"},
+        {"y", offsetof(Point, y), "int"}
     });
 
     REQUIRE(engine.isTypeRegistered("Point"));

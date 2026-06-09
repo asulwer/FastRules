@@ -21,8 +21,8 @@ TEST_CASE("LuaEngine state reset preserves types and callbacks", "[lua_engine][c
     LuaEngine engine;
 
     // Register a type
-    engine.registerType<int>("MyInt", [](auto& ut) {
-        ut["value"] = [](int* self) { return *self; };
+    engine.registerType<int>("MyInt", {
+        {"value", 0, "int"}
     });
 
     // Register an action (sol2-specific signature)

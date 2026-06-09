@@ -34,7 +34,7 @@ TEST_CASE("Benchmark workflow compilation", "[benchmark][compilation]") {
 
     for (int i = 0; i < 10; ++i) {
         auto rule = std::make_shared<Rule>();
-        rule->id = 1 + std::to_string(i);
+        rule->id = 100 + i;
         rule->expression = "x > " + std::to_string(i);
         workflow.rules.push_back(rule);
     }
@@ -71,9 +71,9 @@ TEST_CASE("Benchmark rule with type registration", "[benchmark][execution]") {
     LuaEngine engine;
 
     struct Point { double x = 0; double y = 0; };
-    engine.registerType<Point>("Point", [](auto& ut) {
-        ut["x"] = &Point::x;
-        ut["y"] = &Point::y;
+    engine.registerType<Point>("Point", {
+        {"x", offsetof(Point, x), "double"},
+        {"y", offsetof(Point, y), "double"}
     });
 
     Rule rule;
@@ -103,7 +103,7 @@ TEST_CASE("Benchmark sequential workflow execution", "[benchmark][execution]") {
 
     for (int i = 0; i < 5; ++i) {
         auto rule = std::make_shared<Rule>();
-        rule->id = 1 + std::to_string(i);
+        rule->id = 100 + i;
         rule->expression = "x > " + std::to_string(i);
         workflow.rules.push_back(rule);
     }
@@ -126,7 +126,7 @@ TEST_CASE("Benchmark parallel workflow execution", "[benchmark][execution]") {
 
     for (int i = 0; i < 5; ++i) {
         auto rule = std::make_shared<Rule>();
-        rule->id = 1 + std::to_string(i);
+        rule->id = 100 + i;
         rule->expression = "x > " + std::to_string(i);
         workflow.rules.push_back(rule);
     }
@@ -153,7 +153,7 @@ TEST_CASE("Benchmark rule memory footprint", "[benchmark][memory]") {
             Rule rule;
             rule.id = 1;
             rule.expression = "x > 0";
-                    return rule.id.length();
+                    return sizeof(rule.id);
         });
     };
 }
@@ -167,7 +167,7 @@ TEST_CASE("Benchmark workflow memory scaling", "[benchmark][memory]") {
     
     for (int i = 0; i < 50; ++i) {
         auto rule = std::make_shared<Rule>();
-        rule->id = 1 + std::to_string(i);
+        rule->id = 100 + i;
         rule->expression = "x > " + std::to_string(i);
         workflow.rules.push_back(rule);
     }

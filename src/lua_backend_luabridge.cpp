@@ -267,6 +267,7 @@ struct LuaBridge3Backend::Impl {
     std::unordered_set<std::string> globals_;
     std::unordered_map<std::string, LuaNativeFunc> nativeFuncs_;
     std::unordered_map<std::string, LuaPredicateFunc> predicates_;
+    std::vector<ActionCallbacks::Handler> actionHandlers_;
 };
 
 LuaBridge3Backend::LuaBridge3Backend() : pImpl_(std::make_unique<Impl>()) {
@@ -290,6 +291,12 @@ LuaBridge3Backend::~LuaBridge3Backend() {
 
 void LuaBridge3Backend::openLibraries() {
     luaL_openlibs(pImpl_->L);
+    
+    // Store backend pointer for closures to access action handlers
+    LuaBridge3Backend** ptr = reinterpret_cast<LuaBridge3Backend**>(
+        lua_newuserdata(pImpl_->L, sizeof(LuaBridge3Backend*)));
+    *ptr = this;
+    lua_setglobal(pImpl_->L, "__fastrules_backend_ptr");
 }
 
 lua_State* LuaBridge3Backend::state() const {
@@ -691,21 +698,199 @@ std::unique_ptr<LuaValue> LuaBridge3Backend::createTable() {
 // Type / Action binding — stubs for now (full implementation later)
 // ============================================================================
 
-void LuaBridge3Backend::bindTypes(TypeRegistry* /*registry*/) {
-    // LuaBridge3 type binding from TypeDescriptor
-    // Note: LuaBridge3 requires compile-time type knowledge. Runtime field binding
-    // is not directly supported. Users should use the sol2 backend for type registration.
-    throw std::runtime_error("LuaBridge3 backend does not support runtime type registration. Use sol2 backend instead.");
+void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
+    if (!registry) return;
+
+    for (const auto& [typeIndex, desc] : registry->allTypes()) {
+        // Create a metatable for this type
+        std::string mtName = "__fastrules_mt_" + desc.name;
+        luaL_newmetatable(pImpl_->L, mtName.c_str());
+
+        // Store type descriptor pointer as upvalue (in registry)
+        // We need to store it somewhere accessible to the closures
+        lua_pushstring(pImpl_->L, "__fields");
+        lua_newtable(pImpl_->L); // table of fieldName -> {offset, luaType}
+        for (const auto& field : desc.fields) {
+            lua_pushstring(pImpl_->L, field.name.c_str());
+            lua_newtable(pImpl_->L);
+            lua_pushstring(pImpl_->L, "offset");
+            lua_pushinteger(pImpl_->L, static_cast<lua_Integer>(field.offset));
+            lua_settable(pImpl_->L, -3);
+            lua_pushstring(pImpl_->L, "type");
+            lua_pushstring(pImpl_->L, field.luaType.c_str());
+            lua_settable(pImpl_->L, -3);
+            lua_settable(pImpl_->L, -3);
+        }
+        lua_settable(pImpl_->L, -3);
+
+        // __index closure
+        lua_pushstring(pImpl_->L, "__index");
+        lua_pushcfunction(pImpl_->L, [](lua_State* L) -> int {
+            // arg1: userdata (the object pointer)
+            // arg2: field name
+            void* obj = lua_touserdata(L, 1);
+            if (!obj) {
+                lua_pushnil(L);
+                return 1;
+            }
+            const char* fieldName = lua_tostring(L, 2);
+            if (!fieldName) {
+                lua_pushnil(L);
+                return 1;
+            }
+
+            // Get the metatable
+            if (!lua_getmetatable(L, 1)) {
+                lua_pushnil(L);
+                return 1;
+            }
+            lua_pushstring(L, "__fields");
+            lua_rawget(L, -2); // get fields table
+            if (!lua_istable(L, -1)) {
+                lua_pop(L, 2);
+                lua_pushnil(L);
+                return 1;
+            }
+
+            lua_pushstring(L, fieldName);
+            lua_rawget(L, -2); // get field info table
+            if (!lua_istable(L, -1)) {
+                lua_pop(L, 3);
+                lua_pushnil(L);
+                return 1;
+            }
+
+            lua_pushstring(L, "offset");
+            lua_rawget(L, -2);
+            size_t offset = static_cast<size_t>(lua_tointeger(L, -1));
+            lua_pop(L, 1);
+
+            lua_pushstring(L, "type");
+            lua_rawget(L, -2);
+            std::string typeStr = lua_tostring(L, -1) ? lua_tostring(L, -1) : "";
+            lua_pop(L, 1);
+
+            // Pop field info + fields table + metatable
+            lua_pop(L, 3);
+
+            // Read value at offset
+            char* ptr = static_cast<char*>(obj);
+            if (typeStr == "int") {
+                lua_pushinteger(L, *reinterpret_cast<int*>(ptr + offset));
+            } else if (typeStr == "double") {
+                lua_pushnumber(L, *reinterpret_cast<double*>(ptr + offset));
+            } else if (typeStr == "bool") {
+                lua_pushboolean(L, *reinterpret_cast<bool*>(ptr + offset));
+            } else if (typeStr == "string") {
+                lua_pushstring(L, reinterpret_cast<std::string*>(ptr + offset)->c_str());
+            } else {
+                lua_pushnil(L);
+            }
+            return 1;
+        });
+        lua_settable(pImpl_->L, -3);
+
+        // __newindex closure
+        lua_pushstring(pImpl_->L, "__newindex");
+        lua_pushcfunction(pImpl_->L, [](lua_State* L) -> int {
+            // arg1: userdata, arg2: field name, arg3: value
+            void* obj = lua_touserdata(L, 1);
+            if (!obj) return 0;
+            const char* fieldName = lua_tostring(L, 2);
+            if (!fieldName) return 0;
+
+            if (!lua_getmetatable(L, 1)) return 0;
+            lua_pushstring(L, "__fields");
+            lua_rawget(L, -2);
+            if (!lua_istable(L, -1)) {
+                lua_pop(L, 2);
+                return 0;
+            }
+
+            lua_pushstring(L, fieldName);
+            lua_rawget(L, -2);
+            if (!lua_istable(L, -1)) {
+                lua_pop(L, 3);
+                return 0;
+            }
+
+            lua_pushstring(L, "offset");
+            lua_rawget(L, -2);
+            size_t offset = static_cast<size_t>(lua_tointeger(L, -1));
+            lua_pop(L, 1);
+
+            lua_pushstring(L, "type");
+            lua_rawget(L, -2);
+            std::string typeStr = lua_tostring(L, -1) ? lua_tostring(L, -1) : "";
+            lua_pop(L, 1);
+            lua_pop(L, 3); // field info + fields + metatable
+
+            char* ptr = static_cast<char*>(obj);
+            if (typeStr == "int") {
+                *reinterpret_cast<int*>(ptr + offset) = static_cast<int>(lua_tointeger(L, 3));
+            } else if (typeStr == "double") {
+                *reinterpret_cast<double*>(ptr + offset) = lua_tonumber(L, 3);
+            } else if (typeStr == "bool") {
+                *reinterpret_cast<bool*>(ptr + offset) = lua_toboolean(L, 3);
+            } else if (typeStr == "string") {
+                *reinterpret_cast<std::string*>(ptr + offset) = lua_tostring(L, 3) ? lua_tostring(L, 3) : "";
+            }
+            return 0;
+        });
+        lua_settable(pImpl_->L, -3);
+
+        lua_pop(pImpl_->L, 1); // pop metatable
+    }
 }
 
 void LuaBridge3Backend::bindActions(ActionCallbacks* callbacks) {
     if (!callbacks) return;
     
-    // LuaBridge3 action callback binding via C function wrappers
     callbacks->forEachHandler([this](const std::string& name, const ActionCallbacks::Handler& handler) {
-        // Store handler in a registry and push a C closure that calls it
-        // For now, register as a simple function that throws (not fully implemented)
-        (void)name; (void)handler;
+        // Wrap the std::any handler in a C closure
+        // Store the handler in a persistent map
+        int handlerId = static_cast<int>(pImpl_->actionHandlers_.size());
+        pImpl_->actionHandlers_.push_back(handler);
+
+        lua_pushinteger(pImpl_->L, handlerId);
+        lua_pushcclosure(pImpl_->L, [](lua_State* L) -> int {
+            int hId = static_cast<int>(lua_tointeger(L, lua_upvalueindex(1)));
+            // Need access to backend's handler list - this requires a registry lookup
+            // For simplicity, store a pointer to the backend in a global
+            lua_getglobal(L, "__fastrules_backend_ptr");
+            auto* backend = reinterpret_cast<LuaBridge3Backend**>(lua_touserdata(L, -1));
+            lua_pop(L, 1);
+            if (!backend || !*backend) {
+                luaL_error(L, "Action handler not available");
+                return 0;
+            }
+            if (hId < 0 || hId >= static_cast<int>((*backend)->pImpl_->actionHandlers_.size())) {
+                luaL_error(L, "Invalid action handler ID");
+                return 0;
+            }
+            
+            // Build parameter map from Lua arguments
+            std::unordered_map<std::string, std::any> params;
+            int nargs = lua_gettop(L);
+            for (int i = 1; i <= nargs; ++i) {
+                if (lua_isstring(L, i)) {
+                    params["arg" + std::to_string(i)] = std::string(lua_tostring(L, i));
+                } else if (lua_isnumber(L, i)) {
+                    params["arg" + std::to_string(i)] = lua_tonumber(L, i);
+                } else if (lua_isboolean(L, i)) {
+                    params["arg" + std::to_string(i)] = lua_toboolean(L, i) != 0;
+                }
+            }
+            
+            try {
+                (*backend)->pImpl_->actionHandlers_[hId](params);
+            } catch (const std::exception& e) {
+                luaL_error(L, "Action handler error: %s", e.what());
+                return 0;
+            }
+            return 0;
+        }, 1);
+        lua_setglobal(pImpl_->L, name.c_str());
     });
 }
 

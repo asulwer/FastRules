@@ -4,29 +4,29 @@
 using namespace fastrules;
 
 TEST_CASE("ExecutionTracer basic", "[execution_tracing]") {
-    ExecutionTracer tracer("test-workflow");
+    ExecutionTracer tracer(1);
 
     tracer.start();
     REQUIRE(tracer.isActive());
 
-    tracer.record("rule-1", "compile", true, "Compiled successfully");
-    tracer.record("rule-1", "execute", true, "Rule evaluated to true");
+    tracer.record(1, "compile", true, "Compiled successfully");
+    tracer.record(1, "execute", true, "Rule evaluated to true");
 
     tracer.finish(true);
     REQUIRE(!tracer.isActive());
 
     const auto& trace = tracer.getTrace();
-    REQUIRE(trace.workflowId == "test-workflow");
+    REQUIRE(trace.workflowId == 1);
     REQUIRE(trace.steps.size() == 2);
     REQUIRE(trace.overallSuccess);
 }
 
 TEST_CASE("ExecutionTrace query methods", "[execution_tracing]") {
-    ExecutionTracer tracer("query-test");
+    ExecutionTracer tracer(2);
     tracer.start();
 
     ExecutionTraceStep step1;
-    step1.ruleId = "rule-a";
+    step1.ruleId = 1;
     step1.stage = "compile";
     step1.success = true;
     step1.startedAt = std::chrono::steady_clock::now();
@@ -34,7 +34,7 @@ TEST_CASE("ExecutionTrace query methods", "[execution_tracing]") {
     tracer.addStep(step1);
 
     ExecutionTraceStep step2;
-    step2.ruleId = "rule-b";
+    step2.ruleId = 2;
     step2.stage = "execute";
     step2.success = true;
     step2.startedAt = std::chrono::steady_clock::now();
@@ -42,7 +42,7 @@ TEST_CASE("ExecutionTrace query methods", "[execution_tracing]") {
     tracer.addStep(step2);
 
     ExecutionTraceStep step3;
-    step3.ruleId = "rule-a";
+    step3.ruleId = 1;
     step3.stage = "execute";
     step3.success = false;
     step3.startedAt = std::chrono::steady_clock::now();
@@ -54,7 +54,7 @@ TEST_CASE("ExecutionTrace query methods", "[execution_tracing]") {
     const auto& trace = tracer.getTrace();
 
     // getStepsForRule
-    auto ruleASteps = trace.getStepsForRule("rule-a");
+    auto ruleASteps = trace.getStepsForRule(1);
     REQUIRE(ruleASteps.size() == 2);
 
     // getTotalTimeInStage
@@ -64,14 +64,14 @@ TEST_CASE("ExecutionTrace query methods", "[execution_tracing]") {
     // getSlowestStep
     auto slowest = trace.getSlowestStep();
     REQUIRE(slowest.has_value());
-    REQUIRE(slowest->ruleId == "rule-b");
+    REQUIRE(slowest->ruleId == 2);
 }
 
 TEST_CASE("ExecutionTrace JSON serialization", "[execution_tracing]") {
-    ExecutionTracer tracer("json-test");
+    ExecutionTracer tracer(3);
     tracer.start();
 
-    tracer.record("rule-1", "execute", true, "OK");
+    tracer.record(1, "execute", true, "OK");
     tracer.finish(true);
 
     // toJson() has been removed from core — use JsonSerialization::serialize(trace)
@@ -94,7 +94,7 @@ TEST_CASE("Workflow executeWithTrace", "[execution_tracing]") {
     workflow.rules.push_back(rule1);
     workflow.rules.push_back(rule2);
 
-    ExecutionTracer tracer("trace-test");
+    ExecutionTracer tracer(4);
     std::vector<RuleParameter> params;
 
     auto results = workflow.executeWithTrace(engine, params, tracer);
@@ -105,6 +105,6 @@ TEST_CASE("Workflow executeWithTrace", "[execution_tracing]") {
     const auto& trace = tracer.getTrace();
     REQUIRE(trace.steps.size() >= 2);  // At least execute steps for both rules
 
-    auto rule1Steps = trace.getStepsForRule("rule-1");
+    auto rule1Steps = trace.getStepsForRule(1);
     REQUIRE(!rule1Steps.empty());
 }

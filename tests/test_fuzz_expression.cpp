@@ -142,7 +142,7 @@ TEST_CASE("Lua compilation handles malformed but safe expressions", "[security][
     
     for (const auto& expr : expressions) {
         Rule rule;
-        rule.id = 1 + std::to_string(expr.length());
+        rule.id = 1 + static_cast<int>(expr.length());
         rule.expression = expr;
         
         // Should throw compilation exception, not crash
@@ -285,7 +285,7 @@ TEST_CASE("Workflow handles large rule sets", "[security][fuzz]") {
     workflow.id = 1;
     
     for (int i = 0; i < 1000; ++i) {
-        auto rule = Rule::Builder(4 + std::to_string(i))
+        auto rule = Rule::Builder(400 + i)
             .withExpression("true")
             .withPriority(i)
             .build();
@@ -304,12 +304,12 @@ TEST_CASE("Workflow handles large rule sets", "[security][fuzz]") {
 TEST_CASE("Workflow handles circular dependencies gracefully", "[security][fuzz]") {
     auto rule1 = Rule::Builder(5)
         .withExpression("true")
-        .dependsOn("B")
+        .dependsOn(2)
         .build();
     
     auto rule2 = Rule::Builder(6)
         .withExpression("true")
-        .dependsOn("A")
+        .dependsOn(1)
         .build();
     
     Workflow workflow;
