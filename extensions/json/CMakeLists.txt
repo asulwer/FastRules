@@ -52,6 +52,7 @@ target_compile_definitions(fastrules-json PUBLIC FASTRULES_HAS_JSON_LOADER)
 target_include_directories(fastrules-json PUBLIC
     include
     ${FASTRULES_INCLUDE_DIR}
+    ${CMAKE_SOURCE_DIR}/extensions/include
 )
 
 # Add nlohmann/json include directory explicitly for IntelliSense

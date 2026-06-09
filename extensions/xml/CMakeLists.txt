@@ -64,6 +64,7 @@ source_group("Header Files" FILES
 target_include_directories(fastrules-xml PUBLIC
     include
     ${FASTRULES_INCLUDE_DIR}
+    ${CMAKE_SOURCE_DIR}/extensions/include
 )
 
 # Add pugixml include directory explicitly for IntelliSense
