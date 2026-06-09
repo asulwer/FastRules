@@ -23,11 +23,11 @@ int main() {
     try {
         fastrules::LuaEngine engine;
 
-        engine.registerType<Customer>("Customer", [](auto& ut) {
-            ut["name"] = &Customer::name;
-            ut["age"] = &Customer::age;
-            ut["processed"] = &Customer::processed;
-            ut["isActive"] = &Customer::isActive;
+        engine.registerType<Customer>("Customer", [](auto& reg) {
+            reg.bind("name", &Customer::name);
+            reg.bind("age", &Customer::age);
+            reg.bind("processed", &Customer::processed);
+            reg.bind("isActive", &Customer::isActive);
         });
 
         // === WORKFLOW: Holder for all rules ===
@@ -114,5 +114,3 @@ int main() {
 
     return 0;
 }
-
-

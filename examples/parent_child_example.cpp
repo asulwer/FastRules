@@ -20,11 +20,11 @@ int main() {
     try {
         fastrules::LuaEngine engine;
 
-        engine.registerType<Customer>("Customer", [](auto& ut) {
-            ut["name"] = &Customer::name;
-            ut["age"] = &Customer::age;
-            ut["processed"] = &Customer::processed;
-            ut["isActive"] = &Customer::isActive;
+        engine.registerType<Customer>("Customer", [](auto& reg) {
+            reg.bind("name", &Customer::name);
+            reg.bind("age", &Customer::age);
+            reg.bind("processed", &Customer::processed);
+            reg.bind("isActive", &Customer::isActive);
         });
 
         // Child rule 1: Age check
@@ -45,13 +45,13 @@ int main() {
         // Uses context.getResult() to check child results
         auto parent = std::make_shared<fastrules::Rule>();
         parent->id = 3;
-        parent->expression = "context.getResult(4).success == true and context.getResult(5).success == true";
+        parent->expression = "context.getResult(1).success == true and context.getResult(2).success == true";
         parent->action = "customer.processed = true";
         parent->isActive = true;
         parent->priority = 2;
 
         // Add children to parent's childRules
-        // Parent depends on both children
+        // Parent is top-level, children are nested
         parent->childRules = {child1, child2};
 
         fastrules::Workflow workflow;
@@ -98,5 +98,3 @@ int main() {
 
     return 0;
 }
-
-

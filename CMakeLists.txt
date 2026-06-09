@@ -401,26 +401,49 @@ if(FASTRULES_BUILD_EXAMPLES)
     set_property(TARGET luabridge3_basic_example PROPERTY FOLDER "Examples")
     target_link_libraries(luabridge3_basic_example PRIVATE fastrules)
 
-    # FIXME: These examples use outdated sol2 APIs that no longer exist.
-    # They need to be updated to use the current LuaBridge3-based API:
-    # - registerType now takes std::vector<TypeField> instead of lambda
-    # - dependsOnRuleId is now int, not string
-    # - getGlobal method was removed from LuaEngine
-    # - sol::object types are no longer available
-    #
-    # add_executable(core_only_example examples/core_only_example.cpp)
-    # add_executable(workflow_bubble_up examples/workflow_bubble_up.cpp)
-    # add_executable(parent_child_example examples/parent_child_example.cpp)
-    # add_executable(multi_object_example examples/multi_object_example.cpp)
-    # add_executable(no_globals_example examples/no_globals_example.cpp)
-    
+    add_executable(core_only_example examples/core_only_example.cpp)
+    set_property(TARGET core_only_example PROPERTY FOLDER "Examples")
+    target_link_libraries(core_only_example PRIVATE fastrules)
+
+    add_executable(workflow_bubble_up examples/workflow_bubble_up.cpp)
+    set_property(TARGET workflow_bubble_up PROPERTY FOLDER "Examples")
+    target_link_libraries(workflow_bubble_up PRIVATE fastrules)
+
+    add_executable(parent_child_example examples/parent_child_example.cpp)
+    set_property(TARGET parent_child_example PROPERTY FOLDER "Examples")
+    target_link_libraries(parent_child_example PRIVATE fastrules)
+
+    add_executable(multi_object_example examples/multi_object_example.cpp)
+    set_property(TARGET multi_object_example PROPERTY FOLDER "Examples")
+    target_link_libraries(multi_object_example PRIVATE fastrules)
+
+    add_executable(no_globals_example examples/no_globals_example.cpp)
+    set_property(TARGET no_globals_example PROPERTY FOLDER "Examples")
+    target_link_libraries(no_globals_example PRIVATE fastrules)
+
     add_executable(typed_example examples/typed_example.cpp)
     set_property(TARGET typed_example PROPERTY FOLDER "Examples")
     target_link_libraries(typed_example PRIVATE fastrules)
-    
-    # add_executable(custom_methods_example examples/custom_methods_example.cpp)
-    # add_executable(repl_example examples/repl_example.cpp)
-    # add_executable(debug_context examples/debug_context.cpp)
+
+    add_executable(custom_methods_example examples/custom_methods_example.cpp)
+    set_property(TARGET custom_methods_example PROPERTY FOLDER "Examples")
+    target_link_libraries(custom_methods_example PRIVATE fastrules)
+
+    add_executable(repl_example examples/repl_example.cpp)
+    set_property(TARGET repl_example PROPERTY FOLDER "Examples")
+    target_link_libraries(repl_example PRIVATE fastrules)
+
+    add_executable(debug_context examples/debug_context.cpp)
+    set_property(TARGET debug_context PROPERTY FOLDER "Examples")
+    target_link_libraries(debug_context PRIVATE fastrules)
+
+    add_executable(macro_example examples/macro_example.cpp)
+    set_property(TARGET macro_example PROPERTY FOLDER "Examples")
+    target_link_libraries(macro_example PRIVATE fastrules)
+
+    add_executable(console_logging_example examples/console_logging_example.cpp)
+    set_property(TARGET console_logging_example PROPERTY FOLDER "Examples")
+    target_link_libraries(console_logging_example PRIVATE fastrules)
 endif()
 
 # JSON/XML-dependent examples (only if extensions are built)

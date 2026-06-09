@@ -36,16 +36,16 @@ int main() {
         fastrules::LuaEngine engine;
 
         // Register both types
-        engine.registerType<Customer>("Customer", [](auto& ut) {
-            ut["name"] = &Customer::name;
-            ut["total"] = &Customer::total;
-            ut["vip"] = &Customer::vip;
+        engine.registerType<Customer>("Customer", [](auto& reg) {
+            reg.bind("name", &Customer::name);
+            reg.bind("total", &Customer::total);
+            reg.bind("vip", &Customer::vip);
         });
 
-        engine.registerType<Order>("Order", [](auto& ut) {
-            ut["id"] = &Order::id;
-            ut["minTotal"] = &Order::minTotal;
-            ut["status"] = &Order::status;
+        engine.registerType<Order>("Order", [](auto& reg) {
+            reg.bind("id", &Order::id);
+            reg.bind("minTotal", &Order::minTotal);
+            reg.bind("status", &Order::status);
         });
 
         // Rule that compares two different objects
@@ -110,5 +110,3 @@ int main() {
 
     return 0;
 }
-
-

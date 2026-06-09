@@ -100,7 +100,7 @@ std::string JsonSerialization::serialize(const RuleVersionManager& manager) {
     
     json histories = json::array();
     for (const auto& ruleId : manager.getTrackedRuleIds()) {
-        auto historyOpt = manager.getHistory(ruleId);
+        auto historyOpt = manager.getHistory(std::stoi(ruleId));
         if (historyOpt) {
             histories.push_back(json::parse(serialize(historyOpt.value())));
         }
@@ -119,7 +119,7 @@ void JsonSerialization::deserialize(RuleVersionManager& manager, const std::stri
             if (historyOpt) {
                 for (const auto& ver : historyOpt->getVersions()) {
                     Rule rule;
-                    rule.id = ver.ruleId;
+                    rule.id = std::stoi(ver.ruleId);
                     rule.expression = ver.expression;
                     rule.action = ver.action;
                     rule.isActive = ver.isActive;

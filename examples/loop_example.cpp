@@ -37,11 +37,11 @@ int main(int argc, char* argv[]) {
 
         // 2. REGISTER TYPES - one time
         // This binds Customer properties to Lua. Do this once at startup.
-        engine.registerType<Customer>("Customer", [](auto& ut) {
-            ut["name"] = &Customer::name;
-            ut["age"] = &Customer::age;
-            ut["processed"] = &Customer::processed;
-            ut["isActive"] = &Customer::isActive;
+        engine.registerType<Customer>("Customer", [](auto& reg) {
+            reg.bind("name", &Customer::name);
+            reg.bind("age", &Customer::age);
+            reg.bind("processed", &Customer::processed);
+            reg.bind("isActive", &Customer::isActive);
         });
 
         // 3. CREATE WORKFLOW - one time
@@ -93,5 +93,3 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
-
-

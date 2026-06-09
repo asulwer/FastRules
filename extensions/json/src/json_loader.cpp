@@ -19,11 +19,16 @@ namespace {
 std::shared_ptr<Rule> JsonLoader::parseRule(const nlohmann::json& j) {
     auto rule = std::make_shared<Rule>();
 
-    if (j.contains("id") && j["id"].is_string()) {
-        rule->id = j["id"];
+    if (j.contains("id")) {
+        if (j["id"].is_number_integer()) {
+            rule->id = j["id"];
+        } else if (j["id"].is_string()) {
+            rule->id = std::stoi(j["id"].get<std::string>());
+        } else {
+            rule->id = ++ruleIdCounter;
+        }
     } else {
-        // Generate thread-safe unique ID
-        rule->id = "rule-" + std::to_string(++ruleIdCounter);
+        rule->id = ++ruleIdCounter;
     }
 
     if (j.contains("description") && j["description"].is_string()) {
@@ -47,8 +52,10 @@ std::shared_ptr<Rule> JsonLoader::parseRule(const nlohmann::json& j) {
     }
 
     if (j.contains("dependsOnRuleId") && !j["dependsOnRuleId"].is_null()) {
-        if (j["dependsOnRuleId"].is_string()) {
+        if (j["dependsOnRuleId"].is_number_integer()) {
             rule->dependsOnRuleId = j["dependsOnRuleId"];
+        } else if (j["dependsOnRuleId"].is_string()) {
+            rule->dependsOnRuleId = std::stoi(j["dependsOnRuleId"].get<std::string>());
         }
     }
 
@@ -134,11 +141,18 @@ Workflow JsonLoader::loadWorkflow(const std::string& jsonString) {
 
     nlohmann::json j = nlohmann::json::parse(jsonString);
 
-    if (j.contains("id") && j["id"].is_string()) {
-        workflow.id = j["id"];
+    if (j.contains("id")) {
+        if (j["id"].is_number_integer()) {
+            workflow.id = j["id"];
+        } else if (j["id"].is_string()) {
+            workflow.id = std::stoi(j["id"].get<std::string>());
+        } else {
+            static int counter = 0;
+            workflow.id = ++counter;
+        }
     } else {
         static int counter = 0;
-        workflow.id = "workflow-" + std::to_string(++counter);
+        workflow.id = ++counter;
     }
 
     if (j.contains("description") && j["description"].is_string()) {

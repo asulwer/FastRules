@@ -15,109 +15,215 @@
 #pragma once
 
 // ============================================================================
-// Field binding macro — generates reg.bind() calls
+// Field & method binding primitives
 // ============================================================================
 
-#define FASTRULES_BIND_FIELD_1(reg, TypeName, field1) \
-    reg.bind(#field1, &TypeName::field1)
+#define FASTRULES_BIND_FIELD(reg_, TypeName_, fieldName_) \
+    reg_.bind(#fieldName_, &TypeName_::fieldName_);
 
-#define FASTRULES_BIND_FIELD_2(reg, TypeName, field1, field2) \
-    FASTRULES_BIND_FIELD_1(reg, TypeName, field1); \
-    reg.bind(#field2, &TypeName::field2)
-
-#define FASTRULES_BIND_FIELD_3(reg, TypeName, field1, field2, field3) \
-    FASTRULES_BIND_FIELD_2(reg, TypeName, field1, field2); \
-    reg.bind(#field3, &TypeName::field3)
-
-#define FASTRULES_BIND_FIELD_4(reg, TypeName, field1, field2, field3, field4) \
-    FASTRULES_BIND_FIELD_3(reg, TypeName, field1, field2, field3); \
-    reg.bind(#field4, &TypeName::field4)
-
-#define FASTRULES_BIND_FIELD_5(reg, TypeName, field1, field2, field3, field4, field5) \
-    FASTRULES_BIND_FIELD_4(reg, TypeName, field1, field2, field3, field4); \
-    reg.bind(#field5, &TypeName::field5)
-
-#define FASTRULES_BIND_FIELD_6(reg, TypeName, field1, field2, field3, field4, field5, field6) \
-    FASTRULES_BIND_FIELD_5(reg, TypeName, field1, field2, field3, field4, field5); \
-    reg.bind(#field6, &TypeName::field6)
-
-#define FASTRULES_BIND_FIELD_7(reg, TypeName, field1, field2, field3, field4, field5, field6, field7) \
-    FASTRULES_BIND_FIELD_6(reg, TypeName, field1, field2, field3, field4, field5, field6); \
-    reg.bind(#field7, &TypeName::field7)
-
-#define FASTRULES_BIND_FIELD_8(reg, TypeName, field1, field2, field3, field4, field5, field6, field7, field8) \
-    FASTRULES_BIND_FIELD_7(reg, TypeName, field1, field2, field3, field4, field5, field6, field7); \
-    reg.bind(#field8, &TypeName::field8)
+#define FASTRULES_BIND_METHOD(reg_, TypeName_, methodName_) \
+    reg_.method(#methodName_, &TypeName_::methodName_);
 
 // ============================================================================
-// Method binding macro — generates reg.method() calls
+// Explicit dispatch macros (1–8 fields, 1–4 methods)
+// These use MSVC-compatible expansion without __VA_ARGS__ counting tricks.
 // ============================================================================
 
-#define FASTRULES_BIND_METHOD_1(reg, TypeName, method1) \
-    reg.method(#method1, &TypeName::method1)
+// --- Fields ---
+#define FASTRULES_DISPATCH_FIELDS_1(reg, TypeName, _1) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _1)
 
-#define FASTRULES_BIND_METHOD_2(reg, TypeName, method1, method2) \
-    FASTRULES_BIND_METHOD_1(reg, TypeName, method1); \
-    reg.method(#method2, &TypeName::method2)
+#define FASTRULES_DISPATCH_FIELDS_2(reg, TypeName, _1, _2) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _1) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _2)
 
-#define FASTRULES_BIND_METHOD_3(reg, TypeName, method1, method2, method3) \
-    FASTRULES_BIND_METHOD_2(reg, TypeName, method1, method2); \
-    reg.method(#method3, &TypeName::method3)
+#define FASTRULES_DISPATCH_FIELDS_3(reg, TypeName, _1, _2, _3) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _1) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _2) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _3)
 
-#define FASTRULES_BIND_METHOD_4(reg, TypeName, method1, method2, method3, method4) \
-    FASTRULES_BIND_METHOD_3(reg, TypeName, method1, method2, method3); \
-    reg.method(#method4, &TypeName::method4)
+#define FASTRULES_DISPATCH_FIELDS_4(reg, TypeName, _1, _2, _3, _4) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _1) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _2) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _3) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _4)
+
+#define FASTRULES_DISPATCH_FIELDS_5(reg, TypeName, _1, _2, _3, _4, _5) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _1) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _2) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _3) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _4) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _5)
+
+#define FASTRULES_DISPATCH_FIELDS_6(reg, TypeName, _1, _2, _3, _4, _5, _6) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _1) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _2) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _3) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _4) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _5) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _6)
+
+#define FASTRULES_DISPATCH_FIELDS_7(reg, TypeName, _1, _2, _3, _4, _5, _6, _7) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _1) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _2) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _3) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _4) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _5) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _6) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _7)
+
+#define FASTRULES_DISPATCH_FIELDS_8(reg, TypeName, _1, _2, _3, _4, _5, _6, _7, _8) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _1) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _2) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _3) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _4) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _5) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _6) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _7) \
+    FASTRULES_BIND_FIELD(reg, TypeName, _8)
+
+// --- Methods ---
+#define FASTRULES_DISPATCH_METHODS_1(reg, TypeName, _1) \
+    FASTRULES_BIND_METHOD(reg, TypeName, _1)
+
+#define FASTRULES_DISPATCH_METHODS_2(reg, TypeName, _1, _2) \
+    FASTRULES_BIND_METHOD(reg, TypeName, _1) \
+    FASTRULES_BIND_METHOD(reg, TypeName, _2)
+
+#define FASTRULES_DISPATCH_METHODS_3(reg, TypeName, _1, _2, _3) \
+    FASTRULES_BIND_METHOD(reg, TypeName, _1) \
+    FASTRULES_BIND_METHOD(reg, TypeName, _2) \
+    FASTRULES_BIND_METHOD(reg, TypeName, _3)
+
+#define FASTRULES_DISPATCH_METHODS_4(reg, TypeName, _1, _2, _3, _4) \
+    FASTRULES_BIND_METHOD(reg, TypeName, _1) \
+    FASTRULES_BIND_METHOD(reg, TypeName, _2) \
+    FASTRULES_BIND_METHOD(reg, TypeName, _3) \
+    FASTRULES_BIND_METHOD(reg, TypeName, _4)
 
 // ============================================================================
-// Dispatch macros (internal use)
+// MSVC-compatible helper: expand __VA_ARGS__ through an intermediate macro
 // ============================================================================
 
-#define FASTRULES_GET_MACRO(_1, _2, _3, _4, _5, _6, _7, _8, NAME, ...) NAME
+#define FASTRULES_REGISTER_TYPE_A(engine, TypeName, ...) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { \
+        FASTRULES_DISPATCH_FIELDS_A(reg, TypeName, __VA_ARGS__) \
+    })
 
-#define FASTRULES_DISPATCH_FIELDS(reg, TypeName, ...) \
-    FASTRULES_GET_MACRO(__VA_ARGS__, \
-        FASTRULES_BIND_FIELD_8, FASTRULES_BIND_FIELD_7, FASTRULES_BIND_FIELD_6, \
-        FASTRULES_BIND_FIELD_5, FASTRULES_BIND_FIELD_4, FASTRULES_BIND_FIELD_3, \
-        FASTRULES_BIND_FIELD_2, FASTRULES_BIND_FIELD_1)(reg, TypeName, __VA_ARGS__)
+#define FASTRULES_DISPATCH_FIELDS_A(reg, TypeName, ...) \
+    FASTRULES_DISPATCH_FIELDS_B(reg, TypeName, __VA_ARGS__)
 
-#define FASTRULES_DISPATCH_METHODS(reg, TypeName, ...) \
-    FASTRULES_GET_MACRO(__VA_ARGS__, \
-        FASTRULES_BIND_METHOD_4, FASTRULES_BIND_METHOD_4, FASTRULES_BIND_METHOD_3, \
-        FASTRULES_BIND_METHOD_3, FASTRULES_BIND_METHOD_2, FASTRULES_BIND_METHOD_2, \
-        FASTRULES_BIND_METHOD_1, FASTRULES_BIND_METHOD_1)(reg, TypeName, __VA_ARGS__)
+#define FASTRULES_DISPATCH_FIELDS_B(reg, TypeName, ...) \
+    FASTRULES_DISPATCH_FIELDS(__VA_ARGS__)(reg, TypeName, __VA_ARGS__)
+
+// Need another level for __VA_ARGS__ to expand before token pasting
+#define FASTRULES_DISPATCH_FIELDS_C(...) FASTRULES_DISPATCH_FIELDS(__VA_ARGS__)
+
+// Hmm, MSVC still won't expand __VA_ARGS__ before token pasting.
+// Alternative: use explicit per-count macros that are user-facing.
 
 // ============================================================================
-// Public API macros
+// Public API: explicit-count macros (MSVC-safe)
 // ============================================================================
 
-// Register fields only
-// Usage: FASTRULES_REGISTER_TYPE(engine, Customer, name, age, balance)
+// Usage: FASTRULES_REGISTER_TYPE_N(engine, Customer, name, age, balance)  // up to 8 fields
+#define FASTRULES_REGISTER_TYPE_1(engine, TypeName, _1) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_FIELDS_1(reg, TypeName, _1) })
+#define FASTRULES_REGISTER_TYPE_2(engine, TypeName, _1, _2) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_FIELDS_2(reg, TypeName, _1, _2) })
+#define FASTRULES_REGISTER_TYPE_3(engine, TypeName, _1, _2, _3) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_FIELDS_3(reg, TypeName, _1, _2, _3) })
+#define FASTRULES_REGISTER_TYPE_4(engine, TypeName, _1, _2, _3, _4) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_FIELDS_4(reg, TypeName, _1, _2, _3, _4) })
+#define FASTRULES_REGISTER_TYPE_5(engine, TypeName, _1, _2, _3, _4, _5) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_FIELDS_5(reg, TypeName, _1, _2, _3, _4, _5) })
+#define FASTRULES_REGISTER_TYPE_6(engine, TypeName, _1, _2, _3, _4, _5, _6) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_FIELDS_6(reg, TypeName, _1, _2, _3, _4, _5, _6) })
+#define FASTRULES_REGISTER_TYPE_7(engine, TypeName, _1, _2, _3, _4, _5, _6, _7) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_FIELDS_7(reg, TypeName, _1, _2, _3, _4, _5, _6, _7) })
+#define FASTRULES_REGISTER_TYPE_8(engine, TypeName, _1, _2, _3, _4, _5, _6, _7, _8) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_FIELDS_8(reg, TypeName, _1, _2, _3, _4, _5, _6, _7, _8) })
+
+// Usage: FASTRULES_REGISTER_METHODS_N(engine, Customer, isPremium, getTier)  // up to 4 methods
+#define FASTRULES_REGISTER_METHODS_1(engine, TypeName, _1) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_METHODS_1(reg, TypeName, _1) })
+#define FASTRULES_REGISTER_METHODS_2(engine, TypeName, _1, _2) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_METHODS_2(reg, TypeName, _1, _2) })
+#define FASTRULES_REGISTER_METHODS_3(engine, TypeName, _1, _2, _3) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_METHODS_3(reg, TypeName, _1, _2, _3) })
+#define FASTRULES_REGISTER_METHODS_4(engine, TypeName, _1, _2, _3, _4) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_METHODS_4(reg, TypeName, _1, _2, _3, _4) })
+
+// ============================================================================
+// Variadic wrappers (may not work on all MSVC versions; prefer explicit-count)
+// ============================================================================
+
+// Attempt at variadic dispatch using an intermediate macro layer.
+// On compilers with a traditional (non-conformant) preprocessor this may fail.
+// In that case use the FASTRULES_REGISTER_TYPE_N explicit-count macros above.
+
+#define FASTRULES_VARG_EXPAND(x) x
+
+#define FASTRULES_VARG_GET_MACRO(_1, _2, _3, _4, _5, _6, _7, _8, NAME, ...) NAME
+
+#define FASTRULES_VARG_DISPATCH_FIELDS_I(reg, TypeName, ...) \
+    FASTRULES_VARG_EXPAND(FASTRULES_VARG_GET_MACRO(__VA_ARGS__, \
+        FASTRULES_DISPATCH_FIELDS_8, FASTRULES_DISPATCH_FIELDS_7, FASTRULES_DISPATCH_FIELDS_6, \
+        FASTRULES_DISPATCH_FIELDS_5, FASTRULES_DISPATCH_FIELDS_4, FASTRULES_DISPATCH_FIELDS_3, \
+        FASTRULES_DISPATCH_FIELDS_2, FASTRULES_DISPATCH_FIELDS_1)(reg, TypeName, __VA_ARGS__))
+
+#define FASTRULES_VARG_DISPATCH_FIELDS(reg, TypeName, ...) \
+    FASTRULES_VARG_DISPATCH_FIELDS_I(reg, TypeName, __VA_ARGS__)
+
+#define FASTRULES_VARG_DISPATCH_METHODS_I(reg, TypeName, ...) \
+    FASTRULES_VARG_EXPAND(FASTRULES_VARG_GET_MACRO(__VA_ARGS__, \
+        FASTRULES_DISPATCH_METHODS_4, FASTRULES_DISPATCH_METHODS_4, FASTRULES_DISPATCH_METHODS_3, \
+        FASTRULES_DISPATCH_METHODS_3, FASTRULES_DISPATCH_METHODS_2, FASTRULES_DISPATCH_METHODS_2, \
+        FASTRULES_DISPATCH_METHODS_1, FASTRULES_DISPATCH_METHODS_1)(reg, TypeName, __VA_ARGS__))
+
+#define FASTRULES_VARG_DISPATCH_METHODS(reg, TypeName, ...) \
+    FASTRULES_VARG_DISPATCH_METHODS_I(reg, TypeName, __VA_ARGS__)
+
+// Variadic public API
 #define FASTRULES_REGISTER_TYPE(engine, TypeName, ...) \
     engine.registerType<TypeName>(#TypeName, [](auto& reg) { \
-        FASTRULES_DISPATCH_FIELDS(reg, TypeName, __VA_ARGS__); \
+        FASTRULES_VARG_DISPATCH_FIELDS(reg, TypeName, __VA_ARGS__); \
     })
 
-// Register methods only
-// Usage: FASTRULES_REGISTER_METHODS(engine, Customer, isPremium, getTier)
 #define FASTRULES_REGISTER_METHODS(engine, TypeName, ...) \
     engine.registerType<TypeName>(#TypeName, [](auto& reg) { \
-        FASTRULES_DISPATCH_METHODS(reg, TypeName, __VA_ARGS__); \
+        FASTRULES_VARG_DISPATCH_METHODS(reg, TypeName, __VA_ARGS__); \
     })
 
-// Register both fields and methods
-// Usage: FASTRULES_REGISTER_TYPE_WITH_METHODS(engine, Customer,
-//     (name, age, balance),      // fields — up to 8
-//     (isPremium, getTier)       // methods — up to 4
-// );
+// Combined macros — register fields AND methods in a single registerType call.
+// These generate one lambda that binds both fields and methods.
 //
-// Note: The inner parentheses are required to separate field and method lists.
-// This uses the "parenthesized arguments" trick since VA_ARGS can't have two lists.
-#define FASTRULES_REGISTER_TYPE_WITH_METHODS(engine, TypeName, fields_tuple, methods_tuple) \
-    engine.registerType<TypeName>(#TypeName, [](auto& reg) { \
-        FASTRULES_EXPAND_FIELDS fields_tuple \
-        FASTRULES_EXPAND_METHODS methods_tuple \
-    })
+// Usage: FASTRULES_REGISTER_TYPE_WITH_METHODS_2_1(engine, Order, id, total, isShipped)
+//   (2 fields, 1 method)
 
-// Helper: strip parentheses from tuple notation
-#define FASTRULES_EXPAND_FIELDS(...) FASTRULES_DISPATCH_FIELDS(reg, TypeName, __VA_ARGS__)
-#define FASTRULES_EXPAND_METHODS(...) FASTRULES_DISPATCH_METHODS(reg, TypeName, __VA_ARGS__)
+#define FASTRULES_REGISTER_TYPE_WITH_METHODS_1_1(engine, TypeName, f1, m1) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_FIELDS_1(reg, TypeName, f1) FASTRULES_DISPATCH_METHODS_1(reg, TypeName, m1) })
+
+#define FASTRULES_REGISTER_TYPE_WITH_METHODS_2_1(engine, TypeName, f1, f2, m1) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_FIELDS_2(reg, TypeName, f1, f2) FASTRULES_DISPATCH_METHODS_1(reg, TypeName, m1) })
+
+#define FASTRULES_REGISTER_TYPE_WITH_METHODS_3_1(engine, TypeName, f1, f2, f3, m1) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_FIELDS_3(reg, TypeName, f1, f2, f3) FASTRULES_DISPATCH_METHODS_1(reg, TypeName, m1) })
+
+#define FASTRULES_REGISTER_TYPE_WITH_METHODS_4_1(engine, TypeName, f1, f2, f3, f4, m1) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_FIELDS_4(reg, TypeName, f1, f2, f3, f4) FASTRULES_DISPATCH_METHODS_1(reg, TypeName, m1) })
+
+#define FASTRULES_REGISTER_TYPE_WITH_METHODS_5_1(engine, TypeName, f1, f2, f3, f4, f5, m1) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_FIELDS_5(reg, TypeName, f1, f2, f3, f4, f5) FASTRULES_DISPATCH_METHODS_1(reg, TypeName, m1) })
+
+#define FASTRULES_REGISTER_TYPE_WITH_METHODS_2_2(engine, TypeName, f1, f2, m1, m2) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_FIELDS_2(reg, TypeName, f1, f2) FASTRULES_DISPATCH_METHODS_2(reg, TypeName, m1, m2) })
+
+#define FASTRULES_REGISTER_TYPE_WITH_METHODS_3_2(engine, TypeName, f1, f2, f3, m1, m2) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_FIELDS_3(reg, TypeName, f1, f2, f3) FASTRULES_DISPATCH_METHODS_2(reg, TypeName, m1, m2) })
+
+#define FASTRULES_REGISTER_TYPE_WITH_METHODS_4_2(engine, TypeName, f1, f2, f3, f4, m1, m2) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_FIELDS_4(reg, TypeName, f1, f2, f3, f4) FASTRULES_DISPATCH_METHODS_2(reg, TypeName, m1, m2) })
+
+#define FASTRULES_REGISTER_TYPE_WITH_METHODS_5_2(engine, TypeName, f1, f2, f3, f4, f5, m1, m2) \
+    engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_FIELDS_5(reg, TypeName, f1, f2, f3, f4, f5) FASTRULES_DISPATCH_METHODS_2(reg, TypeName, m1, m2) })

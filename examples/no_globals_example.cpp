@@ -86,9 +86,9 @@ void demo_current_api() {
     fastrules::LuaEngine engine;
     
     // Register type
-    engine.registerType<Customer>("Customer", [](auto& ut) {
-        ut["age"] = &Customer::age;
-        ut["processed"] = &Customer::processed;
+    engine.registerType<Customer>("Customer", [](auto& reg) {
+        reg.bind("age", &Customer::age);
+        reg.bind("processed", &Customer::processed);
     });
 
     // Create rule
@@ -144,5 +144,3 @@ int main() {
 
     return 0;
 }
-
-

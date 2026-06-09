@@ -15,10 +15,10 @@ int main() {
     try {
         fastrules::LuaEngine engine;
 
-        engine.registerType<Customer>("Customer", [](auto& ut) {
-            ut["name"] = &Customer::name;
-            ut["age"] = &Customer::age;
-            ut["processed"] = &Customer::processed;
+        engine.registerType<Customer>("Customer", [](auto& reg) {
+            reg.bind("name", &Customer::name);
+            reg.bind("age", &Customer::age);
+            reg.bind("processed", &Customer::processed);
         });
 
         // Child rule
@@ -33,10 +33,10 @@ int main() {
         child2->expression = "isNotEmpty(customer.name)";
         child2->isActive = true;
 
-        // Parent rule
+        // Parent rule — references children by their actual IDs (1 and 2)
         auto parent = std::make_shared<fastrules::Rule>();
         parent->id = 3;
-        parent->expression = "context.getResult(6).success == true and context.getResult(7).success == true";
+        parent->expression = "context.getResult(1).success == true and context.getResult(2).success == true";
         parent->action = "customer.processed = true";
         parent->isActive = true;
         parent->childRules = {child, child2};
@@ -49,7 +49,7 @@ int main() {
 
         auto parent2 = std::make_shared<fastrules::Rule>();
         parent2->id = 5;
-        parent2->expression = "context.getResult(8).success == true";
+        parent2->expression = "context.getResult(4).success == true";
         parent2->action = "customer.processed = false";
         parent2->isActive = true;
         parent2->childRules = {minorChild};
@@ -82,5 +82,3 @@ int main() {
 
     return 0;
 }
-
-

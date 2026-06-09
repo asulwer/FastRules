@@ -81,18 +81,20 @@ int main() {
         //   - Call methods: customer:isPremium(), customer:getTier(), customer:addBalance(100)
         //   - Use in expressions: customer.age >= 18, customer:isPremium(), customer.balance > 500
         //
-        engine.registerType<Customer>("Customer", [](auto& ut) {
+        engine.registerType<Customer>("Customer", [](auto& reg) {
             // Fields (read/write in both expressions and actions)
-            ut["name"]      = &Customer::name;
-            ut["age"]       = &Customer::age;
-            ut["processed"] = &Customer::processed;
-            ut["isActive"]  = &Customer::isActive;
-            ut["balance"]   = &Customer::balance;
+            reg.bind("name",      &Customer::name);
+            reg.bind("age",       &Customer::age);
+            reg.bind("processed", &Customer::processed);
+            reg.bind("isActive",  &Customer::isActive);
+            reg.bind("balance",   &Customer::balance);
 
             // Methods (call from expressions and actions)
-            ut["isPremium"]  = &Customer::isPremium;   // no args, returns bool
-            ut["getTier"]    = &Customer::getTier;     // no args, returns string
-            ut["addBalance"] = &Customer::addBalance;  // one arg (double), void return
+            // NOTE: TypeRegistrar::method() only supports zero-argument methods.
+            // For methods with arguments, use direct Lua or action callbacks.
+            reg.method("isPremium",  &Customer::isPremium);   // no args, returns bool
+            reg.method("getTier",    &Customer::getTier);     // no args, returns string
+            // addBalance(double) is not registered — use field mutation instead: customer.balance = customer.balance + 10
         });
 
         // =====================================================================
@@ -101,39 +103,40 @@ int main() {
         // After this, Lua actions can call:
         //   callbacks.sendEmail("alice@example.com", "Welcome", "...")
         //   callbacks.logAction("rule-id", customer.name, true)
-        //   callbacks.formatCurrency(123.45) → returns "$123.45"
+        //   callbacks.formatCurrency(123.45) → prints formatted value
+        //
+        // NOTE: Action callbacks use std::any, not sol::object or LuaRef.
+        // The signature is: void(const std::any& target, const std::vector<std::any>& args)
         //
 
-        // Callback: sendEmail(target, args...) — target is first arg, rest are in args vector
-        engine.registerAction("sendEmail", [](fastrules::LuaRef target, const std::vector<fastrules::LuaRef>& args) {
+        // Callback: sendEmail(target, args...)
+        engine.registerAction("sendEmail", [](const std::any& /*target*/, const std::vector<std::any>& args) {
             // args[0] = to, args[1] = subject, args[2] = body
             if (args.size() >= 3) {
                 sendEmail(
-                    args[0].as<std::string>(),
-                    args[1].as<std::string>(),
-                    args[2].as<std::string>()
+                    std::any_cast<std::string>(args[0]),
+                    std::any_cast<std::string>(args[1]),
+                    std::any_cast<std::string>(args[2])
                 );
             }
         });
 
         // Callback: logAction(target, args...)
-        engine.registerAction("logAction", [](fastrules::LuaRef target, const std::vector<fastrules::LuaRef>& args) {
+        engine.registerAction("logAction", [](const std::any& /*target*/, const std::vector<std::any>& args) {
             if (args.size() >= 3) {
                 logAction(
-                    args[0].as<std::string>(),
-                    args[1].as<std::string>(),
-                    args[2].as<bool>()
+                    std::any_cast<std::string>(args[0]),
+                    std::any_cast<std::string>(args[1]),
+                    std::any_cast<bool>(args[2])
                 );
             }
         });
 
-        // Callback: formatCurrency — this one returns a value via target
-        engine.registerAction("formatCurrency", [](fastrules::LuaRef target, const std::vector<fastrules::LuaRef>& args) {
+        // Callback: formatCurrency — prints a formatted value
+        engine.registerAction("formatCurrency", [](const std::any& /*target*/, const std::vector<std::any>& args) {
             if (!args.empty()) {
-                double amount = args[0].as<double>();
+                double amount = std::any_cast<double>(args[0]);
                 std::string formatted = formatCurrency(amount);
-                // Note: Action callbacks can't directly return values to Lua assignments.
-                // For value-returning functions, use TypeRegistry methods instead.
                 std::cout << "  [FORMAT] " << amount << " → " << formatted << std::endl;
             }
         });
@@ -187,7 +190,7 @@ int main() {
         balanceCheck->expression = "customer.balance > 0";
         balanceCheck->action = R"(
             callbacks.formatCurrency(customer.balance)
-            customer:addBalance(10.0)  -- call C++ method with argument
+            customer.balance = customer.balance + 10.0  -- mutate field directly
             callbacks.logAction("balance-check", customer.name, true)
         )";
         workflow.rules.push_back(balanceCheck);

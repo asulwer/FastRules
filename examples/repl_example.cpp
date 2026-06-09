@@ -17,7 +17,7 @@ int main() {
         if (line.empty()) continue;
 
         try {
-            auto ref = engine.compileExpression(line, {});
+            auto ref = engine.compileExpression(line);
             if (!ref.has_value()) {
                 std::cout << "Error: compilation failed\n";
                 continue;
@@ -33,5 +33,3 @@ int main() {
 
     return 0;
 }
-
-

@@ -30,11 +30,11 @@ int main() {
             double creditScore;
         };
 
-        engine.registerType<Customer>("Customer", [](auto& ut) {
-            ut["id"] = &Customer::id;
-            ut["name"] = &Customer::name;
-            ut["age"] = &Customer::age;
-            ut["creditScore"] = &Customer::creditScore;
+        engine.registerType<Customer>("Customer", [](auto& reg) {
+            reg.bind("id", &Customer::id);
+            reg.bind("name", &Customer::name);
+            reg.bind("age", &Customer::age);
+            reg.bind("creditScore", &Customer::creditScore);
         });
 
         // ================================================================
@@ -50,7 +50,7 @@ int main() {
         creditCheck->id = 2;
         creditCheck->expression = "customer.creditScore >= 650";
         creditCheck->action = "isCreditWorthy = true";
-        creditCheck->dependsOnRuleId = "adult-check";  // Runs after adult-check
+        creditCheck->dependsOnRuleId = 1;  // Runs after adult-check (id=1)
         creditCheck->timeout = std::chrono::milliseconds(200);
 
         auto nameCheck = std::make_shared<Rule>();
@@ -158,12 +158,14 @@ int main() {
         auto priorityResults = priorityWorkflow.execute(engine, params);
         for (const auto& r : priorityResults) {
             std::cout << r.ruleId << " (priority " << 
-                (r.ruleId == "slow-rule" ? "999" : "0") << "): " <<
+                (r.ruleId == 4 ? "999" : "0") << "): " <<
                 (r.isSuccess() ? "PASS" : "FAIL") << std::endl;
         }
 
         // ================================================================
         // 11. Access Lua variables set by actions
+        // NOTE: engine.getGlobal() is not available in this API.
+        // Use RuleResult and actions that mutate C++ objects instead.
         // ================================================================
         std::cout << "\n--- Action Results ---" << std::endl;
         Customer customer6{6, "Frank", 28, 700};
@@ -172,17 +174,8 @@ int main() {
 
         (void)workflow.execute(engine, params);
 
-        // Read back variables set by actions from Lua state
-        auto isAdultVal = engine.getGlobal("isAdult");
-        auto isCreditWorthyVal = engine.getGlobal("isCreditWorthy");
-        auto hasValidNameVal = engine.getGlobal("hasValidName");
-        bool isAdult = isAdultVal ? isAdultVal->toBool() : false;
-        bool isCreditWorthy = isCreditWorthyVal ? isCreditWorthyVal->toBool() : false;
-        bool hasValidName = hasValidNameVal ? hasValidNameVal->toBool() : false;
-
-        std::cout << "isAdult = " << (isAdult ? "true" : "false") << std::endl;
-        std::cout << "isCreditWorthy = " << (isCreditWorthy ? "true" : "false") << std::endl;
-        std::cout << "hasValidName = " << (hasValidName ? "true" : "false") << std::endl;
+        std::cout << "Actions executed (variables set in Lua state)." << std::endl;
+        std::cout << "Note: Use C++ object mutation via actions for observable side effects." << std::endl;
 
         // ================================================================
         // 12. Reset Lua state (important for long-running apps)
@@ -198,5 +191,3 @@ int main() {
         return 1;
     }
 }
-
-

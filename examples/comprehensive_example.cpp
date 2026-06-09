@@ -21,37 +21,37 @@ int main() {
         std::cout << "=== Phase 1: Load workflow from JSON ===\n";
 
         std::string jsonInput = R"({
-            "id": "loan-approval",
+            "id": 1,
             "description": "Loan approval workflow",
             "isActive": true,
             "rules": [
                 {
-                    "id": "income-check",
+                    "id": 1,
                     "expression": "app.annualIncome >= 50000",
                     "action": "incomeOk = true",
                     "isActive": true,
-                    "priority": 10,
-                                    },
+                    "priority": 10
+                },
                 {
-                    "id": "debt-ratio-check",
+                    "id": 2,
                     "expression": "app.debtRatio <= 0.43",
                     "action": "debtOk = true",
                     "isActive": true,
                     "priority": 5,
-                                        "dependsOnRuleId": "income-check"
+                    "dependsOnRuleId": 1
                 },
                 {
-                    "id": "credit-score-check",
+                    "id": 3,
                     "expression": "app.creditScore >= 650",
                     "action": "creditOk = true",
                     "isActive": true,
-                    "priority": 3,
-                                    }
+                    "priority": 3
+                }
             ]
         })";
 
         auto workflow = JsonLoader::loadWorkflow(jsonInput);
-        std::cout << "Loaded: " << workflow.id << " with " << workflow.rules.size() << " rules\n";
+        std::cout << "Loaded workflow with " << workflow.rules.size() << " rules\n";
 
         // ================================================================
         // PHASE 2: Execute the workflow
@@ -64,10 +64,10 @@ int main() {
             int creditScore = 720;
         };
 
-        engine.registerType<LoanApplication>("LoanApplication", [](auto& ut) {
-            ut["annualIncome"] = &LoanApplication::annualIncome;
-            ut["debtRatio"] = &LoanApplication::debtRatio;
-            ut["creditScore"] = &LoanApplication::creditScore;
+        engine.registerType<LoanApplication>("LoanApplication", [](auto& reg) {
+            reg.bind("annualIncome", &LoanApplication::annualIncome);
+            reg.bind("debtRatio", &LoanApplication::debtRatio);
+            reg.bind("creditScore", &LoanApplication::creditScore);
         });
 
         LoanApplication app;
@@ -80,11 +80,6 @@ int main() {
 
         workflow.compile(engine);
         auto results = workflow.execute(engine, params);
-
-        for (const auto& result : results) {
-            std::cout << "Rule " << result.ruleId << ": "
-                      << (result.isSuccess() ? "PASS" : "FAIL") << "\n";
-        }
 
         for (const auto& result : results) {
             std::cout << "Rule " << result.ruleId << ": "
@@ -110,7 +105,7 @@ int main() {
         std::cout << "\n=== Phase 4: Reload from XML ===\n";
 
         auto xmlWorkflow = XmlLoader::loadWorkflow(xmlOutput);
-        std::cout << "Reloaded: " << xmlWorkflow.id << " with " << xmlWorkflow.rules.size() << " rules\n";
+        std::cout << "Reloaded workflow with " << xmlWorkflow.rules.size() << " rules\n";
 
         // Verify round-trip integrity
         bool roundTripOk = true;
@@ -179,5 +174,3 @@ int main() {
         return 1;
     }
 }
-
-
