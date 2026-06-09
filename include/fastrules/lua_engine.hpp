@@ -21,6 +21,11 @@
 #include <spdlog/spdlog.h>
 #include "lua_backend.hpp"
 
+// Forward declaration for TypeRegistrar method support
+extern "C" {
+#include "lua.h"
+}
+
 namespace fastrules {
 
 // ============================================================================
@@ -30,6 +35,7 @@ namespace fastrules {
 template<typename T>
 struct TypeRegistrar {
     std::vector<TypeField> fields;
+    std::vector<TypeMethod> methods;
 
     template<typename MemberT>
     void bind(const std::string& name, MemberT T::*member) {
@@ -46,6 +52,54 @@ struct TypeRegistrar {
             luaType = "userdata";
         }
         fields.push_back({name, reinterpret_cast<size_t>(&(((T*)nullptr)->*member)), luaType});
+    }
+    
+    // Register a method (member function) that takes no args and returns Ret
+    template<typename Ret>
+    void method(const std::string& name, Ret (T::*method)()) {
+        methods.push_back({name, [method](void* obj, lua_State* L) -> int {
+            Ret result = (static_cast<T*>(obj)->*method)();
+            if constexpr (std::is_same_v<Ret, bool>) {
+                lua_pushboolean(L, result);
+            } else if constexpr (std::is_same_v<Ret, int> || std::is_same_v<Ret, int32_t>) {
+                lua_pushinteger(L, result);
+            } else if constexpr (std::is_same_v<Ret, double> || std::is_same_v<Ret, float>) {
+                lua_pushnumber(L, result);
+            } else if constexpr (std::is_same_v<Ret, std::string>) {
+                lua_pushstring(L, result.c_str());
+            } else {
+                lua_pushnil(L);
+            }
+            return 1;
+        }});
+    }
+    
+    // Register a const method (member function) that takes no args and returns Ret
+    template<typename Ret>
+    void method(const std::string& name, Ret (T::*method)() const) {
+        methods.push_back({name, [method](void* obj, lua_State* L) -> int {
+            Ret result = (static_cast<T*>(obj)->*method)();
+            if constexpr (std::is_same_v<Ret, bool>) {
+                lua_pushboolean(L, result);
+            } else if constexpr (std::is_same_v<Ret, int> || std::is_same_v<Ret, int32_t>) {
+                lua_pushinteger(L, result);
+            } else if constexpr (std::is_same_v<Ret, double> || std::is_same_v<Ret, float>) {
+                lua_pushnumber(L, result);
+            } else if constexpr (std::is_same_v<Ret, std::string>) {
+                lua_pushstring(L, result.c_str());
+            } else {
+                lua_pushnil(L);
+            }
+            return 1;
+        }});
+    }
+    
+    // Register a const void method (member function) that takes no args
+    void method(const std::string& name, void (T::*method)() const) {
+        methods.push_back({name, [method](void* obj, lua_State* /*L*/) -> int {
+            (static_cast<T*>(obj)->*method)();
+            return 0;
+        }});
     }
 };
 
@@ -165,7 +219,7 @@ public:
     void registerType(const std::string& name, Func func) {
         TypeRegistrar<T> registrar;
         func(registrar);
-        typeRegistry_.registerType<T>(name, std::move(registrar.fields));
+        typeRegistry_.registerType<T>(name, std::move(registrar.fields), std::move(registrar.methods));
         backend_->bindTypes(&typeRegistry_);
     }
 

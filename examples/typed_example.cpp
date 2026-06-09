@@ -11,7 +11,16 @@ struct Customer {
     std::string name;
     int age = 0;
     bool processed = false;
+    double balance = 0.0;
     bool isActive = true;
+
+    // Methods callable from Lua
+    bool isPremium() const { return balance > 1000.0; }
+    std::string getTier() const {
+        if (balance > 10000.0) return "platinum";
+        if (balance > 1000.0) return "gold";
+        return "standard";
+    }
 
     // Comparison operators required by LuaBridge3 automagic
     bool operator==(const Customer& other) const {
@@ -39,7 +48,10 @@ int main() {
             reg.bind("name", &Customer::name);
             reg.bind("age", &Customer::age);
             reg.bind("processed", &Customer::processed);
+            reg.bind("balance", &Customer::balance);
             reg.bind("isActive", &Customer::isActive);
+            reg.method("isPremium", &Customer::isPremium);
+            reg.method("getTier", &Customer::getTier);
         });
 
         // Create a workflow with rules using typed expressions

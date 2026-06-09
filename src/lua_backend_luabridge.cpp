@@ -834,6 +834,31 @@ void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
         });
         lua_settable(pImpl_->L, -3);
 
+        // Add method closures
+        for (const auto& method : desc.methods) {
+            // Store the invoker as a light userdata in the metatable
+            lua_pushstring(pImpl_->L, ("__method_" + method.name).c_str());
+            lua_pushlightuserdata(pImpl_->L, const_cast<TypeMethod*>(&method));
+            lua_settable(pImpl_->L, -3);
+
+            // Add the method as a closure
+            lua_pushstring(pImpl_->L, method.name.c_str());
+            lua_pushlightuserdata(pImpl_->L, const_cast<TypeMethod*>(&method));
+            lua_pushcclosure(pImpl_->L, [](lua_State* L) -> int {
+                // Get method info from upvalue
+                TypeMethod* method = static_cast<TypeMethod*>(lua_touserdata(L, lua_upvalueindex(1)));
+                if (!method) return 0;
+                
+                // Get self (first arg)
+                void* obj = lua_touserdata(L, 1);
+                if (!obj) return 0;
+                
+                // Call the invoker
+                return method->invoker(obj, L);
+            }, 1);
+            lua_settable(pImpl_->L, -3);
+        }
+
         lua_pop(pImpl_->L, 1); // pop metatable
     }
 }

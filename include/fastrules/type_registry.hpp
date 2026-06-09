@@ -7,6 +7,10 @@
 #include <optional>
 #include <unordered_map>
 #include <unordered_set>
+#include <functional>
+
+// Forward declaration for TypeMethod invoker
+struct lua_State;
 
 namespace fastrules {
 
@@ -20,6 +24,16 @@ struct TypeField {
 };
 
 // ============================================================================
+// Backend-neutral type method descriptor
+// ============================================================================
+struct TypeMethod {
+    std::string name;
+    // Type-erased function that calls the method on a given object
+    // Returns number of values pushed to Lua stack
+    std::function<int(void*, lua_State*)> invoker;
+};
+
+// ============================================================================
 // Backend-neutral type descriptor
 // Stored by TypeRegistry, consumed by backends to create native bindings
 // ============================================================================
@@ -27,6 +41,7 @@ struct TypeDescriptor {
     std::string name;
     std::optional<std::type_index> type;
     std::vector<TypeField> fields;
+    std::vector<TypeMethod> methods;
     size_t size = 0;
 };
 
@@ -42,12 +57,13 @@ public:
     TypeRegistry() = default;
 
     template<typename T>
-    void registerType(const std::string& name, std::vector<TypeField> fields) {
+    void registerType(const std::string& name, std::vector<TypeField> fields, std::vector<TypeMethod> methods = {}) {
         TypeDescriptor desc;
         desc.name = name;
         auto t = std::type_index(typeid(T));
         desc.type = t;
         desc.fields = std::move(fields);
+        desc.methods = std::move(methods);
         desc.size = sizeof(T);
         types_[t] = std::move(desc);
         types_[std::type_index(typeid(T*))] = types_.at(t); // pointer alias
