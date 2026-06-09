@@ -100,7 +100,7 @@ int main() {
 
             // Pass the Customer pointer as a typed parameter
             std::vector<fastrules::RuleParameter> params;
-            params.emplace_back("customer", customer);
+            params.emplace_back("customer", &customer);
 
             auto results = workflow.execute(engine, params);
 
@@ -113,7 +113,7 @@ int main() {
                 std::cout << std::endl;
             }
 
-            std::cout << "  Processed: " << (customer->processed ? "Yes" : "No") << std::endl;
+            std::cout << "  Processed: " << (customer.processed ? "Yes" : "No") << std::endl;
         }
 
     } catch (const std::exception& ex) {

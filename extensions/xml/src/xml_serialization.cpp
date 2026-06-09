@@ -145,7 +145,7 @@ std::string XmlSerialization::serialize(const RuleVersionManager& manager) {
 
     auto historiesNode = root.append_child("histories");
     for (const auto& ruleId : manager.getTrackedRuleIds()) {
-        auto histOpt = manager.getHistory(ruleId);
+        auto histOpt = manager.getHistory(std::stoi(ruleId));
         if (histOpt) {
             auto histNode = historiesNode.append_child("history");
             // Embed the serialized history as XML
@@ -194,7 +194,7 @@ void XmlSerialization::deserialize(RuleVersionManager& manager, const std::strin
             if (historyOpt) {
                 for (const auto& ver : historyOpt->getVersions()) {
                     Rule rule;
-                    rule.id = ver.ruleId;
+                    rule.id = std::stoi(ver.ruleId);
                     rule.expression = ver.expression;
                     rule.action = ver.action;
                     rule.isActive = ver.isActive;
@@ -214,7 +214,7 @@ void XmlSerialization::deserialize(RuleVersionManager& manager, const std::strin
 std::string XmlSerialization::serialize(const ExecutionTrace& trace) {
     pugi::xml_document doc;
     auto root = doc.append_child("executionTrace");
-    root.append_attribute("workflowId").set_value(trace.workflowId.c_str());
+    root.append_attribute("workflowId").set_value(trace.workflowId);
     root.append_attribute("overallSuccess").set_value(trace.overallSuccess);
 
     auto totalMs = std::chrono::duration_cast<std::chrono::milliseconds>(trace.totalDuration());

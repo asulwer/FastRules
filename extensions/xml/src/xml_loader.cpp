@@ -106,7 +106,7 @@ Workflow XmlLoader::loadWorkflow(const std::string& xmlString) {
     }
 
     Workflow workflow;
-    workflow.id = root.attribute("id").as_string("");
+    workflow.id = root.attribute("id").as_int(0);
     workflow.description = root.attribute("description").as_string("");
     workflow.isActive = root.attribute("isActive").as_bool(true);
 
@@ -133,7 +133,7 @@ Workflow XmlLoader::loadWorkflowFromFile(const std::string& filePath) {
     }
 
     Workflow workflow;
-    workflow.id = root.attribute("id").as_string("");
+    workflow.id = root.attribute("id").as_int(0);
     workflow.description = root.attribute("description").as_string("");
     workflow.isActive = root.attribute("isActive").as_bool(true);
 

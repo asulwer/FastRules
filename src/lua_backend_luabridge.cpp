@@ -721,13 +721,14 @@ void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
         // __index closure
         lua_pushstring(pImpl_->L, "__index");
         lua_pushcfunction(pImpl_->L, [](lua_State* L) -> int {
-            // arg1: userdata (the object pointer)
+            // arg1: userdata (pointer to object pointer — void**)
             // arg2: field name
-            void* obj = lua_touserdata(L, 1);
-            if (!obj) {
+            void** ud = static_cast<void**>(lua_touserdata(L, 1));
+            if (!ud || !*ud) {
                 lua_pushnil(L);
                 return 1;
             }
+            void* obj = *ud;
             const char* fieldName = lua_tostring(L, 2);
             if (!fieldName) {
                 lua_pushnil(L);
@@ -789,8 +790,9 @@ void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
         lua_pushstring(pImpl_->L, "__newindex");
         lua_pushcfunction(pImpl_->L, [](lua_State* L) -> int {
             // arg1: userdata, arg2: field name, arg3: value
-            void* obj = lua_touserdata(L, 1);
-            if (!obj) return 0;
+            void** ud = static_cast<void**>(lua_touserdata(L, 1));
+            if (!ud || !*ud) return 0;
+            void* obj = *ud;
             const char* fieldName = lua_tostring(L, 2);
             if (!fieldName) return 0;
 
@@ -919,13 +921,43 @@ void LuaBridge3Backend::bindActions(ActionCallbacks* callbacks) {
     });
 }
 
-void LuaBridge3Backend::setRegisteredTypeGlobal(const std::string& name, const std::type_index& /*type*/, const std::any& value, TypeRegistry* /*registry*/) {
+void LuaBridge3Backend::setRegisteredTypeGlobal(const std::string& name, const std::type_index& type, const std::any& value, TypeRegistry* registry) {
     if (!value.has_value()) {
         lua_pushnil(pImpl_->L);
         lua_setglobal(pImpl_->L, name.c_str());
         return;
     }
-    // Push as light userdata (full usertype binding requires implementation)
+
+    // Try to get the descriptor for this registered type
+    if (registry) {
+        auto descOpt = registry->getDescriptor(type);
+        if (descOpt.has_value()) {
+            const auto& desc = descOpt.value();
+            // Use the type-erased extractPointer to get void* from std::any
+            void* ptr = desc.extractPointer ? desc.extractPointer(value) : nullptr;
+            if (ptr) {
+                // Create a userdata with our custom metatable
+                // The metatable has __index/__newindex for fields and __method_* for methods
+                void* ud = lua_newuserdata(pImpl_->L, sizeof(void*));
+                *static_cast<void**>(ud) = ptr;
+                // Set the metatable for this userdata
+                std::string mtName = "__fastrules_mt_" + desc.name;
+                luaL_getmetatable(pImpl_->L, mtName.c_str());
+                if (lua_isnil(pImpl_->L, -1)) {
+                    lua_pop(pImpl_->L, 1);
+                    // Metatable doesn't exist yet — bindTypes hasn't been called
+                    // Create it now
+                    luaL_newmetatable(pImpl_->L, mtName.c_str());
+                    // Leave it on stack to be set as metatable
+                }
+                lua_setmetatable(pImpl_->L, -2);
+                lua_setglobal(pImpl_->L, name.c_str());
+                return;
+            }
+        }
+    }
+
+    // Fallback: try to extract any pointer type and push as light userdata
     try {
         void* ptr = std::any_cast<void*>(value);
         lua_pushlightuserdata(pImpl_->L, ptr);

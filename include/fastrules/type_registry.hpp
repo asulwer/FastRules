@@ -43,6 +43,8 @@ struct TypeDescriptor {
     std::vector<TypeField> fields;
     std::vector<TypeMethod> methods;
     size_t size = 0;
+    // Type-erased function to extract void* pointer from std::any containing T*
+    std::function<void*(const std::any&)> extractPointer;
 };
 
 // ============================================================================
@@ -65,8 +67,16 @@ public:
         desc.fields = std::move(fields);
         desc.methods = std::move(methods);
         desc.size = sizeof(T);
-        types_[t] = std::move(desc);
-        types_[std::type_index(typeid(T*))] = types_.at(t); // pointer alias
+        // Store extractor for T* — extracts void* from std::any containing T*
+        desc.extractPointer = [](const std::any& value) -> void* {
+            try {
+                return std::any_cast<T*>(value);
+            } catch (...) {
+                return nullptr;
+            }
+        };
+        types_[t] = desc;
+        types_[std::type_index(typeid(T*))] = desc; // pointer alias
         nameToType_[name] = t;
     }
 
