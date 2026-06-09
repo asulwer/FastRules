@@ -19,14 +19,16 @@ class FastRulesConan(ConanFile):
         "with_json": [True, False],
         "with_xml": [True, False],
         "with_db": [True, False],
+        "with_tests": [True, False],
         "use_luajit": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
-        "with_json": True,
+        "with_json": False,
         "with_xml": False,
         "with_db": False,
+        "with_tests": False,
         "use_luajit": False,
     }
 
@@ -42,17 +44,23 @@ class FastRulesConan(ConanFile):
             self.options.rm_safe("fPIC")
 
     def requirements(self):
+        # Core dependencies
         if self.options.use_luajit:
             self.requires("luajit/2.1.0-beta3")
         else:
             self.requires("lua/5.4.6")
+        self.requires("spdlog/1.14.1")
         # LuaBridge3 is header-only and fetched via CMake FetchContent
+
+        # Extension dependencies (optional)
         if self.options.with_json:
             self.requires("nlohmann_json/3.11.3")
         if self.options.with_xml:
             self.requires("pugixml/1.14")
         if self.options.with_db:
             self.requires("soci/4.0.3")
+        if self.options.with_tests:
+            self.requires("catch2/3.5.2")
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.28]")
@@ -64,7 +72,7 @@ class FastRulesConan(ConanFile):
         deps = CMakeDeps(self)
         deps.generate()
         tc = CMakeToolchain(self)
-        tc.variables["FASTRULES_BUILD_TESTS"] = False
+        tc.variables["FASTRULES_BUILD_TESTS"] = self.options.with_tests
         tc.variables["FASTRULES_BUILD_EXAMPLES"] = False
         tc.variables["FASTRULES_BUILD_EXTENSIONS"] = self.options.with_json or self.options.with_xml or self.options.with_db
         tc.variables["FASTRULES_BUILD_DB"] = self.options.with_db
