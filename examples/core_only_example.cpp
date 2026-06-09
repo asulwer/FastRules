@@ -41,20 +41,20 @@ int main() {
         // 3. Create rules programmatically (no JSON loading)
         // ================================================================
         auto adultCheck = std::make_shared<Rule>();
-        adultCheck->id = "adult-check";
+        adultCheck->id = 1;
         adultCheck->expression = "customer.age >= 18";
         adultCheck->action = "isAdult = true";
         adultCheck->timeout = std::chrono::milliseconds(100);
 
         auto creditCheck = std::make_shared<Rule>();
-        creditCheck->id = "credit-check";
+        creditCheck->id = 2;
         creditCheck->expression = "customer.creditScore >= 650";
         creditCheck->action = "isCreditWorthy = true";
         creditCheck->dependsOnRuleId = "adult-check";  // Runs after adult-check
         creditCheck->timeout = std::chrono::milliseconds(200);
 
         auto nameCheck = std::make_shared<Rule>();
-        nameCheck->id = "name-check";
+        nameCheck->id = 3;
         nameCheck->expression = "isNotEmpty(customer.name)";
         nameCheck->action = "hasValidName = true";
 
@@ -62,7 +62,7 @@ int main() {
         // 4. Build workflow
         // ================================================================
         Workflow workflow;
-        workflow.id = "customer-validation";
+        workflow.id = 5;
         workflow.description = "Validate adult customers with good credit";
         workflow.rules.push_back(adultCheck);
         workflow.rules.push_back(creditCheck);
@@ -139,14 +139,14 @@ int main() {
         // ================================================================
         std::cout << "\n--- Priority & Timeout ---" << std::endl;
         auto slowRule = std::make_shared<Rule>();
-        slowRule->id = "slow-rule";
+        slowRule->id = 4;
         slowRule->expression = "true";
         slowRule->action = "x = 1";
         slowRule->priority = 999;  // Runs first
         slowRule->timeout = std::chrono::milliseconds(50);
 
         Workflow priorityWorkflow;
-        priorityWorkflow.id = "priority-test";
+        priorityWorkflow.id = 6;
         priorityWorkflow.rules.push_back(slowRule);
         priorityWorkflow.rules.push_back(adultCheck);  // priority 0, runs after
         priorityWorkflow.compile(engine);

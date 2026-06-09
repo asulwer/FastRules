@@ -8,14 +8,20 @@
 #include <functional>
 #include <any>
 #include <unordered_map>
+#include <typeindex>
 #include <stdexcept>
+
+#include "rule_result.hpp"
 
 namespace fastrules {
 
 // Forward declarations
-struct RuleResult;
 class RuleContext;
 class RateLimiter;
+class LuaEngine;
+class AsyncWorkflow;
+struct AsyncRuleResult;
+class AsyncWorkflowTask;
 
 struct RuleParameter {
     std::string name;
@@ -92,6 +98,8 @@ public:
     friend class AsyncWorkflow;
     friend class RuleAwaitable;
     friend struct AsyncRuleResult;
+    friend struct AsyncRulePromise;
+    friend class AsyncWorkflowTask;
 
     // Compilation
     void compile(class LuaEngine& engine);
@@ -108,6 +116,11 @@ private:
     RuleResult execute(class LuaEngine& engine, RuleContext& context, const std::vector<RuleParameter>& parameters);
 
 public:
+    // Internal accessor for async/coroutine execution (not for general use)
+    [[nodiscard]] RuleResult executeInternal(class LuaEngine& engine, RuleContext& context, const std::vector<RuleParameter>& parameters) {
+        return execute(engine, context, parameters);
+    }
+
     // Static factories
     static Rule isNotNull(const std::string& parameterName, const std::string& description = "");
     static Rule greaterThan(const std::string& parameterName, double value, const std::string& description = "");
@@ -119,7 +132,7 @@ public:
     // Builder
     class Builder {
     public:
-        explicit Builder(const std::string& ruleId) : rule_(std::make_shared<Rule>()) {
+        explicit Builder(int ruleId) : rule_(std::make_shared<Rule>()) {
             rule_->id = ruleId;
         }
 

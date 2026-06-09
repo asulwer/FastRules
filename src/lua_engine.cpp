@@ -9,6 +9,16 @@
 #include <unordered_set>
 #include <algorithm>
 
+// Forward declaration for Lua debug struct
+struct lua_Debug;
+
+// Lua C API forward declarations
+extern "C" {
+    typedef struct lua_State lua_State;
+    void lua_sethook(lua_State* L, void (*func)(lua_State*, lua_Debug*), int mask, int count);
+    #define LUA_MASKCOUNT 0x04
+}
+
 namespace {
     // Thread-local deadline for timeout preemption
     thread_local std::chrono::steady_clock::time_point* g_deadline = nullptr;
@@ -219,15 +229,16 @@ void LuaEngine::setupContextTable(RuleContext& context) {
         if (args.empty() || !args[0]->isString()) {
             return results;
         }
-        std::string ruleId = args[0]->toString();
+        std::string ruleIdStr = args[0]->toString();
+        int ruleId = std::stoi(ruleIdStr);
         auto result = context.getResult(ruleId);
         auto tbl = backend_->createTable();
         if (result.has_value()) {
             tbl->set("success", *backend_->makeBool(result->success));
-            tbl->set("ruleId", *backend_->makeString(result->ruleId));
+            tbl->set("ruleId", *backend_->makeString(std::to_string(result->ruleId)));
         } else {
             tbl->set("success", *backend_->makeBool(false));
-            tbl->set("ruleId", *backend_->makeString(ruleId));
+            tbl->set("ruleId", *backend_->makeString(std::to_string(ruleId)));
         }
         results.push_back(std::move(tbl));
         return results;
@@ -381,9 +392,7 @@ std::optional<int> LuaEngine::compileExpression(const std::string& expression) {
         size_t memKB = getMemoryUsageKB();
         if (memKB > autoResetThresholdKB_) {
             if (logger_) {
-                logger_->warning(
-                    "Lua state memory (" + std::to_string(memKB) + " KB) exceeded threshold (" +
-                    std::to_string(autoResetThresholdKB_) + " KB). Triggering state reset.");
+                logger_->warn("Lua state memory ({} KB) exceeded threshold ({} KB). Triggering state reset.", memKB, autoResetThresholdKB_);
             }
             resetState();
         }
@@ -423,9 +432,7 @@ std::optional<int> LuaEngine::compileAction(const std::string& action) {
         size_t memKB = getMemoryUsageKB();
         if (memKB > autoResetThresholdKB_) {
             if (logger_) {
-                logger_->warning(
-                    "Lua state memory (" + std::to_string(memKB) + " KB) exceeded threshold (" +
-                    std::to_string(autoResetThresholdKB_) + " KB). Triggering state reset.");
+                logger_->warn("Lua state memory ({} KB) exceeded threshold ({} KB). Triggering state reset.", memKB, autoResetThresholdKB_);
             }
             resetState();
         }
@@ -464,9 +471,7 @@ std::optional<int> LuaEngine::compileCoroutine(const std::string& expression) {
         size_t memKB = getMemoryUsageKB();
         if (memKB > autoResetThresholdKB_) {
             if (logger_) {
-                logger_->warning(
-                    "Lua state memory (" + std::to_string(memKB) + " KB) exceeded threshold (" +
-                    std::to_string(autoResetThresholdKB_) + " KB). Triggering state reset.");
+                logger_->warn("Lua state memory ({} KB) exceeded threshold ({} KB). Triggering state reset.", memKB, autoResetThresholdKB_);
             }
             resetState();
         }
@@ -754,10 +759,7 @@ void LuaEngine::resetState() {
 
     if (logger_) {
         size_t memBefore = getMemoryUsageKB();
-        logger_->info(
-            "Resetting Lua state. Memory before: " + std::to_string(memBefore) +
-            " KB, compiled refs: " + std::to_string(refToBackendId_.size()) +
-            ", compile count: " + std::to_string(compileCount_.load()));
+        logger_->info("Resetting Lua state. Memory before: {} KB, compiled refs: {}, compile count: {}", memBefore, refToBackendId_.size(), compileCount_.load());
     }
 
     {
@@ -790,7 +792,7 @@ void LuaEngine::resetState() {
 
     if (logger_) {
         size_t memAfter = getMemoryUsageKB();
-        logger_->info("Lua state reset complete. Memory after: " + std::to_string(memAfter) + " KB");
+        logger_->info("Lua state reset complete. Memory after: {} KB", memAfter);
     }
 }
 

@@ -38,7 +38,7 @@ struct AsyncRuleResult {
 };
 
 // Promise type for async rule execution
-class AsyncRulePromise {
+struct AsyncRulePromise {
 public:
     struct promise_type {
         AsyncRuleResult result;

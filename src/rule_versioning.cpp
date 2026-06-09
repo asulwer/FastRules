@@ -61,7 +61,7 @@ Rule RuleVersionHistory::rollbackTo(const std::string& versionId) const {
     
     const auto& version = versionOpt.value();
     Rule rule;
-    rule.id = version.ruleId;
+    rule.id = std::stoi(version.ruleId);
     rule.expression = version.expression;
     rule.action = version.action;
     rule.priority = version.priority;
@@ -134,7 +134,7 @@ void RuleVersionManager::snapshotRule(const Rule& rule, const std::string& autho
     
     RuleVersion version;
     version.versionId = generateVersionId();
-    version.ruleId = rule.id;
+    version.ruleId = std::to_string(rule.id);
     version.expression = rule.expression;
     version.action = rule.action;
     version.priority = rule.priority;
@@ -143,25 +143,25 @@ void RuleVersionManager::snapshotRule(const Rule& rule, const std::string& autho
     version.author = author;
     version.changeSummary = summary;
     
-    auto& history = histories_[rule.id];
+    auto& history = histories_[std::to_string(rule.id)];
     auto latest = history.getLatest();
     if (latest.has_value()) {
         version.parentVersionId = latest->versionId;
     }
     
-    history.ruleId = rule.id;
+    history.ruleId = std::to_string(rule.id);
     history.addVersion(version);
 }
 
-std::optional<RuleVersionHistory> RuleVersionManager::getHistory(const std::string& ruleId) const {
+std::optional<RuleVersionHistory> RuleVersionManager::getHistory(int ruleId) const {
     std::lock_guard<std::mutex> lock(mutex_);
-    auto it = histories_.find(ruleId);
+    auto it = histories_.find(std::to_string(ruleId));
     if (it == histories_.end()) return std::nullopt;
     RuleVersionHistory result = it->second;
     return result;
 }
 
-Workflow RuleVersionManager::rollbackWorkflow(const std::string& workflowId,
+Workflow RuleVersionManager::rollbackWorkflow(int workflowId,
                                                const std::string& versionId) const {
     std::lock_guard<std::mutex> lock(mutex_);
     

@@ -50,19 +50,19 @@ int main() {
 
         // Rule that compares two different objects
         auto rule = std::make_shared<fastrules::Rule>();
-        rule->id = "minimum-order";
+        rule->id = 1;
         rule->expression = "customer.total >= order.minTotal";
         rule->isActive = true;
 
         // Rule that checks VIP status
         auto vipRule = std::make_shared<fastrules::Rule>();
-        vipRule->id = "vip-check";
+        vipRule->id = 2;
         vipRule->expression = "customer.vip == true";
         vipRule->isActive = true;
 
         // Rule that mutates based on both objects
         auto actionRule = std::make_shared<fastrules::Rule>();
-        actionRule->id = "update-status";
+        actionRule->id = 3;
         actionRule->expression = "order.minTotal > 100";
         actionRule->action = "order.status = 'priority'";
         actionRule->isActive = true;

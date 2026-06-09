@@ -18,7 +18,7 @@ TEST_CASE("Rule timeout fires on long-running expression", "[rule][timeout][!may
     LuaEngine engine;
 
     Rule rule;
-    rule.id = "slow";
+    rule.id = 1;
     // Pure computation without assignment - uses recursion via repeated math
     rule.expression = "(function() local s = 0; for i = 1, 1000000 do s = s + i end; return s > 0 end)()";
     rule.timeout = std::chrono::milliseconds(1);
@@ -37,7 +37,7 @@ TEST_CASE("Rule timeout does not fire on fast expression", "[rule][timeout]") {
     LuaEngine engine;
 
     Rule rule;
-    rule.id = "fast";
+    rule.id = 1;
     rule.expression = "true";
     rule.timeout = std::chrono::milliseconds(5000);
     rule.compile(engine);
@@ -59,7 +59,7 @@ TEST_CASE("Cache entry expires after TTL", "[rule][cache]") {
     LuaEngine engine;
 
     Rule rule;
-    rule.id = "cached";
+    rule.id = 1;
     rule.expression = "true";
     rule.cacheDuration = std::chrono::milliseconds(50);
     rule.compile(engine);
@@ -83,7 +83,7 @@ TEST_CASE("Cache disabled when cacheDuration not set", "[rule][cache]") {
     LuaEngine engine;
 
     Rule rule;
-    rule.id = "uncached";
+    rule.id = 1;
     rule.expression = "true";
     rule.compile(engine);
 
@@ -105,7 +105,7 @@ TEST_CASE("Rule compilation fails on invalid Lua syntax", "[rule][errors]") {
     LuaEngine engine;
 
     Rule rule;
-    rule.id = "bad-syntax";
+    rule.id = 1;
     rule.expression = "if then end";
 
     try {
@@ -121,7 +121,7 @@ TEST_CASE("Rule execution handles runtime error gracefully", "[rule][errors]") {
     LuaEngine engine;
 
     Rule rule;
-    rule.id = "runtime-error";
+    rule.id = 1;
     rule.expression = "nil > 0";
     rule.compile(engine);
 
@@ -138,7 +138,7 @@ TEST_CASE("Rule execution handles missing parameter", "[rule][errors]") {
     LuaEngine engine;
 
     Rule rule;
-    rule.id = "missing-param";
+    rule.id = 1;
     rule.expression = "x > 0";
     rule.compile(engine);
 
@@ -156,7 +156,7 @@ TEST_CASE("Rule execution handles missing parameter", "[rule][errors]") {
 
 TEST_CASE("Validation detects missing dependency", "[rule][validation][errors]") {
     Rule rule1;
-    rule1.id = "a";
+    rule1.id = 1;
     rule1.expression = "true";
     rule1.dependsOnRuleId = "b";
 
@@ -168,7 +168,7 @@ TEST_CASE("Validation detects missing dependency", "[rule][validation][errors]")
 
 TEST_CASE("Validation allows self-dependency (known limitation)", "[rule][validation][errors]") {
     Rule rule;
-    rule.id = "self";
+    rule.id = 1;
     rule.expression = "true";
     rule.dependsOnRuleId = "self";
 
@@ -185,11 +185,11 @@ TEST_CASE("Validation allows self-dependency (known limitation)", "[rule][valida
 
 TEST_CASE("Circular dependency A -> B -> A detected", "[rule][validation][circular]") {
     Rule a;
-    a.id = "A";
+    a.id = 1;
     a.dependsOnRuleId = "B";
 
     Rule b;
-    b.id = "B";
+    b.id = 1;
     b.dependsOnRuleId = "A";
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b};
@@ -198,9 +198,9 @@ TEST_CASE("Circular dependency A -> B -> A detected", "[rule][validation][circul
 }
 
 TEST_CASE("Circular dependency A -> B -> C -> A detected", "[rule][validation][circular]") {
-    Rule a; a.id = "A"; a.dependsOnRuleId = "B";
-    Rule b; b.id = "B"; b.dependsOnRuleId = "C";
-    Rule c; c.id = "C"; c.dependsOnRuleId = "A";
+    Rule a; a.id = 1; a.dependsOnRuleId = "B";
+    Rule b; b.id = 1; b.dependsOnRuleId = "C";
+    Rule c; c.id = 1; c.dependsOnRuleId = "A";
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b, c};
 
@@ -209,7 +209,7 @@ TEST_CASE("Circular dependency A -> B -> C -> A detected", "[rule][validation][c
 
 TEST_CASE("Self-dependency detected", "[rule][validation][circular]") {
     Rule a;
-    a.id = "A";
+    a.id = 1;
     a.dependsOnRuleId = "A";
 
     std::vector<std::reference_wrapper<const Rule>> all = {a};
@@ -218,8 +218,8 @@ TEST_CASE("Self-dependency detected", "[rule][validation][circular]") {
 }
 
 TEST_CASE("No circular dependency passes validation", "[rule][validation][circular]") {
-    Rule a; a.id = "A"; a.dependsOnRuleId = "B";
-    Rule b; b.id = "B";
+    Rule a; a.id = 1; a.dependsOnRuleId = "B";
+    Rule b; b.id = 1;
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b};
 
@@ -228,10 +228,10 @@ TEST_CASE("No circular dependency passes validation", "[rule][validation][circul
 }
 
 TEST_CASE("Circular dependency via child rules detected", "[rule][validation][circular]") {
-    Rule parent; parent.id = "parent";
+    Rule parent; parent.id = 1;
     
     auto child = std::make_shared<Rule>();
-    child->id = "child";
+    child->id = 1;
     child->dependsOnRuleId = "parent"; // Child depends on parent
     
     parent.childRules.push_back(child);
@@ -242,10 +242,10 @@ TEST_CASE("Circular dependency via child rules detected", "[rule][validation][ci
 }
 
 TEST_CASE("Diamond dependency passes validation", "[rule][validation][circular]") {
-    Rule top;    top.id = "top";
-    Rule left;   left.id = "left";  left.dependsOnRuleId = "top";
-    Rule right;  right.id = "right"; right.dependsOnRuleId = "top";
-    Rule bottom; bottom.id = "bottom"; bottom.dependsOnRuleId = "left";
+    Rule top;    top.id = 1;
+    Rule left;   left.id = 1;  left.dependsOnRuleId = "top";
+    Rule right;  right.id = 1; right.dependsOnRuleId = "top";
+    Rule bottom; bottom.id = 1; bottom.dependsOnRuleId = "left";
 
     std::vector<std::reference_wrapper<const Rule>> all = {top, left, right, bottom};
 
@@ -254,7 +254,7 @@ TEST_CASE("Diamond dependency passes validation", "[rule][validation][circular]"
 
 TEST_CASE("Validation detects empty rule ID", "[rule][validation][errors]") {
     Rule a; a.id = "";
-    Rule b; b.id = "B";
+    Rule b; b.id = 1;
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b};
 
@@ -262,8 +262,8 @@ TEST_CASE("Validation detects empty rule ID", "[rule][validation][errors]") {
 }
 
 TEST_CASE("Validation detects duplicate rule IDs", "[rule][validation][errors]") {
-    Rule a; a.id = "same-id";
-    Rule b; b.id = "same-id";
+    Rule a; a.id = 1;
+    Rule b; b.id = 1;
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b};
 
@@ -276,7 +276,7 @@ TEST_CASE("Validation detects duplicate rule IDs", "[rule][validation][errors]")
 
 TEST_CASE("Validation fails on zero timeout", "[rule][validation][errors]") {
     Rule rule;
-    rule.id = "bad-timeout";
+    rule.id = 1;
     rule.expression = "true";
 
     REQUIRE_THROWS(rule.setTimeout(std::chrono::milliseconds(0)));
@@ -296,7 +296,7 @@ TEST_CASE("Rate limiter blocks excessive calls", "[rule][rate-limit]") {
     limiter->configure(config);
 
     Rule rule;
-    rule.id = "limited";
+    rule.id = 1;
     rule.expression = "true";
     rule.rateLimiter = limiter;
     rule.compile(engine);
@@ -322,12 +322,12 @@ TEST_CASE("Parent rule executes child rules", "[rule][children]") {
     LuaEngine engine;
 
     auto child = std::make_shared<Rule>();
-    child->id = "child";
+    child->id = 1;
     child->expression = "true";
     child->compile(engine);
 
     Rule parent;
-    parent.id = "parent";
+    parent.id = 1;
     parent.expression = "true";
     parent.childRules.push_back(child);
     parent.compile(engine);
@@ -348,12 +348,12 @@ TEST_CASE("Parent fails when child fails", "[rule][children]") {
     LuaEngine engine;
 
     auto child = std::make_shared<Rule>();
-    child->id = "failing-child";
+    child->id = 1;
     child->expression = "false";
     child->compile(engine);
 
     Rule parent;
-    parent.id = "parent";
+    parent.id = 1;
     parent.expression = "true";
     parent.childRules.push_back(child);
     parent.compile(engine);
@@ -376,7 +376,7 @@ TEST_CASE("Parent fails when child fails", "[rule][children]") {
 TEST_CASE("Workflow with no rules is valid", "[workflow][edge]") {
     LuaEngine engine;
     Workflow workflow;
-    workflow.id = "empty";
+    workflow.id = 1;
 
     REQUIRE_NOTHROW(workflow.compile(engine));
 
@@ -389,10 +389,10 @@ TEST_CASE("Workflow with no rules is valid", "[workflow][edge]") {
 TEST_CASE("Workflow execution with all inactive rules", "[workflow][edge]") {
     LuaEngine engine;
     Workflow workflow;
-    workflow.id = "all-inactive";
+    workflow.id = 1;
 
     auto rule = std::make_shared<Rule>();
-    rule->id = "inactive";
+    rule->id = 1;
     rule->expression = "true";
     rule->isActive = false;
     workflow.rules.push_back(rule);
@@ -408,10 +408,10 @@ TEST_CASE("Workflow execution with all inactive rules", "[workflow][edge]") {
 TEST_CASE("Workflow detects missing dependency", "[workflow][errors]") {
     LuaEngine engine;
     Workflow workflow;
-    workflow.id = "broken-deps";
+    workflow.id = 1;
 
     auto rule = std::make_shared<Rule>();
-    rule->id = "orphan";
+    rule->id = 1;
     rule->expression = "true";
     rule->dependsOnRuleId = "nonexistent";
     workflow.rules.push_back(rule);
@@ -428,7 +428,7 @@ TEST_CASE("Wrong parameter type causes execution failure", "[rule][errors][types
     LuaEngine engine;
 
     Rule rule;
-    rule.id = "type-check";
+    rule.id = 1;
     rule.expression = "x > 0";
     rule.compile(engine);
 
@@ -450,7 +450,7 @@ TEST_CASE("LuaEngine handles empty parameter list", "[lua][edge]") {
     LuaEngine engine;
 
     Rule rule;
-    rule.id = "no-params";
+    rule.id = 1;
     rule.expression = "true";
     rule.compile(engine);
 
@@ -466,7 +466,7 @@ TEST_CASE("LuaEngine handles nil return from action", "[lua][edge]") {
     RuleContext ctx;
 
     Rule rule;
-    rule.id = "nil-action";
+    rule.id = 1;
     rule.expression = "true";
     rule.action = "return nil";
     rule.compile(engine);
@@ -482,7 +482,7 @@ TEST_CASE("LuaEngine handles boolean string conversion", "[lua][edge]") {
     LuaEngine engine;
 
     Rule rule;
-    rule.id = "bool-string";
+    rule.id = 1;
     rule.expression = "x == true";
     rule.compile(engine);
 
@@ -502,7 +502,7 @@ TEST_CASE("LuaEngine handles boolean string conversion", "[lua][edge]") {
 
 TEST_CASE("hasCircularDependency detects self-dependency", "[rule][circular-dependency]") {
     Rule a;
-    a.id = "A";
+    a.id = 1;
     a.dependsOnRuleId = "A";
 
     std::vector<std::reference_wrapper<const Rule>> all = {a};
@@ -511,8 +511,8 @@ TEST_CASE("hasCircularDependency detects self-dependency", "[rule][circular-depe
 }
 
 TEST_CASE("hasCircularDependency detects A -> B -> A", "[rule][circular-dependency]") {
-    Rule a; a.id = "A"; a.dependsOnRuleId = "B";
-    Rule b; b.id = "B"; b.dependsOnRuleId = "A";
+    Rule a; a.id = 1; a.dependsOnRuleId = "B";
+    Rule b; b.id = 1; b.dependsOnRuleId = "A";
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b};
 
@@ -521,9 +521,9 @@ TEST_CASE("hasCircularDependency detects A -> B -> A", "[rule][circular-dependen
 }
 
 TEST_CASE("hasCircularDependency detects A -> B -> C -> A", "[rule][circular-dependency]") {
-    Rule a; a.id = "A"; a.dependsOnRuleId = "B";
-    Rule b; b.id = "B"; b.dependsOnRuleId = "C";
-    Rule c; c.id = "C"; c.dependsOnRuleId = "A";
+    Rule a; a.id = 1; a.dependsOnRuleId = "B";
+    Rule b; b.id = 1; b.dependsOnRuleId = "C";
+    Rule c; c.id = 1; c.dependsOnRuleId = "A";
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b, c};
 
@@ -533,10 +533,10 @@ TEST_CASE("hasCircularDependency detects A -> B -> C -> A", "[rule][circular-dep
 }
 
 TEST_CASE("hasCircularDependency returns false for long chain without cycle", "[rule][circular-dependency]") {
-    Rule a; a.id = "A"; a.dependsOnRuleId = "B";
-    Rule b; b.id = "B"; b.dependsOnRuleId = "C";
-    Rule c; c.id = "C"; c.dependsOnRuleId = "D";
-    Rule d; d.id = "D"; // No dependency
+    Rule a; a.id = 1; a.dependsOnRuleId = "B";
+    Rule b; b.id = 1; b.dependsOnRuleId = "C";
+    Rule c; c.id = 1; c.dependsOnRuleId = "D";
+    Rule d; d.id = 1; // No dependency
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b, c, d};
 
@@ -547,7 +547,7 @@ TEST_CASE("hasCircularDependency returns false for long chain without cycle", "[
 }
 
 TEST_CASE("hasCircularDependency returns false for no dependency", "[rule][circular-dependency]") {
-    Rule a; a.id = "A"; // No dependency
+    Rule a; a.id = 1; // No dependency
 
     std::vector<std::reference_wrapper<const Rule>> all = {a};
 
@@ -555,7 +555,7 @@ TEST_CASE("hasCircularDependency returns false for no dependency", "[rule][circu
 }
 
 TEST_CASE("hasCircularDependency handles missing dependency", "[rule][circular-dependency]") {
-    Rule a; a.id = "A"; a.dependsOnRuleId = "B"; // B not in allRules
+    Rule a; a.id = 1; a.dependsOnRuleId = "B"; // B not in allRules
 
     std::vector<std::reference_wrapper<const Rule>> all = {a};
 
@@ -568,7 +568,7 @@ TEST_CASE("hasCircularDependency handles missing dependency", "[rule][circular-d
 // ============================================================================
 
 TEST_CASE("getDependencyChain returns just ID for no dependency", "[rule][circular-dependency]") {
-    Rule a; a.id = "A";
+    Rule a; a.id = 1;
 
     std::vector<std::reference_wrapper<const Rule>> all = {a};
 
@@ -580,8 +580,8 @@ TEST_CASE("getDependencyChain returns just ID for no dependency", "[rule][circul
 }
 
 TEST_CASE("getDependencyChain returns chain for single dependency", "[rule][circular-dependency]") {
-    Rule a; a.id = "A"; a.dependsOnRuleId = "B";
-    Rule b; b.id = "B"; // No dependency
+    Rule a; a.id = 1; a.dependsOnRuleId = "B";
+    Rule b; b.id = 1; // No dependency
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b};
 
@@ -594,10 +594,10 @@ TEST_CASE("getDependencyChain returns chain for single dependency", "[rule][circ
 }
 
 TEST_CASE("getDependencyChain returns full chain for long chain", "[rule][circular-dependency]") {
-    Rule a; a.id = "A"; a.dependsOnRuleId = "B";
-    Rule b; b.id = "B"; b.dependsOnRuleId = "C";
-    Rule c; c.id = "C"; c.dependsOnRuleId = "D";
-    Rule d; d.id = "D"; // No dependency
+    Rule a; a.id = 1; a.dependsOnRuleId = "B";
+    Rule b; b.id = 1; b.dependsOnRuleId = "C";
+    Rule c; c.id = 1; c.dependsOnRuleId = "D";
+    Rule d; d.id = 1; // No dependency
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b, c, d};
 
@@ -612,7 +612,7 @@ TEST_CASE("getDependencyChain returns full chain for long chain", "[rule][circul
 }
 
 TEST_CASE("getDependencyChain handles self-dependency cycle", "[rule][circular-dependency]") {
-    Rule a; a.id = "A"; a.dependsOnRuleId = "A";
+    Rule a; a.id = 1; a.dependsOnRuleId = "A";
 
     std::vector<std::reference_wrapper<const Rule>> all = {a};
 
@@ -627,8 +627,8 @@ TEST_CASE("getDependencyChain handles self-dependency cycle", "[rule][circular-d
 }
 
 TEST_CASE("getDependencyChain handles A -> B -> A cycle", "[rule][circular-dependency]") {
-    Rule a; a.id = "A"; a.dependsOnRuleId = "B";
-    Rule b; b.id = "B"; b.dependsOnRuleId = "A";
+    Rule a; a.id = 1; a.dependsOnRuleId = "B";
+    Rule b; b.id = 1; b.dependsOnRuleId = "A";
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b};
 
@@ -658,7 +658,7 @@ TEST_CASE("Builder dependsOn without validation allows cycle", "[rule][builder][
 }
 
 TEST_CASE("Builder dependsOn with validation throws on self-dependency", "[rule][builder][circular-dependency]") {
-    Rule a; a.id = "A";
+    Rule a; a.id = 1;
     std::vector<std::reference_wrapper<const Rule>> all = {a};
 
     // Building "A" that depends on "A" should throw when validation is enabled
@@ -669,7 +669,7 @@ TEST_CASE("Builder dependsOn with validation throws on self-dependency", "[rule]
 }
 
 TEST_CASE("Builder dependsOn with validation throws on A -> B -> A", "[rule][builder][circular-dependency]") {
-    Rule b; b.id = "B"; b.dependsOnRuleId = "A";
+    Rule b; b.id = 1; b.dependsOnRuleId = "A";
     std::vector<std::reference_wrapper<const Rule>> all = {b};
 
     // Building "A" that depends on "B" should throw because B already depends on A
@@ -680,8 +680,8 @@ TEST_CASE("Builder dependsOn with validation throws on A -> B -> A", "[rule][bui
 }
 
 TEST_CASE("Builder dependsOn with validation passes for valid chain", "[rule][builder][circular-dependency]") {
-    Rule b; b.id = "B"; b.dependsOnRuleId = "C";
-    Rule c; c.id = "C"; // No dependency
+    Rule b; b.id = 1; b.dependsOnRuleId = "C";
+    Rule c; c.id = 1; // No dependency
     std::vector<std::reference_wrapper<const Rule>> all = {b, c};
 
     // Building "A" that depends on "B" should succeed (A -> B -> C, no cycle)
@@ -690,10 +690,10 @@ TEST_CASE("Builder dependsOn with validation passes for valid chain", "[rule][bu
 }
 
 TEST_CASE("Builder dependsOn with validation passes for long chain", "[rule][builder][circular-dependency]") {
-    Rule b; b.id = "B"; b.dependsOnRuleId = "C";
-    Rule c; c.id = "C"; c.dependsOnRuleId = "D";
-    Rule d; d.id = "D"; d.dependsOnRuleId = "E";
-    Rule e; e.id = "E"; // No dependency
+    Rule b; b.id = 1; b.dependsOnRuleId = "C";
+    Rule c; c.id = 1; c.dependsOnRuleId = "D";
+    Rule d; d.id = 1; d.dependsOnRuleId = "E";
+    Rule e; e.id = 1; // No dependency
     std::vector<std::reference_wrapper<const Rule>> all = {b, c, d, e};
 
     // Building "A" that depends on "B" should succeed (A -> B -> C -> D -> E, no cycle)

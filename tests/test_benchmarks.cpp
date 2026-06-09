@@ -18,7 +18,7 @@ TEST_CASE("Benchmark rule compilation", "[benchmark][compilation]") {
     LuaEngine engine;
 
     Rule rule;
-    rule.id = "benchmark-rule";
+    rule.id = 1;
     rule.expression = "x > 0 and y < 100";
     rule.action = "result = x + y";
 
@@ -30,11 +30,11 @@ TEST_CASE("Benchmark rule compilation", "[benchmark][compilation]") {
 TEST_CASE("Benchmark workflow compilation", "[benchmark][compilation]") {
     LuaEngine engine;
     Workflow workflow;
-    workflow.id = "benchmark-workflow";
+    workflow.id = 1;
 
     for (int i = 0; i < 10; ++i) {
         auto rule = std::make_shared<Rule>();
-        rule->id = "rule-" + std::to_string(i);
+        rule->id = 1 + std::to_string(i);
         rule->expression = "x > " + std::to_string(i);
         workflow.rules.push_back(rule);
     }
@@ -52,7 +52,7 @@ TEST_CASE("Benchmark simple rule execution", "[benchmark][execution]") {
     LuaEngine engine;
 
     Rule rule;
-    rule.id = "simple";
+    rule.id = 1;
     rule.expression = "x > 0";
     rule.action = "result = x * 2";
     rule.compile(engine);
@@ -77,7 +77,7 @@ TEST_CASE("Benchmark rule with type registration", "[benchmark][execution]") {
     });
 
     Rule rule;
-    rule.id = "point-distance";
+    rule.id = 1;
     rule.expression = "math.sqrt(point.x * point.x + point.y * point.y) < 100";
     rule.action = "distance = math.sqrt(point.x * point.x + point.y * point.y)";
     rule.compile(engine);
@@ -99,11 +99,11 @@ TEST_CASE("Benchmark rule with type registration", "[benchmark][execution]") {
 TEST_CASE("Benchmark sequential workflow execution", "[benchmark][execution]") {
     LuaEngine engine;
     Workflow workflow;
-    workflow.id = "sequential";
+    workflow.id = 1;
 
     for (int i = 0; i < 5; ++i) {
         auto rule = std::make_shared<Rule>();
-        rule->id = "rule-" + std::to_string(i);
+        rule->id = 1 + std::to_string(i);
         rule->expression = "x > " + std::to_string(i);
         workflow.rules.push_back(rule);
     }
@@ -122,11 +122,11 @@ TEST_CASE("Benchmark sequential workflow execution", "[benchmark][execution]") {
 TEST_CASE("Benchmark parallel workflow execution", "[benchmark][execution]") {
     LuaEngine engine;
     Workflow workflow;
-    workflow.id = "parallel";
+    workflow.id = 1;
 
     for (int i = 0; i < 5; ++i) {
         auto rule = std::make_shared<Rule>();
-        rule->id = "rule-" + std::to_string(i);
+        rule->id = 1 + std::to_string(i);
         rule->expression = "x > " + std::to_string(i);
         workflow.rules.push_back(rule);
     }
@@ -151,7 +151,7 @@ TEST_CASE("Benchmark rule memory footprint", "[benchmark][memory]") {
     BENCHMARK_ADVANCED("rule memory: create & compile")(Catch::Benchmark::Chronometer meter) {
         meter.measure([] {
             Rule rule;
-            rule.id = "mem-test";
+            rule.id = 1;
             rule.expression = "x > 0";
                     return rule.id.length();
         });
@@ -163,11 +163,11 @@ TEST_CASE("Benchmark workflow memory scaling", "[benchmark][memory]") {
     
     // Pre-build workflow outside benchmark
     Workflow workflow;
-    workflow.id = "large-workflow";
+    workflow.id = 1;
     
     for (int i = 0; i < 50; ++i) {
         auto rule = std::make_shared<Rule>();
-        rule->id = "rule-" + std::to_string(i);
+        rule->id = 1 + std::to_string(i);
         rule->expression = "x > " + std::to_string(i);
         workflow.rules.push_back(rule);
     }
@@ -190,7 +190,7 @@ TEST_CASE("Benchmark cached vs uncached execution", "[benchmark][cache]") {
     LuaEngine engine;
 
     Rule rule;
-    rule.id = "cached";
+    rule.id = 1;
     rule.expression = "x > 0";
     rule.action = "result = x";
     rule.cacheDuration = std::chrono::milliseconds(1000);
@@ -209,7 +209,7 @@ TEST_CASE("Benchmark cached vs uncached execution", "[benchmark][cache]") {
     };
 
     Rule uncachedRule;
-    uncachedRule.id = "uncached";
+    uncachedRule.id = 1;
     uncachedRule.expression = "x > 0";
     uncachedRule.action = "result = x";
     uncachedRule.compile(engine);

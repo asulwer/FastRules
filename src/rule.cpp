@@ -53,7 +53,7 @@ std::string Rule::buildCacheKey(const std::vector<RuleParameter>& parameters) co
                 key << std::any_cast<const char*>(param.value);
             } else {
                 // For complex types, hash the type_info + use type name as proxy
-                key << param.type << "@" << ti.hash_code();
+                key << (param.type.has_value() ? param.type.value().name() : "unknown") << "@" << ti.hash_code();
             }
         } else {
             key << "nil";
@@ -90,7 +90,7 @@ void Rule::compile(LuaEngine& engine) {
             compiledExpressionRef = engine.compileExpression(expression);
         } catch (const std::exception& e) {
             throw RuleCompilationException(
-                "Rule '" + id + "': Failed to compile expression\n  Expression: " + expression + "\n  Error: " + e.what()
+                "Rule '" + std::to_string(id) + "': Failed to compile expression\n  Expression: " + expression + "\n  Error: " + e.what()
             );
         }
     }
@@ -99,7 +99,7 @@ void Rule::compile(LuaEngine& engine) {
         auto validation = ExpressionValidator::validate(action);
         if (!validation.valid) {
             std::ostringstream oss;
-            oss << "Rule '" << id << "': Action validation failed\n";
+            oss << "Rule '" << std::to_string(id) << "': Action validation failed\n";
             oss << "  Action: " << action << "\n";
             oss << "  Errors:\n";
             for (const auto& err : validation.errors) {
@@ -111,7 +111,7 @@ void Rule::compile(LuaEngine& engine) {
             compiledActionRef = engine.compileAction(action);
         } catch (const std::exception& e) {
             throw RuleCompilationException(
-                "Rule '" + id + "': Failed to compile action\n  Action: " + action + "\n  Error: " + e.what()
+                "Rule '" + std::to_string(id) + "': Failed to compile action\n  Action: " + action + "\n  Error: " + e.what()
             );
         }
     }
@@ -149,7 +149,7 @@ void Rule::validate(const std::vector<std::reference_wrapper<const Rule>>& allRu
         // execution dependency, so add parent depends on child completing first)
         // Actually child rules are executed BEFORE parent, so parent depends on child
         for (const auto& child : rule.childRules) {
-            if (child && !child->id.empty()) {
+            if (child && child->id != 0) {
                 adjacency[rule.id].push_back(child->id);
                 ruleById[child->id] = child.get();
             }
@@ -245,16 +245,16 @@ bool Rule::hasCircularDependency(const std::vector<std::reference_wrapper<const 
     }
 
     // Build lookup map from allRules
-    std::unordered_map<std::string, const Rule*> ruleMap;
+    std::unordered_map<int, const Rule*> ruleMap;
     for (const auto& ref : allRules) {
         ruleMap[ref.get().id] = &ref.get();
     }
 
     // Follow the dependency chain
-    std::unordered_set<std::string> visited;
-    std::string current = dependsOnRuleId.value();
+    std::unordered_set<int> visited;
+    int current = dependsOnRuleId.value();
 
-    while (!current.empty()) {
+    while (current != 0) {
         // Check if we've returned to the starting rule
         if (current == id) {
             return true;
@@ -277,8 +277,8 @@ bool Rule::hasCircularDependency(const std::vector<std::reference_wrapper<const 
     return false;
 }
 
-std::vector<std::string> Rule::getDependencyChain(const std::vector<std::reference_wrapper<const Rule>>& allRules) const {
-    std::vector<std::string> chain;
+std::vector<Rule::Id> Rule::getDependencyChain(const std::vector<std::reference_wrapper<const Rule>>& allRules) const {
+    std::vector<Rule::Id> chain;
     chain.push_back(id);
 
     if (!dependsOnRuleId.has_value()) {
@@ -286,16 +286,16 @@ std::vector<std::string> Rule::getDependencyChain(const std::vector<std::referen
     }
 
     // Build lookup map from allRules
-    std::unordered_map<std::string, const Rule*> ruleMap;
+    std::unordered_map<int, const Rule*> ruleMap;
     for (const auto& ref : allRules) {
         ruleMap[ref.get().id] = &ref.get();
     }
 
     // Follow the dependency chain
-    std::unordered_set<std::string> visited;
-    std::string current = dependsOnRuleId.value();
+    std::unordered_set<int> visited;
+    int current = dependsOnRuleId.value();
 
-    while (!current.empty()) {
+    while (current != 0) {
         chain.push_back(current);
 
         // Check for cycle
@@ -376,9 +376,9 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
         } else {
             limiter = &RateLimiter::global();
         }
-        if (!limiter->isAllowed(id)) {
-            log->warning("Rate limit exceeded for rule {}", id);
-            throw RateLimitException("Rate limit exceeded for rule '" + id + "'");
+        if (!limiter->isAllowed(std::to_string(id))) {
+            log->warn("Rate limit exceeded for rule {}", id);
+            throw RateLimitException("Rate limit exceeded for rule '" + std::to_string(id) + "'");
         }
 
         // Validate parameter types before execution

@@ -255,7 +255,7 @@ std::optional<AotBundle> AotBundle::fromHexString(const std::string& hex) {
 
 AotBundle AotCompiler::compileWorkflow(const Workflow& workflow, LuaEngine& engine) {
     AotBundle bundle;
-    bundle.workflowId = workflow.id;
+    bundle.workflowId = std::to_string(workflow.id);
     
     for (const auto& rule : workflow.rules) {
         bundle.rules.push_back(compileRule(*rule, engine));
@@ -266,7 +266,7 @@ AotBundle AotCompiler::compileWorkflow(const Workflow& workflow, LuaEngine& engi
 
 AotBundle::CompiledRule AotCompiler::compileRule(const Rule& rule, LuaEngine& engine) {
     AotBundle::CompiledRule compiled;
-    compiled.ruleId = rule.id;
+    compiled.ruleId = std::to_string(rule.id);
     compiled.expression = rule.expression;
     compiled.action = rule.action;
     
@@ -314,52 +314,65 @@ bool AotCompiler::isBundleValid(const std::string& path) {
 }
 
 std::optional<std::string> AotCompiler::dumpBytecode(LuaEngine& engine, const std::string& source) {
-    // Use Lua's string.dump to get bytecode
-    sol::state& lua = engine.state();
+#ifdef FASTRULES_USE_SOL2
+    // Access sol2 state through the backend
+    lua_State* L = engine.luaState();
+    if (!L) return std::nullopt;
     
     try {
-        // Compile to a function
-        sol::load_result loaded = lua.load(source);
-        if (!loaded.valid()) {
+        // Use raw Lua C API for string.dump
+        lua_getglobal(L, "string");
+        lua_getfield(L, -1, "dump");
+        
+        // Compile source to function
+        if (luaL_loadstring(L, source.c_str()) != LUA_OK) {
+            lua_pop(L, 2);
             return std::nullopt;
         }
         
-        sol::function func = loaded;
-        if (!func.valid()) {
-            return std::nullopt;
+        // Call string.dump with the function
+        lua_pushvalue(L, -1); // duplicate function
+        lua_call(L, 1, 1);
+        
+        if (lua_isstring(L, -1)) {
+            size_t len;
+            const char* data = lua_tolstring(L, -1, &len);
+            std::string result(data, len);
+            lua_pop(L, 3);
+            return result;
         }
         
-        // Use string.dump equivalent via Lua
-        sol::function stringDump = lua["string"]["dump"];
-        if (!stringDump.valid()) {
-            // string.dump might be restricted, fallback to storing source
-            return std::nullopt;
-        }
-        
-        auto result = stringDump(func);
-        if (result.valid() && result.get_type() == sol::type::string) {
-            return result.get<std::string>();
-        }
-        
+        lua_pop(L, 3);
         return std::nullopt;
     } catch (...) {
         return std::nullopt;
     }
+#else
+    (void)engine; (void)source;
+    return std::nullopt;
+#endif
 }
 
 bool AotCompiler::loadBytecode(LuaEngine& engine, const std::string& bytecode) {
-    sol::state& lua = engine.state();
+#ifdef FASTRULES_USE_SOL2
+    lua_State* L = engine.luaState();
+    if (!L) return false;
     
     try {
-        // Use loadstring equivalent to load bytecode
-        sol::load_result loaded = lua.load(bytecode);
-        if (!loaded.valid()) {
+        // Use raw Lua C API to load bytecode
+        if (luaL_loadbuffer(L, bytecode.c_str(), bytecode.size(), "=bytecode") != LUA_OK) {
+            lua_pop(L, 1); // pop error message
             return false;
         }
+        lua_pop(L, 1); // pop loaded function
         return true;
     } catch (...) {
         return false;
     }
+#else
+    (void)engine; (void)bytecode;
+    return false;
+#endif
 }
 
 } // namespace fastrules

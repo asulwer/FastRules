@@ -32,37 +32,37 @@ int main() {
 
         // === WORKFLOW: Holder for all rules ===
         fastrules::Workflow workflow;
-        workflow.id = "customer-processing";
+        workflow.id = 6;
         workflow.description = "Process customers with validation";
         workflow.isActive = true;
 
         // === PARENT 1: Adult Processing ===
         auto p1_child1 = std::make_shared<fastrules::Rule>();
-        p1_child1->id = "age-check";
+        p1_child1->id = 1;
         p1_child1->expression = "customer.age >= 18";
         p1_child1->isActive = true;
 
         auto p1_child2 = std::make_shared<fastrules::Rule>();
-        p1_child2->id = "name-check";
+        p1_child2->id = 2;
         p1_child2->expression = "isNotEmpty(customer.name)";
         p1_child2->isActive = true;
 
         auto parent1 = std::make_shared<fastrules::Rule>();
-        parent1->id = "adult-processing";
-        parent1->expression = "context.getResult('age-check').success == true and context.getResult('name-check').success == true";
+        parent1->id = 3;
+        parent1->expression = "context.getResult(1).success == true and context.getResult(2).success == true";
         parent1->action = "customer.processed = true";
         parent1->isActive = true;
         parent1->childRules = {p1_child1, p1_child2};
 
         // === PARENT 2: Minor Processing ===
         auto p2_child1 = std::make_shared<fastrules::Rule>();
-        p2_child1->id = "minor-age-check";
+        p2_child1->id = 4;
         p2_child1->expression = "customer.age < 18";
         p2_child1->isActive = true;
 
         auto parent2 = std::make_shared<fastrules::Rule>();
-        parent2->id = "minor-processing";
-        parent2->expression = "context.getResult('minor-age-check').success == true";
+        parent2->id = 5;
+        parent2->expression = "context.getResult(4).success == true";
         parent2->action = "customer.processed = false";
         parent2->isActive = true;
         parent2->childRules = {p2_child1};

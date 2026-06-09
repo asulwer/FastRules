@@ -3,8 +3,8 @@
 
 namespace fastrules {
 
-ExecutionTracer::ExecutionTracer(std::string workflowId) {
-    trace_.workflowId = std::move(workflowId);
+ExecutionTracer::ExecutionTracer(int workflowId) {
+    trace_.workflowId = workflowId;
 }
 
 void ExecutionTracer::start() {
@@ -18,11 +18,11 @@ void ExecutionTracer::addStep(ExecutionTraceStep step) {
     }
 }
 
-void ExecutionTracer::record(const std::string& ruleId,
+void ExecutionTracer::record(int ruleId,
                              const std::string& stage,
                              bool success,
                              const std::optional<std::string>& message,
-                             const std::optional<std::string>& dependencyId) {
+                             const std::optional<int>& dependencyId) {
     if (!active_) return;
 
     ExecutionTraceStep step;
@@ -42,7 +42,7 @@ void ExecutionTracer::finish(bool overallSuccess) {
     active_ = false;
 }
 
-std::vector<ExecutionTraceStep> ExecutionTrace::getStepsForRule(const std::string& ruleId) const {
+std::vector<ExecutionTraceStep> ExecutionTrace::getStepsForRule(int ruleId) const {
     std::vector<ExecutionTraceStep> result;
     for (const auto& step : steps) {
         if (step.ruleId == ruleId) {

@@ -10,13 +10,13 @@ namespace fastrules {
 
 // A single step in the execution trace
 struct ExecutionTraceStep {
-    std::string ruleId;
+    int ruleId = 0;
     std::string stage;           // "compile", "evaluate", "action", "skip", "dependency_check"
     bool success = true;
     std::chrono::steady_clock::time_point startedAt;
     std::chrono::steady_clock::time_point endedAt;
     std::optional<std::string> message;       // Human-readable detail
-    std::optional<std::string> dependencyId; // For dependency_check stage
+    std::optional<int> dependencyId; // For dependency_check stage
     std::optional<std::string> expression;    // The expression being evaluated
     std::optional<std::string> action;      // The action being executed
 
@@ -27,7 +27,7 @@ struct ExecutionTraceStep {
 
 // Complete trace for a workflow execution
 struct ExecutionTrace {
-    std::string workflowId;
+    int workflowId = 0;
     std::chrono::steady_clock::time_point startedAt;
     std::chrono::steady_clock::time_point endedAt;
     std::vector<ExecutionTraceStep> steps;
@@ -38,7 +38,7 @@ struct ExecutionTrace {
     }
 
     // Get steps for a specific rule
-    [[nodiscard]] std::vector<ExecutionTraceStep> getStepsForRule(const std::string& ruleId) const;
+    [[nodiscard]] std::vector<ExecutionTraceStep> getStepsForRule(int ruleId) const;
 
     // Get total time spent in a specific stage across all rules
     [[nodiscard]] std::chrono::nanoseconds getTotalTimeInStage(const std::string& stage) const;
@@ -51,7 +51,7 @@ struct ExecutionTrace {
 class ExecutionTracer {
 public:
     ExecutionTracer() = default;
-    explicit ExecutionTracer(std::string workflowId);
+    explicit ExecutionTracer(int workflowId);
 
     // Start the trace
     void start();
@@ -60,11 +60,11 @@ public:
     void addStep(ExecutionTraceStep step);
 
     // Convenience: record with auto timestamps
-    void record(const std::string& ruleId,
+    void record(int ruleId,
                 const std::string& stage,
                 bool success = true,
                 const std::optional<std::string>& message = std::nullopt,
-                const std::optional<std::string>& dependencyId = std::nullopt);
+                const std::optional<int>& dependencyId = std::nullopt);
 
     // Mark trace as complete
     void finish(bool overallSuccess);

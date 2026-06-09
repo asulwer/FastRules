@@ -7,9 +7,9 @@ namespace fastrules {
 
 void ParameterValidator::validateTypes(const std::vector<RuleParameter>& parameters) {
     for (const auto& param : parameters) {
-        if (!valueMatchesType(param.type, param.value)) {
+        if (param.type.has_value() && !valueMatchesType(param.type.value().name(), param.value)) {
             std::ostringstream oss;
-            oss << "Parameter '" << param.name << "' declared as type '" << param.type
+            oss << "Parameter '" << param.name << "' declared as type '" << (param.type.has_value() ? param.type.value().name() : "any")
                 << "' but value does not match";
             throw ParameterTypeException(oss.str());
         }

@@ -93,7 +93,7 @@ void demo_current_api() {
 
     // Create rule
     auto rule = std::make_shared<fastrules::Rule>();
-    rule->id = "adult-check";
+    rule->id = 1;
     rule->expression = "customer.age >= 18";
     rule->action = "customer.processed = true";
 

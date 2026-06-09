@@ -16,14 +16,14 @@ int main() {
 
         // Rule 1: Check if customer is an adult (age >= 18)
         auto adultCheck = std::make_shared<fastrules::Rule>();
-        adultCheck->id = "adult-check";
+        adultCheck->id = 1;
         adultCheck->description = "Adult customer check";
         adultCheck->expression = "age >= 18";
         workflow.rules.push_back(adultCheck);
 
         // Rule 2: Check name is not empty
         auto nameCheck = std::make_shared<fastrules::Rule>();
-        nameCheck->id = "name-check";
+        nameCheck->id = 2;
         nameCheck->description = "Name not empty check";
         nameCheck->expression = "isNotEmpty(name)";
         workflow.rules.push_back(nameCheck);

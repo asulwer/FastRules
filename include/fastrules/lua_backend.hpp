@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <typeindex>
 
 struct lua_State;
 

@@ -6,14 +6,14 @@ using namespace fastrules;
 TEST_CASE("Streaming execution basic", "[workflow][streaming]") {
     LuaEngine engine;
     Workflow workflow;
-    workflow.id = "stream-test";
+    workflow.id = 1;
     
     auto rule1 = std::make_shared<Rule>();
-    rule1->id = "rule-1";
+    rule1->id = 1;
     rule1->expression = "true";
     
     auto rule2 = std::make_shared<Rule>();
-    rule2->id = "rule-2";
+    rule2->id = 1;
     rule2->expression = "false";
     
     workflow.rules.push_back(rule1);

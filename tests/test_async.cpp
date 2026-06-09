@@ -30,7 +30,7 @@ TEST_CASE("AsyncWorkflow with workflow", "[async]") {
     workflow.description = "Test workflow";
     
     auto rule = std::make_shared<Rule>();
-    rule->id = "test-rule";
+    rule->id = 1;
     rule->expression = "true";
     workflow.rules.push_back(rule);
     
@@ -87,19 +87,19 @@ TEST_CASE("Parallel workflow execution", "[async][parallel]") {
     
     // Rule 1: Independent
     auto rule1 = std::make_shared<Rule>();
-    rule1->id = "rule-1";
+    rule1->id = 1;
     rule1->expression = "true";
     workflow.rules.push_back(rule1);
     
     // Rule 2: Independent
     auto rule2 = std::make_shared<Rule>();
-    rule2->id = "rule-2";
+    rule2->id = 1;
     rule2->expression = "true";
     workflow.rules.push_back(rule2);
     
     // Rule 3: Depends on rule-1
     auto rule3 = std::make_shared<Rule>();
-    rule3->id = "rule-3";
+    rule3->id = 1;
     rule3->expression = "context.getResult('rule-1').success";
     rule3->dependsOnRuleId = "rule-1";
     workflow.rules.push_back(rule3);
@@ -137,24 +137,24 @@ TEST_CASE("Parallel execution with dependencies", "[async][parallel]") {
     
     // Create a chain: A -> B -> C, with D independent
     auto ruleA = std::make_shared<Rule>();
-    ruleA->id = "A";
+    ruleA->id = 1;
     ruleA->expression = "true";
     workflow.rules.push_back(ruleA);
     
     auto ruleB = std::make_shared<Rule>();
-    ruleB->id = "B";
+    ruleB->id = 1;
     ruleB->expression = "context.getResult('A').success";
     ruleB->dependsOnRuleId = "A";
     workflow.rules.push_back(ruleB);
     
     auto ruleC = std::make_shared<Rule>();
-    ruleC->id = "C";
+    ruleC->id = 1;
     ruleC->expression = "context.getResult('B').success";
     ruleC->dependsOnRuleId = "B";
     workflow.rules.push_back(ruleC);
     
     auto ruleD = std::make_shared<Rule>();
-    ruleD->id = "D";
+    ruleD->id = 1;
     ruleD->expression = "true";
     workflow.rules.push_back(ruleD);
     
@@ -200,12 +200,12 @@ TEST_CASE("AsyncWorkflow parallel async execution", "[async][parallel][asyncwork
     workflow.description = "Async parallel test";
     
     auto rule1 = std::make_shared<Rule>();
-    rule1->id = "async-1";
+    rule1->id = 1;
     rule1->expression = "true";
     workflow.rules.push_back(rule1);
     
     auto rule2 = std::make_shared<Rule>();
-    rule2->id = "async-2";
+    rule2->id = 1;
     rule2->expression = "true";
     workflow.rules.push_back(rule2);
     
@@ -234,7 +234,7 @@ TEST_CASE("Performance: parallel vs sequential", "[async][performance]") {
     // Create multiple independent rules that sleep
     for (int i = 0; i < 5; ++i) {
         auto rule = std::make_shared<Rule>();
-        rule->id = "perf-" + std::to_string(i);
+        rule->id = 1 + std::to_string(i);
         rule->expression = "true";
         workflow.rules.push_back(rule);
     }

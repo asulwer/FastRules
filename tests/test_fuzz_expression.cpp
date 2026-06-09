@@ -142,7 +142,7 @@ TEST_CASE("Lua compilation handles malformed but safe expressions", "[security][
     
     for (const auto& expr : expressions) {
         Rule rule;
-        rule.id = "fuzz-" + std::to_string(expr.length());
+        rule.id = 1 + std::to_string(expr.length());
         rule.expression = expr;
         
         // Should throw compilation exception, not crash
@@ -282,7 +282,7 @@ TEST_CASE("LuaEngine handles stack overflow via deep nesting", "[security][fuzz]
 TEST_CASE("Workflow handles large rule sets", "[security][fuzz]") {
     LuaEngine engine;
     Workflow workflow;
-    workflow.id = "fuzz-large";
+    workflow.id = 1;
     
     for (int i = 0; i < 1000; ++i) {
         auto rule = Rule::Builder("rule-" + std::to_string(i))
@@ -313,7 +313,7 @@ TEST_CASE("Workflow handles circular dependencies gracefully", "[security][fuzz]
         .build();
     
     Workflow workflow;
-    workflow.id = "fuzz-circular";
+    workflow.id = 1;
     workflow.rules.push_back(rule1);
     workflow.rules.push_back(rule2);
     

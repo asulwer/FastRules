@@ -369,12 +369,12 @@ TEST_CASE("Workflow sequential execution", "[workflow][execution]") {
     workflow.description = "Sequential test";
     
     auto rule1 = std::make_shared<Rule>();
-    rule1->id = "rule1";
+    rule1->id = 1;
     rule1->expression = "true";
     workflow.rules.push_back(rule1);
     
     auto rule2 = std::make_shared<Rule>();
-    rule2->id = "rule2";
+    rule2->id = 1;
     rule2->expression = "true";
     workflow.rules.push_back(rule2);
     
@@ -397,12 +397,12 @@ TEST_CASE("Workflow execution order", "[workflow][execution]") {
     workflow.description = "Order test";
     
     auto rule1 = std::make_shared<Rule>();
-    rule1->id = "first";
+    rule1->id = 1;
     rule1->expression = "true";
     workflow.rules.push_back(rule1);
     
     auto rule2 = std::make_shared<Rule>();
-    rule2->id = "second";
+    rule2->id = 1;
     rule2->expression = "false";
     workflow.rules.push_back(rule2);
     
@@ -426,7 +426,7 @@ TEST_CASE("RuleResult cache hit", "[cache]") {
     LuaEngine engine;
     
     auto rule = std::make_shared<Rule>();
-    rule->id = "cached-rule";
+    rule->id = 1;
     rule->expression = "true";
     rule->cacheDuration = std::chrono::milliseconds(1000);
     
@@ -469,7 +469,7 @@ TEST_CASE("Single rule workflow", "[workflow][edge]") {
     Workflow workflow;
     
     auto rule = std::make_shared<Rule>();
-    rule->id = "only";
+    rule->id = 1;
     rule->expression = "true";
     workflow.rules.push_back(rule);
     
@@ -486,7 +486,7 @@ TEST_CASE("Rule with empty expression always succeeds", "[rule][edge]") {
     LuaEngine engine;
     
     auto rule = std::make_shared<Rule>();
-    rule->id = "empty";
+    rule->id = 1;
     rule->expression = "";
     
     Workflow workflow;

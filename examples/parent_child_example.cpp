@@ -29,14 +29,14 @@ int main() {
 
         // Child rule 1: Age check
         auto child1 = std::make_shared<fastrules::Rule>();
-        child1->id = "age-check";
+        child1->id = 1;
         child1->expression = "customer.age >= 18";
         child1->isActive = true;
         child1->priority = 0;
 
         // Child rule 2: Active check
         auto child2 = std::make_shared<fastrules::Rule>();
-        child2->id = "active-check";
+        child2->id = 2;
         child2->expression = "customer.isActive == true";
         child2->isActive = true;
         child2->priority = 1;
@@ -44,8 +44,8 @@ int main() {
         // Parent rule: only executes if both children pass
         // Uses context.getResult() to check child results
         auto parent = std::make_shared<fastrules::Rule>();
-        parent->id = "process-customer";
-        parent->expression = "context.getResult('age-check').success == true and context.getResult('active-check').success == true";
+        parent->id = 3;
+        parent->expression = "context.getResult(4).success == true and context.getResult(5).success == true";
         parent->action = "customer.processed = true";
         parent->isActive = true;
         parent->priority = 2;

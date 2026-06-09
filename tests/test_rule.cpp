@@ -51,7 +51,7 @@ TEST_CASE("Rule compile and execute", "[rule]") {
     LuaEngine engine;
 
     auto rule = std::make_shared<Rule>();
-    rule->id = "compile-test";
+    rule->id = 1;
     rule->expression = "value > 10";
     rule->action = "result = true";
 
@@ -66,7 +66,7 @@ TEST_CASE("Rule inactive", "[rule]") {
     RuleContext ctx;
 
     auto rule = std::make_shared<Rule>();
-    rule->id = "inactive-test";
+    rule->id = 1;
     rule->isActive = false;
     rule->expression = "false";
 
@@ -86,7 +86,7 @@ TEST_CASE("Rule timeout enforcement", "[rule]") {
     RuleContext ctx;
 
     auto rule = std::make_shared<Rule>();
-    rule->id = "timeout-test";
+    rule->id = 1;
     // Simple expression that should complete quickly - just test timeout infrastructure exists
     // Real timeout testing would require an infinite loop or very slow operation
     rule->expression = "true";
@@ -108,7 +108,7 @@ TEST_CASE("Rule timeout not exceeded", "[rule]") {
     RuleContext ctx;
 
     auto rule = std::make_shared<Rule>();
-    rule->id = "no-timeout-test";
+    rule->id = 1;
     rule->expression = "true";
     rule->timeout = std::chrono::milliseconds(5000);  // 5s timeout
 
@@ -128,7 +128,7 @@ TEST_CASE("Rule cache memoization", "[rule]") {
     RuleContext ctx;
 
     auto rule = std::make_shared<Rule>();
-    rule->id = "cache-test";
+    rule->id = 1;
     rule->expression = "true";
     rule->cacheDuration = std::chrono::milliseconds(1000);  // 1 second cache
 
@@ -156,7 +156,7 @@ TEST_CASE("Rule cache expires", "[rule]") {
     RuleContext ctx;
 
     auto rule = std::make_shared<Rule>();
-    rule->id = "cache-expire-test";
+    rule->id = 1;
     rule->expression = "true";
     rule->cacheDuration = std::chrono::milliseconds(50);  // 50ms cache
 
@@ -186,15 +186,15 @@ TEST_CASE("Rule child rules execution", "[rule]") {
     RuleContext ctx;
 
     auto parent = std::make_shared<Rule>();
-    parent->id = "parent";
+    parent->id = 1;
     parent->expression = "true";
 
     auto child1 = std::make_shared<Rule>();
-    child1->id = "child1";
+    child1->id = 1;
     child1->expression = "true";
 
     auto child2 = std::make_shared<Rule>();
-    child2->id = "child2";
+    child2->id = 1;
     child2->expression = "true";
 
     parent->childRules.push_back(child1);

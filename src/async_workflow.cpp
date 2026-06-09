@@ -99,7 +99,7 @@ std::vector<AsyncRuleResult> AsyncWorkflow::executeParallelAsync(
     // Group by dependency level
     std::vector<std::vector<std::shared_ptr<Rule>>> dependencyLevels;
     {
-        std::unordered_map<std::string, std::shared_ptr<Rule>> remaining;
+        std::unordered_map<int, std::shared_ptr<Rule>> remaining;
         for (auto& rule : workflow_.rules) {
             remaining[rule->id] = rule;
         }
@@ -150,7 +150,7 @@ std::vector<AsyncRuleResult> AsyncWorkflow::executeParallelAsync(
                         }
                         
                         // Use engine directly (thread-safe via shared_lock in registry)
-                        asyncResult.result = rule->execute(engine, context, parameters);
+                        asyncResult.result = rule->executeInternal(engine, context, parameters);
                     } catch (...) {
                         asyncResult.exception = std::current_exception();
                     }
@@ -184,7 +184,7 @@ AsyncRulePromise coExecuteRule(std::shared_ptr<Rule> rule,
     // It wraps rule execution in a coroutine-friendly way
     AsyncRuleResult asyncResult;
     try {
-        asyncResult.result = rule->execute(engine, context, parameters);
+        asyncResult.result = rule->executeInternal(engine, context, parameters);
     } catch (...) {
         asyncResult.exception = std::current_exception();
     }
@@ -206,7 +206,7 @@ static std::vector<RuleResult> executeWorkflowLevels(
     // Group by dependency level
     std::vector<std::vector<std::shared_ptr<Rule>>> dependencyLevels;
     {
-        std::unordered_map<std::string, std::shared_ptr<Rule>> remaining;
+        std::unordered_map<int, std::shared_ptr<Rule>> remaining;
         for (auto& rule : workflow.rules) {
             remaining[rule->id] = rule;
         }
@@ -251,7 +251,7 @@ static std::vector<RuleResult> executeWorkflowLevels(
                 }
             }
 
-            auto result = rule->execute(engine, context, parameters);
+            auto result = rule->executeInternal(engine, context, parameters);
             results.push_back(result);
         }
     }

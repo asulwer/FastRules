@@ -55,7 +55,7 @@ void Workflow::validate() {
 }
 
 void Workflow::compile(LuaEngine& engine) {
-    auto& log = globalLogger();
+    auto log = fastrules::logger();
     if (compiled_) {
         return;
     }
@@ -163,11 +163,11 @@ std::vector<RuleResult> Workflow::executeWithTrace(LuaEngine& engine,
             depStep.endedAt = std::chrono::steady_clock::now();
 
             if (!depResult.has_value() || !depResult->isSuccess()) {
-                depStep.message = "Dependency '" + rule->dependsOnRuleId.value() + "' failed or not found";
+                depStep.message = "Dependency '" + std::to_string(rule->dependsOnRuleId.value()) + "' failed or not found";
                 tracer.addStep(std::move(depStep));
                 continue;
             }
-            depStep.message = "Dependency '" + rule->dependsOnRuleId.value() + "' satisfied";
+            depStep.message = "Dependency '" + std::to_string(rule->dependsOnRuleId.value()) + "' satisfied";
             tracer.addStep(std::move(depStep));
         }
 
@@ -221,7 +221,7 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
 
     // Execute each level in parallel
     for (const auto& level : dependencyLevels) {
-        std::vector<std::future<std::pair<std::string, RuleResult>>> futures;
+        std::vector<std::future<std::pair<int, RuleResult>>> futures;
 
         for (const auto& rule : level) {
             if (!rule->isActive) {
@@ -237,7 +237,7 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
                             RuleResult skipResult;
                             skipResult.ruleId = rule->id;
                             skipResult.success = false;
-                            skipResult.exception = RuleException("Dependency failed: " + rule->dependsOnRuleId.value());
+                            skipResult.exception = RuleException("Dependency failed: " + std::to_string(rule->dependsOnRuleId.value()));
                             return std::make_pair(rule->id, skipResult);
                         }
                     }

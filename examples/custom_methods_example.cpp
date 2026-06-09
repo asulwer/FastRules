@@ -147,7 +147,7 @@ int main() {
 
         // Rule 1: Check if customer is an adult using field access
         auto adultCheck = std::make_shared<fastrules::Rule>();
-        adultCheck->id = "adult-check";
+        adultCheck->id = 1;
         adultCheck->description = "Customer must be 18+";
         adultCheck->expression = "customer.age >= 18";
         // Action uses both field mutation AND callback
@@ -159,7 +159,7 @@ int main() {
 
         // Rule 2: Check premium status using C++ method in expression
         auto premiumCheck = std::make_shared<fastrules::Rule>();
-        premiumCheck->id = "premium-check";
+        premiumCheck->id = 2;
         premiumCheck->description = "Premium customers get special handling";
         // Use : syntax for method calls on userdata
         premiumCheck->expression = "customer:isPremium()";
@@ -171,7 +171,7 @@ int main() {
 
         // Rule 3: Check tier using C++ method that returns string
         auto tierCheck = std::make_shared<fastrules::Rule>();
-        tierCheck->id = "tier-check";
+        tierCheck->id = 3;
         tierCheck->description = "Check customer tier";
         // getTier() returns "standard", "gold", or "platinum"
         tierCheck->expression = "customer:getTier() ~= 'standard'";
@@ -182,7 +182,7 @@ int main() {
 
         // Rule 4: Balance check with arithmetic
         auto balanceCheck = std::make_shared<fastrules::Rule>();
-        balanceCheck->id = "balance-check";
+        balanceCheck->id = 4;
         balanceCheck->description = "Check if balance is positive";
         balanceCheck->expression = "customer.balance > 0";
         balanceCheck->action = R"(
@@ -194,7 +194,7 @@ int main() {
 
         // Rule 5: Complex expression combining fields and methods
         auto complexCheck = std::make_shared<fastrules::Rule>();
-        complexCheck->id = "complex-check";
+        complexCheck->id = 5;
         complexCheck->description = "Active adult with positive balance";
         complexCheck->expression = "customer.isActive and customer.age >= 18 and customer.balance > 0";
         complexCheck->action = "callbacks.logAction('complex-check', customer.name, true)";

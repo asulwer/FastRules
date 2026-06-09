@@ -105,10 +105,10 @@ public:
                       const std::string& summary = "");
     
     // Get history for a rule
-    [[nodiscard]] std::optional<RuleVersionHistory> getHistory(const std::string& ruleId) const;
+    [[nodiscard]] std::optional<RuleVersionHistory> getHistory(int ruleId) const;
     
     // Rollback entire workflow to a snapshot
-    [[nodiscard]] Workflow rollbackWorkflow(const std::string& workflowId,
+    [[nodiscard]] Workflow rollbackWorkflow(int workflowId,
                                              const std::string& versionId) const;
     
     // List all tracked rule IDs
