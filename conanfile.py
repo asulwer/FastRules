@@ -31,7 +31,7 @@ class FastRulesConan(ConanFile):
     }
 
     # Sources are located in the same place as this recipe, copy sources to the build directory
-    exports_sources = "CMakeLists.txt", "src/*", "include/*", "extensions/*", "tests/*", "examples/*", "docs/*", "benchmarks/*", "scripts/*"
+    exports_sources = "CMakeLists.txt", "src/*", "include/*", "extensions/*", "tests/*", "examples/*", "docs/*", "scripts/*", "cmake/*", "data/*"
 
     def config_options(self):
         if self.settings.os == "Windows":
@@ -82,11 +82,7 @@ class FastRulesConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.libs = ["fastrules"]
-        if self.options.with_json:
-            self.cpp_info.libs.append("fastrules-json")
-        if self.options.with_xml:
-            self.cpp_info.libs.append("fastrules-xml")
-        if self.options.with_db:
-            self.cpp_info.libs.append("fastrules-db")
         self.cpp_info.includedirs = ["include"]
         self.cpp_info.cppstd = 23
+        # Dependencies are linked automatically by CMake
+        # fastrules is a single static library regardless of extensions enabled

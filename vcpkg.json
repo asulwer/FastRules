@@ -6,6 +6,7 @@
   "license": "MIT",
   "dependencies": [
     "lua",
+    "spdlog",
     "catch2",
     "nlohmann-json"
   ],

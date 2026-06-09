@@ -22,6 +22,13 @@ if(MSVC)
 endif()
 
 # Options
+# Enable vcpkg manifest mode when vcpkg.json is present
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg.json")
+    set(VCPKG_MANIFEST_MODE ON CACHE BOOL "" FORCE)
+    set(VCPKG_APPLOCAL_DEPS OFF)
+    message(STATUS "vcpkg manifest mode enabled")
+endif()
+
 option(FASTRULES_BUILD_TESTS "Build tests" ON)
 option(FASTRULES_BUILD_EXAMPLES "Build examples" ON)
 option(FASTRULES_BUILD_EXTENSIONS "Build optional persistence extensions" OFF)
