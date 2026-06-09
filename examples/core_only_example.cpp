@@ -173,10 +173,12 @@ int main() {
         (void)workflow.execute(engine, params);
 
         // Read back variables set by actions from Lua state
-        sol::state& lua = engine.state();
-        bool isAdult = lua["isAdult"].get_or(false);
-        bool isCreditWorthy = lua["isCreditWorthy"].get_or(false);
-        bool hasValidName = lua["hasValidName"].get_or(false);
+        auto isAdultVal = engine.getGlobal("isAdult");
+        auto isCreditWorthyVal = engine.getGlobal("isCreditWorthy");
+        auto hasValidNameVal = engine.getGlobal("hasValidName");
+        bool isAdult = isAdultVal ? isAdultVal->toBool() : false;
+        bool isCreditWorthy = isCreditWorthyVal ? isCreditWorthyVal->toBool() : false;
+        bool hasValidName = hasValidNameVal ? hasValidNameVal->toBool() : false;
 
         std::cout << "isAdult = " << (isAdult ? "true" : "false") << std::endl;
         std::cout << "isCreditWorthy = " << (isCreditWorthy ? "true" : "false") << std::endl;

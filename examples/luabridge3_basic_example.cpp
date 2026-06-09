@@ -3,7 +3,7 @@
 #include "fastrules/workflow.hpp"
 #include <iostream>
 
-// Minimal example that works with both sol2 and luabridge3 backends
+// Minimal example that works with the LuaBridge3 backend
 // Uses only primitive parameters (no object types)
 int main() {
     try {

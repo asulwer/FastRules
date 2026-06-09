@@ -6,14 +6,14 @@
 #include <iostream>
 #include <vector>
 
-// Define a C++ struct with comparison operators for sol2 automagic
+// Define a C++ struct with comparison operators for LuaBridge3 automagic
 struct Customer {
     std::string name;
     int age = 0;
     bool processed = false;
     bool isActive = true;
 
-    // Comparison operators required by sol2 automagic
+    // Comparison operators required by LuaBridge3 automagic
     bool operator==(const Customer& other) const {
         return name == other.name && age == other.age &&
                processed == other.processed && isActive == other.isActive;

@@ -25,7 +25,7 @@ struct Customer {
     bool isActive = true;
     double balance = 0.0;
 
-    // Comparison operators required by sol2 automagic
+    // Comparison operators required by LuaBridge3 automagic
     bool operator==(const Customer& other) const {
         return name == other.name && age == other.age &&
                processed == other.processed && isActive == other.isActive &&
@@ -105,7 +105,7 @@ int main() {
         //
 
         // Callback: sendEmail(target, args...) — target is first arg, rest are in args vector
-        engine.registerAction("sendEmail", [](sol::object target, const std::vector<sol::object>& args) {
+        engine.registerAction("sendEmail", [](fastrules::LuaRef target, const std::vector<fastrules::LuaRef>& args) {
             // args[0] = to, args[1] = subject, args[2] = body
             if (args.size() >= 3) {
                 sendEmail(
@@ -117,7 +117,7 @@ int main() {
         });
 
         // Callback: logAction(target, args...)
-        engine.registerAction("logAction", [](sol::object target, const std::vector<sol::object>& args) {
+        engine.registerAction("logAction", [](fastrules::LuaRef target, const std::vector<fastrules::LuaRef>& args) {
             if (args.size() >= 3) {
                 logAction(
                     args[0].as<std::string>(),
@@ -128,7 +128,7 @@ int main() {
         });
 
         // Callback: formatCurrency — this one returns a value via target
-        engine.registerAction("formatCurrency", [](sol::object target, const std::vector<sol::object>& args) {
+        engine.registerAction("formatCurrency", [](fastrules::LuaRef target, const std::vector<fastrules::LuaRef>& args) {
             if (!args.empty()) {
                 double amount = args[0].as<double>();
                 std::string formatted = formatCurrency(amount);
@@ -255,5 +255,3 @@ int main() {
 
     return 0;
 }
-
-
