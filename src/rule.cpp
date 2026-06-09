@@ -207,8 +207,8 @@ void Rule::validate(const std::vector<std::reference_wrapper<const Rule>>& allRu
 
     // === Empty rule ID check ===
     for (const auto& r : allRules) {
-        if (r.get().id.empty()) {
-            throw RuleValidationException("Rule has empty ID");
+        if (r.get().id == 0) {
+            throw RuleValidationException("Rule has zero ID");
         }
     }
 
