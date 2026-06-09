@@ -16,20 +16,20 @@
 namespace fastrules {
 
 void Workflow::validate() {
-    auto& log = globalLogger();
+    auto log = fastrules::logger();
     if (validated_) {
         return;
     }
 
-    log.debug("Validating workflow", id);
+    log->debug("Validating workflow {}", id);
 
     // Check for duplicate rule IDs
-    std::unordered_set<std::string> seenIds;
+    std::unordered_set<int> seenIds;
     for (const auto& rule : rules) {
-        if (!rule->id.empty()) {
+        if (rule->id != 0) {
             if (seenIds.contains(rule->id)) {
-                log.error("Duplicate rule ID detected: " + rule->id, id);
-                throw RuleValidationException("Duplicate rule ID detected: " + rule->id);
+                log->error("Duplicate rule ID detected: {}", rule->id);
+                throw RuleValidationException("Duplicate rule ID detected: " + std::to_string(rule->id));
             }
             seenIds.insert(rule->id);
         }
@@ -50,7 +50,7 @@ void Workflow::validate() {
     // Check for circular dependencies
     checkCircularDependencies();
 
-    log.info("Workflow validated successfully", id);
+    log->info("Workflow {} validated successfully", id);
     validated_ = true;
 }
 
@@ -64,7 +64,7 @@ void Workflow::compile(LuaEngine& engine) {
         validate();
     }
 
-    log.debug("Compiling workflow", id);
+    log->debug("Compiling workflow {}", id);
 
     // Auto-discover callbacks from actions before compiling
     // This ensures any callbacks referenced in JSON actions get stub registrations
@@ -78,7 +78,7 @@ void Workflow::compile(LuaEngine& engine) {
         rule->compile(engine);
     }
 
-    log.info("Workflow compiled successfully", id);
+    log->info("Workflow {} compiled successfully", id);
     compiled_ = true;
 }
 
@@ -87,18 +87,18 @@ bool Workflow::isCompiled() const noexcept {
 }
 
 std::vector<RuleResult> Workflow::execute(LuaEngine& engine, const std::vector<RuleParameter>& parameters) {
-    auto& log = globalLogger();
+    auto log = fastrules::logger();
     if (!compiled_) {
         compile(engine);
     }
 
-    log.debug("Executing workflow", id);
+    log->debug("Executing workflow {}", id);
 
     RuleContext context;
     std::vector<RuleResult> results;
 
     auto executionOrder = resolveExecutionOrder();
-    log.info("Executing " + std::to_string(executionOrder.size()) + " rules", id);
+    log->info("Executing {} rules in workflow {}", executionOrder.size(), id);
 
     for (auto& rule : executionOrder) {
         // Preference: skip inactive rules entirely - no evaluation, no result
@@ -110,7 +110,7 @@ std::vector<RuleResult> Workflow::execute(LuaEngine& engine, const std::vector<R
         if (rule->dependsOnRuleId.has_value()) {
             auto depResult = context.getResult(rule->dependsOnRuleId.value());
             if (!depResult.has_value() || !depResult->isSuccess()) {
-                log.debug("Skipping rule '" + rule->id + "' — dependency failed", id);
+                log->debug("Skipping rule {} — dependency failed in workflow {}", rule->id, id);
                 // Dependency failed - skip this rule silently
                 continue;
             }
@@ -125,7 +125,7 @@ std::vector<RuleResult> Workflow::execute(LuaEngine& engine, const std::vector<R
         }
     }
 
-    log.info("Workflow executed — " + std::to_string(results.size()) + " results", id);
+    log->info("Workflow {} executed — {} results", id, results.size());
     return results;
 }
 

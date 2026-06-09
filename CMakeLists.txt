@@ -59,6 +59,14 @@ FetchContent_Declare(
 )
 
 FetchContent_Declare(
+    spdlog
+    GIT_REPOSITORY https://github.com/gabime/spdlog.git
+    GIT_TAG v1.14.1
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+)
+
+FetchContent_Declare(
     catch2
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
     GIT_TAG v3.5.2
@@ -181,13 +189,16 @@ if(FASTRULES_USE_LUAJIT)
     if(FASTRULES_LUA_BACKEND STREQUAL "luabridge3")
         FetchContent_MakeAvailable(luabridge3)
     endif()
-    
+
     # Organize external targets in VS solution
     if(TARGET nlohmann_json)
         set_target_properties(nlohmann_json PROPERTIES FOLDER "ThirdParty")
     endif()
     if(TARGET sol2)
         set_target_properties(sol2 PROPERTIES FOLDER "ThirdParty")
+    endif()
+    if(TARGET spdlog)
+        set_target_properties(spdlog PROPERTIES FOLDER "ThirdParty")
     endif()
     if(TARGET Catch2)
         set_target_properties(Catch2 PROPERTIES FOLDER "ThirdParty")
@@ -199,17 +210,20 @@ if(FASTRULES_USE_LUAJIT)
         set_target_properties(luabridge3 PROPERTIES FOLDER "ThirdParty")
     endif()
 else()
-    FetchContent_MakeAvailable(lua json sol2 catch2)
+    FetchContent_MakeAvailable(lua json sol2 spdlog catch2)
     if(FASTRULES_LUA_BACKEND STREQUAL "luabridge3")
         FetchContent_MakeAvailable(luabridge3)
     endif()
-    
+
     # Organize external targets in VS solution
     if(TARGET nlohmann_json)
         set_target_properties(nlohmann_json PROPERTIES FOLDER "ThirdParty")
     endif()
     if(TARGET sol2)
         set_target_properties(sol2 PROPERTIES FOLDER "ThirdParty")
+    endif()
+    if(TARGET spdlog)
+        set_target_properties(spdlog PROPERTIES FOLDER "ThirdParty")
     endif()
     if(TARGET Catch2)
         set_target_properties(Catch2 PROPERTIES FOLDER "ThirdParty")
@@ -250,7 +264,6 @@ set(FASTRULES_CORE_SOURCES
     src/async_registry.cpp
     src/async_workflow.cpp
     src/lua_engine.cpp
-    src/logger.cpp
     src/rule.cpp
     src/rule_context.cpp
     src/workflow.cpp
@@ -337,6 +350,7 @@ target_include_directories(fastrules
 target_link_libraries(fastrules
     PUBLIC
         lua_static
+        spdlog::spdlog
 )
 
 if(FASTRULES_LUA_BACKEND STREQUAL "sol2")

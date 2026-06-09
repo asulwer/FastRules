@@ -18,6 +18,7 @@
 #include "type_registry.hpp"
 #include "action_callback.hpp"
 #include "logger.hpp"
+#include <spdlog/spdlog.h>
 #include "lua_backend.hpp"
 
 namespace fastrules {
@@ -112,8 +113,9 @@ public:
     // Raw lua_State access (backend-neutral)
     [[nodiscard]] lua_State* luaState() const noexcept;
 
-    void setLogger(std::shared_ptr<Logger> logger) { logger_ = std::move(logger); }
+    void setLogger(std::shared_ptr<spdlog::logger> logger) { logger_ = std::move(logger); }
     [[nodiscard]] bool hasLogger() const { return logger_ != nullptr; }
+    [[nodiscard]] std::shared_ptr<spdlog::logger> getLogger() const { return logger_; }
 
     void setMaxExpressionLength(size_t maxLength) { maxExpressionLength_ = maxLength; }
     [[nodiscard]] size_t getMaxExpressionLength() const { return maxExpressionLength_; }
@@ -170,7 +172,7 @@ private:
     TypeRegistry typeRegistry_;
     ActionCallbacks actionCallbacks_;
 
-    std::shared_ptr<Logger> logger_;
+    std::shared_ptr<spdlog::logger> logger_;
 
     size_t maxExpressionLength_ = 0;
     std::atomic<size_t> compileCount_{0};

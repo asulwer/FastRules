@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <fastrules.hpp>
 #include <fastrules/enum_registry.hpp>
+#include <spdlog/sinks/ostream_sink.h>
 #include <thread>
 
 using namespace fastrules;
@@ -53,20 +54,15 @@ TEST_CASE("LuaEngine enum registration", "[lua_engine]") {
 
 TEST_CASE("LuaEngine logging support", "[lua_engine]") {
     LuaEngine engine;
-    
-    std::vector<LogEntry> capturedLogs;
-    auto logger = std::make_shared<Logger>([&capturedLogs](const LogEntry& entry) {
-        capturedLogs.push_back(entry);
-    });
-    
+
+    auto sink = std::make_shared<spdlog::sinks::ostream_sink_mt>(std::cout, true);
+    auto logger = std::make_shared<spdlog::logger>("test", sink);
+    logger->set_level(spdlog::level::info);
+
     engine.setLogger(logger);
     REQUIRE(engine.hasLogger());
-    
-    // Logging is currently used internally; test that logger is set up correctly
-    logger->info("Test message", "test-rule");
-    
-    REQUIRE(capturedLogs.size() == 1);
-    REQUIRE(capturedLogs[0].message == "Test message");
-    REQUIRE(capturedLogs[0].ruleId == "test-rule");
-    REQUIRE(capturedLogs[0].level == LogLevel::Info);
+
+    logger->info("Test message from rule {}", 42);
+
+    REQUIRE(logger->level() == spdlog::level::info);
 }

@@ -24,7 +24,8 @@ bool ExpressionValidator::isValidLua(const std::string& expression, LuaEngine& e
     } catch (const std::exception& e) {
         // Compilation failed - log at debug level if logger available
         if (engine.hasLogger()) {
-            // Logger not directly accessible from here, but we could add a static log
+            auto log = engine.getLogger();
+            log->debug("Expression compilation failed: {}", expression);
         }
         return false;
     }

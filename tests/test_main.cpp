@@ -4,33 +4,25 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch_test_macros.hpp>
 #include <fastrules/logger.hpp>
+#include <spdlog/sinks/ostream_sink.h>
 #include <iostream>
 #include <exception>
 #include <cstdlib>
 
-// Global logger for test diagnostics
-static fastrules::Logger g_testLogger;
+// Global test logger — configured once per test session
+static std::shared_ptr<spdlog::logger> g_testLogger;
 
 static void setupTestLogging() {
-    g_testLogger.setHandler([](const fastrules::LogEntry& entry) {
-        const char* levelStr = "?";
-        switch (entry.level) {
-            case fastrules::LogLevel::Trace:   levelStr = "TRACE"; break;
-            case fastrules::LogLevel::Debug:   levelStr = "DEBUG"; break;
-            case fastrules::LogLevel::Info:    levelStr = "INFO";  break;
-            case fastrules::LogLevel::Warning: levelStr = "WARN";  break;
-            case fastrules::LogLevel::Error:   levelStr = "ERROR"; break;
-            case fastrules::LogLevel::Fatal:   levelStr = "FATAL"; break;
-        }
-        std::cerr << "[" << levelStr << "] " << entry.message;
-        if (entry.ruleId != 0) std::cerr << " (rule: " << entry.ruleId << ")";
-        std::cerr << "\n";
-    });
-    g_testLogger.setMinLevel(fastrules::LogLevel::Debug);
+    // Create an ostream sink that writes to std::cerr
+    auto sink = std::make_shared<spdlog::sinks::ostream_sink_mt>(std::cerr, true);
+    g_testLogger = std::make_shared<spdlog::logger>("test_logger", sink);
+    g_testLogger->set_level(spdlog::level::debug);
+    spdlog::set_default_logger(g_testLogger);
+    spdlog::set_pattern("[%H:%M:%S.%e] [%l] %v");
 }
 
 // Provide a way for tests to access the logger
-fastrules::Logger& getTestLogger() {
+std::shared_ptr<spdlog::logger> getTestLogger() {
     static bool initialized = false;
     if (!initialized) {
         setupTestLogging();
@@ -39,26 +31,27 @@ fastrules::Logger& getTestLogger() {
     return g_testLogger;
 }
 
-// Wrapper to catch structured exceptions / debug assertions on Windows
-#if defined(_WIN32) && defined(_DEBUG)
+// ------------------------------------------------------------------------------
+// MSVC debug assertion handler — forwards to spdlog
+// ------------------------------------------------------------------------------
+#ifdef _WIN32
 #include <windows.h>
+#include <crtdbg.h>
 
-static LONG WINAPI vectoredExceptionHandler(EXCEPTION_POINTERS* ep) {
-    DWORD code = ep->ExceptionRecord->ExceptionCode;
-    if (code == STATUS_ARRAY_BOUNDS_EXCEEDED ||
-        code == STATUS_ACCESS_VIOLATION ||
-        code == STATUS_INVALID_HANDLE) {
-        getTestLogger().fatal("Structured exception caught: code=" + std::to_string(code));
-        std::cerr << "FATAL: Structured exception caught during test execution.\n";
-        std::cerr << "Exception code: 0x" << std::hex << code << std::dec << "\n";
+static int __cdecl msvcAssertionHandler(int reportType, char* message, int* returnValue) {
+    auto log = fastrules::logger();
+    if (reportType == _CRT_ASSERT || reportType == _CRT_ERROR) {
+        log->critical("MSVC assertion failed: {}", message ? message : "(no message)");
         std::abort();
     }
-    return EXCEPTION_CONTINUE_SEARCH;
+    if (returnValue) { *returnValue = 0; }
+    return TRUE;
 }
 
-struct ExceptionHandlerInstaller {
-    ExceptionHandlerInstaller() {
-        AddVectoredExceptionHandler(1, vectoredExceptionHandler);
+// Override the default handler on MSVC debug builds
+struct MsvcAssertionInstaller {
+    MsvcAssertionInstaller() {
+        _CrtSetReportHook2(_CRT_RPTHOOK_INSTALL, msvcAssertionHandler);
     }
-} g_exceptionHandlerInstaller;
+} g_msvcAssertionInstaller;
 #endif

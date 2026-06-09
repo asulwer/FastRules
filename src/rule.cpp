@@ -334,8 +334,8 @@ void Rule::setFailure(RuleResult& result, const std::string& message, bool wasCa
 }
 
 RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vector<RuleParameter>& parameters) {
-    auto& log = globalLogger();
-    log.trace("Executing rule", id);
+    auto log = fastrules::logger();
+    log->trace("Executing rule {}", id);
 
     // Check cache first if cacheDuration is set
     if (cacheDuration.has_value() && cacheDuration->count() > 0) {
@@ -344,12 +344,12 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
         if (it != cache_.end()) {
             if (std::chrono::steady_clock::now() < it->second.expiresAt) {
                 // Cache hit - return cached result
-                log.debug("Cache hit", id);
+                log->debug("Cache hit for rule {}", id);
                 PerformanceCounters::instance().recordExecution(it->second.result->isSuccess(), false, true, false, false);
                 return *it->second.result;
             }
             // Cache expired - remove it
-            log.debug("Cache expired", id);
+            log->debug("Cache expired for rule {}", id);
             cache_.erase(it);
         }
     }
@@ -360,7 +360,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
 
     // Preference: inactive rules are completely skipped - no result, no evaluation
     if (!isActive) {
-        log.debug("Rule inactive — skipped", id);
+        log->debug("Rule {} inactive — skipped", id);
         result.success = false;
         result.skipped = true;
         return result;
@@ -377,7 +377,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
             limiter = &RateLimiter::global();
         }
         if (!limiter->isAllowed(id)) {
-            log.warning("Rate limit exceeded", id);
+            log->warning("Rate limit exceeded for rule {}", id);
             throw RateLimitException("Rate limit exceeded for rule '" + id + "'");
         }
 
@@ -387,7 +387,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
 
         // Step 1: Execute child rules (bottom-up / bubble-up)
         if (!childRules.empty()) {
-            log.debug("Executing child rules", id);
+            log->debug("Executing {} child rules for rule {}", childRules.size(), id);
             result.childResults = executeChildRules(engine, context, parameters);
 
             // Store child results in context so parent expressions can access them
@@ -398,7 +398,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
             // Preference: parent only evaluates if ALL children pass
             for (const auto& childResult : result.childResults) {
                 if (!childResult.isSuccess()) {
-                    log.info("Child rule " + std::to_string(childResult.ruleId) + " failed — parent aborted", id);
+                    log->info("Child rule {} failed — parent {} aborted", childResult.ruleId, id);
                     setFailure(result, "Child rule " + std::to_string(childResult.ruleId) + " failed");
                     storeInCache(parameters, result);
                     context.setResult(id, result);
@@ -409,10 +409,10 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
 
         // Step 2: Evaluate parent expression (only if all children passed)
         if (!expression.empty() && compiledExpressionRef.has_value()) {
-            log.trace("Evaluating expression: " + expression, id);
+            log->trace("Evaluating expression for rule {}: {}", id, expression);
             bool exprResult = evaluateExpression(engine, context, parameters);
             if (!exprResult) {
-                log.info("Expression evaluated to false", id);
+                log->info("Rule {} expression evaluated to false", id);
                 setFailure(result, "Expression evaluated to false");
                 storeInCache(parameters, result);
                 context.setResult(id, result);
@@ -422,37 +422,37 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
 
         // Step 3: Execute action (only if expression passed)
         if (!action.empty() && compiledActionRef.has_value()) {
-            log.trace("Executing action: " + action, id);
+            log->trace("Executing action for rule {}: {}", id, action);
             executeAction(engine, context, parameters);
         }
 
         result.success = true;
-        log.debug("Rule executed successfully", id);
+        log->debug("Rule {} executed successfully", id);
         // Record successful execution
         PerformanceCounters::instance().recordExecution(true, false, false, false, false);
 
     } catch (const RateLimitException& ex) {
-        log.error("Rate limit exception: " + std::string(ex.what()), id);
+        log->error("Rate limit exception in rule {}: {}", id, ex.what());
         result.success = false;
         result.exception = RuleException(ex.what());
         context.setLastError(id, "Rate limit exceeded: " + std::string(ex.what()));
         PerformanceCounters::instance().recordExecution(false, false, false, false, true);
     } catch (const RuleTimeoutException& ex) {
-        log.error("Timeout exception: " + std::string(ex.what()), id);
+        log->error("Timeout in rule {}: {}", id, ex.what());
         result.success = false;
         result.exception = ex;
         context.setLastError(id, "Timeout: " + std::string(ex.what()));
         PerformanceCounters::instance().recordExecution(false, false, false, true, false);
     } catch (const RuleException& ex) {
-        log.error("Rule exception: " + std::string(ex.what()), id);
+        log->error("Rule {} exception: {}", id, ex.what());
         setFailure(result, ex.what());
         context.setLastError(id, ex.what());
     } catch (const std::exception& ex) {
-        log.error("Standard exception: " + std::string(ex.what()), id);
+        log->error("Standard exception in rule {}: {}", id, ex.what());
         setFailure(result, ex.what());
         context.setLastError(id, ex.what());
     } catch (...) {
-        log.fatal("Unknown exception during rule execution", id);
+        log->critical("Unknown exception during rule {} execution", id);
         setFailure(result, "Unknown exception during rule execution");
         context.setLastError(id, "Unknown exception");
     }

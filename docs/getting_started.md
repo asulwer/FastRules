@@ -218,6 +218,62 @@ rule.expression = "math.sqrt(point.x^2 + point.y^2) < 100";
 
 ---
 
+## Logging
+
+FastRules uses [spdlog](https://github.com/gabime/spdlog) for all internal logging. Configure it at application startup:
+
+### Basic Console Logging
+
+```cpp
+#include <spdlog/sinks/stdout_color_sinks.h>
+
+// Set pattern: [HH:MM:SS.msec] [level] message
+spdlog::set_pattern("[%H:%M:%S.%e] [%l] %v");
+
+// Set global log level
+spdlog::set_level(spdlog::level::debug);
+
+// Create colored console logger
+auto console = spdlog::stdout_color_mt("fastrules");
+spdlog::set_default_logger(console);
+```
+
+### File Logging
+
+```cpp
+#include <spdlog/sinks/basic_file_sink.h>
+
+auto file_logger = spdlog::basic_logger_mt("fastrules", "logs/rules.log");
+spdlog::set_default_logger(file_logger);
+```
+
+### Console + File (Multiple Sinks)
+
+```cpp
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/basic_file_sink.h>
+
+auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/rules.log", true);
+
+std::vector<std::shared_ptr<spdlog::sinks::sink>> sinks = {console_sink, file_sink};
+auto logger = std::make_shared<spdlog::logger>("fastrules", sinks.begin(), sinks.end());
+spdlog::set_default_logger(logger);
+```
+
+### Log Levels
+
+| Level | Description |
+|---|---|
+| `trace` | Most verbose — every rule evaluation step |
+| `debug` | Rule execution, cache hits, compilation |
+| `info` | Workflow completion, validation success |
+| `warn` | Rate limits, recoverable issues |
+| `error` | Rule exceptions, validation failures |
+| `critical` | Fatal errors, assertion failures |
+
+---
+
 ## Next Steps
 
 - [Architecture Overview](architecture.md)

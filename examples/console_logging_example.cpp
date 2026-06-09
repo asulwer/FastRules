@@ -1,68 +1,47 @@
 // console_logging_example.cpp
-// Demonstrates how to wire a custom logger (console output) into FastRules.
-// Any sink works: file, syslog, spdlog, etc. — just provide the callback.
+// Demonstrates how to configure spdlog for FastRules logging.
 
 #include <fastrules.hpp>
 #include <fastrules/logger.hpp>
-#include <iostream>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <optional>
 
 using namespace fastrules;
 
 int main() {
-    // 1. Set up global console logger — runs once at app startup
-    setGlobalLogger([](const LogEntry& entry) {
-        const char* levelStr = "?";
-        switch (entry.level) {
-            case LogLevel::Trace:   levelStr = "TRACE"; break;
-            case LogLevel::Debug:   levelStr = "DEBUG"; break;
-            case LogLevel::Info:    levelStr = "INFO";  break;
-            case LogLevel::Warning: levelStr = "WARN";  break;
-            case LogLevel::Error:   levelStr = "ERROR"; break;
-            case LogLevel::Fatal:   levelStr = "FATAL"; break;
-        }
-        std::cout << "[" << levelStr << "] ";
-        if (entry.ruleId != 0) std::cout << "[" << entry.ruleId << "] ";
-        std::cout << entry.message << "\n";
-    });
+    // 1. Configure spdlog at application startup
+    // Pattern: [HH:MM:SS.msec] [level] message
+    spdlog::set_pattern("[%H:%M:%S.%e] [%l] %v");
 
-    // Optional: filter out Trace/Debug noise
-    globalLogger().setMinLevel(LogLevel::Debug);
+    // Set global log level (trace = everything, debug = no trace, etc.)
+    spdlog::set_level(spdlog::level::debug);
+
+    // Create a console sink with colors
+    auto console = spdlog::stdout_color_mt("fastrules");
+    spdlog::set_default_logger(console);
 
     // 2. Create engine and workflow
     LuaEngine engine;
 
-    auto rule1 = Rule::Builder("age-check")
-        .withExpression("age >= 18")
+    auto rule1 = Rule::create(1, "age >= 18")
         .withAction("eligible = true")
         .withPriority(1)
         .active(true)
         .build();
 
-    auto rule2 = Rule::Builder("name-check")
-        .withExpression("string.len(name) > 0")
-        .withPriority(2)
-        .active(true)
-        .build();
-
     Workflow workflow;
-    workflow.id = "validation";
-    workflow.description = "Customer validation";
-    workflow.rules.push_back(rule1);
-    workflow.rules.push_back(rule2);
+    workflow.id = 1;
+    workflow.rules = {rule1};
+    workflow.compile(engine);
 
-    // 3. Execute — you'll see log output on console
+    // 3. Execute — all internal logging goes through spdlog
     std::vector<RuleParameter> params;
     params.emplace_back("age", 25);
-    params.emplace_back("name", std::string("Alice"));
 
     auto results = workflow.execute(engine, params);
 
-    std::cout << "\n=== Results ===\n";
-    for (const auto& r : results) {
-        std::cout << "Rule " << r.ruleId << ": " << (r.isSuccess() ? "PASS" : "FAIL") << "\n";
-    }
+    // 4. Cleanup — optional, spdlog handles its own shutdown
+    spdlog::shutdown();
 
-    // 4. Clean up (optional — resets to silent)
-    clearGlobalLogger();
     return 0;
 }
