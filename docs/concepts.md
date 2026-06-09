@@ -26,10 +26,11 @@ A collection of rules with dependency ordering.
 
 ```cpp
 fastrules::Workflow workflow;
+workflow.id = 1;
 workflow.description = "Customer validation";
 
-auto rule1 = fastrules::Rule::create("check-age", "age >= 18", true);
-auto rule2 = fastrules::Rule::create("check-name", "#name > 0", true);
+auto rule1 = fastrules::Rule::create(1, "age >= 18", true);
+auto rule2 = fastrules::Rule::create(2, "#name > 0", true);
 
 workflow.rules = {rule1, rule2};
 workflow.compile(engine);
@@ -90,8 +91,8 @@ params.emplace_back("customer", &customer);
 Rules can depend on other rules:
 
 ```cpp
-auto child = fastrules::Rule::create("child", "true", true);
-child->dependsOnRuleId = "parent";  // Runs after "parent"
+auto child = fastrules::Rule::create(3, "true", true);
+child->dependsOnRuleId = 1;  // Runs after rule 1
 ```
 
 ## Parallel Execution

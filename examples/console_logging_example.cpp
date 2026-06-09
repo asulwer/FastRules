@@ -21,7 +21,7 @@ int main() {
             case LogLevel::Fatal:   levelStr = "FATAL"; break;
         }
         std::cout << "[" << levelStr << "] ";
-        if (!entry.ruleId.empty()) std::cout << "[" << entry.ruleId << "] ";
+        if (entry.ruleId != 0) std::cout << "[" << entry.ruleId << "] ";
         std::cout << entry.message << "\n";
     });
 

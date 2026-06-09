@@ -82,12 +82,12 @@ int main() {
         auto results = workflow.execute(engine, params);
 
         for (const auto& result : results) {
-            std::cout << "  Rule " << result.ruleId << ": "
+            std::cout << "Rule " << result.ruleId << ": "
                       << (result.isSuccess() ? "PASS" : "FAIL") << "\n";
         }
 
         for (const auto& result : results) {
-            std::cout << "  Rule " << result.ruleId << ": "
+            std::cout << "Rule " << result.ruleId << ": "
                       << (result.isSuccess() ? "PASS" : "FAIL") << "\n";
         }
 
@@ -135,7 +135,7 @@ int main() {
 
         auto xmlResults = xmlWorkflow.execute(engine, xmlParams);
         for (const auto& result : xmlResults) {
-            std::cout << "  Rule " << result.ruleId << ": "
+            std::cout << "Rule " << result.ruleId << ": "
                       << (result.isSuccess() ? "PASS" : "FAIL") << "\n";
         }
 

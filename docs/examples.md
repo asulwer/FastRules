@@ -35,21 +35,21 @@ int main() {
     });
 
     // Parent rule: credit check (only runs if children pass)
-    auto parent = Rule::create("credit-check", "customer.balance >= minBalance")
+    auto parent = Rule::create(1, "customer.balance >= minBalance")
         .withAction("approved = true")
         .build();
 
     // Child rules (execute first, bubble-up)
-    auto identity = Rule::create("identity-verified", "verified == true").build();
-    auto income   = Rule::create("income-sufficient", "income >= minIncome").build();
+    auto identity = Rule::create(2, "verified == true").build();
+    auto income   = Rule::create(3, "income >= minIncome").build();
     parent->childRules = {identity, income};
 
-    // Workflow with dependency: credit-check only runs if signup passed
-    auto signup = Rule::create("signup-valid", "string.len(email) > 0 and age >= 13").build();
-    signup->dependsOnRuleId = parent->id;  // credit-check must pass first
+    // Workflow with dependency: rule 1 only runs if signup passed
+    auto signup = Rule::create(4, "string.len(email) > 0 and age >= 13").build();
+    signup->dependsOnRuleId = parent->id;
 
     Workflow workflow;
-    workflow.id = "customer-onboarding";
+    workflow.id = 1;
     workflow.description = "Full customer validation pipeline";
     workflow.rules = {parent, signup};
     workflow.compile(engine);

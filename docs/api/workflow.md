@@ -15,7 +15,7 @@ nav_order: 2
 
 ```cpp
 Workflow workflow;
-workflow.id = "customer-validation";
+workflow.id = 1;
 workflow.description = "Full customer validation pipeline";
 ```
 
@@ -23,7 +23,7 @@ workflow.description = "Full customer validation pipeline";
 
 | Property | Type | Description |
 |---|---|---|
-| `id` | `std::string` | Unique identifier |
+| `id` | `int` | Unique identifier |
 | `description` | `std::string` | Human-readable description |
 | `rules` | `std::vector<std::shared_ptr<Rule>>` | Top-level rules |
 | `isActive` | `bool` | Master switch (default true) |
@@ -85,14 +85,14 @@ Executes rules in parallel up to `maxConcurrent` threads.
 ## Builder
 
 ```cpp
-static Workflow::Builder Workflow::create(const std::string& id);
+static Workflow::Builder Workflow::create(int id);
 ```
 
 ```cpp
-auto workflow = Workflow::create("validation")
+auto workflow = Workflow::create(1)
     .withDescription("Customer validation")
-    .withRule(Rule::create("age-check", "age >= 18").build())
-    .withRule(Rule::create("email-check", "#email > 0").build())
+    .withRule(Rule::create(1, "age >= 18").build())
+    .withRule(Rule::create(2, "#email > 0").build())
     .build();
 ```
 

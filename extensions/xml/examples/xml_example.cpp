@@ -76,7 +76,7 @@ int main() {
 
         auto results = workflow.execute(engine, params);
         for (const auto& result : results) {
-            std::cout << "  Rule " << result.ruleId << ": " << (result.isSuccess() ? "PASS" : "FAIL") << "\n";
+            std::cout << "Rule " << result.ruleId << ": " << (result.isSuccess() ? "PASS" : "FAIL") << "\n";
         }
 
         std::cout << "\nXML extension example complete.\n";

@@ -16,7 +16,7 @@ nav_order: 1
 ### Builder Pattern (Recommended)
 
 ```cpp
-auto rule = Rule::create("check-age", "age >= 18")
+auto rule = Rule::create(1, "age >= 18")
     .withAction("eligible = true")
     .withPriority(10)
     .withTimeout(std::chrono::milliseconds(100))
@@ -29,7 +29,7 @@ auto rule = Rule::create("check-age", "age >= 18")
 
 ```cpp
 Rule rule;
-rule.id = "check-age";
+rule.id = 1;
 rule.expression = "age >= 18";
 rule.action = "eligible = true";
 rule.priority = 10;
@@ -40,13 +40,13 @@ rule.isActive = true;
 
 | Property | Type | Description |
 |---|---|---|
-| `id` | `std::string` | Unique identifier |
+| `id` | `int` | Unique identifier |
 | `expression` | `std::string` | Lua expression to evaluate |
 | `action` | `std::string` | Optional Lua action executed on success |
 | `description` | `std::string` | Human-readable description |
 | `isActive` | `bool` | If false, skipped during execution |
 | `priority` | `int` | Execution order (lower = earlier) |
-| `dependsOnRuleId` | `std::optional<std::string>` | Must succeed before this rule runs |
+| `dependsOnRuleId` | `std::optional<int>` | Must succeed before this rule runs |
 | `childRules` | `std::vector<std::shared_ptr<Rule>>` | Child rules execute first (bubble-up) |
 | `timeout` | `std::optional<std::chrono::milliseconds>` | Per-rule timeout |
 | `cacheDuration` | `std::optional<std::chrono::milliseconds>` | Cache successful results |

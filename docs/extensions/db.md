@@ -68,7 +68,7 @@ int main() {
 ```cpp
 // Create workflow
 Workflow workflow;
-workflow.id = "customer-validation";
+workflow.id = 1;
 workflow.description = "Validate new customers";
 // ... add rules ...
 
@@ -82,20 +82,20 @@ The extension creates two tables:
 
 ```sql
 CREATE TABLE workflows (
-    id TEXT PRIMARY KEY,
+    id INTEGER PRIMARY KEY,
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE rules (
-    id TEXT PRIMARY KEY,
-    workflow_id TEXT REFERENCES workflows(id),
+    id INTEGER PRIMARY KEY,
+    workflow_id INTEGER REFERENCES workflows(id),
     expression TEXT NOT NULL,
     action TEXT,
     priority INTEGER DEFAULT 0,
     active INTEGER DEFAULT 1,
-    depends_on_rule_id TEXT,
+    depends_on_rule_id INTEGER,
     timeout_ms INTEGER,
     cache_duration_ms INTEGER
 );

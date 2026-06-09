@@ -23,7 +23,7 @@ static void setupTestLogging() {
             case fastrules::LogLevel::Fatal:   levelStr = "FATAL"; break;
         }
         std::cerr << "[" << levelStr << "] " << entry.message;
-        if (!entry.ruleId.empty()) std::cerr << " (rule: " << entry.ruleId << ")";
+        if (entry.ruleId != 0) std::cerr << " (rule: " << entry.ruleId << ")";
         std::cerr << "\n";
     });
     g_testLogger.setMinLevel(fastrules::LogLevel::Debug);

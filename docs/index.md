@@ -113,11 +113,12 @@ using namespace fastrules;
 LuaEngine engine;
 
 // Create a rule in pure C++
-auto rule = Rule::create("adult-check", "age >= 18");
+auto rule = Rule::create(1, "age >= 18");
 rule.withAction("eligible = true");
 
 // Compile and execute
 Workflow workflow;
+workflow.id = 1;
 workflow.description = "Simple validation";
 workflow.rules.push_back(rule.build());
 workflow.compile(engine);

@@ -62,15 +62,15 @@ std::ofstream("rules.json") << json;
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `id` | string | Yes | Workflow identifier |
+| `id` | int | Yes | Workflow identifier |
 | `description` | string | No | Description |
 | `rules` | array | Yes | List of rules |
-| `rules[].id` | string | Yes | Rule identifier |
+| `rules[].id` | int | Yes | Rule identifier |
 | `rules[].expression` | string | Yes | Lua expression |
 | `rules[].action` | string | No | Lua action |
 | `rules[].priority` | int | No | Order (lower first) |
 | `rules[].active` | bool | No | Enabled (default true) |
-| `rules[].dependsOnRuleId` | string | No | Dependency rule ID |
+| `rules[].dependsOnRuleId` | int | No | Dependency rule ID |
 | `rules[].childRules` | array | No | Nested child rules |
 | `rules[].timeoutMs` | int | No | Timeout in ms |
 | `rules[].cacheDurationMs` | int | No | Cache duration in ms |

@@ -98,12 +98,12 @@ using namespace fastrules;
 int main() {
     LuaEngine engine;
 
-    auto rule = Rule::create("age-check", "age >= 18")
+    auto rule = Rule::create(1, "age >= 18")
         .withAction("eligible = true")
         .build();
 
     Workflow workflow;
-    workflow.id = "signup-validation";
+    workflow.id = 1;
     workflow.rules.push_back(rule);
     workflow.compile(engine);
 
@@ -149,10 +149,10 @@ Multiple rules execute in sequence, respecting priority and dependencies:
 
 ```cpp
 Workflow workflow;
-workflow.id = "signup-validation";
+workflow.id = 1;
 
-auto emailCheck = Rule::create("email-valid", "string.find(email, '@') ~= nil").build();
-auto ageCheck = Rule::create("age-valid", "age >= 13").build();
+auto emailCheck = Rule::create(1, "string.find(email, '@') ~= nil").build();
+auto ageCheck = Rule::create(2, "age >= 13").build();
 
 workflow.rules = {emailCheck, ageCheck};
 workflow.compile(engine);
@@ -171,12 +171,12 @@ auto results = workflow.execute(engine, params);
 Child rules execute first. Parent only evaluates if all children pass:
 
 ```cpp
-auto parent = Rule::create("credit-check", "customer.balance >= minBalance")
+auto parent = Rule::create(1, "customer.balance >= minBalance")
     .withAction("approved = true")
     .build();
 
-auto identity = Rule::create("identity-verified", "verified == true").build();
-auto income = Rule::create("income-sufficient", "income >= minIncome").build();
+auto identity = Rule::create(2, "verified == true").build();
+auto income = Rule::create(3, "income >= minIncome").build();
 
 parent->childRules = {identity, income};
 
@@ -212,7 +212,7 @@ engine.registerType<Point>("Point", {
 });
 
 Rule rule;
-rule.id = "distance-check";
+rule.id = 4;
 rule.expression = "math.sqrt(point.x^2 + point.y^2) < 100";
 ```
 
