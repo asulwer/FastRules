@@ -65,7 +65,7 @@ public:
     // Builder pattern for fluent construction
     class Builder {
     public:
-        explicit Builder(const std::string& workflowId);
+        explicit Builder(int workflowId);
 
         Builder& withDescription(const std::string& desc);
         Builder& addRule(std::shared_ptr<Rule> rule);
@@ -78,7 +78,7 @@ public:
     };
 
     // Static builder entry point
-    [[nodiscard]] static Builder builder(const std::string& workflowId) {
+    [[nodiscard]] static Builder builder(int workflowId) {
         return Builder(workflowId);
     }
 

@@ -29,10 +29,10 @@ public:
     ~DbRuleRepository() override = default;
     
     void save(const Rule& rule) override;
-    std::optional<Rule> findById(const std::string& id) override;
+    std::optional<Rule> findById(int id) override;
     std::vector<Rule> findAll() override;
-    void remove(const std::string& id) override;
-    bool exists(const std::string& id) override;
+    void remove(int id) override;
+    bool exists(int id) override;
     size_t count() override;
     
     /**
@@ -70,10 +70,10 @@ public:
     ~DbWorkflowRepository() override = default;
     
     void save(const Workflow& workflow) override;
-    std::optional<Workflow> findById(const std::string& id) override;
+    std::optional<Workflow> findById(int id) override;
     std::vector<Workflow> findAll() override;
-    void remove(const std::string& id) override;
-    bool exists(const std::string& id) override;
+    void remove(int id) override;
+    bool exists(int id) override;
     size_t count() override;
     
     void createSchema();
@@ -92,10 +92,10 @@ public:
     explicit DbVersionRepository(std::shared_ptr<soci::session> session);
     ~DbVersionRepository() override = default;
     
-    void saveVersion(const RuleVersion& version, const std::string& ruleId) override;
-    std::vector<RuleVersion> findVersionsForRule(const std::string& ruleId) override;
-    std::optional<RuleVersion> findVersion(const std::string& ruleId, const std::string& versionId) override;
-    void removeAllVersionsForRule(const std::string& ruleId) override;
+    void saveVersion(const RuleVersion& version, int ruleId) override;
+    std::vector<RuleVersion> findVersionsForRule(int ruleId) override;
+    std::optional<RuleVersion> findVersion(int ruleId, const std::string& versionId) override;
+    void removeAllVersionsForRule(int ruleId) override;
     
     void createSchema();
     soci::session& session() { return *session_; }

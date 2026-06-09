@@ -62,7 +62,7 @@ void DbRuleRepository::save(const Rule& rule) {
 void DbRuleRepository::insertRule(const Rule& rule) {
     int timeoutMs = rule.timeout.has_value() ? static_cast<int>(rule.timeout->count()) : -1;
     int cacheMs   = rule.cacheDuration.has_value() ? static_cast<int>(rule.cacheDuration->count()) : -1;
-    std::string dependsOn = rule.dependsOnRuleId.has_value() ? rule.dependsOnRuleId.value() : "";
+    int dependsOn = rule.dependsOnRuleId.has_value() ? rule.dependsOnRuleId.value() : -1;
     DbBool isActive = rule.isActive;
 
     *session_ << 
@@ -75,7 +75,7 @@ void DbRuleRepository::insertRule(const Rule& rule) {
 void DbRuleRepository::updateRule(const Rule& rule) {
     int timeoutMs = rule.timeout.has_value() ? static_cast<int>(rule.timeout->count()) : -1;
     int cacheMs   = rule.cacheDuration.has_value() ? static_cast<int>(rule.cacheDuration->count()) : -1;
-    std::string dependsOn = rule.dependsOnRuleId.has_value() ? rule.dependsOnRuleId.value() : "";
+    int dependsOn = rule.dependsOnRuleId.has_value() ? rule.dependsOnRuleId.value() : -1;
     DbBool isActive = rule.isActive;
 
     *session_ <<
@@ -89,7 +89,7 @@ void DbRuleRepository::updateRule(const Rule& rule) {
         soci::use(timeoutMs), soci::use(cacheMs), soci::use(dependsOn), soci::use(rule.id);
 }
 
-std::optional<Rule> DbRuleRepository::findById(const std::string& id) {
+std::optional<Rule> DbRuleRepository::findById(int id) {
     soci::rowset<soci::row> rs = ((*session_).prepare <<
         "SELECT id, expression, action, description, is_active, priority, timeout_ms, cache_duration_ms, depends_on_rule_id "
         "FROM rules WHERE id = :id", soci::use(id));
@@ -111,11 +111,11 @@ std::vector<Rule> DbRuleRepository::findAll() {
     return rules;
 }
 
-void DbRuleRepository::remove(const std::string& id) {
+void DbRuleRepository::remove(int id) {
     *session_ << "DELETE FROM rules WHERE id = :id", soci::use(id);
 }
 
-bool DbRuleRepository::exists(const std::string& id) {
+bool DbRuleRepository::exists(int id) {
     int count = 0;
     *session_ << "SELECT COUNT(*) FROM rules WHERE id = :id", soci::into(count), soci::use(id);
     return count > 0;
@@ -134,7 +134,7 @@ void DbRuleRepository::clear() {
 
 Rule DbRuleRepository::rowToRule(soci::row& row) {
     Rule rule;
-    rule.id = row.get<std::string>(0);
+    rule.id = row.get<int>(0);
     rule.expression = row.get<std::string>(1);
     rule.action = row.get<std::string>(2);
     rule.description = row.get<std::string>(3);
@@ -149,8 +149,8 @@ Rule DbRuleRepository::rowToRule(soci::row& row) {
     int cacheMs = row.get<int>(7);
     if (cacheMs >= 0) rule.cacheDuration = std::chrono::milliseconds(cacheMs);
     
-    std::string dependsOn = row.get<std::string>(8);
-    if (!dependsOn.empty()) rule.dependsOnRuleId = dependsOn;
+    int dependsOn = row.get<int>(8);
+    if (dependsOn >= 0) rule.dependsOnRuleId = dependsOn;
     
     return rule;
 }
@@ -167,7 +167,7 @@ DbWorkflowRepository::DbWorkflowRepository(std::shared_ptr<soci::session> sessio
 void DbWorkflowRepository::createSchema() {
     *session_ <<
         "CREATE TABLE IF NOT EXISTS workflows ("
-        "  id VARCHAR(255) PRIMARY KEY,"
+        "  id INTEGER PRIMARY KEY,"
         "  description TEXT,"
         "  is_active BOOLEAN DEFAULT TRUE,"
         "  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
@@ -176,8 +176,8 @@ void DbWorkflowRepository::createSchema() {
 
     *session_ <<
         "CREATE TABLE IF NOT EXISTS workflow_rules ("
-        "  workflow_id VARCHAR(255) REFERENCES workflows(id) ON DELETE CASCADE,"
-        "  rule_id VARCHAR(255) REFERENCES rules(id) ON DELETE CASCADE,"
+        "  workflow_id INTEGER REFERENCES workflows(id) ON DELETE CASCADE,"
+        "  rule_id INTEGER REFERENCES rules(id) ON DELETE CASCADE,"
         "  rule_order INT,"
         "  PRIMARY KEY (workflow_id, rule_id)"
         ")";
@@ -214,13 +214,13 @@ void DbWorkflowRepository::save(const Workflow& workflow) {
     tr.commit();
 }
 
-std::optional<Workflow> DbWorkflowRepository::findById(const std::string& id) {
+std::optional<Workflow> DbWorkflowRepository::findById(int id) {
     soci::rowset<soci::row> rs = ((*session_).prepare <<
         "SELECT id, description, is_active FROM workflows WHERE id = :id", soci::use(id));
 
     for (auto& row : rs) {
         Workflow wf;
-        wf.id = row.get<std::string>(0);
+        wf.id = row.get<int>(0);
         wf.description = row.get<std::string>(1);
         DbBool isActive;
     isActive = row.get<int>(2) != 0;
@@ -251,7 +251,7 @@ std::vector<Workflow> DbWorkflowRepository::findAll() {
         "SELECT id FROM workflows");
 
     for (auto& row : rs) {
-        std::string wid = row.get<std::string>(0);
+        int wid = row.get<int>(0);
         auto wf = findById(wid);
         if (wf.has_value()) {
             workflows.push_back(std::move(wf.value()));
@@ -260,12 +260,12 @@ std::vector<Workflow> DbWorkflowRepository::findAll() {
     return workflows;
 }
 
-void DbWorkflowRepository::remove(const std::string& id) {
+void DbWorkflowRepository::remove(int id) {
     *session_ << "DELETE FROM workflow_rules WHERE workflow_id = :id", soci::use(id);
     *session_ << "DELETE FROM workflows WHERE id = :id", soci::use(id);
 }
 
-bool DbWorkflowRepository::exists(const std::string& id) {
+bool DbWorkflowRepository::exists(int id) {
     int count = 0;
     *session_ << "SELECT COUNT(*) FROM workflows WHERE id = :id", soci::into(count), soci::use(id);
     return count > 0;
@@ -295,7 +295,7 @@ void DbVersionRepository::createSchema() {
     *session_ <<
         "CREATE TABLE IF NOT EXISTS rule_versions ("
         "  version_id VARCHAR(255),"
-        "  rule_id VARCHAR(255),"
+        "  rule_id INTEGER,"
         "  expression TEXT,"
         "  action TEXT,"
         "  priority INT,"
@@ -308,7 +308,7 @@ void DbVersionRepository::createSchema() {
         ")";
 }
 
-void DbVersionRepository::saveVersion(const RuleVersion& version, const std::string& ruleId) {
+void DbVersionRepository::saveVersion(const RuleVersion& version, int ruleId) {
     DbBool isActive = version.isActive;
     *session_ <<
         "INSERT INTO rule_versions (version_id, rule_id, expression, action, priority, is_active, author, change_summary, parent_version_id) "
@@ -318,7 +318,7 @@ void DbVersionRepository::saveVersion(const RuleVersion& version, const std::str
         soci::use(version.author), soci::use(version.changeSummary), soci::use(version.parentVersionId);
 }
 
-std::vector<RuleVersion> DbVersionRepository::findVersionsForRule(const std::string& ruleId) {
+std::vector<RuleVersion> DbVersionRepository::findVersionsForRule(int ruleId) {
     std::vector<RuleVersion> versions;
     soci::rowset<soci::row> rs = ((*session_).prepare <<
         "SELECT version_id, expression, action, priority, is_active, created_at, author, change_summary, parent_version_id "
@@ -328,7 +328,7 @@ std::vector<RuleVersion> DbVersionRepository::findVersionsForRule(const std::str
     for (auto& row : rs) {
         RuleVersion rv;
         rv.versionId = row.get<std::string>(0);
-        rv.ruleId = ruleId;
+        rv.ruleId = std::to_string(ruleId);
         rv.expression = row.get<std::string>(1);
         rv.action = row.get<std::string>(2);
         rv.priority = row.get<int>(3);
@@ -341,7 +341,7 @@ std::vector<RuleVersion> DbVersionRepository::findVersionsForRule(const std::str
     return versions;
 }
 
-std::optional<RuleVersion> DbVersionRepository::findVersion(const std::string& ruleId, const std::string& versionId) {
+std::optional<RuleVersion> DbVersionRepository::findVersion(int ruleId, const std::string& versionId) {
     soci::rowset<soci::row> rs = ((*session_).prepare <<
         "SELECT version_id, expression, action, priority, is_active, created_at, author, change_summary, parent_version_id "
         "FROM rule_versions WHERE rule_id = :rid AND version_id = :vid",
@@ -350,7 +350,7 @@ std::optional<RuleVersion> DbVersionRepository::findVersion(const std::string& r
     for (auto& row : rs) {
         RuleVersion rv;
         rv.versionId = row.get<std::string>(0);
-        rv.ruleId = ruleId;
+        rv.ruleId = std::to_string(ruleId);
         rv.expression = row.get<std::string>(1);
         rv.action = row.get<std::string>(2);
         rv.priority = row.get<int>(3);
@@ -363,7 +363,7 @@ std::optional<RuleVersion> DbVersionRepository::findVersion(const std::string& r
     return std::nullopt;
 }
 
-void DbVersionRepository::removeAllVersionsForRule(const std::string& ruleId) {
+void DbVersionRepository::removeAllVersionsForRule(int ruleId) {
     *session_ << "DELETE FROM rule_versions WHERE rule_id = :rid", soci::use(ruleId);
 }
 

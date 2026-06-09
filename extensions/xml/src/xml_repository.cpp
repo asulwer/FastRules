@@ -20,7 +20,7 @@ void XmlRuleRepository::save(const Rule& rule) {
     
     // Remove existing rule with same ID
     for (auto child = root.child("rule"); child; child = child.next_sibling("rule")) {
-        if (std::string(child.attribute("id").value()) == rule.id) {
+        if (child.attribute("id").as_int() == rule.id) {
             root.remove_child(child);
             break;
         }
@@ -30,12 +30,12 @@ void XmlRuleRepository::save(const Rule& rule) {
     dirty_ = true;
 }
 
-std::optional<Rule> XmlRuleRepository::findById(const std::string& id) {
+std::optional<Rule> XmlRuleRepository::findById(int id) {
     auto root = doc_.child("rules");
     if (!root) return std::nullopt;
     
     for (auto child = root.child("rule"); child; child = child.next_sibling("rule")) {
-        if (std::string(child.attribute("id").value()) == id) {
+        if (child.attribute("id").as_int() == id) {
             return xmlToRule(child);
         }
     }
@@ -53,12 +53,12 @@ std::vector<Rule> XmlRuleRepository::findAll() {
     return rules;
 }
 
-void XmlRuleRepository::remove(const std::string& id) {
+void XmlRuleRepository::remove(int id) {
     auto root = doc_.child("rules");
     if (!root) return;
     
     for (auto child = root.child("rule"); child; child = child.next_sibling("rule")) {
-        if (std::string(child.attribute("id").value()) == id) {
+        if (child.attribute("id").as_int() == id) {
             root.remove_child(child);
             dirty_ = true;
             return;
@@ -66,7 +66,7 @@ void XmlRuleRepository::remove(const std::string& id) {
     }
 }
 
-bool XmlRuleRepository::exists(const std::string& id) {
+bool XmlRuleRepository::exists(int id) {
     return findById(id).has_value();
 }
 
@@ -112,7 +112,7 @@ void XmlRuleRepository::write() {
 
 void XmlRuleRepository::ruleToXml(const Rule& rule, pugi::xml_node& parent) const {
     auto node = parent.append_child("rule");
-    node.append_attribute("id") = rule.id.c_str();
+    node.append_attribute("id") = rule.id;
     node.append_attribute("isActive") = rule.isActive;
     node.append_attribute("priority") = rule.priority;
     if (rule.timeout) {
@@ -128,13 +128,13 @@ void XmlRuleRepository::ruleToXml(const Rule& rule, pugi::xml_node& parent) cons
     if (rule.dependsOnRuleId) {
         auto deps = node.append_child("dependencies");
         auto dep = deps.append_child("dep");
-        dep.append_child(pugi::node_pcdata).set_value(rule.dependsOnRuleId->c_str());
+        dep.append_child(pugi::node_pcdata).set_value(std::to_string(*rule.dependsOnRuleId).c_str());
     }
 }
 
 Rule XmlRuleRepository::xmlToRule(const pugi::xml_node& node) const {
     Rule rule;
-    rule.id = node.attribute("id").value();
+    rule.id = node.attribute("id").as_int();
     rule.expression = node.child("expression").child_value();
     rule.action = node.child("action").child_value();
     
@@ -146,7 +146,7 @@ Rule XmlRuleRepository::xmlToRule(const pugi::xml_node& node) const {
     
     auto deps = node.child("dependencies");
     for (auto d = deps.child("dep"); d; d = d.next_sibling("dep")) {
-        rule.dependsOnRuleId = d.child_value();
+        rule.dependsOnRuleId = std::stoi(d.child_value());
     }
     
     return rule;

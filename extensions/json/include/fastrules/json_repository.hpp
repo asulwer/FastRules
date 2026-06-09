@@ -32,10 +32,10 @@ public:
     ~JsonRuleRepository() override = default;
     
     void save(const Rule& rule) override;
-    std::optional<Rule> findById(const std::string& id) override;
+    std::optional<Rule> findById(int id) override;
     std::vector<Rule> findAll() override;
-    void remove(const std::string& id) override;
-    bool exists(const std::string& id) override;
+    void remove(int id) override;
+    bool exists(int id) override;
     size_t count() override;
     
     /**
@@ -69,10 +69,10 @@ public:
     ~JsonWorkflowRepository() override = default;
     
     void save(const Workflow& workflow) override;
-    std::optional<Workflow> findById(const std::string& id) override;
+    std::optional<Workflow> findById(int id) override;
     std::vector<Workflow> findAll() override;
-    void remove(const std::string& id) override;
-    bool exists(const std::string& id) override;
+    void remove(int id) override;
+    bool exists(int id) override;
     size_t count() override;
     
     void flush();

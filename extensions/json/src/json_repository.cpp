@@ -27,7 +27,7 @@ void JsonRuleRepository::save(const Rule& rule) {
     dirty_ = true;
 }
 
-std::optional<Rule> JsonRuleRepository::findById(const std::string& id) {
+std::optional<Rule> JsonRuleRepository::findById(int id) {
     for (const auto& item : data_) {
         if (item.contains("id") && item["id"] == id) {
             return jsonToRule(item);
@@ -45,9 +45,9 @@ std::vector<Rule> JsonRuleRepository::findAll() {
     return rules;
 }
 
-void JsonRuleRepository::remove(const std::string& id) {
+void JsonRuleRepository::remove(int id) {
     auto it = std::remove_if(data_.begin(), data_.end(),
-        [&id](const nlohmann::json& item) {
+        [id](const nlohmann::json& item) {
             return item.contains("id") && item["id"] == id;
         });
     if (it != data_.end()) {
@@ -56,7 +56,7 @@ void JsonRuleRepository::remove(const std::string& id) {
     }
 }
 
-bool JsonRuleRepository::exists(const std::string& id) {
+bool JsonRuleRepository::exists(int id) {
     for (const auto& item : data_) {
         if (item.contains("id") && item["id"] == id) {
             return true;
@@ -121,8 +121,8 @@ Rule JsonRuleRepository::jsonToRule(const nlohmann::json& j) const {
     
     try {
         if (j.is_object()) {
-            if (j.contains("id") && j["id"].is_string()) {
-                rule.id = j["id"].get<std::string>();
+            if (j.contains("id") && j["id"].is_number_integer()) {
+                rule.id = j["id"].get<int>();
             }
             if (j.contains("expression") && j["expression"].is_string()) {
                 rule.expression = j["expression"].get<std::string>();
@@ -139,8 +139,8 @@ Rule JsonRuleRepository::jsonToRule(const nlohmann::json& j) const {
             if (j.contains("timeout") && j["timeout"].is_number_integer()) {
                 rule.timeout = std::chrono::milliseconds(j["timeout"].get<int>());
             }
-            if (j.contains("dependsOn") && j["dependsOn"].is_string()) {
-                rule.dependsOnRuleId = j["dependsOn"].get<std::string>();
+            if (j.contains("dependsOn") && j["dependsOn"].is_number_integer()) {
+                rule.dependsOnRuleId = j["dependsOn"].get<int>();
             }
         }
     } catch (...) {

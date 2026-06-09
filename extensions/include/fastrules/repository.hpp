@@ -18,38 +18,11 @@ namespace ext {
 class IRuleRepository {
 public:
     virtual ~IRuleRepository() = default;
-    
-    /**
-     * Save or update a rule.
-     * If the rule already exists, it is updated.
-     */
     virtual void save(const Rule& rule) = 0;
-    
-    /**
-     * Find a rule by its unique ID.
-     * Returns std::nullopt if not found.
-     */
-    virtual std::optional<Rule> findById(const std::string& id) = 0;
-    
-    /**
-     * Retrieve all stored rules.
-     */
+    virtual std::optional<Rule> findById(int id) = 0;
     virtual std::vector<Rule> findAll() = 0;
-    
-    /**
-     * Remove a rule by ID.
-     * No-op if the rule does not exist.
-     */
-    virtual void remove(const std::string& id) = 0;
-    
-    /**
-     * Check if a rule with the given ID exists.
-     */
-    virtual bool exists(const std::string& id) = 0;
-    
-    /**
-     * Count total number of rules.
-     */
+    virtual void remove(int id) = 0;
+    virtual bool exists(int id) = 0;
     virtual size_t count() = 0;
 };
 
@@ -59,12 +32,11 @@ public:
 class IWorkflowRepository {
 public:
     virtual ~IWorkflowRepository() = default;
-    
     virtual void save(const Workflow& workflow) = 0;
-    virtual std::optional<Workflow> findById(const std::string& id) = 0;
+    virtual std::optional<Workflow> findById(int id) = 0;
     virtual std::vector<Workflow> findAll() = 0;
-    virtual void remove(const std::string& id) = 0;
-    virtual bool exists(const std::string& id) = 0;
+    virtual void remove(int id) = 0;
+    virtual bool exists(int id) = 0;
     virtual size_t count() = 0;
 };
 
@@ -74,11 +46,10 @@ public:
 class IVersionRepository {
 public:
     virtual ~IVersionRepository() = default;
-    
-    virtual void saveVersion(const RuleVersion& version, const std::string& ruleId) = 0;
-    virtual std::vector<RuleVersion> findVersionsForRule(const std::string& ruleId) = 0;
-    virtual std::optional<RuleVersion> findVersion(const std::string& ruleId, const std::string& versionId) = 0;
-    virtual void removeAllVersionsForRule(const std::string& ruleId) = 0;
+    virtual void saveVersion(const RuleVersion& version, int ruleId) = 0;
+    virtual std::vector<RuleVersion> findVersionsForRule(int ruleId) = 0;
+    virtual std::optional<RuleVersion> findVersion(int ruleId, const std::string& versionId) = 0;
+    virtual void removeAllVersionsForRule(int ruleId) = 0;
 };
 
 } // namespace ext

@@ -331,8 +331,8 @@ std::vector<std::shared_ptr<Rule>> Workflow::resolveExecutionOrder() const {
 
 std::vector<std::vector<std::shared_ptr<Rule>>> Workflow::buildDependencyLevels() const {
     // Kahn's algorithm for topological sort with priority within levels
-    std::unordered_map<std::string, std::shared_ptr<Rule>> ruleMap;
-    std::unordered_map<std::string, int> inDegree;
+    std::unordered_map<int, std::shared_ptr<Rule>> ruleMap;
+    std::unordered_map<int, int> inDegree;
 
     for (const auto& rule : rules) {
         ruleMap[rule->id] = rule;
@@ -389,24 +389,24 @@ std::vector<std::vector<std::shared_ptr<Rule>>> Workflow::buildDependencyLevels(
 
 void Workflow::checkCircularDependencies() const {
     // DFS-based cycle detection
-    std::unordered_map<std::string, std::shared_ptr<Rule>> ruleMap;
+    std::unordered_map<int, std::shared_ptr<Rule>> ruleMap;
     for (const auto& rule : rules) {
         ruleMap[rule->id] = rule;
     }
 
     enum class VisitState { Unvisited, Visiting, Visited };
-    std::unordered_map<std::string, VisitState> state;
+    std::unordered_map<int, VisitState> state;
 
     for (const auto& [id, _] : ruleMap) {
         state[id] = VisitState::Unvisited;
     }
 
-    std::function<bool(const std::string&)> dfs = [&](const std::string& ruleId) -> bool {
+    std::function<bool(int)> dfs = [&](int ruleId) -> bool {
         state[ruleId] = VisitState::Visiting;
 
         auto it = ruleMap.find(ruleId);
         if (it != ruleMap.end() && it->second->dependsOnRuleId.has_value()) {
-            const std::string& depId = it->second->dependsOnRuleId.value();
+            int depId = it->second->dependsOnRuleId.value();
             if (state[depId] == VisitState::Visiting) {
                 return true; // Cycle found
             }
@@ -447,7 +447,7 @@ void Workflow::collectActions(const std::vector<std::shared_ptr<Rule>>& ruleList
 // Workflow Builder implementation
 // ============================================================================
 
-Workflow::Builder::Builder(const std::string& workflowId)
+Workflow::Builder::Builder(int workflowId)
     : workflow_(std::make_unique<Workflow>()) {
     workflow_->id = workflowId;
 }
