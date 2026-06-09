@@ -11,6 +11,10 @@
     "nlohmann-json"
   ],
   "features": {
+    "json": {
+      "description": "JSON persistence and serialization support",
+      "dependencies": ["nlohmann-json"]
+    },
     "xml": {
       "description": "XML persistence support",
       "dependencies": ["pugixml"]
