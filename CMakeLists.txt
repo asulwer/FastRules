@@ -413,7 +413,11 @@ if(FASTRULES_BUILD_EXAMPLES)
     # add_executable(parent_child_example examples/parent_child_example.cpp)
     # add_executable(multi_object_example examples/multi_object_example.cpp)
     # add_executable(no_globals_example examples/no_globals_example.cpp)
-    # add_executable(typed_example examples/typed_example.cpp)
+    
+    add_executable(typed_example examples/typed_example.cpp)
+    set_property(TARGET typed_example PROPERTY FOLDER "Examples")
+    target_link_libraries(typed_example PRIVATE fastrules)
+    
     # add_executable(custom_methods_example examples/custom_methods_example.cpp)
     # add_executable(repl_example examples/repl_example.cpp)
     # add_executable(debug_context examples/debug_context.cpp)

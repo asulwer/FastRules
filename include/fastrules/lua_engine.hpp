@@ -24,6 +24,32 @@
 namespace fastrules {
 
 // ============================================================================
+// Convenience: TypeRegistrar for lambda-based registration
+// Usage inside registerType lambda: reg.bind("name", &T::name);
+// ============================================================================
+template<typename T>
+struct TypeRegistrar {
+    std::vector<TypeField> fields;
+
+    template<typename MemberT>
+    void bind(const std::string& name, MemberT T::*member) {
+        std::string luaType;
+        if constexpr (std::is_same_v<MemberT, int> || std::is_same_v<MemberT, int32_t> || std::is_same_v<MemberT, int64_t> || std::is_same_v<MemberT, long>) {
+            luaType = "int";
+        } else if constexpr (std::is_same_v<MemberT, double> || std::is_same_v<MemberT, float>) {
+            luaType = "double";
+        } else if constexpr (std::is_same_v<MemberT, bool>) {
+            luaType = "bool";
+        } else if constexpr (std::is_same_v<MemberT, std::string> || std::is_same_v<MemberT, const char*>) {
+            luaType = "string";
+        } else {
+            luaType = "userdata";
+        }
+        fields.push_back({name, reinterpret_cast<size_t>(&(((T*)nullptr)->*member)), luaType});
+    }
+};
+
+// ============================================================================
 // Lua engine wrapper using pluggable LuaBackend
 //
 // Fully backend-agnostic. Works with Sol2Backend, LuaBridge3Backend, or any
@@ -127,6 +153,19 @@ public:
     template<typename T>
     void registerType(const std::string& name, std::vector<TypeField> fields) {
         typeRegistry_.registerType<T>(name, std::move(fields));
+        backend_->bindTypes(&typeRegistry_);
+    }
+
+    // Convenience overload: lambda-based registration (compile-time safe)
+    // Usage: engine.registerType<Customer>("Customer", [](auto& reg) {
+    //     reg.bind("name", &Customer::name);
+    //     reg.bind("age", &Customer::age);
+    // });
+    template<typename T, typename Func>
+    void registerType(const std::string& name, Func func) {
+        TypeRegistrar<T> registrar;
+        func(registrar);
+        typeRegistry_.registerType<T>(name, std::move(registrar.fields));
         backend_->bindTypes(&typeRegistry_);
     }
 
