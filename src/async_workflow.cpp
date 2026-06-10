@@ -132,25 +132,14 @@ std::vector<AsyncRuleResult> AsyncWorkflow::executeParallelAsync(
         for (const auto& rule : level) {
             if (!rule->isActive) continue;
             
+            auto engineClone = engine.clone();
+            auto paramsCopy = parameters;
             futures.push_back(
-                threadPool_->enqueue([this, &engine, &context, &parameters, rule]() {
+                threadPool_->enqueue([this, eng = std::move(engineClone), params = std::move(paramsCopy), rule, &context]() {
                     AsyncRuleResult asyncResult;
                     try {
-                        // Check dependency from context
-                        if (rule->dependsOnRuleId.has_value()) {
-                            auto depResult = context.getResult(rule->dependsOnRuleId.value());
-                            if (!depResult.has_value() || !depResult->isSuccess()) {
-                                RuleResult skipResult;
-                                skipResult.ruleId = rule->id;
-                                skipResult.success = false;
-                                skipResult.exception = RuleException("Dependency failed: " + rule->dependsOnRuleId.value());
-                                asyncResult.result = skipResult;
-                                return asyncResult;
-                            }
-                        }
-                        
-                        // Use engine directly (thread-safe via shared_lock in registry)
-                        asyncResult.result = rule->execute(engine, context, parameters);
+                        RuleContext localContext;
+                        asyncResult.result = rule->execute(*eng, localContext, params);
                     } catch (...) {
                         asyncResult.exception = std::current_exception();
                     }
