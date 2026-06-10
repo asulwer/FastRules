@@ -1,5 +1,5 @@
 // json_example.cpp
-// Demonstrates the fastrules-json extension: loading workflows from JSON,
+// Demonstrates the fastrules-json extension: loading workflows from JSON files,
 // serializing rules, and using the JSON repository for persistence.
 
 #include <fastrules.hpp>
@@ -8,74 +8,83 @@
 #include <fastrules/json_repository.hpp>
 #include <iostream>
 #include <fstream>
+#include <filesystem>
 
 using namespace fastrules;
 using namespace fastrules::ext;
+
+static std::string resolveDataPath(const std::string& filename) {
+    std::filesystem::path exePath = std::filesystem::current_path();
+    // Look in data/json/ relative to project root or current dir
+    std::filesystem::path dataPath = exePath / ".." / ".." / ".." / "data" / "json" / filename;
+    if (std::filesystem::exists(dataPath)) return dataPath.string();
+    dataPath = exePath / "data" / "json" / filename;
+    if (std::filesystem::exists(dataPath)) return dataPath.string();
+    dataPath = std::filesystem::path("C:/Users/asulw/.openclaw/workspace/main/fastrules/data/json") / filename;
+    if (std::filesystem::exists(dataPath)) return dataPath.string();
+    return filename;
+}
+
+static std::string readFile(const std::string& path) {
+    std::ifstream file(path);
+    if (!file) throw std::runtime_error("Cannot open: " + path);
+    return std::string((std::istreambuf_iterator<char>(file)),
+                        std::istreambuf_iterator<char>());
+}
 
 int main() {
     try {
         LuaEngine engine;
 
         // ================================================================
-        // 1. Load a workflow from JSON string
+        // 1. Load a workflow from a JSON data file
         // ================================================================
-        std::string workflowJson = R"({
-            "id": 1,
-            "description": "Validate customer eligibility",
-            "isActive": true,
-            "rules": [
-                {
-                    "id": 1,
-                    "description": "Check if customer is an adult",
-                    "expression": "age >= 18",
-                    "action": "isAdult = true",
-                    "isActive": true,
-                    "priority": 10,
-                    "timeout": 100
-                },
-                {
-                    "id": 2,
-                    "description": "Check credit score",
-                    "expression": "creditScore >= 650",
-                    "action": "isCreditWorthy = true",
-                    "isActive": true,
-                    "priority": 5,
-                    "timeout": 200,
-                    "dependencyChain": [1]
-                }
-            ]
-        })";
+        std::string jsonPath = resolveDataPath("customer_rules.json");
+        std::string workflowJson = readFile(jsonPath);
 
         auto workflow = JsonLoader::loadWorkflow(workflowJson);
         std::cout << "Loaded workflow: " << workflow.id << "\n";
+        std::cout << "  Description: " << workflow.description << "\n";
         std::cout << "  Rules: " << workflow.rules.size() << "\n";
 
         // ================================================================
         // 2. Execute the workflow
         // ================================================================
-        struct Customer { int age; int creditScore; };
+        struct Customer { int age; std::string name; bool isActive; };
         engine.registerType<Customer>("Customer", [](auto& reg) {
             reg.bind("age", &Customer::age);
-            reg.bind("creditScore", &Customer::creditScore);
+            reg.bind("name", &Customer::name);
+            reg.bind("isActive", &Customer::isActive);
         });
 
-        Customer customer{25, 720};
+        Customer customer{25, "John Doe", true};
         std::vector<RuleParameter> params;
         params.emplace_back("customer", &customer);
 
+        workflow.compile(engine);
         auto results = workflow.execute(engine, params);
         for (const auto& result : results) {
-            std::cout << "Rule " << result.ruleId << ": " << (result.isSuccess() ? "PASS" : "FAIL") << "\n";
+            std::cout << "Rule " << result.ruleId << ": "
+                      << (result.isSuccess() ? "PASS" : "FAIL") << "\n";
         }
 
         // ================================================================
-        // 3. Serialize workflow back to JSON
+        // 3. Load dependency workflow from JSON
+        // ================================================================
+        std::string depPath = resolveDataPath("dependency_rules.json");
+        std::string depJson = readFile(depPath);
+        auto depWorkflow = JsonLoader::loadWorkflow(depJson);
+        std::cout << "\nLoaded dependency workflow: " << depWorkflow.id
+                  << " with " << depWorkflow.rules.size() << " rules\n";
+
+        // ================================================================
+        // 4. Serialize workflow back to JSON
         // ================================================================
         std::string prettyJson = JsonLoader::saveWorkflowPretty(workflow);
         std::cout << "\nSerialized workflow (pretty):\n" << prettyJson << "\n";
 
         // ================================================================
-        // 4. JSON repository persistence
+        // 5. JSON repository persistence
         // ================================================================
         JsonRuleRepository repo("rules.json");
         for (const auto& rule : workflow.rules) {
@@ -87,28 +96,6 @@ int main() {
         // Reload from file
         auto allRules = repo.findAll();
         std::cout << "Loaded " << allRules.size() << " rules from repository\n";
-
-        // ================================================================
-        // 5. Version history serialization
-        // ================================================================
-        RuleVersionHistory history;
-        history.ruleId = "adult-check";
-        
-        RuleVersion v1;
-        v1.versionId = "v1";
-        v1.expression = "age >= 21";
-        v1.author = "Alice";
-        history.addVersion(v1);
-        
-        RuleVersion v2;
-        v2.versionId = "v2";
-        v2.expression = "age >= 18";
-        v2.author = "Bob";
-        v2.parentVersionId = "v1";
-        history.addVersion(v2);
-
-        std::string historyJson = JsonSerialization::serialize(history);
-        std::cout << "\nVersion history JSON:\n" << historyJson << "\n";
 
         std::cout << "\nJSON extension example complete.\n";
         return 0;
