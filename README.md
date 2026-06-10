@@ -145,7 +145,7 @@ LuaEngine engine;
 
 // Create a rule in pure C++
 Rule rule;
-rule.id = "adult-check";
+rule.id = 1;
 rule.expression = "age >= 18";
 rule.action = "eligible = true";
 rule.priority = 0;
@@ -260,11 +260,11 @@ ctest --test-dir build --build-config Release
 
 ```json
 {
-  "id": "customer-validation",
+  "id": 1,
   "version": "1.0.0",
   "rules": [
     {
-      "id": "adult-check",
+      "id": 1,
       "expression": "customer.age >= 18",
       "action": "eligible = true",
       "timeout": 100,
