@@ -20,12 +20,12 @@ int main() {
         // 1. Load a workflow from JSON string
         // ================================================================
         std::string workflowJson = R"({
-            "id": "customer-validation",
+            "id": 1,
             "description": "Validate customer eligibility",
             "isActive": true,
             "rules": [
                 {
-                    "id": "adult-check",
+                    "id": 1,
                     "description": "Check if customer is an adult",
                     "expression": "age >= 18",
                     "action": "isAdult = true",
@@ -34,14 +34,14 @@ int main() {
                     "timeout": 100
                 },
                 {
-                    "id": "credit-check",
+                    "id": 2,
                     "description": "Check credit score",
                     "expression": "creditScore >= 650",
                     "action": "isCreditWorthy = true",
                     "isActive": true,
                     "priority": 5,
                     "timeout": 200,
-                    "dependencyChain": ["adult-check"]
+                    "dependencyChain": [1]
                 }
             ]
         })";
