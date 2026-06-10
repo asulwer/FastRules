@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Migration Guide
+
+If upgrading from 0.1.0:
+- **Persistence moved to extensions.** JSON/XML loading is no longer in the core library. Link `fastrules-json` or `fastrules-xml` and include `<fastrules/json_loader.hpp>` / `<fastrules/xml_loader.hpp>`.
+- **API is unchanged.** `fastrules::JsonLoader::loadWorkflow(json)`, `fastrules::XmlLoader::loadWorkflow(xml)`, etc. still work exactly as before — just from a separate library target.
+- **AOT compiler now works without sol2.** If you were using `FASTRULES_USE_SOL2`, that flag is no longer required. Bytecode dump/load uses raw Lua C API and works with any backend.
+- **Time formatting uses thread-safe functions.** `std::gmtime` replaced with `gmtime_s` (Windows) / `gmtime_r` (POSIX). No user-facing API change.
+- **Test discovery unified.** `enable_testing()` is now called at the root level; run `ctest` from the build root to execute both core and extension tests.
+
 ### Added
 - AOT compilation — pre-compile workflows to binary bundles for faster loading
 - Rule versioning — semantic versioning with history tracking and rollback support
@@ -37,6 +46,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MSVC runtime library mismatch between fastrules and dependencies
 - Missing CMake install/export configuration
 - Conan recipe missing `build_examples` option
+- Extension tests now wired to root CTest
+- AOT compiler no longer requires sol2 backend
+- `std::gmtime` deprecation warnings on Windows
+- Extension example path resolution made robust
+- REPL example EOF handling on Windows
+- Macro header MSVC warning suppression
 
 ## [0.1.0] - 2024-06-05
 

@@ -73,8 +73,10 @@ endif()
 
 # Tests
 option(FASTRULES_DB_BUILD_TESTS "Build DB extension tests" ON)
-if(FASTRULES_DB_BUILD_TESTS)
+if(FASTRULES_DB_BUILD_TESTS AND NOT FASTRULES_IN_TREE_TESTS)
     enable_testing()
+    add_subdirectory(tests)
+elseif(FASTRULES_DB_BUILD_TESTS AND FASTRULES_IN_TREE_TESTS)
     add_subdirectory(tests)
 endif()
 

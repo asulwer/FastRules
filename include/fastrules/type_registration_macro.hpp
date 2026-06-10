@@ -158,6 +158,13 @@
 // Variadic wrappers (may not work on all MSVC versions; prefer explicit-count)
 // ============================================================================
 
+#ifdef _MSC_VER
+#pragma warning(push)
+// C4003: not enough arguments for function-like macro invocation
+// C4002: too many arguments for function-like macro invocation
+#pragma warning(disable : 4003 4002)
+#endif
+
 // Attempt at variadic dispatch using an intermediate macro layer.
 // On compilers with a traditional (non-conformant) preprocessor this may fail.
 // In that case use the FASTRULES_REGISTER_TYPE_N explicit-count macros above.
@@ -224,6 +231,12 @@
 
 #define FASTRULES_REGISTER_TYPE_WITH_METHODS_4_2(engine, TypeName, f1, f2, f3, f4, m1, m2) \
     engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_FIELDS_4(reg, TypeName, f1, f2, f3, f4) FASTRULES_DISPATCH_METHODS_2(reg, TypeName, m1, m2) })
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
+// End of type_registration_macro.hpp
 
 #define FASTRULES_REGISTER_TYPE_WITH_METHODS_5_2(engine, TypeName, f1, f2, f3, f4, f5, m1, m2) \
     engine.registerType<TypeName>(#TypeName, [](auto& reg) { FASTRULES_DISPATCH_FIELDS_5(reg, TypeName, f1, f2, f3, f4, f5) FASTRULES_DISPATCH_METHODS_2(reg, TypeName, m1, m2) })

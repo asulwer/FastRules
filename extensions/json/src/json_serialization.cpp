@@ -30,7 +30,15 @@ std::string JsonSerialization::serialize(const RuleVersionHistory& history) {
         
         auto time_t = std::chrono::system_clock::to_time_t(v.createdAt);
         std::stringstream ss;
-        ss << std::put_time(std::gmtime(&time_t), "%Y-%m-%dT%H:%M:%SZ");
+#ifdef _WIN32
+        std::tm tm_buf{};
+        gmtime_s(&tm_buf, &time_t);
+        ss << std::put_time(&tm_buf, "%Y-%m-%dT%H:%M:%SZ");
+#else
+        std::tm tm_buf{};
+        gmtime_r(&time_t, &tm_buf);
+        ss << std::put_time(&tm_buf, "%Y-%m-%dT%H:%M:%SZ");
+#endif
         ver["createdAt"] = ss.str();
         
         ver["author"] = v.author;

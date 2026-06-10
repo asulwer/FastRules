@@ -59,7 +59,7 @@ TEST_CASE("JSON to XML roundtrip", "[json][xml][integration]") {
     // 2. Save to XML
     std::string xml = XmlLoader::saveWorkflow(workflow);
     REQUIRE(xml.find("42") != std::string::npos);
-    REQUIRE(xml.find("rule1") != std::string::npos);
+    REQUIRE(xml.find("Rule 1") != std::string::npos);
     // XML escapes > to &gt;, so check for the escaped form
     REQUIRE(xml.find("x &gt; 0") != std::string::npos);
 

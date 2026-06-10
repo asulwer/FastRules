@@ -196,11 +196,13 @@ std::string RuleVersionManager::generateVersionId() const {
     
     std::stringstream ss;
 #ifdef _WIN32
-    std::tm tm;
-    gmtime_s(&tm, &time_t);
-    ss << std::put_time(&tm, "%Y%m%d-%H%M%S");
+    std::tm tm_buf{};
+    gmtime_s(&tm_buf, &time_t);
+    ss << std::put_time(&tm_buf, "%Y%m%d-%H%M%S");
 #else
-    ss << std::put_time(std::gmtime(&time_t), "%Y%m%d-%H%M%S");
+    std::tm tm_buf{};
+    gmtime_r(&time_t, &tm_buf);
+    ss << std::put_time(&tm_buf, "%Y%m%d-%H%M%S");
 #endif
     ss << "-" << std::hex << (++counter);
     return ss.str();

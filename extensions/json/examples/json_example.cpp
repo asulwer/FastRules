@@ -14,15 +14,18 @@ using namespace fastrules;
 using namespace fastrules::ext;
 
 static std::string resolveDataPath(const std::string& filename) {
-    std::filesystem::path exePath = std::filesystem::current_path();
-    // Look in data/json/ relative to project root or current dir
-    std::filesystem::path dataPath = exePath / ".." / ".." / ".." / "data" / "json" / filename;
-    if (std::filesystem::exists(dataPath)) return dataPath.string();
-    dataPath = exePath / "data" / "json" / filename;
-    if (std::filesystem::exists(dataPath)) return dataPath.string();
-    dataPath = std::filesystem::path("C:/Users/asulw/.openclaw/workspace/main/fastrules/data/json") / filename;
-    if (std::filesystem::exists(dataPath)) return dataPath.string();
-    return filename;
+    auto exePath = std::filesystem::current_path();
+    // Walk up looking for data/json directory
+    for (int i = 0; i < 6; ++i) {
+        auto p = exePath / "data" / "json" / filename;
+        if (std::filesystem::exists(p)) return p.string();
+        auto parent = exePath.parent_path();
+        if (parent == exePath) break;
+        exePath = parent;
+    }
+    // Fallback: try current dir directly
+    auto fallback = std::filesystem::current_path() / filename;
+    return fallback.string();
 }
 
 static std::string readFile(const std::string& path) {

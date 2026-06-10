@@ -59,11 +59,11 @@ int main() {
         std::cout << "=== Macro-Based Type Registration Example ===" << std::endl << std::endl;
 
         // =====================================================================
-        // 1. FASTRULES_REGISTER_TYPE — register fields only (variadic)
+        // 1. FASTRULES_REGISTER_TYPE — register fields only (explicit count)
         // =====================================================================
-        std::cout << "1. FASTRULES_REGISTER_TYPE(engine, Customer, name, age, processed, isActive, balance);"
+        std::cout << "1. FASTRULES_REGISTER_TYPE_5(engine, Customer, name, age, processed, isActive, balance);"
                   << std::endl;
-        FASTRULES_REGISTER_TYPE(engine, Customer, name, age, processed, isActive, balance);
+        FASTRULES_REGISTER_TYPE_5(engine, Customer, name, age, processed, isActive, balance);
         std::cout << "   Customer type registered with 5 fields." << std::endl << std::endl;
 
         // =====================================================================

@@ -68,6 +68,10 @@ void Workflow::compile(LuaEngine& engine) {
 
     log->debug("Compiling workflow {}", id);
 
+    // Ensure the engine has types and actions bound before compiling
+    engine.bindTypesToState();
+    engine.bindActionsToState();
+
     // Auto-discover callbacks from actions before compiling
     // This ensures any callbacks referenced in JSON actions get stub registrations
     auto actions = getAllActions();

@@ -1,6 +1,7 @@
 #include <fastrules.hpp>
 #include <iostream>
 #include <string>
+#include <limits>
 
 int main() {
     fastrules::LuaEngine engine;
@@ -10,8 +11,16 @@ int main() {
     std::cout << "Examples: 1 + 1, true and false, string.len(\"hello\")\n\n";
 
     while (true) {
-        std::cout << "> ";
-        std::getline(std::cin, line);
+        std::cout << "> " << std::flush;
+        if (!std::getline(std::cin, line)) {
+            if (std::cin.eof()) {
+                std::cout << "\nEOF detected. Exiting.\n";
+                break;
+            }
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            continue;
+        }
 
         if (line == "exit" || line == "quit") break;
         if (line.empty()) continue;

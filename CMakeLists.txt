@@ -369,6 +369,15 @@ endif()
 
 # === Tests ===
 if(FASTRULES_BUILD_TESTS)
+    enable_testing()
+
+    # Build extension tests into the same CTest suite when extensions are enabled
+    if(FASTRULES_BUILD_EXTENSIONS)
+        # Pass CTest integration through to extension subdirectories
+        set(FASTRULES_IN_TREE_TESTS TRUE CACHE BOOL "" FORCE)
+    endif()
+
+
     FetchContent_Declare(
         Catch2
         GIT_REPOSITORY https://github.com/catchorg/Catch2.git

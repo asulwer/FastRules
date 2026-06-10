@@ -61,11 +61,44 @@ public:
     template<typename T>
     void registerType(const std::string& name, std::vector<TypeField> fields, std::vector<TypeMethod> methods = {}) {
         TypeDescriptor desc;
+        
+        // If type already registered, merge with existing
+        auto existing = types_.find(std::type_index(typeid(T)));
+        if (existing != types_.end()) {
+            desc = existing->second;
+        }
+        
         desc.name = name;
         auto t = std::type_index(typeid(T));
         desc.type = t;
-        desc.fields = std::move(fields);
-        desc.methods = std::move(methods);
+        
+        // Merge fields (append new ones)
+        for (auto& f : fields) {
+            // Check if field already exists
+            bool found = false;
+            for (auto& ef : desc.fields) {
+                if (ef.name == f.name) {
+                    ef = f; // update existing
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) desc.fields.push_back(f);
+        }
+        
+        // Merge methods (append new ones)
+        for (auto& m : methods) {
+            bool found = false;
+            for (auto& em : desc.methods) {
+                if (em.name == m.name) {
+                    em = m; // update existing
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) desc.methods.push_back(m);
+        }
+        
         desc.size = sizeof(T);
         // Store extractor for T* — extracts void* from std::any containing T*
         desc.extractPointer = [](const std::any& value) -> void* {

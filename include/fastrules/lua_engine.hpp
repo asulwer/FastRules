@@ -287,6 +287,8 @@ private:
         const std::vector<RuleParameter>& parameters);
 
     [[nodiscard]] std::any luaValueToAny(const LuaValue& value) const;
+
+public:
     void bindTypesToState();
     void bindActionsToState();
 };

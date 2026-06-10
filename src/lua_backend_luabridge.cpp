@@ -851,9 +851,10 @@ void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
                 TypeMethod* method = static_cast<TypeMethod*>(lua_touserdata(L, lua_upvalueindex(1)));
                 if (!method) return 0;
                 
-                // Get self (first arg)
-                void* obj = lua_touserdata(L, 1);
-                if (!obj) return 0;
+                // Get self (first arg) — userdata stores void**, dereference it
+                void** ud = static_cast<void**>(lua_touserdata(L, 1));
+                if (!ud || !*ud) return 0;
+                void* obj = *ud;
                 
                 // Call the invoker
                 return method->invoker(obj, L);

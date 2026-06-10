@@ -3,13 +3,15 @@
 #include "fastrules/rule.hpp"
 #include "fastrules/workflow.hpp"
 
-#ifdef FASTRULES_USE_SOL2
-
-#include <sol/sol.hpp>
 #include <sstream>
 #include <iomanip>
 #include <cstring>
 #include <stdexcept>
+
+extern "C" {
+#include "lua.h"
+#include "lauxlib.h"
+}
 
 namespace fastrules {
 
@@ -146,8 +148,6 @@ std::optional<AotBundle> AotBundle::loadFromFile(const std::string& path) {
 }
 
 std::string AotBundle::toHexString() const {
-    // First serialize to binary, then hex encode
-    // Use a temp file approach or memory stream
     std::ostringstream oss(std::ios::binary);
     
     oss.write("FAOT", 4);
@@ -197,8 +197,6 @@ std::optional<AotBundle> AotBundle::fromHexString(const std::string& hex) {
         binary.push_back(static_cast<char>(byte));
     }
     
-    // Write to temp and load
-    // Simpler: parse directly
     if (binary.size() < 8 || binary.substr(0, 4) != "FAOT") return std::nullopt;
     
     uint32_t version = readUint32(binary, 4);
@@ -314,66 +312,59 @@ bool AotCompiler::isBundleValid(const std::string& path) {
 }
 
 std::optional<std::string> AotCompiler::dumpBytecode(LuaEngine& engine, const std::string& source) {
-#ifdef FASTRULES_USE_SOL2
-    // Access sol2 state through the backend
     lua_State* L = engine.luaState();
     if (!L) return std::nullopt;
     
-    try {
-        // Use raw Lua C API for string.dump
-        lua_getglobal(L, "string");
-        lua_getfield(L, -1, "dump");
-        
-        // Compile source to function
-        if (luaL_loadstring(L, source.c_str()) != LUA_OK) {
-            lua_pop(L, 2);
-            return std::nullopt;
-        }
-        
-        // Call string.dump with the function
-        lua_pushvalue(L, -1); // duplicate function
-        lua_call(L, 1, 1);
-        
-        if (lua_isstring(L, -1)) {
-            size_t len;
-            const char* data = lua_tolstring(L, -1, &len);
-            std::string result(data, len);
-            lua_pop(L, 3);
-            return result;
-        }
-        
-        lua_pop(L, 3);
-        return std::nullopt;
-    } catch (...) {
+    // Use raw Lua C API for string.dump (works with any backend)
+    lua_getglobal(L, "string");
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 1);
         return std::nullopt;
     }
-#else
-    (void)engine; (void)source;
+    lua_getfield(L, -1, "dump");
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 2);
+        return std::nullopt;
+    }
+    
+    // Compile source to function
+    if (luaL_loadstring(L, source.c_str()) != LUA_OK) {
+        lua_pop(L, 1); // pop error message
+        lua_pop(L, 2); // pop string.dump and string table
+        return std::nullopt;
+    }
+    
+    // Call string.dump with the function
+    lua_pushvalue(L, -1); // duplicate compiled function
+    int err = lua_pcall(L, 1, 1, 0);
+    if (err != LUA_OK) {
+        lua_pop(L, 1); // pop error message
+        lua_pop(L, 2); // pop string.dump and string table
+        return std::nullopt;
+    }
+    
+    if (lua_isstring(L, -1)) {
+        size_t len;
+        const char* data = lua_tolstring(L, -1, &len);
+        std::string result(data, len);
+        lua_pop(L, 3); // pop result, string.dump, string table
+        return result;
+    }
+    
+    lua_pop(L, 3);
     return std::nullopt;
-#endif
 }
 
 bool AotCompiler::loadBytecode(LuaEngine& engine, const std::string& bytecode) {
-#ifdef FASTRULES_USE_SOL2
     lua_State* L = engine.luaState();
     if (!L) return false;
     
-    try {
-        // Use raw Lua C API to load bytecode
-        if (luaL_loadbuffer(L, bytecode.c_str(), bytecode.size(), "=bytecode") != LUA_OK) {
-            lua_pop(L, 1); // pop error message
-            return false;
-        }
-        lua_pop(L, 1); // pop loaded function
-        return true;
-    } catch (...) {
+    if (luaL_loadbuffer(L, bytecode.c_str(), bytecode.size(), "=bytecode") != LUA_OK) {
+        lua_pop(L, 1); // pop error message
         return false;
     }
-#else
-    (void)engine; (void)bytecode;
-    return false;
-#endif
+    lua_pop(L, 1); // pop loaded function
+    return true;
 }
 
 } // namespace fastrules
-#endif // FASTRULES_USE_SOL2

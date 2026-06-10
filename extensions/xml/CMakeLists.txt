@@ -85,8 +85,10 @@ endif()
 
 # Tests
 option(FASTRULES_XML_BUILD_TESTS "Build XML extension tests" ON)
-if(FASTRULES_XML_BUILD_TESTS)
+if(FASTRULES_XML_BUILD_TESTS AND NOT FASTRULES_IN_TREE_TESTS)
     enable_testing()
+    add_subdirectory(tests)
+elseif(FASTRULES_XML_BUILD_TESTS AND FASTRULES_IN_TREE_TESTS)
     add_subdirectory(tests)
 endif()
 

@@ -131,8 +131,10 @@ size_t getGeneration() const;           // State generation (increments on reset
 ## Backend Access
 
 ```cpp
-// Raw lua_State (works with both sol2 and LuaBridge3 backends)
+// Raw lua_State (backend-neutral, works with any Lua backend)
 lua_State* luaState() const noexcept;
 ```
 
-`sol::state&` accessor removed — use `luaState()` for interop.
+`luaState()` returns the raw `lua_State*` pointer for interop with C Lua libraries and tooling.
+
+_If migrating from an older version that used `sol::state&` — that accessor was removed. Use `luaState()` instead._

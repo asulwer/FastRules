@@ -12,14 +12,16 @@ using namespace fastrules;
 using namespace fastrules::ext;
 
 static std::string resolveDataPath(const std::string& filename) {
-    std::filesystem::path exePath = std::filesystem::current_path();
-    std::filesystem::path dataPath = exePath / ".." / ".." / ".." / "data" / "xml" / filename;
-    if (std::filesystem::exists(dataPath)) return dataPath.string();
-    dataPath = exePath / "data" / "xml" / filename;
-    if (std::filesystem::exists(dataPath)) return dataPath.string();
-    dataPath = std::filesystem::path("C:/Users/asulw/.openclaw/workspace/main/fastrules/data/xml") / filename;
-    if (std::filesystem::exists(dataPath)) return dataPath.string();
-    return filename;
+    auto exePath = std::filesystem::current_path();
+    for (int i = 0; i < 6; ++i) {
+        auto p = exePath / "data" / "xml" / filename;
+        if (std::filesystem::exists(p)) return p.string();
+        auto parent = exePath.parent_path();
+        if (parent == exePath) break;
+        exePath = parent;
+    }
+    auto fallback = std::filesystem::current_path() / filename;
+    return fallback.string();
 }
 
 static std::string readFile(const std::string& path) {
@@ -98,9 +100,9 @@ int main() {
         std::vector<RuleParameter> params;
         int quantity = 5, stock = 10;
         bool addressValid = true;
-        params.emplace_back("quantity", &quantity);
-        params.emplace_back("stock", &stock);
-        params.emplace_back("addressValid", &addressValid);
+        params.emplace_back("quantity", quantity);
+        params.emplace_back("stock", stock);
+        params.emplace_back("addressValid", addressValid);
 
         auto results = workflow.execute(engine, params);
         for (const auto& result : results) {

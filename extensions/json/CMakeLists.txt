@@ -74,8 +74,10 @@ endif()
 
 # Tests
 option(FASTRULES_JSON_BUILD_TESTS "Build JSON extension tests" ON)
-if(FASTRULES_JSON_BUILD_TESTS)
+if(FASTRULES_JSON_BUILD_TESTS AND NOT FASTRULES_IN_TREE_TESTS)
     enable_testing()
+    add_subdirectory(tests)
+elseif(FASTRULES_JSON_BUILD_TESTS AND FASTRULES_IN_TREE_TESTS)
     add_subdirectory(tests)
 endif()
 
