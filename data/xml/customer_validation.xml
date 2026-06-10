@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<rules>
+  <rule id="1" isActive="true" priority="2">
+    <expression>context.getResult('age-check').success == true and context.getResult('name-check').success == true</expression>
+    <action>customer.processed = true</action>
+    <childRules>
+      <rule id="10" isActive="true">
+        <expression>customer.age &gt;= 18</expression>
+      </rule>
+      <rule id="11" isActive="true">
+        <expression>isNotEmpty(customer.name)</expression>
+      </rule>
+    </childRules>
+  </rule>
+  <rule id="2" isActive="true" priority="0">
+    <expression>context.getResult('minor-age-check').success == true</expression>
+    <action>customer.processed = false</action>
+    <childRules>
+      <rule id="20" isActive="true">
+        <expression>customer.age &lt; 18</expression>
+      </rule>
+    </childRules>
+  </rule>
+  <rule id="3" isActive="false" priority="1">
+    <expression>context.getResult('vip-status-check').success == true</expression>
+    <action>customer.processed = true</action>
+    <childRules>
+      <rule id="30" isActive="true">
+        <expression>customer.age &gt;= 50</expression>
+      </rule>
+    </childRules>
+  </rule>
+</rules>
