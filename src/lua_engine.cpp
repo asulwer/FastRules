@@ -58,7 +58,7 @@ std::vector<std::string> extractParameterNames(const std::string& expression) {
         "context", "success", "failure", "callbacks"
     };
     
-    enum class State { Normal, SingleString, DoubleString, Escape };
+    enum class State { Normal, SingleString, DoubleString };
     State state = State::Normal;
     
     std::string_view expr(expression);
@@ -68,21 +68,26 @@ std::vector<std::string> extractParameterNames(const std::string& expression) {
         char c = expr[i];
         
         switch (state) {
-            case State::Escape:
-                state = (i > 0 && expr[i-1] == '\'') ? State::SingleString : State::DoubleString;
-                ++i;
-                break;
-                
             case State::SingleString:
-                if (c == '\\') state = State::Escape;
-                else if (c == '\'') state = State::Normal;
-                ++i;
+                if (c == '\\' && i + 1 < expr.size()) {
+                    i += 2;  // Skip escaped char
+                } else if (c == '\'') {
+                    state = State::Normal;
+                    ++i;
+                } else {
+                    ++i;
+                }
                 break;
                 
             case State::DoubleString:
-                if (c == '\\') state = State::Escape;
-                else if (c == '"') state = State::Normal;
-                ++i;
+                if (c == '\\' && i + 1 < expr.size()) {
+                    i += 2;  // Skip escaped char
+                } else if (c == '"') {
+                    state = State::Normal;
+                    ++i;
+                } else {
+                    ++i;
+                }
                 break;
                 
             case State::Normal:
