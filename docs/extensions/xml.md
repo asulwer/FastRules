@@ -27,12 +27,12 @@ target_link_libraries(your_target fastrules fastrules-xml)
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<workflow id="validation" description="Customer validation">
-    <rule id="age-check" priority="1">
+<workflow id="1" description="Customer validation">
+    <rule id="1" priority="1">
         <expression>age >= 18</expression>
         <action>eligible = true</action>
     </rule>
-    <rule id="name-check" priority="2">
+    <rule id="2" priority="2">
         <expression>string.len(name) > 0</expression>
     </rule>
 </workflow>
@@ -82,15 +82,15 @@ std::ofstream("rules.xml") << xml;
 
 | Element | Attribute | Required | Description |
 |---|---|---|---|
-| `workflow` | `id` | Yes | Workflow identifier |
+| `workflow` | `id` | Yes | Workflow identifier (int) |
 | `workflow` | `description` | No | Description |
-| `rule` | `id` | Yes | Rule identifier |
+| `rule` | `id` | Yes | Rule identifier (int) |
 | `rule` | `priority` | No | Execution order |
 | `rule` | `active` | No | `"true"` or `"false"` |
 | `expression` | — | Yes | Lua expression |
 | `action` | — | No | Lua action |
 | `childRules` | — | No | Nested rules |
-| `dependsOnRuleId` | — | No | Dependency rule ID |
+| `dependsOnRuleId` | — | No | Dependency rule ID (int) |
 
 ## Error Handling
 

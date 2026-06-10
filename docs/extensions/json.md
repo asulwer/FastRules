@@ -27,17 +27,17 @@ target_link_libraries(your_target fastrules fastrules-json)
 
 ```json
 {
-  "id": "validation",
+  "id": 1,
   "description": "Customer validation workflow",
   "rules": [
     {
-      "id": "age-check",
+      "id": 1,
       "expression": "age >= 18",
       "action": "eligible = true",
       "priority": 1
     },
     {
-      "id": "name-check",
+      "id": 2,
       "expression": "string.len(name) > 0",
       "priority": 2
     }
@@ -101,16 +101,16 @@ std::ofstream("rules.json") << json;
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `id` | string | Yes | Workflow identifier |
+| `id` | int | Yes | Workflow identifier |
 | `description` | string | No | Human-readable description |
 | `rules` | array | Yes | List of rules |
-| `rules[].id` | string | Yes | Rule identifier |
+| `rules[].id` | int | Yes | Rule identifier |
 | `rules[].expression` | string | Yes | Lua expression |
 | `rules[].action` | string | No | Lua action executed on pass |
 | `rules[].priority` | int | No | Execution order (lower first) |
 | `rules[].active` | bool | No | Enabled/disabled (default true) |
 | `rules[].childRules` | array | No | Nested child rules |
-| `rules[].dependsOnRuleId` | string | No | Depends on another rule |
+| `rules[].dependsOnRuleId` | int | No | Depends on another rule |
 | `rules[].timeoutMs` | int | No | Per-rule timeout |
 | `rules[].cacheDurationMs` | int | No | Cache duration |
 
