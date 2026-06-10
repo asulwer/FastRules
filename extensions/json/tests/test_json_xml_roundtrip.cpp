@@ -7,7 +7,7 @@ using namespace fastrules;
 
 TEST_CASE("JSON to XML roundtrip", "[json][xml][integration]") {
     std::string json = R"({
-        "id": "roundtrip-workflow",
+        "id": 42,
         "description": "Test roundtrip",
         "isActive": true,
         "rules": [
@@ -40,7 +40,7 @@ TEST_CASE("JSON to XML roundtrip", "[json][xml][integration]") {
 
     // 1. Load from JSON
     auto workflow = JsonLoader::loadWorkflow(json);
-    REQUIRE(workflow.id == "roundtrip-workflow");
+    REQUIRE(workflow.id == 42);
     REQUIRE(workflow.rules.size() == 2);
     REQUIRE(workflow.rules[0]->id == 1);
     REQUIRE(workflow.rules[0]->expression == "x > 0");
@@ -58,7 +58,7 @@ TEST_CASE("JSON to XML roundtrip", "[json][xml][integration]") {
 
     // 2. Save to XML
     std::string xml = XmlLoader::saveWorkflow(workflow);
-    REQUIRE(xml.find("roundtrip-workflow") != std::string::npos);
+    REQUIRE(xml.find("42") != std::string::npos);
     REQUIRE(xml.find("rule1") != std::string::npos);
     // XML escapes > to &gt;, so check for the escaped form
     REQUIRE(xml.find("x &gt; 0") != std::string::npos);
