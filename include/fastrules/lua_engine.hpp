@@ -18,7 +18,12 @@
 #include "type_registry.hpp"
 #include "action_callback.hpp"
 #include "logger.hpp"
-#include <spdlog/spdlog.h>
+
+// Forward-declare spdlog::logger to avoid hard public dependency
+namespace spdlog {
+    class logger;
+}
+
 #include "lua_backend.hpp"
 
 // Forward declaration for TypeRegistrar method support

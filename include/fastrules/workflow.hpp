@@ -13,8 +13,8 @@
 #include "streaming_result.hpp"
 #include "execution_tracer.hpp"
 
-// Include for unique_ptr<LuaEngine> destructor
-#include "fastrules/lua_engine.hpp"
+// Forward declaration — unique_ptr<LuaEngine> destructor is in workflow.cpp
+class LuaEngine;
 
 namespace fastrules {
 
@@ -99,7 +99,7 @@ private:
     // Engine clone pool for parallel execution optimization
     // Pre-created and pre-compiled clones avoid per-task allocation overhead
     std::vector<std::unique_ptr<LuaEngine>> enginePool_;
-    std::unique_ptr<std::mutex> poolMutex_;
+    std::mutex poolMutex_;
     size_t poolNextIndex_ = 0;
 
     // Helper: topological sort for dependency-aware execution

@@ -8,17 +8,14 @@
 #include <unordered_set>
 #include <algorithm>
 
-// Forward declaration for Lua debug struct
-struct lua_Debug;
-
-// Lua C API forward declarations
 extern "C" {
-    typedef struct lua_State lua_State;
-    void lua_sethook(lua_State* L, void (*func)(lua_State*, lua_Debug*), int mask, int count);
-    #ifndef LUA_MASKCOUNT
-    #define LUA_MASKCOUNT 0x04
-    #endif
+#include <lua.h>
+#include <lauxlib.h>
 }
+
+// Lua C API: lua_sethook is declared in lauxlib.h which we include above.
+// If using LuaJIT, lauxlib.h may not declare lua_sethook directly,
+// but including both lua.h and lauxlib.h is the correct approach.
 
 namespace {
     // Thread-local deadline for timeout preemption
@@ -164,8 +161,15 @@ std::unique_ptr<LuaValue> anyToLuaValue(LuaBackend& backend, const std::any& val
         } else if (value.type() == typeid(void*)) {
             return backend.makePointer(std::any_cast<void*>(value));
         }
-    } catch (...) {
-        // Fall through to nil
+    } catch (const std::bad_any_cast& e) {
+        // Log the error if a logger is available, then fall through to nil
+        // This indicates a type registration mismatch — worth knowing about
+        try {
+            auto log = fastrules::logger();
+            if (log) log->warn("anyToLuaValue: bad_any_cast for type {}", value.type().name());
+        } catch (...) {
+            // Logger not available — ignore
+        }
     }
     return backend.makeNil();
 }
