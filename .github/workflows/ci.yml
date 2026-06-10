@@ -63,6 +63,23 @@ jobs:
       - name: Test
         run: ./build/Release/fastrules_tests
 
+  conan-test-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Conan
+        id: install-conan
+        uses: turtlebrowser/get-conan@main
+
+      - name: Conan version
+        run: echo "${{ steps.install-conan.outputs.version }}"
+
+      - name: Conan test_package
+        run: |
+          conan profile detect --force
+          conan create . --build=missing -o with_json=True -o with_xml=True
+
   benchmark:
     runs-on: windows-latest
     if: github.event_name == 'pull_request' && false  # Disabled: benchmarks/baseline.txt does not exist

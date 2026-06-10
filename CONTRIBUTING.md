@@ -44,7 +44,11 @@ TEST_CASE("My new feature works", "[feature]") {
 
 Run tests before submitting:
 ```bash
-./build/tests/fastrules_tests
+# Windows
+.\build\Release\fastrules_tests.exe
+
+# Linux/macOS
+./build/Release/fastrules_tests
 ```
 
 ## Documentation

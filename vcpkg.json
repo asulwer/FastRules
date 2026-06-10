@@ -5,8 +5,14 @@
   "homepage": "https://github.com/asulwer/fastrules",
   "license": "MIT",
   "dependencies": [
-    "lua",
-    "spdlog"
+    {
+      "name": "lua",
+      "version>=": "5.4.0"
+    },
+    {
+      "name": "spdlog",
+      "version>=": "1.14.0"
+    }
   ],
   "features": {
     "json": {

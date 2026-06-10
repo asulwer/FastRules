@@ -6,8 +6,7 @@ using namespace fastrules;
 int main() {
     LuaEngine engine;
     
-    auto rule = Rule::builder("test")
-        .withExpression("true")
+    auto rule = Rule::create(1, "true")
         .withAction("result = 42")
         .build();
     

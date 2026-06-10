@@ -126,7 +126,6 @@ public:
     // Execution (typically through Workflow, but also available for direct use)
     RuleResult execute(class LuaEngine& engine, RuleContext& context, const std::vector<RuleParameter>& parameters);
 
-public:
     // Static factories
     static Rule isNotNull(const std::string& parameterName, const std::string& description = "");
     static Rule greaterThan(const std::string& parameterName, double value, const std::string& description = "");

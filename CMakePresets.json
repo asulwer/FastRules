@@ -23,6 +23,44 @@
             }
         },
         {
+            "name": "linux-default",
+            "hidden": false,
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_CXX_STANDARD": "23",
+                "CMAKE_CXX_STANDARD_REQUIRED": "ON",
+                "CMAKE_BUILD_TYPE": "Release",
+                "FASTRULES_BUILD_TESTS": "ON",
+                "FASTRULES_BUILD_EXAMPLES": "ON",
+                "FASTRULES_BUILD_EXTENSIONS": "ON",
+                "FASTRULES_BUILD_DB": "OFF"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            }
+        },
+        {
+            "name": "macos-default",
+            "hidden": false,
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_CXX_STANDARD": "23",
+                "CMAKE_CXX_STANDARD_REQUIRED": "ON",
+                "CMAKE_BUILD_TYPE": "Release",
+                "FASTRULES_BUILD_TESTS": "ON",
+                "FASTRULES_BUILD_EXAMPLES": "ON",
+                "FASTRULES_BUILD_EXTENSIONS": "ON",
+                "FASTRULES_BUILD_DB": "OFF"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
+            }
+        },
+        {
             "name": "windows-release",
             "inherits": "windows-default",
             "cacheVariables": {
