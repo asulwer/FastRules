@@ -115,7 +115,7 @@ std::vector<std::string> ExpressionValidator::findDangerousPatterns(const std::s
     auto patterns = getDangerousPatterns();
 
     std::string lowerExpr = expression;
-    std::transform(lowerExpr.begin(), lowerExpr.end(), lowerExpr.begin(), ::tolower);
+    std::transform(lowerExpr.begin(), lowerExpr.end(), lowerExpr.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
     for (const auto& [pattern, description] : patterns) {
         if (lowerExpr.find(pattern) != std::string::npos) {

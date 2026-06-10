@@ -182,7 +182,7 @@ std::string XmlLoader::saveWorkflow(const Workflow& workflow) {
 std::string XmlLoader::saveWorkflowPretty(const Workflow& workflow) {
     pugi::xml_document doc;
     auto root = doc.append_child("workflow");
-    root.append_attribute("id").set_value(workflow.id.c_str());
+    root.append_attribute("id").set_value(std::to_string(workflow.id).c_str());
     root.append_attribute("description").set_value(workflow.description.c_str());
     root.append_attribute("isActive").set_value(workflow.isActive);
 
