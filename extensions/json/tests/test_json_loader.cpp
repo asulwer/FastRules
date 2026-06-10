@@ -27,11 +27,11 @@ TEST_CASE("JsonLoader workflow parsing", "[json]") {
 
     auto workflow = fastrules::JsonLoader::loadWorkflow(json);
 
-    REQUIRE(workflow.id == "test-workflow");
+    REQUIRE(workflow.id == 1);
     REQUIRE(workflow.description == "Test workflow");
     REQUIRE(workflow.isActive == true);
     REQUIRE(workflow.rules.size() == 1);
-    REQUIRE(workflow.rules[0]->id == "rule1");
+    REQUIRE(workflow.rules[0]->id == 1);
     REQUIRE(workflow.rules[0]->expression == "true");
     REQUIRE(workflow.rules[0]->action == "x = 1");
 }
@@ -62,15 +62,15 @@ TEST_CASE("JsonLoader rule parsing", "[json]") {
 
 TEST_CASE("JsonLoader child rules", "[json]") {
     std::string json = R"({
-        "id": "parent",
+        "id": 1,
         "expression": "true",
         "childRules": [
             {
-                "id": "child1",
+                "id": 2,
                 "expression": "true"
             },
             {
-                "id": "child2",
+                "id": 3,
                 "expression": "false"
             }
         ]
@@ -79,8 +79,8 @@ TEST_CASE("JsonLoader child rules", "[json]") {
     auto rule = fastrules::JsonLoader::loadRule(json);
 
     REQUIRE(rule->childRules.size() == 2);
-    REQUIRE(rule->childRules[0]->id == "child1");
-    REQUIRE(rule->childRules[1]->id == "child2");
+    REQUIRE(rule->childRules[0]->id == 2);
+    REQUIRE(rule->childRules[1]->id == 3);
 }
 
 TEST_CASE("JsonLoader auto-generated IDs", "[json]") {
@@ -95,17 +95,17 @@ TEST_CASE("JsonLoader auto-generated IDs", "[json]") {
 
     auto workflow = fastrules::JsonLoader::loadWorkflow(json);
 
-    REQUIRE_FALSE(workflow.id.empty());
-    REQUIRE_FALSE(workflow.rules[0]->id.empty());
+    REQUIRE(workflow.id != 0);
+    REQUIRE(workflow.rules[0]->id != 0);
 }
 
 TEST_CASE("JsonLoader workflow serialization", "[json]") {
     Workflow workflow;
-    workflow.id = "serialize-test";
+    workflow.id = 99;
     workflow.description = "Serialization test";
 
     auto rule = std::make_shared<Rule>();
-    rule->id = "rule1";
+    rule->id = 1;
     rule->description = "Test rule";
     rule->expression = "true";
     rule->priority = 1;
@@ -113,7 +113,7 @@ TEST_CASE("JsonLoader workflow serialization", "[json]") {
 
     std::string json = fastrules::JsonLoader::saveWorkflow(workflow);
 
-    REQUIRE(json.find("serialize-test") != std::string::npos);
+    REQUIRE(json.find("99") != std::string::npos);
     REQUIRE(json.find("Test rule") != std::string::npos);
     REQUIRE(json.find("true") != std::string::npos);
 }
