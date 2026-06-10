@@ -17,19 +17,19 @@ int main() {
         // 1. Create a workflow and rules programmatically
         // ================================================================
         Workflow workflow;
-        workflow.id = "order-processing";
+        workflow.id = 1;
         workflow.description = "Process customer orders";
 
         auto inventoryCheck = std::make_shared<Rule>();
-        inventoryCheck->id = "inventory-check";
+        inventoryCheck->id = 1;
         inventoryCheck->expression = "quantity <= stock";
         inventoryCheck->action = "inStock = true";
 
         auto shippingRule = std::make_shared<Rule>();
-        shippingRule->id = "shipping-check";
+        shippingRule->id = 2;
         shippingRule->expression = "addressValid == true";
         shippingRule->action = "canShip = true";
-        shippingRule->dependsOnRuleId = "inventory-check";
+        shippingRule->dependsOnRuleId = 1;
 
         workflow.rules.push_back(inventoryCheck);
         workflow.rules.push_back(shippingRule);
@@ -47,7 +47,7 @@ int main() {
         // ================================================================
         // 3. Read rules back from XML
         // ================================================================
-        auto loadedRule = repo.findById("inventory-check");
+        auto loadedRule = repo.findById(1);
         if (loadedRule) {
             std::cout << "Loaded rule: " << loadedRule->id << "\n";
             std::cout << "  Expression: " << loadedRule->expression << "\n";

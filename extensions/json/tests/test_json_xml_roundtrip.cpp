@@ -12,7 +12,7 @@ TEST_CASE("JSON to XML roundtrip", "[json][xml][integration]") {
         "isActive": true,
         "rules": [
             {
-                "id": "rule1",
+                "id": 1,
                 "description": "Rule 1",
                 "expression": "x > 0",
                 "action": "result = x * 2",
@@ -24,13 +24,13 @@ TEST_CASE("JSON to XML roundtrip", "[json][xml][integration]") {
                 "cacheDuration": "5000ms"
             },
             {
-                "id": "rule2",
+                "id": 2,
                 "description": "Rule 2",
                 "expression": "y == 'hello'",
                 "action": "flag = true",
                 "isActive": false,
                 "priority": 1,
-                "dependsOnRuleId": "rule1",
+                "dependsOnRuleId": 1,
                 "childRules": [],
                 "timeout": null,
                 "cacheDuration": null
@@ -42,7 +42,7 @@ TEST_CASE("JSON to XML roundtrip", "[json][xml][integration]") {
     auto workflow = JsonLoader::loadWorkflow(json);
     REQUIRE(workflow.id == "roundtrip-workflow");
     REQUIRE(workflow.rules.size() == 2);
-    REQUIRE(workflow.rules[0]->id == "rule1");
+    REQUIRE(workflow.rules[0]->id == 1);
     REQUIRE(workflow.rules[0]->expression == "x > 0");
     REQUIRE(workflow.rules[0]->action == "result = x * 2");
     REQUIRE(workflow.rules[0]->priority == 5);
@@ -51,9 +51,9 @@ TEST_CASE("JSON to XML roundtrip", "[json][xml][integration]") {
     REQUIRE(workflow.rules[0]->cacheDuration.has_value());
     REQUIRE(workflow.rules[0]->cacheDuration->count() == 5000);
 
-    REQUIRE(workflow.rules[1]->id == "rule2");
+    REQUIRE(workflow.rules[1]->id == 2);
     REQUIRE(workflow.rules[1]->dependsOnRuleId.has_value());
-    REQUIRE(workflow.rules[1]->dependsOnRuleId.value() == "rule1");
+    REQUIRE(workflow.rules[1]->dependsOnRuleId.value() == 1);
     REQUIRE(workflow.rules[1]->isActive == false);
 
     // 2. Save to XML

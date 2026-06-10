@@ -6,12 +6,12 @@ using namespace fastrules;
 
 TEST_CASE("JsonLoader workflow parsing", "[json]") {
     std::string json = R"({
-        "id": "test-workflow",
+        "id": 1,
         "description": "Test workflow",
         "isActive": true,
         "rules": [
             {
-                "id": "rule1",
+                "id": 1,
                 "description": "Rule 1",
                 "expression": "true",
                 "action": "x = 1",
@@ -38,22 +38,22 @@ TEST_CASE("JsonLoader workflow parsing", "[json]") {
 
 TEST_CASE("JsonLoader rule parsing", "[json]") {
     std::string json = R"({
-        "id": "test-rule",
+        "id": 1,
         "description": "Test",
         "expression": "value > 0",
         "isActive": true,
         "priority": 5,
-        "dependsOnRuleId": "parent-rule",
+        "dependsOnRuleId": 2,
         "timeout": 1000,
         "cacheDuration": "5000ms"
     })";
 
     auto rule = fastrules::JsonLoader::loadRule(json);
 
-    REQUIRE(rule->id == "test-rule");
+    REQUIRE(rule->id == 1);
     REQUIRE(rule->priority == 5);
     REQUIRE(rule->dependsOnRuleId.has_value());
-    REQUIRE(rule->dependsOnRuleId.value() == "parent-rule");
+    REQUIRE(rule->dependsOnRuleId.value() == 2);
     REQUIRE(rule->timeout.has_value());
     REQUIRE(rule->timeout->count() == 1000);
     REQUIRE(rule->cacheDuration.has_value());
