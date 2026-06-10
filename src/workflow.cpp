@@ -147,7 +147,7 @@ std::vector<RuleResult> Workflow::execute(LuaEngine& engine, const std::vector<R
         }
     }
 
-    log->info("Workflow {} executed — {} results", id, results.size());
+    log->info("Workflow {} executed - {} results", static_cast<int>(id), results.size());
     return results;
 }
 
