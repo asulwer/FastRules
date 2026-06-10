@@ -29,7 +29,12 @@ AsyncWorkflow::ThreadPool::ThreadPool(size_t numThreads) : stop_(false) {
                     task = std::move(tasks_.front());
                     tasks_.pop();
                 }
-                task();
+                try {
+                    task();
+                } catch (...) {
+                    // Exceptions from tasks are stored in std::promise (via packaged_task).
+                    // Unhandled worker exceptions terminate the program — swallow here.
+                }
             }
         });
     }
@@ -43,7 +48,11 @@ AsyncWorkflow::ThreadPool::~ThreadPool() {
     condition_.notify_all();
     for (auto& worker : workers_) {
         if (worker.joinable()) {
-            worker.join();
+            try {
+                worker.join();
+            } catch (const std::system_error&) {
+                // Thread state invalid or already terminated — safe to ignore
+            }
         }
     }
 }
