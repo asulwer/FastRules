@@ -5,7 +5,6 @@
 
 #include <chrono>
 #include <stdexcept>
-#include <regex>
 #include <unordered_set>
 #include <algorithm>
 
@@ -35,83 +34,109 @@ namespace {
 
 // Extract parameter names from a Lua expression
 // Identifies standalone variables (not field accesses, not function names)
+// NOTE: Replaced std::regex with hand-rolled parser for performance (regex is 50-100x slower)
 std::vector<std::string> extractParameterNames(const std::string& expression) {
     std::vector<std::string> names;
-
-    // Remove string literals from consideration
-    std::string stripped = expression;
-    {
-        std::regex singleQuote(R"('(?:[^'\\]|\\.)*')");
-        stripped = std::regex_replace(stripped, singleQuote, "''");
-
-        std::regex doubleQuote(R"("(?:[^"\\]|\\.)*")");
-        stripped = std::regex_replace(stripped, doubleQuote, "\"\"");
-    }
-
-    // Remove numeric literals (so "123" doesn't match as identifier)
-    {
-        std::regex numeric(R"(\b\d+\.?\d*\b)");
-        stripped = std::regex_replace(stripped, numeric, "0");
-    }
-
-    // Match identifiers that are NOT preceded by a dot (field access)
-    std::regex wordRegex(R"(\b([a-zA-Z_][a-zA-Z0-9_]*)\b)");
-    std::sregex_iterator iter(stripped.begin(), stripped.end(), wordRegex);
-    std::sregex_iterator end;
-
-    std::vector<std::pair<std::string, size_t>> matches;
-    for (; iter != end; ++iter) {
-        matches.push_back({(*iter)[1].str(), iter->position()});
-    }
-
-    for (size_t i = 0; i < matches.size(); ++i) {
-        const auto& [name, pos] = matches[i];
+    
+    // Static keyword/builtin sets - initialized once
+    static const std::unordered_set<std::string_view> luaKeywords = {
+        "and", "break", "do", "else", "elseif", "end", "false", "for",
+        "function", "goto", "if", "in", "local", "nil", "not", "or",
+        "repeat", "return", "then", "true", "until", "while"
+    };
+    static const std::unordered_set<std::string_view> builtins = {
+        "isNotNull", "isNull", "isEmpty", "isNotEmpty", "inRange",
+        "matchesRegex", "startsWith", "endsWith", "hasLength",
+        "hasMinLength", "hasMaxLength", "countEquals", "countGreaterThan",
+        "countLessThan", "contains", "string", "table", "math",
+        "pairs", "ipairs", "tonumber", "tostring", "type", "print",
+        "coroutine", "os", "io", "debug", "package", "require",
+        "loadfile", "dofile", "load", "assert", "error", "pcall",
+        "xpcall", "collectgarbage", "module", "select",
+        "rawget", "rawset", "rawequal", "rawlen", "getmetatable",
+        "setmetatable", "next", "unpack", "_G", "_VERSION",
+        "context", "success", "failure", "callbacks"
+    };
+    
+    enum class State { Normal, SingleString, DoubleString, Escape };
+    State state = State::Normal;
+    
+    std::string_view expr(expression);
+    size_t i = 0;
+    
+    while (i < expr.size()) {
+        char c = expr[i];
         
-        bool isField = false;
-        if (pos > 0) {
-            size_t checkPos = pos - 1;
-            while (checkPos > 0 && std::isspace(stripped[checkPos])) checkPos--;
-            if (stripped[checkPos] == '.') {
-                isField = true;
-            }
-        }
-        
-        bool isFunction = false;
-        size_t afterEnd = pos + name.length();
-        while (afterEnd < stripped.length() && std::isspace(stripped[afterEnd])) afterEnd++;
-        if (afterEnd < stripped.length() && stripped[afterEnd] == '(') {
-            isFunction = true;
-        }
-
-        if (isField || isFunction) continue;
-
-        static const std::unordered_set<std::string> luaKeywords = {
-            "and", "break", "do", "else", "elseif", "end", "false", "for",
-            "function", "goto", "if", "in", "local", "nil", "not", "or",
-            "repeat", "return", "then", "true", "until", "while"
-        };
-        if (luaKeywords.contains(name)) continue;
-
-        static const std::unordered_set<std::string> builtins = {
-            "isNotNull", "isNull", "isEmpty", "isNotEmpty", "inRange",
-            "matchesRegex", "startsWith", "endsWith", "hasLength",
-            "hasMinLength", "hasMaxLength", "countEquals", "countGreaterThan",
-            "countLessThan", "contains", "string", "table", "math",
-            "pairs", "ipairs", "tonumber", "tostring", "type", "print",
-            "coroutine", "os", "io", "debug", "package", "require",
-            "loadfile", "dofile", "load", "assert", "error", "pcall",
-            "xpcall", "collectgarbage", "module", "select",
-            "rawget", "rawset", "rawequal", "rawlen", "getmetatable",
-            "setmetatable", "next", "unpack", "_G", "_VERSION",
-            "context", "success", "failure", "callbacks"
-        };
-        if (builtins.contains(name)) continue;
-
-        if (std::find(names.begin(), names.end(), name) == names.end()) {
-            names.push_back(name);
+        switch (state) {
+            case State::Escape:
+                state = (i > 0 && expr[i-1] == '\'') ? State::SingleString : State::DoubleString;
+                ++i;
+                break;
+                
+            case State::SingleString:
+                if (c == '\\') state = State::Escape;
+                else if (c == '\'') state = State::Normal;
+                ++i;
+                break;
+                
+            case State::DoubleString:
+                if (c == '\\') state = State::Escape;
+                else if (c == '"') state = State::Normal;
+                ++i;
+                break;
+                
+            case State::Normal:
+                // Skip string literals
+                if (c == '\'') {
+                    state = State::SingleString;
+                    ++i;
+                } else if (c == '"') {
+                    state = State::DoubleString;
+                    ++i;
+                }
+                // Skip numeric literals
+                else if (std::isdigit(c) || (c == '.' && i + 1 < expr.size() && std::isdigit(expr[i + 1]))) {
+                    while (i < expr.size() && (std::isdigit(expr[i]) || expr[i] == '.')) ++i;
+                }
+                // Identifier start
+                else if (std::isalpha(c) || c == '_') {
+                    size_t start = i;
+                    while (i < expr.size() && (std::isalnum(expr[i]) || expr[i] == '_')) ++i;
+                    
+                    std::string_view name(expr.data() + start, i - start);
+                    
+                    // Check if preceded by dot (field access)
+                    bool isField = false;
+                    size_t check = start;
+                    while (check > 0 && std::isspace(expr[check - 1])) --check;
+                    if (check > 0 && expr[check - 1] == '.') isField = true;
+                    
+                    // Check if followed by paren (function call)
+                    bool isFunction = false;
+                    size_t after = i;
+                    while (after < expr.size() && std::isspace(expr[after])) ++after;
+                    if (after < expr.size() && expr[after] == '(') isFunction = true;
+                    
+                    if (!isField && !isFunction && 
+                        !luaKeywords.contains(name) && 
+                        !builtins.contains(name)) {
+                        // Check for duplicates
+                        bool exists = false;
+                        for (const auto& n : names) {
+                            if (n == name) { exists = true; break; }
+                        }
+                        if (!exists) {
+                            names.emplace_back(name);
+                        }
+                    }
+                }
+                else {
+                    ++i;
+                }
+                break;
         }
     }
-
+    
     return names;
 }
 
