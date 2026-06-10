@@ -16,7 +16,9 @@ struct lua_Debug;
 extern "C" {
     typedef struct lua_State lua_State;
     void lua_sethook(lua_State* L, void (*func)(lua_State*, lua_Debug*), int mask, int count);
+    #ifndef LUA_MASKCOUNT
     #define LUA_MASKCOUNT 0x04
+    #endif
 }
 
 namespace {

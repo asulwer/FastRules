@@ -103,8 +103,8 @@ TEST_CASE("ExpressionValidator handles very long expressions", "[security][fuzz]
 
 TEST_CASE("ExpressionValidator handles unicode in strings", "[security][fuzz]") {
     std::vector<std::string> expressions = {
-        "name == 'Unicode: \u4e2d\u6587'",
-        "name == 'Emoji: \xf0\x9f\x98\x80'",
+        "name == 'Unicode: \xE4\xB8\xAD\xE6\x96\x87'",
+        "name == 'Emoji: \xF0\x9F\x98\x80'",
         "name == '\\u0041\\u0042\\u0043'",
     };
     

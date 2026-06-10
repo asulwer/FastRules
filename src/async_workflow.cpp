@@ -196,7 +196,7 @@ static std::vector<RuleResult> executeWorkflowLevels(
     Workflow& workflow,
     LuaEngine& engine,
     const std::vector<RuleParameter>& parameters,
-    AsyncWorkflow::ThreadPool& pool) {
+    AsyncWorkflow::ThreadPool& /*pool*/) {
     
     RuleContext context;
     std::vector<RuleResult> results;

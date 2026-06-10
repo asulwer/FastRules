@@ -54,15 +54,14 @@ int main() {
         // 2. Execute the workflow
         // ================================================================
         struct Customer { int age; int creditScore; };
-        engine.registerType<Customer>("Customer", [](auto& ut) {
-            ut["age"] = &Customer::age;
-            ut["creditScore"] = &Customer::creditScore;
+        engine.registerType<Customer>("Customer", [](auto& reg) {
+            reg.bind("age", &Customer::age);
+            reg.bind("creditScore", &Customer::creditScore);
         });
 
         Customer customer{25, 720};
         std::vector<RuleParameter> params;
-        params.emplace_back("age", &customer.age);
-        params.emplace_back("creditScore", &customer.creditScore);
+        params.emplace_back("customer", &customer);
 
         auto results = workflow.execute(engine, params);
         for (const auto& result : results) {

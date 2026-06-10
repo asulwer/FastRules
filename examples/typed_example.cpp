@@ -113,7 +113,7 @@ int main() {
                 std::cout << std::endl;
             }
 
-            std::cout << "  Processed: " << (customer.processed ? "Yes" : "No") << std::endl;
+            std::cout << "  Processed: " << ((*customer).processed ? "Yes" : "No") << std::endl;
         }
 
     } catch (const std::exception& ex) {

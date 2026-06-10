@@ -69,9 +69,9 @@ int main() {
         // =====================================================================
         // 2. FASTRULES_REGISTER_METHODS — register methods on the same type
         // =====================================================================
-        std::cout << "2. FASTRULES_REGISTER_METHODS(engine, Customer, isPremium, getTier);"
+        std::cout << "2. FASTRULES_REGISTER_METHODS_2(engine, Customer, isPremium, getTier);"
                   << std::endl;
-        FASTRULES_REGISTER_METHODS(engine, Customer, isPremium, getTier);
+        FASTRULES_REGISTER_METHODS_2(engine, Customer, isPremium, getTier);
         std::cout << "   Customer methods registered (isPremium, getTier)." << std::endl << std::endl;
 
         // =====================================================================

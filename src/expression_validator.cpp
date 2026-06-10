@@ -21,7 +21,7 @@ bool ExpressionValidator::isValidLua(const std::string& expression, LuaEngine& e
             return true;
         }
         return false;
-    } catch (const std::exception& e) {
+    } catch (const std::exception& /*e*/) {
         // Compilation failed - log at debug level if logger available
         if (engine.hasLogger()) {
             auto log = engine.getLogger();
