@@ -5,6 +5,7 @@
 #include <lua.hpp>
 #include <LuaBridge/LuaBridge.h>
 #include <any>
+#include <cstring>
 #include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
@@ -769,16 +770,24 @@ void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
             // Pop field info + fields table + metatable
             lua_pop(L, 3);
 
-            // Read value at offset
+            // Read value at offset (use memcpy for safe type punning)
             char* ptr = static_cast<char*>(obj);
             if (typeStr == "int") {
-                lua_pushinteger(L, *reinterpret_cast<int*>(ptr + offset));
+                int val;
+                std::memcpy(&val, ptr + offset, sizeof(int));
+                lua_pushinteger(L, val);
             } else if (typeStr == "double") {
-                lua_pushnumber(L, *reinterpret_cast<double*>(ptr + offset));
+                double val;
+                std::memcpy(&val, ptr + offset, sizeof(double));
+                lua_pushnumber(L, val);
             } else if (typeStr == "bool") {
-                lua_pushboolean(L, *reinterpret_cast<bool*>(ptr + offset));
+                bool val;
+                std::memcpy(&val, ptr + offset, sizeof(bool));
+                lua_pushboolean(L, val);
             } else if (typeStr == "string") {
-                lua_pushstring(L, reinterpret_cast<std::string*>(ptr + offset)->c_str());
+                std::string val;
+                std::memcpy(&val, ptr + offset, sizeof(std::string));
+                lua_pushstring(L, val.c_str());
             } else {
                 lua_pushnil(L);
             }
@@ -824,13 +833,17 @@ void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
 
             char* ptr = static_cast<char*>(obj);
             if (typeStr == "int") {
-                *reinterpret_cast<int*>(ptr + offset) = static_cast<int>(lua_tointeger(L, 3));
+                int val = static_cast<int>(lua_tointeger(L, 3));
+                std::memcpy(ptr + offset, &val, sizeof(int));
             } else if (typeStr == "double") {
-                *reinterpret_cast<double*>(ptr + offset) = lua_tonumber(L, 3);
+                double val = lua_tonumber(L, 3);
+                std::memcpy(ptr + offset, &val, sizeof(double));
             } else if (typeStr == "bool") {
-                *reinterpret_cast<bool*>(ptr + offset) = lua_toboolean(L, 3);
+                bool val = lua_toboolean(L, 3);
+                std::memcpy(ptr + offset, &val, sizeof(bool));
             } else if (typeStr == "string") {
-                *reinterpret_cast<std::string*>(ptr + offset) = lua_tostring(L, 3) ? lua_tostring(L, 3) : "";
+                std::string val = lua_tostring(L, 3) ? lua_tostring(L, 3) : "";
+                std::memcpy(ptr + offset, &val, sizeof(std::string));
             }
             return 0;
         });

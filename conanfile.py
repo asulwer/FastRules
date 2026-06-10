@@ -33,7 +33,7 @@ class FastRulesConan(ConanFile):
     }
 
     # Sources are located in the same place as this recipe, copy sources to the build directory
-    exports_sources = "CMakeLists.txt", "src/*", "include/*", "extensions/*", "tests/*", "examples/*", "docs/*", "scripts/*", "cmake/*", "data/*"
+    exports_sources = "CMakeLists.txt", "src/*", "include/*", "extensions/*", "tests/*", "examples/*", "cmake/*", "scripts/*"
 
     def config_options(self):
         if self.settings.os == "Windows":
