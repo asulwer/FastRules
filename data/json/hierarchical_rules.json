@@ -1,10 +1,10 @@
 {
-  "id": "hierarchical-example",
+  "id": 1,
   "description": "Workflow with hierarchical child rules",
   "isActive": true,
   "rules": [
     {
-      "id": "parent-validation",
+      "id": 1,
       "description": "Parent validation rule with child checks",
       "expression": "true",
       "isActive": true,
@@ -12,7 +12,7 @@
       "dependsOnRuleId": null,
       "childRules": [
         {
-          "id": "child-name-check",
+          "id": 10,
           "description": "Check name is valid",
           "expression": "isNotEmpty(customer.name) and string.len(customer.name) >= 2",
           "isActive": true,
@@ -23,7 +23,7 @@
           "cacheDuration": null
         },
         {
-          "id": "child-age-check",
+          "id": 11,
           "description": "Check age is valid",
           "expression": "customer.age >= 0 and customer.age <= 120",
           "isActive": true,
