@@ -286,7 +286,7 @@ bool Rule::hasCircularDependency(const std::vector<std::reference_wrapper<const 
         if (it == ruleMap.end() || !it->second->dependsOnRuleName.has_value()) {
             break;
         }
-        current = it->second->dependsOnRuleName.value();
+        auto nameIt = nameToId.find(it->second->dependsOnRuleName.value()); if (nameIt == nameToId.end()) { break; } current = nameIt->second;
     }
 
     return false;
@@ -325,7 +325,7 @@ std::vector<Rule::Id> Rule::getDependencyChain(const std::vector<std::reference_
         if (it == ruleMap.end() || !it->second->dependsOnRuleName.has_value()) {
             break;
         }
-        current = it->second->dependsOnRuleName.value();
+        auto nameIt = nameToId.find(it->second->dependsOnRuleName.value()); if (nameIt == nameToId.end()) { break; } current = nameIt->second;
     }
 
     return chain;

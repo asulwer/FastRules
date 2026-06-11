@@ -172,12 +172,12 @@ public:
             rule_->priority = p;
             return *this;
         }
-        Builder& dependsOn(const Id& ruleId) {
-            rule_->dependsOnRuleId = ruleId;
+        Builder& dependsOn(const std::string& ruleName) {
+            rule_->dependsOnRuleName = ruleName;
             return *this;
         }
-        Builder& dependsOn(const Id& ruleId, const std::vector<std::reference_wrapper<const Rule>>& allRules) {
-            rule_->dependsOnRuleId = ruleId;
+        Builder& dependsOn(const std::string& ruleName, const std::vector<std::reference_wrapper<const Rule>>& allRules) {
+            rule_->dependsOnRuleName = ruleName;
             // Temporarily add this rule to allRules for validation
             std::vector<std::reference_wrapper<const Rule>> allWithThis = allRules;
             allWithThis.emplace_back(*rule_);
