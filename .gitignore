@@ -18,8 +18,8 @@ CTestTestfile.cmake
 *.user
 CMakeSettings.json
 
-# vcpkg - uncomment if you want to ignore installed packages
-# vcpkg_installed/
+# vcpkg - ignore installed packages
+vcpkg_installed/
 
 # Test artifacts
 *.db
