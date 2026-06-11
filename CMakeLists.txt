@@ -327,6 +327,7 @@ set(FASTRULES_PUBLIC_HEADERS
     include/fastrules/execution_tracer.hpp
     include/fastrules/expression_validator.hpp
     include/fastrules/fastrules.hpp
+    include/fastrules/fastrules_export.hpp
     include/fastrules/logger.hpp
     include/fastrules/lua_backend.hpp
     include/fastrules/lua_backend_luabridge.hpp
@@ -533,6 +534,32 @@ if(FASTRULES_BUILD_EXAMPLES)
     add_executable(console_logging_example examples/console_logging_example.cpp)
     set_property(TARGET console_logging_example PROPERTY FOLDER "Examples")
     target_link_libraries(console_logging_example PRIVATE fastrules)
+
+    # ============================================================================
+    # C API Wrapper for Python/C# FFI
+    # ============================================================================
+    if(FASTRULES_BUILD_SHARED)
+        add_library(fastrules_c_api SHARED
+            examples/python_example/fastrules_c_api.cpp
+        )
+        set_property(TARGET fastrules_c_api PROPERTY FOLDER "Examples")
+        target_include_directories(fastrules_c_api PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+            ${CMAKE_CURRENT_SOURCE_DIR}/_deps/json-src/include
+            ${CMAKE_CURRENT_SOURCE_DIR}/_deps/luabridge3-src/Source
+            ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include
+        )
+        target_link_libraries(fastrules_c_api PRIVATE fastrules)
+        
+        if(WIN32)
+            set_target_properties(fastrules_c_api PROPERTIES
+                WINDOWS_EXPORT_ALL_SYMBOLS TRUE
+            )
+        endif()
+        
+        message(STATUS "Building C API wrapper for FFI (Python/C#)")
+    endif()
 endif()
 
 # JSON/XML-dependent examples (only if extensions are built)

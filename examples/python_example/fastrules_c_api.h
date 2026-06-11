@@ -16,6 +16,16 @@
 #ifndef FASTRULES_C_API_H
 #define FASTRULES_C_API_H
 
+#ifdef _WIN32
+    #ifdef FASTRULES_C_API_BUILDING
+        #define FASTRULES_C_API __declspec(dllexport)
+    #else
+        #define FASTRULES_C_API __declspec(dllimport)
+    #endif
+#else
+    #define FASTRULES_C_API __attribute__((visibility("default")))
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -48,20 +58,20 @@ typedef enum {
  * Create a new FastRules engine.
  * @return Engine handle or NULL on error
  */
-fastrules_engine_t fastrules_engine_create(void);
+FASTRULES_C_API fastrules_engine_t fastrules_engine_create(void);
 
 /**
  * Destroy a FastRules engine.
  * @param engine Engine handle
  */
-void fastrules_engine_destroy(fastrules_engine_t engine);
+FASTRULES_C_API void fastrules_engine_destroy(fastrules_engine_t engine);
 
 /**
  * Get the last error message.
  * @param engine Engine handle
  * @return Error string (owned by engine, do not free)
  */
-const char* fastrules_engine_get_last_error(fastrules_engine_t engine);
+FASTRULES_C_API const char* fastrules_engine_get_last_error(fastrules_engine_t engine);
 
 // ============================================================================
 // Workflow Management
@@ -73,7 +83,7 @@ const char* fastrules_engine_get_last_error(fastrules_engine_t engine);
  * @param json JSON string defining workflow and rules
  * @return Workflow handle or NULL on error
  */
-fastrules_workflow_t fastrules_workflow_create_from_json(
+FASTRULES_C_API fastrules_workflow_t fastrules_workflow_create_from_json(
     fastrules_engine_t engine,
     const char* json
 );
@@ -82,7 +92,7 @@ fastrules_workflow_t fastrules_workflow_create_from_json(
  * Destroy a workflow.
  * @param workflow Workflow handle
  */
-void fastrules_workflow_destroy(fastrules_workflow_t workflow);
+FASTRULES_C_API void fastrules_workflow_destroy(fastrules_workflow_t workflow);
 
 /**
  * Compile a workflow (prepares Lua code).
@@ -90,7 +100,7 @@ void fastrules_workflow_destroy(fastrules_workflow_t workflow);
  * @param workflow Workflow handle
  * @return Error code
  */
-fastrules_error_t fastrules_workflow_compile(
+FASTRULES_C_API fastrules_error_t fastrules_workflow_compile(
     fastrules_engine_t engine,
     fastrules_workflow_t workflow
 );
@@ -107,7 +117,7 @@ fastrules_error_t fastrules_workflow_compile(
  * @param results Output: JSON array of results (caller must free)
  * @return Error code
  */
-fastrules_error_t fastrules_workflow_execute(
+FASTRULES_C_API fastrules_error_t fastrules_workflow_execute(
     fastrules_engine_t engine,
     fastrules_workflow_t workflow,
     const char* json_params,
@@ -122,7 +132,7 @@ fastrules_error_t fastrules_workflow_execute(
  * @param results Output: JSON array of results (caller must free)
  * @return Error code
  */
-fastrules_error_t fastrules_workflow_execute_parallel(
+FASTRULES_C_API fastrules_error_t fastrules_workflow_execute_parallel(
     fastrules_engine_t engine,
     fastrules_workflow_t workflow,
     const char* json_params,
@@ -133,7 +143,7 @@ fastrules_error_t fastrules_workflow_execute_parallel(
  * Free memory allocated by FastRules (for result strings).
  * @param ptr Pointer to free
  */
-void fastrules_free(char* ptr);
+FASTRULES_C_API void fastrules_free(char* ptr);
 
 // ============================================================================
 // Utility
@@ -143,14 +153,14 @@ void fastrules_free(char* ptr);
  * Get FastRules version string.
  * @return Version string (static, do not free)
  */
-const char* fastrules_get_version(void);
+FASTRULES_C_API const char* fastrules_get_version(void);
 
 /**
  * Check if a JSON string is valid workflow definition.
  * @param json JSON string to validate
  * @return true if valid
  */
-bool fastrules_validate_workflow_json(const char* json);
+FASTRULES_C_API bool fastrules_validate_workflow_json(const char* json);
 
 #ifdef __cplusplus
 }

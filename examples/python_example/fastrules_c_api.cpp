@@ -5,6 +5,9 @@
  * Build as a shared library for use with Python, C#, etc.
  */
 
+// Define FASTRULES_C_API_BUILDING so functions are exported
+#define FASTRULES_C_API_BUILDING
+
 #include "fastrules_c_api.h"
 #include <fastrules.hpp>
 #include <nlohmann/json.hpp>
@@ -75,12 +78,18 @@ static json results_to_json(const std::vector<RuleResult>& results) {
         r["success"] = result.isSuccess();
         r["executedAt"] = result.executedAt.time_since_epoch().count();
         
-        if (!result.errorMessage.empty()) {
-            r["error"] = result.errorMessage;
+        if (result.exception.has_value()) {
+            r["error"] = result.exception->what();
         }
         
         if (result.isSuccess()) {
-            r["actionResult"] = result.actionResult;
+            if (result.value.has_value()) {
+                try {
+                    r["value"] = std::any_cast<std::string>(result.value.value());
+                } catch (...) {
+                    r["value"] = nullptr;
+                }
+            }
         }
         
         arr.push_back(r);

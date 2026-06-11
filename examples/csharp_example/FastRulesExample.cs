@@ -14,38 +14,38 @@ namespace FastRulesExample
         private IntPtr _engine;
         private bool _disposed;
 
-        // P/Invoke declarations
-        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
+        // P/Invoke declarations - import from fastrules_c_api.dll
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr fastrules_engine_create();
 
-        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
         private static extern void fastrules_engine_destroy(IntPtr engine);
 
-        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr fastrules_engine_get_last_error(IntPtr engine);
 
-        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr fastrules_workflow_create_from_json(IntPtr engine, string json);
 
-        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
         private static extern void fastrules_workflow_destroy(IntPtr workflow);
 
-        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
         private static extern int fastrules_workflow_compile(IntPtr engine, IntPtr workflow);
 
-        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
         private static extern int fastrules_workflow_execute(IntPtr engine, IntPtr workflow, string jsonParams, out IntPtr results);
 
-        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
         private static extern int fastrules_workflow_execute_parallel(IntPtr engine, IntPtr workflow, string jsonParams, out IntPtr results);
 
-        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
         private static extern void fastrules_free(IntPtr ptr);
 
-        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr fastrules_get_version();
 
-        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
         private static extern bool fastrules_validate_workflow_json(string json);
 
         // Error codes

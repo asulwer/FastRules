@@ -23,24 +23,24 @@ from dataclasses import dataclass
 from enum import IntEnum
 
 
-# Load the FastRules shared library
+# Load the FastRules C API library
 def load_fastrules_library():
-    """Load the FastRules shared library based on platform."""
+    """Load the FastRules C API shared library based on platform."""
     if sys.platform == "win32":
-        lib_name = "fastrules.dll"
+        lib_name = "fastrules_c_api.dll"
     elif sys.platform == "linux":
-        lib_name = "libfastrules.so"
+        lib_name = "libfastrules_c_api.so"
     elif sys.platform == "darwin":
-        lib_name = "libfastrules.dylib"
+        lib_name = "libfastrules_c_api.dylib"
     else:
         raise RuntimeError(f"Unsupported platform: {sys.platform}")
     
-    # Try to find library in common locations
+    # Try to find library in the current directory first
+    script_dir = os.path.dirname(os.path.abspath(__file__))
     search_paths = [
-        os.path.join(os.path.dirname(__file__), "..", "..", "build", "Release"),
-        os.path.join(os.path.dirname(__file__), "..", "..", "build"),
-        os.path.join(os.path.dirname(__file__), "..", "..", "build_vs", "Release"),
-        os.path.dirname(__file__),
+        script_dir,
+        os.path.join(script_dir, "..", "..", "Release"),
+        os.path.join(script_dir, "..", "..", "build", "Release"),
     ]
     
     for path in search_paths:
@@ -51,11 +51,12 @@ def load_fastrules_library():
     # Try system paths
     try:
         return ctypes.CDLL(lib_name)
-    except OSError:
+    except OSError as e:
         raise RuntimeError(
             f"Could not find {lib_name}. "
-            "Please build FastRules with -DFASTRULES_BUILD_SHARED=ON "
-            "or ensure the library is in your PATH/LD_LIBRARY_PATH."
+            f"Please build FastRules with -DFASTRULES_BUILD_SHARED=ON "
+            f"or ensure the library is in your PATH/LD_LIBRARY_PATH. "
+            f"Error: {e}"
         )
 
 
