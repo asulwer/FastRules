@@ -131,18 +131,25 @@ void Rule::validate(const std::vector<std::reference_wrapper<const Rule>>& allRu
 
     // === Circular dependency detection ===
     // Build a graph of all rules and detect cycles using DFS.
-    // Edges: dependsOnRuleId (horizontal) + parentRule (vertical from childRules)
+    // Edges: dependsOnRuleName (horizontal) + parentRule (vertical from childRules)
     
     std::unordered_map<Id, std::vector<Id>> adjacency;
     std::unordered_map<Id, const Rule*> ruleById;
+    std::unordered_map<std::string, Id> ruleByName;
     
     for (const auto& r : allRules) {
         const Rule& rule = r.get();
         ruleById[rule.id] = &rule;
+        if (!rule.name.empty()) {
+            ruleByName[rule.name] = rule.id;
+        }
         
-        // Add horizontal dependency edge
-        if (rule.dependsOnRuleId.has_value()) {
-            adjacency[rule.id].push_back(rule.dependsOnRuleId.value());
+        // Add horizontal dependency edge (by name lookup)
+        if (rule.dependsOnRuleName.has_value()) {
+            auto it = ruleByName.find(rule.dependsOnRuleName.value());
+            if (it != ruleByName.end()) {
+                adjacency[rule.id].push_back(it->second);
+            }
         }
         
         // Add vertical edges: child -> parent (childRules creates parent -> child
@@ -223,16 +230,16 @@ void Rule::validate(const std::vector<std::reference_wrapper<const Rule>>& allRu
     }
 
     // === Dependency existence check ===
-    if (dependsOnRuleId.has_value()) {
+    if (dependsOnRuleName.has_value()) {
         bool found = false;
         for (const auto& r : allRules) {
-            if (r.get().id == dependsOnRuleId.value()) {
+            if (r.get().name == dependsOnRuleName.value()) {
                 found = true;
                 break;
             }
         }
         if (!found) {
-            throw RuleValidationException("Rule depends on non-existent rule: " + dependsOnRuleId.value());
+            throw RuleValidationException("Rule depends on non-existent rule: " + dependsOnRuleName.value());
         }
     }
 
@@ -240,19 +247,27 @@ void Rule::validate(const std::vector<std::reference_wrapper<const Rule>>& allRu
 }
 
 bool Rule::hasCircularDependency(const std::vector<std::reference_wrapper<const Rule>>& allRules) const {
-    if (!dependsOnRuleId.has_value()) {
+    if (!dependsOnRuleName.has_value()) {
         return false;
     }
 
-    // Build lookup map from allRules
+    // Build lookup maps from allRules
     std::unordered_map<int, const Rule*> ruleMap;
+    std::unordered_map<std::string, int> nameToId;
     for (const auto& ref : allRules) {
         ruleMap[ref.get().id] = &ref.get();
+        if (!ref.get().name.empty()) {
+            nameToId[ref.get().name] = ref.get().id;
+        }
     }
 
     // Follow the dependency chain
     std::unordered_set<int> visited;
-    int current = dependsOnRuleId.value();
+    auto it = nameToId.find(dependsOnRuleName.value());
+    if (it == nameToId.end()) {
+        return false; // Dependency not found
+    }
+    int current = it->second;
 
     while (current != 0) {
         // Check if we've returned to the starting rule
@@ -268,10 +283,10 @@ bool Rule::hasCircularDependency(const std::vector<std::reference_wrapper<const 
 
         // Move to next dependency
         auto it = ruleMap.find(current);
-        if (it == ruleMap.end() || !it->second->dependsOnRuleId.has_value()) {
+        if (it == ruleMap.end() || !it->second->dependsOnRuleName.has_value()) {
             break;
         }
-        current = it->second->dependsOnRuleId.value();
+        current = it->second->dependsOnRuleName.value();
     }
 
     return false;
@@ -281,7 +296,7 @@ std::vector<Rule::Id> Rule::getDependencyChain(const std::vector<std::reference_
     std::vector<Rule::Id> chain;
     chain.push_back(id);
 
-    if (!dependsOnRuleId.has_value()) {
+    if (!dependsOnRuleName.has_value()) {
         return chain;
     }
 
@@ -293,7 +308,7 @@ std::vector<Rule::Id> Rule::getDependencyChain(const std::vector<std::reference_
 
     // Follow the dependency chain
     std::unordered_set<int> visited;
-    int current = dependsOnRuleId.value();
+    int current = dependsOnRuleName.value();
 
     while (current != 0) {
         chain.push_back(current);
@@ -307,10 +322,10 @@ std::vector<Rule::Id> Rule::getDependencyChain(const std::vector<std::reference_
 
         // Move to next dependency
         auto it = ruleMap.find(current);
-        if (it == ruleMap.end() || !it->second->dependsOnRuleId.has_value()) {
+        if (it == ruleMap.end() || !it->second->dependsOnRuleName.has_value()) {
             break;
         }
-        current = it->second->dependsOnRuleId.value();
+        current = it->second->dependsOnRuleName.value();
     }
 
     return chain;
