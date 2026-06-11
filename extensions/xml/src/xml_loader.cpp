@@ -13,6 +13,7 @@ static std::shared_ptr<Rule> parseRule(const pugi::xml_node& ruleNode) {
     auto rule = std::make_shared<Rule>();
 
     rule->id = ruleNode.attribute("id").as_int(0);
+    rule->name = ruleNode.attribute("name").as_string("");
     rule->isActive = ruleNode.attribute("isActive").as_bool(true);
     rule->priority = ruleNode.attribute("priority").as_int(0);
 
@@ -41,9 +42,9 @@ static std::shared_ptr<Rule> parseRule(const pugi::xml_node& ruleNode) {
         rule->cacheDuration = std::chrono::milliseconds(cacheAttr.as_int(0));
     }
 
-    auto dependsNode = ruleNode.child("dependsOnRuleId");
+    auto dependsNode = ruleNode.child("dependsOnRuleName");
     if (dependsNode) {
-        rule->dependsOnRuleId = dependsNode.text().as_int(0);
+        rule->dependsOnRuleName = dependsNode.text().as_string("");
     }
 
     auto childrenNode = ruleNode.child("childRules");
@@ -81,9 +82,9 @@ static void serializeRule(pugi::xml_node& parent, const Rule& rule) {
         auto act = node.append_child("action");
         act.text().set(rule.action.c_str());
     }
-    if (rule.dependsOnRuleId.has_value()) {
-        auto dep = node.append_child("dependsOnRuleId");
-        dep.text().set(rule.dependsOnRuleId.value());
+    if (rule.dependsOnRuleName.has_value()) {
+        auto dep = node.append_child("dependsOnRuleName");
+        dep.text().set(rule.dependsOnRuleName.value().c_str());
     }
     if (!rule.childRules.empty()) {
         auto children = node.append_child("childRules");

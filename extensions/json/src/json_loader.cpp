@@ -31,6 +31,10 @@ std::shared_ptr<Rule> JsonLoader::parseRule(const nlohmann::json& j) {
         rule->id = ++ruleIdCounter;
     }
 
+    if (j.contains("name") && j["name"].is_string()) {
+        rule->name = j["name"];
+    }
+
     if (j.contains("description") && j["description"].is_string()) {
         rule->description = j["description"];
     }
@@ -51,11 +55,9 @@ std::shared_ptr<Rule> JsonLoader::parseRule(const nlohmann::json& j) {
         rule->action = j["action"];
     }
 
-    if (j.contains("dependsOnRuleId") && !j["dependsOnRuleId"].is_null()) {
-        if (j["dependsOnRuleId"].is_number_integer()) {
-            rule->dependsOnRuleId = j["dependsOnRuleId"];
-        } else if (j["dependsOnRuleId"].is_string()) {
-            rule->dependsOnRuleId = std::stoi(j["dependsOnRuleId"].get<std::string>());
+    if (j.contains("dependsOnRuleName") && !j["dependsOnRuleName"].is_null()) {
+        if (j["dependsOnRuleName"].is_string()) {
+            rule->dependsOnRuleName = j["dependsOnRuleName"];
         }
     }
 

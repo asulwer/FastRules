@@ -117,8 +117,8 @@ std::vector<AsyncRuleResult> AsyncWorkflow::executeParallelAsync(
             std::vector<std::shared_ptr<Rule>> level;
             for (auto& [id, rule] : remaining) {
                 bool depsSatisfied = true;
-                if (rule->dependsOnRuleId.has_value()) {
-                    depsSatisfied = !remaining.contains(rule->dependsOnRuleId.value());
+                if (rule->dependsOnRuleName.has_value()) {
+                    depsSatisfied = !remaining.contains(rule->dependsOnRuleName.value());
                 }
                 if (depsSatisfied) {
                     level.push_back(rule);
@@ -214,8 +214,8 @@ static std::vector<RuleResult> executeWorkflowLevels(
             std::vector<std::shared_ptr<Rule>> level;
             for (auto& [id, rule] : remaining) {
                 bool depsSatisfied = true;
-                if (rule->dependsOnRuleId.has_value()) {
-                    depsSatisfied = !remaining.contains(rule->dependsOnRuleId.value());
+                if (rule->dependsOnRuleName.has_value()) {
+                    depsSatisfied = !remaining.contains(rule->dependsOnRuleName.value());
                 }
                 if (depsSatisfied) {
                     level.push_back(rule);
@@ -238,13 +238,13 @@ static std::vector<RuleResult> executeWorkflowLevels(
             if (!rule->isActive) continue;
 
             // Check dependency
-            if (rule->dependsOnRuleId.has_value()) {
-                auto depResult = context.getResult(rule->dependsOnRuleId.value());
+            if (rule->dependsOnRuleName.has_value()) {
+                auto depResult = context.getResult(rule->dependsOnRuleName.value());
                 if (!depResult.has_value() || !depResult->isSuccess()) {
                     RuleResult skipResult;
                     skipResult.ruleId = rule->id;
                     skipResult.success = false;
-                    skipResult.exception = RuleException("Dependency failed: " + rule->dependsOnRuleId.value());
+                    skipResult.exception = RuleException("Dependency failed: " + rule->dependsOnRuleName.value());
                     results.push_back(skipResult);
                     continue;
                 }
