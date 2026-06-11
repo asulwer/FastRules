@@ -3,11 +3,8 @@
 
 #include <fastrules.hpp>
 #include <fastrules/json_loader.hpp>
-#include "path_utils.hpp"
 #include <iostream>
 #include <vector>
-#include <fstream>
-#include <sstream>
 
 struct Customer {
     std::string name;
@@ -20,17 +17,35 @@ struct Customer {
     bool operator<(const Customer& o) const { return age < o.age; }
 };
 
-std::string readFile(const std::string& path) {
-    std::ifstream file(path);
-    if (!file.is_open()) {
-        throw std::runtime_error("Cannot open: " + path);
-    }
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    return buffer.str();
-}
+// In-memory JSON workflow definition
+const char* WORKFLOW_JSON = R"({
+    "id": 1,
+    "name": "Customer Processing",
+    "rules": [
+        {
+            "id": 1,
+            "name": "Validate Age",
+            "expression": "customer.age >= 18",
+            "actions": [
+                {
+                    "type": "set_field",
+                    "target": "customer.processed",
+                    "value": true
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "name": "Check Active",
+            "expression": "customer.isActive",
+            "actions": []
+        }
+    ]
+})";
 
 int main(int argc, char* argv[]) {
+    (void)argc; (void)argv;  // Unused
+    
     try {
         // 1. CREATE ENGINE - one time
         fastrules::LuaEngine engine;
@@ -44,11 +59,8 @@ int main(int argc, char* argv[]) {
             reg.bind("isActive", &Customer::isActive);
         });
 
-        // 3. CREATE WORKFLOW - one time
-        std::string jsonPath = fastrules_examples::resolveDataPath("data/json/customer_rules.json");
-        if (argc > 1) jsonPath = argv[1];
-        auto jsonStr = readFile(jsonPath);
-        auto workflow = fastrules::JsonLoader::loadWorkflow(jsonStr);
+        // 3. CREATE WORKFLOW - one time (from in-memory JSON)
+        auto workflow = fastrules::JsonLoader::loadWorkflow(WORKFLOW_JSON);
         workflow.compile(engine);  // Also one time
 
         // 4. LOOP - different customers, same engine/workflow
