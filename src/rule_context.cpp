@@ -4,9 +4,12 @@
 
 namespace fastrules {
 
-void RuleContext::setResult(int ruleId, const RuleResult& result) {
+void RuleContext::setResult(int ruleId, const std::string& ruleName, const RuleResult& result) {
     std::unique_lock lock(mutex_);
     results_[ruleId] = result;
+    if (!ruleName.empty()) {
+        nameToId_[ruleName] = ruleId;
+    }
 }
 
 std::optional<RuleResult> RuleContext::getResult(int ruleId) const {
@@ -18,9 +21,30 @@ std::optional<RuleResult> RuleContext::getResult(int ruleId) const {
     return std::nullopt;
 }
 
+std::optional<RuleResult> RuleContext::getResult(const std::string& ruleName) const {
+    std::shared_lock lock(mutex_);
+    auto nameIt = nameToId_.find(ruleName);
+    if (nameIt != nameToId_.end()) {
+        auto resultIt = results_.find(nameIt->second);
+        if (resultIt != results_.end()) {
+            return resultIt->second;
+        }
+    }
+    return std::nullopt;
+}
+
 bool RuleContext::hasResult(int ruleId) const {
     std::shared_lock lock(mutex_);
     return results_.contains(ruleId);
+}
+
+bool RuleContext::hasResult(const std::string& ruleName) const {
+    std::shared_lock lock(mutex_);
+    auto nameIt = nameToId_.find(ruleName);
+    if (nameIt != nameToId_.end()) {
+        return results_.contains(nameIt->second);
+    }
+    return false;
 }
 
 void RuleContext::setVariable(const std::string& name, std::any value) {
@@ -40,6 +64,7 @@ std::optional<std::any> RuleContext::getVariable(const std::string& name) const 
 void RuleContext::clear() {
     std::unique_lock lock(mutex_);
     results_.clear();
+    nameToId_.clear();
     variables_.clear();
     lastError_.reset();
 }

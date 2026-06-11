@@ -70,6 +70,7 @@ public:
     // --- Public fields ---
 
     Id id = 0;
+    std::string name;           // Human-readable name for referencing rules
     std::string description;
     bool isActive = true;
     int priority = 0;
@@ -77,7 +78,7 @@ public:
     std::string expression;
     std::string action;
 
-    std::optional<Id> dependsOnRuleId;
+    std::optional<std::string> dependsOnRuleName;  // Reference by name instead of ID
     std::vector<std::shared_ptr<Rule>> childRules;
     std::weak_ptr<Rule> parentRule;
 
