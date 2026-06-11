@@ -562,17 +562,6 @@ if(FASTRULES_BUILD_EXAMPLES)
     endif()
 endif()
 
-# JSON/XML-dependent examples (only if extensions are built)
-if(FASTRULES_BUILD_EXAMPLES AND FASTRULES_BUILD_EXTENSIONS)
-    add_executable(comprehensive_example examples/comprehensive_example.cpp)
-    set_property(TARGET comprehensive_example PROPERTY FOLDER "Examples")
-    target_link_libraries(comprehensive_example PRIVATE fastrules fastrules-json fastrules-xml)
-
-    add_executable(loop_example examples/loop_example.cpp)
-    set_property(TARGET loop_example PROPERTY FOLDER "Examples")
-    target_link_libraries(loop_example PRIVATE fastrules fastrules-json)
-endif()
-
 # Optional extensions (JSON, XML, DB persistence)
 if(FASTRULES_BUILD_EXTENSIONS)
     set(FASTRULES_BUILD_JSON_EXT ON CACHE BOOL "" FORCE)
