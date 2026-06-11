@@ -65,9 +65,6 @@ set_property(GLOBAL PROPERTY CTEST_TARGETS_ADDED 1)
 # Third-party dependencies via CPM or FetchContent
 include(FetchContent)
 
-# Set FetchContent base directory to be inside the build directory
-set(FETCHCONTENT_BASE_DIR "${CMAKE_BINARY_DIR}/_deps")
-
 # nlohmann/json
 FetchContent_Declare(
     json
@@ -75,9 +72,6 @@ FetchContent_Declare(
     GIT_TAG v3.11.3
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE
-    SOURCE_DIR "${FETCHCONTENT_BASE_DIR}/json-src"
-    DOWNLOAD_COMMAND ""
-    UPDATE_COMMAND ""
 )
 
 FetchContent_Declare(
@@ -86,9 +80,6 @@ FetchContent_Declare(
     GIT_TAG v5.4.7
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE
-    SOURCE_DIR "${FETCHCONTENT_BASE_DIR}/lua-src"
-    DOWNLOAD_COMMAND ""
-    UPDATE_COMMAND ""
 )
 
 FetchContent_Declare(
@@ -97,9 +88,6 @@ FetchContent_Declare(
     GIT_TAG v1.14.1
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE
-    SOURCE_DIR "${FETCHCONTENT_BASE_DIR}/spdlog-src"
-    DOWNLOAD_COMMAND ""
-    UPDATE_COMMAND ""
 )
 
 FetchContent_Declare(
@@ -108,9 +96,6 @@ FetchContent_Declare(
     GIT_TAG v3.5.2
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE
-    SOURCE_DIR "${FETCHCONTENT_BASE_DIR}/catch2-src"
-    DOWNLOAD_COMMAND ""
-    UPDATE_COMMAND ""
 )
 
 FetchContent_Declare(
@@ -119,9 +104,6 @@ FetchContent_Declare(
     GIT_TAG master
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE
-    SOURCE_DIR "${FETCHCONTENT_BASE_DIR}/luabridge3-src"
-    DOWNLOAD_COMMAND ""
-    UPDATE_COMMAND ""
 )
 
 # LuaJIT option — fetch and build automatically if requested
@@ -549,8 +531,8 @@ if(FASTRULES_BUILD_EXAMPLES)
         target_include_directories(fastrules_c_api PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example
             ${CMAKE_CURRENT_SOURCE_DIR}/include
-            ${FETCHCONTENT_BASE_DIR}/json-src/include
-            ${FETCHCONTENT_BASE_DIR}/luabridge3-src/Source
+            ${json_SOURCE_DIR}/single_include
+            ${luabridge3_SOURCE_DIR}/Source
             ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include
         )
         target_link_libraries(fastrules_c_api PRIVATE fastrules)
