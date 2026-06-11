@@ -39,6 +39,7 @@ option(FASTRULES_BUILD_EXAMPLES "Build examples" ON)
 option(FASTRULES_BUILD_EXTENSIONS "Build optional persistence extensions" OFF)
 option(FASTRULES_BUILD_DB "Build database persistence extension (requires SOCI)" OFF)
 option(FASTRULES_BUILD_COVERAGE "Build with coverage instrumentation" OFF)
+option(FASTRULES_BUILD_SHARED "Build as shared library (DLL/SO/Dylib)" OFF)
 option(FASTRULES_USE_LUAJIT "Use LuaJIT instead of PUC-Rio Lua (requires manual build on Windows)" OFF)
 # LuaBridge3 backend only
 set(FASTRULES_LUA_BACKEND "luabridge3" CACHE STRING "Lua binding backend")
@@ -345,7 +346,15 @@ set(FASTRULES_PUBLIC_HEADERS
 # ============================================================================
 # fastrules library
 # ============================================================================
-add_library(fastrules ${FASTRULES_CORE_SOURCES})
+if(FASTRULES_BUILD_SHARED)
+    add_library(fastrules SHARED ${FASTRULES_CORE_SOURCES})
+    target_compile_definitions(fastrules PRIVATE FASTRULES_BUILDING_SHARED)
+    set_target_properties(fastrules PROPERTIES
+        WINDOWS_EXPORT_ALL_SYMBOLS TRUE  # Export all symbols on Windows
+    )
+else()
+    add_library(fastrules STATIC ${FASTRULES_CORE_SOURCES})
+endif()
 set_property(TARGET fastrules PROPERTY FOLDER "Core")
 
 # Mark headers as PUBLIC_HEADER for install and source_group
