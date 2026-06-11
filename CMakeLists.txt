@@ -442,6 +442,16 @@ if(FASTRULES_BUILD_TESTS)
 
     target_link_libraries(fastrules_tests PRIVATE fastrules Catch2::Catch2WithMain)
 
+    # Copy vcpkg DLLs to output directory on Windows so tests can find them
+    if(WIN32 AND VCPKG_INSTALLED_DIR)
+        add_custom_command(TARGET fastrules_tests POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin"
+                "$<TARGET_FILE_DIR:fastrules_tests>"
+            COMMENT "Copying vcpkg DLLs to output directory"
+        )
+    endif()
+
     # Coverage instrumentation for test target
     if(FASTRULES_BUILD_COVERAGE AND MSVC)
         target_compile_options(fastrules_tests PRIVATE /Od /Zi)
@@ -458,13 +468,8 @@ if(FASTRULES_BUILD_TESTS)
         NO_DEFAULT_PATH)
     if(CATCH_CMAKE_FILE)
         include("${CATCH_CMAKE_FILE}")
-        # Skip automatic test discovery on Windows due to DLL path issues during build
-        # Tests can still be run via ctest after build completes
-        if(WIN32)
-            add_test(NAME fastrules_tests COMMAND fastrules_tests)
-        else()
-            catch_discover_tests(fastrules_tests)
-        endif()
+        # On Windows, copy vcpkg DLLs before test discovery
+        catch_discover_tests(fastrules_tests)
     else()
         # Fallback: just add the test executable directly
         add_test(NAME fastrules_tests COMMAND fastrules_tests)
