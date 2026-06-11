@@ -1,19 +1,19 @@
 <?xml version="1.0"?>
-<workflow id="1" isActive="true">
-<rules>
-  <rule id="1" isActive="true" priority="0">
-    <description>Parent validation rule with child checks</description>
-    <expression>true</expression>
-    <childRules>
-      <rule id="10" isActive="true" priority="0">
-        <description>Check name is valid</description>
-        <expression>isNotEmpty(customer.name) and string.len(customer.name) &gt;= 2</expression>
-      </rule>
-      <rule id="11" isActive="true" priority="1">
-        <description>Check age is valid</description>
-        <expression>customer.age &gt;= 0 and customer.age &lt;= 120</expression>
-      </rule>
-    </childRules>
-  </rule>
-</rules>
+<workflow id="1" name="hierarchicalRules" isActive="true">
+  <rules>
+    <rule id="1" name="parentValidation" isActive="true" priority="0">
+      <description>Parent validation rule with child checks</description>
+      <expression>true</expression>
+      <childRules>
+        <rule id="10" name="checkNameValid" isActive="true" priority="0">
+          <description>Check name is valid</description>
+          <expression>isNotEmpty(customer.name) and string.len(customer.name) >= 2</expression>
+        </rule>
+        <rule id="11" name="checkAgeValid" isActive="true" priority="1">
+          <description>Check age is valid</description>
+          <expression>customer.age >= 0 and customer.age <= 120</expression>
+        </rule>
+      </childRules>
+    </rule>
+  </rules>
 </workflow>
