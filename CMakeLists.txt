@@ -458,7 +458,14 @@ if(FASTRULES_BUILD_TESTS)
         NO_DEFAULT_PATH)
     if(CATCH_CMAKE_FILE)
         include("${CATCH_CMAKE_FILE}")
-        catch_discover_tests(fastrules_tests)
+        # On Windows, set DLL path for test discovery
+        if(WIN32)
+            catch_discover_tests(fastrules_tests
+                TEST_DL_PATHS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin"
+            )
+        else()
+            catch_discover_tests(fastrules_tests)
+        endif()
     else()
         # Fallback: just add the test executable directly
         add_test(NAME fastrules_tests COMMAND fastrules_tests)
