@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
+<workflow id="1" isActive="true">
 <rules>
   <rule id="1" isActive="true" priority="1">
     <description>Adult customer check</description>
@@ -14,3 +15,4 @@
     <expression>customer.isActive == true</expression>
   </rule>
 </rules>
+</workflow>

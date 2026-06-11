@@ -5,7 +5,7 @@
   "rules": [
     {
       "id": 1,
-      "expression": "context.getResult('age-check').success == true and context.getResult('name-check').success == true",
+      "expression": "context.getResult(10).success == true and context.getResult(11).success == true",
       "action": "customer.processed = true",
       "isActive": true,
       "priority": 2,
@@ -24,7 +24,7 @@
     },
     {
       "id": 2,
-      "expression": "context.getResult('minor-age-check').success == true",
+      "expression": "context.getResult(20).success == true",
       "action": "customer.processed = false",
       "isActive": true,
       "priority": 0,
@@ -38,7 +38,7 @@
     },
     {
       "id": 3,
-      "expression": "context.getResult('vip-status-check').success == true",
+      "expression": "context.getResult(30).success == true",
       "action": "customer.processed = true",
       "isActive": false,
       "priority": 1,

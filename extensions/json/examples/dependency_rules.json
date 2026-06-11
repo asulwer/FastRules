@@ -28,7 +28,7 @@
     {
       "id": 3,
       "description": "Process the customer",
-      "expression": "context.getResult('check-age').success",
+      "expression": "context.getResult(2).success",
       "action": "customer.processed = true",
       "isActive": true,
       "priority": 2,

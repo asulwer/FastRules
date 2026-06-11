@@ -102,7 +102,9 @@ void Workflow::compile(LuaEngine& engine) {
         }
         enginePool_.push_back(std::move(clone));
     }
-    poolNextIndex_ = 0;
+    // Initialize availability tracking - all engines start available
+    engineAvailable_.assign(poolSize, true);
+    availableCount_ = poolSize;
 
     log->info("Workflow {} compiled successfully ({} engine clones ready)", id, poolSize);
     compiled_ = true;
@@ -299,20 +301,34 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
 }
 
 LuaEngine* Workflow::acquireEngine() {
-    std::lock_guard<std::mutex> lock(*poolMutex_);
-    if (enginePool_.empty()) {
-        return nullptr;
+    std::unique_lock<std::mutex> lock(*poolMutex_);
+    // Wait until an engine is available
+    poolCv_.wait(lock, [this] { return availableCount_ > 0; });
+    
+    // Find first available engine
+    for (size_t i = 0; i < enginePool_.size(); ++i) {
+        if (engineAvailable_[i]) {
+            engineAvailable_[i] = false;
+            --availableCount_;
+            return enginePool_[i].get();
+        }
     }
-    // Round-robin distribution
-    auto* engine = enginePool_[poolNextIndex_].get();
-    poolNextIndex_ = (poolNextIndex_ + 1) % enginePool_.size();
-    return engine;
+    return nullptr; // Should never reach here due to wait condition
 }
 
-void Workflow::releaseEngine(LuaEngine* /*engine*/) {
-    // Currently a no-op since engines are stateless after execution
-    // and the round-robin distribution handles reuse
-    // Future: could track in-use status for more sophisticated pooling
+void Workflow::releaseEngine(LuaEngine* engine) {
+    if (!engine) return;
+    
+    std::lock_guard<std::mutex> lock(*poolMutex_);
+    // Find the engine in the pool and mark it available
+    for (size_t i = 0; i < enginePool_.size(); ++i) {
+        if (enginePool_[i].get() == engine) {
+            engineAvailable_[i] = true;
+            ++availableCount_;
+            break;
+        }
+    }
+    poolCv_.notify_one();
 }
 
 StreamingResult Workflow::executeStreaming(LuaEngine& engine, const std::vector<RuleParameter>& parameters) {

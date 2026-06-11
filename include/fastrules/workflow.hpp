@@ -103,7 +103,9 @@ private:
     // Pre-created and pre-compiled clones avoid per-task allocation overhead
     std::vector<std::unique_ptr<LuaEngine>> enginePool_;
     std::unique_ptr<std::mutex> poolMutex_;
-    size_t poolNextIndex_ = 0;
+    std::condition_variable poolCv_;
+    std::vector<bool> engineAvailable_;
+    size_t availableCount_ = 0;
 
     // Helper: topological sort for dependency-aware execution
     [[nodiscard]] std::vector<std::vector<std::shared_ptr<Rule>>> buildDependencyLevels() const;
@@ -114,7 +116,7 @@ private:
     // Helper: recursively collect actions from rules and child rules
     void collectActions(const std::vector<std::shared_ptr<Rule>>& ruleList, std::vector<std::string>& out) const;
     
-    // Helper: get next available engine from the pool (round-robin)
+    // Helper: get next available engine from the pool (exclusive checkout)
     LuaEngine* acquireEngine();
     void releaseEngine(LuaEngine* engine);
 

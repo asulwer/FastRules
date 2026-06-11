@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
+<workflow id="1" isActive="true">
 <rules>
   <rule id="1" isActive="true" priority="2">
     <description>Process adult customers</description>
@@ -16,3 +17,4 @@
     <action>print('VIP processed: ' .. customer.name)</action>
   </rule>
 </rules>
+</workflow>
