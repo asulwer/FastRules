@@ -1,8 +1,8 @@
 // loop_example.cpp
 // Register types once, execute in a loop with different parameters
+// Creates workflow and rules programmatically in C++ (no JSON)
 
 #include <fastrules.hpp>
-#include <fastrules/json_loader.hpp>
 #include <iostream>
 #include <vector>
 
@@ -16,32 +16,6 @@ struct Customer {
     bool operator<=(const Customer& o) const { return age <= o.age; }
     bool operator<(const Customer& o) const { return age < o.age; }
 };
-
-// In-memory JSON workflow definition
-const char* WORKFLOW_JSON = R"({
-    "id": 1,
-    "name": "Customer Processing",
-    "rules": [
-        {
-            "id": 1,
-            "name": "Validate Age",
-            "expression": "customer.age >= 18",
-            "actions": [
-                {
-                    "type": "set_field",
-                    "target": "customer.processed",
-                    "value": true
-                }
-            ]
-        },
-        {
-            "id": 2,
-            "name": "Check Active",
-            "expression": "customer.isActive",
-            "actions": []
-        }
-    ]
-})";
 
 int main(int argc, char* argv[]) {
     (void)argc; (void)argv;  // Unused
@@ -59,9 +33,34 @@ int main(int argc, char* argv[]) {
             reg.bind("isActive", &Customer::isActive);
         });
 
-        // 3. CREATE WORKFLOW - one time (from in-memory JSON)
-        auto workflow = fastrules::JsonLoader::loadWorkflow(WORKFLOW_JSON);
-        workflow.compile(engine);  // Also one time
+        // 3. CREATE WORKFLOW AND RULES PROGRAMMATICALLY - one time
+        fastrules::Workflow workflow;
+        workflow.id = 1;
+        workflow.name = "Customer Processing";
+        
+        // Rule 1: Validate Age
+        fastrules::Rule rule1;
+        rule1.id = 1;
+        rule1.name = "Validate Age";
+        rule1.expression = "customer.age >= 18";
+        // Action: set customer.processed = true when rule passes
+        fastrules::Action action1;
+        action1.type = "set_field";
+        action1.target = "customer.processed";
+        action1.value = true;
+        rule1.actions.push_back(action1);
+        workflow.rules.push_back(rule1);
+        
+        // Rule 2: Check Active
+        fastrules::Rule rule2;
+        rule2.id = 2;
+        rule2.name = "Check Active";
+        rule2.expression = "customer.isActive";
+        // No actions for this rule
+        workflow.rules.push_back(rule2);
+        
+        // Compile the workflow
+        workflow.compile(engine);
 
         // 4. LOOP - different customers, same engine/workflow
         std::vector<Customer> customers = {
