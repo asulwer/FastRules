@@ -20,8 +20,3 @@ target_link_libraries(xml_example_dependency_rules PRIVATE fastrules-xml)
 add_executable(xml_example_hierarchical_rules example_hierarchical_rules.cpp)
 set_property(TARGET xml_example_hierarchical_rules PROPERTY FOLDER "Extensions/XML/Examples")
 target_link_libraries(xml_example_hierarchical_rules PRIVATE fastrules-xml)
-
-# Original combined example (kept for reference)
-add_executable(fastrules_xml_example xml_example.cpp)
-set_property(TARGET fastrules_xml_example PROPERTY FOLDER "Extensions/XML/Examples")
-target_link_libraries(fastrules_xml_example PRIVATE fastrules-xml)

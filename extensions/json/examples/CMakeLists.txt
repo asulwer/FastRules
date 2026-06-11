@@ -20,8 +20,3 @@ target_link_libraries(json_example_dependency_rules PRIVATE fastrules-json)
 add_executable(json_example_hierarchical_rules example_hierarchical_rules.cpp)
 set_property(TARGET json_example_hierarchical_rules PROPERTY FOLDER "Extensions/JSON/Examples")
 target_link_libraries(json_example_hierarchical_rules PRIVATE fastrules-json)
-
-# Original combined example (kept for reference)
-add_executable(fastrules_json_example json_example.cpp)
-set_property(TARGET fastrules_json_example PROPERTY FOLDER "Extensions/JSON/Examples")
-target_link_libraries(fastrules_json_example PRIVATE fastrules-json)
