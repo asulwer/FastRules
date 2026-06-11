@@ -5,6 +5,15 @@ out/
 .vs/
 CMakeFiles/
 
+# Visual Studio generated files
+*.vcxproj
+*.vcxproj.filters
+*.sln
+CMakeCache.txt
+*.cmake
+!cmake/*.cmake
+CTestTestfile.cmake
+
 # Visual Studio user settings
 *.user
 CMakeSettings.json
