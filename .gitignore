@@ -1,3 +1,6 @@
+# Dependencies fetched by CMake
+_deps/
+
 # Build directories
 build/
 build_*/
