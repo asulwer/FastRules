@@ -530,6 +530,10 @@ if(FASTRULES_BUILD_EXAMPLES)
     add_executable(console_logging_example examples/console_logging_example.cpp)
     set_property(TARGET console_logging_example PROPERTY FOLDER "Examples")
     target_link_libraries(console_logging_example PRIVATE fastrules)
+	
+	add_executable(loop_example examples/loop_example.cpp)
+    set_property(TARGET loop_example PROPERTY FOLDER "Examples")
+    target_link_libraries(loop_example PRIVATE fastrules)
 
     # ============================================================================
     # C API Wrapper for Python/C# FFI
