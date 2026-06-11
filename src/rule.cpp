@@ -415,7 +415,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
 
             // Store child results in context so parent expressions can access them
             for (const auto& childResult : result.childResults) {
-                context.setResult(childResult.ruleId, childResult);
+                context.setResult(childResult.ruleId, rule->name, childResult);
             }
 
             // Preference: parent only evaluates if ALL children pass
@@ -424,7 +424,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
                     log->info("Child rule {} failed — parent {} aborted", childResult.ruleId, id);
                     setFailure(result, "Child rule " + std::to_string(childResult.ruleId) + " failed");
                     storeInCache(parameters, result);
-                    context.setResult(id, result);
+                    context.setResult(id, rule->name, result);
                     return result;
                 }
             }
@@ -438,7 +438,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
                 log->info("Rule {} expression evaluated to false", id);
                 setFailure(result, "Expression evaluated to false");
                 storeInCache(parameters, result);
-                context.setResult(id, result);
+                context.setResult(id, rule->name, result);
                 return result;
             }
         }
@@ -494,7 +494,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
         std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime));
 
     // Store result in context for dependency access
-    context.setResult(id, result);
+    context.setResult(id, rule->name, result);
 
     // Store in cache if applicable
     storeInCache(parameters, result);

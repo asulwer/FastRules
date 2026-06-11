@@ -118,7 +118,7 @@ std::vector<AsyncRuleResult> AsyncWorkflow::executeParallelAsync(
             for (auto& [id, rule] : remaining) {
                 bool depsSatisfied = true;
                 if (rule->dependsOnRuleName.has_value()) {
-                    depsSatisfied = !remaining.contains(rule->dependsOnRuleName.value());
+                    depsSatisfied = true; for (const auto& [remainingId, remainingRule] : remaining) { if (remainingRule->name == rule->dependsOnRuleName.value()) { depsSatisfied = false; break; } }
                 }
                 if (depsSatisfied) {
                     level.push_back(rule);
@@ -163,7 +163,7 @@ std::vector<AsyncRuleResult> AsyncWorkflow::executeParallelAsync(
             auto result = future.get();
             allResults.push_back(result);
             if (result.isSuccess()) {
-                context.setResult(result.result.ruleId, result.result);
+                context.setResult(result.result.ruleId, "", result.result);
             }
         }
     }
@@ -215,7 +215,7 @@ static std::vector<RuleResult> executeWorkflowLevels(
             for (auto& [id, rule] : remaining) {
                 bool depsSatisfied = true;
                 if (rule->dependsOnRuleName.has_value()) {
-                    depsSatisfied = !remaining.contains(rule->dependsOnRuleName.value());
+                    depsSatisfied = true; for (const auto& [remainingId, remainingRule] : remaining) { if (remainingRule->name == rule->dependsOnRuleName.value()) { depsSatisfied = false; break; } }
                 }
                 if (depsSatisfied) {
                     level.push_back(rule);

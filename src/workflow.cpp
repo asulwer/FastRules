@@ -183,7 +183,7 @@ std::vector<RuleResult> Workflow::executeWithTrace(LuaEngine& engine,
             ExecutionTraceStep depStep;
             depStep.ruleId = rule->id;
             depStep.stage = "dependency_check";
-            depStep.dependencyId = rule->dependsOnRuleName.value();
+            depStep.dependencyId = -1;
             depStep.startedAt = std::chrono::steady_clock::now();
 
             auto depResult = context.getResult(rule->dependsOnRuleName.value());
@@ -191,11 +191,11 @@ std::vector<RuleResult> Workflow::executeWithTrace(LuaEngine& engine,
             depStep.endedAt = std::chrono::steady_clock::now();
 
             if (!depResult.has_value() || !depResult->isSuccess()) {
-                depStep.message = "Dependency '" + std::to_string(rule->dependsOnRuleName.value()) + "' failed or not found";
+                depStep.message = "Dependency '" + rule->dependsOnRuleName.value() + "' failed or not found";
                 tracer.addStep(std::move(depStep));
                 continue;
             }
-            depStep.message = "Dependency '" + std::to_string(rule->dependsOnRuleName.value()) + "' satisfied";
+            depStep.message = "Dependency '" + rule->dependsOnRuleName.value() + "' satisfied";
             tracer.addStep(std::move(depStep));
         }
 
@@ -221,7 +221,7 @@ std::vector<RuleResult> Workflow::executeWithTrace(LuaEngine& engine,
 
         tracer.addStep(std::move(execStep));
 
-        context.setResult(rule->id, rule->name, result);
+        context.setResult(rule->id, "", rule->name, result);
 
         if (!result.skipped) {
             results.push_back(result);
@@ -268,7 +268,7 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
                             RuleResult skipResult;
                             skipResult.ruleId = rule->id;
                             skipResult.success = false;
-                            skipResult.exception = RuleException("Dependency failed: " + std::to_string(rule->dependsOnRuleName.value()));
+                            skipResult.exception = RuleException("Dependency failed: " + rule->dependsOnRuleName.value());
                             releaseEngine(threadEngine);
                             return std::make_pair(rule->id, skipResult);
                         }
@@ -293,7 +293,7 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
             results.push_back(result);
 
             // Add to context for dependent rules
-            context.setResult(ruleId, "", result);
+            context.setResult(ruleId, "", "", result);
         }
     }
 
@@ -361,7 +361,7 @@ StreamingResult Workflow::executeStreaming(LuaEngine& engine, const std::vector<
 
             // Check dependency
             if (rule->dependsOnRuleName.has_value()) {
-                auto depResult = ctx->getResult(rule->dependsOnRuleName.value());
+                auto depResult = ctx->getResult(rule->dependsOnRuleName.value().c_str());
                 if (!depResult.has_value() || !depResult->isSuccess()) {
                     continue;
                 }
@@ -408,8 +408,14 @@ std::vector<std::vector<std::shared_ptr<Rule>>> Workflow::buildDependencyLevels(
 
     // Count dependencies
     for (const auto& rule : rules) {
-        if (rule->dependsOnRuleName.has_value() && ruleMap.contains(rule->dependsOnRuleName.value())) {
-            inDegree[rule->id]++;
+        if (rule->dependsOnRuleName.has_value()) {
+            // Look up the rule by name in the map
+            for (const auto& [id, r] : ruleMap) {
+                if (r->name == rule->dependsOnRuleName.value().c_str()) {
+                    inDegree[rule->id]++;
+                    break;
+                }
+            }
         }
     }
 
