@@ -558,35 +558,7 @@ if(FASTRULES_BUILD_EXAMPLES)
             )
         endif()
         
-        # Copy DLLs to example directories after building
-        if(WIN32)
-            # Get list of vcpkg DLLs
-            file(GLOB VCPKG_DLLS 
-                "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/*.dll")
-            
-            # Copy to Python example directory
-            add_custom_command(TARGET fastrules_c_api POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    $<TARGET_FILE:fastrules>
-                    $<TARGET_FILE:fastrules_c_api>
-                    ${VCPKG_DLLS}
-                    ${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/
-                COMMENT "Copying DLLs to Python example directory"
-            )
-            
-            # Copy to C# example directory
-            add_custom_command(TARGET fastrules_c_api POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    $<TARGET_FILE:fastrules>
-                    $<TARGET_FILE:fastrules_c_api>
-                    ${VCPKG_DLLS}
-                    ${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/
-                COMMENT "Copying DLLs to C# example directory"
-            )
-        endif()
-        
         message(STATUS "Building C API wrapper for FFI (Python/C#)")
-        message(STATUS "  DLLs will be copied to example directories automatically")
     endif()
 endif()
 
