@@ -1,5 +1,27 @@
 cmake_minimum_required(VERSION 3.28)
 
+# Individual examples for each XML data file
+add_executable(xml_example_customer_rules example_customer_rules.cpp)
+set_property(TARGET xml_example_customer_rules PROPERTY FOLDER "Extensions/XML/Examples")
+target_link_libraries(xml_example_customer_rules PRIVATE fastrules-xml)
+
+add_executable(xml_example_customer_validation example_customer_validation.cpp)
+set_property(TARGET xml_example_customer_validation PROPERTY FOLDER "Extensions/XML/Examples")
+target_link_libraries(xml_example_customer_validation PRIVATE fastrules-xml)
+
+add_executable(xml_example_customer_validation_simple example_customer_validation_simple.cpp)
+set_property(TARGET xml_example_customer_validation_simple PROPERTY FOLDER "Extensions/XML/Examples")
+target_link_libraries(xml_example_customer_validation_simple PRIVATE fastrules-xml)
+
+add_executable(xml_example_dependency_rules example_dependency_rules.cpp)
+set_property(TARGET xml_example_dependency_rules PROPERTY FOLDER "Extensions/XML/Examples")
+target_link_libraries(xml_example_dependency_rules PRIVATE fastrules-xml)
+
+add_executable(xml_example_hierarchical_rules example_hierarchical_rules.cpp)
+set_property(TARGET xml_example_hierarchical_rules PROPERTY FOLDER "Extensions/XML/Examples")
+target_link_libraries(xml_example_hierarchical_rules PRIVATE fastrules-xml)
+
+# Original combined example (kept for reference)
 add_executable(fastrules_xml_example xml_example.cpp)
 set_property(TARGET fastrules_xml_example PROPERTY FOLDER "Extensions/XML/Examples")
 target_link_libraries(fastrules_xml_example PRIVATE fastrules-xml)

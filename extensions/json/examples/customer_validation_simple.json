@@ -1,0 +1,43 @@
+{
+  "id": 1,
+  "description": "Customer validation with bubble-up evaluation",
+  "isActive": true,
+  "rules": [
+    {
+      "id": 1,
+      "description": "Process adult customers",
+      "expression": "customer.age >= 18 and isNotEmpty(customer.name)",
+      "action": "print('Adult processed: ' .. customer.name)",
+      "isActive": true,
+      "priority": 2,
+      "dependsOnRuleId": null,
+      "childRules": [],
+      "timeout": null,
+      "cacheDuration": null
+    },
+    {
+      "id": 2,
+      "description": "Process minor customers",
+      "expression": "customer.age < 18",
+      "action": "print('Minor processed: ' .. customer.name)",
+      "isActive": true,
+      "priority": 0,
+      "dependsOnRuleId": null,
+      "childRules": [],
+      "timeout": null,
+      "cacheDuration": null
+    },
+    {
+      "id": 3,
+      "description": "VIP processing (inactive)",
+      "expression": "customer.age >= 50",
+      "action": "print('VIP processed: ' .. customer.name)",
+      "isActive": false,
+      "priority": 1,
+      "dependsOnRuleId": null,
+      "childRules": [],
+      "timeout": null,
+      "cacheDuration": null
+    }
+  ]
+}

@@ -1,5 +1,27 @@
 cmake_minimum_required(VERSION 3.28)
 
+# Individual examples for each JSON data file
+add_executable(json_example_customer_rules example_customer_rules.cpp)
+set_property(TARGET json_example_customer_rules PROPERTY FOLDER "Extensions/JSON/Examples")
+target_link_libraries(json_example_customer_rules PRIVATE fastrules-json)
+
+add_executable(json_example_customer_validation example_customer_validation.cpp)
+set_property(TARGET json_example_customer_validation PROPERTY FOLDER "Extensions/JSON/Examples")
+target_link_libraries(json_example_customer_validation PRIVATE fastrules-json)
+
+add_executable(json_example_customer_validation_simple example_customer_validation_simple.cpp)
+set_property(TARGET json_example_customer_validation_simple PROPERTY FOLDER "Extensions/JSON/Examples")
+target_link_libraries(json_example_customer_validation_simple PRIVATE fastrules-json)
+
+add_executable(json_example_dependency_rules example_dependency_rules.cpp)
+set_property(TARGET json_example_dependency_rules PROPERTY FOLDER "Extensions/JSON/Examples")
+target_link_libraries(json_example_dependency_rules PRIVATE fastrules-json)
+
+add_executable(json_example_hierarchical_rules example_hierarchical_rules.cpp)
+set_property(TARGET json_example_hierarchical_rules PROPERTY FOLDER "Extensions/JSON/Examples")
+target_link_libraries(json_example_hierarchical_rules PRIVATE fastrules-json)
+
+# Original combined example (kept for reference)
 add_executable(fastrules_json_example json_example.cpp)
 set_property(TARGET fastrules_json_example PROPERTY FOLDER "Extensions/JSON/Examples")
 target_link_libraries(fastrules_json_example PRIVATE fastrules-json)

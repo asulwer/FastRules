@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<rules>
+  <rule id="1" isActive="true" priority="1">
+    <description>Adult customer check</description>
+    <expression>customer.age &gt;= 18</expression>
+    <action>customer.processed = true</action>
+  </rule>
+  <rule id="2" isActive="true" priority="0">
+    <description>Name not empty check</description>
+    <expression>isNotEmpty(customer.name)</expression>
+  </rule>
+  <rule id="3" isActive="true" priority="2">
+    <description>Customer is active</description>
+    <expression>customer.isActive == true</expression>
+  </rule>
+</rules>
