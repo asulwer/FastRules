@@ -12,7 +12,7 @@ int main() {
     try {
         LuaEngine engine;
 
-        std::string xmlPath = std::filesystem::current_path() / "customer_validation_simple.xml";
+        std::string xmlPath = (std::filesystem::current_path() / "customer_validation_simple.xml").string();
         auto workflow = XmlLoader::loadWorkflowFromFile(xmlPath);
         
         std::cout << "Loaded simple validation workflow: " << workflow.id << "\n";

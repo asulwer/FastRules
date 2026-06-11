@@ -21,7 +21,7 @@ int main() {
         LuaEngine engine;
 
         // Load workflow from JSON file in same directory
-        std::string jsonPath = std::filesystem::current_path() / "customer_rules.json";
+        std::string jsonPath = (std::filesystem::current_path() / "customer_rules.json").string();
         std::string workflowJson = readFile(jsonPath);
 
         auto workflow = JsonLoader::loadWorkflow(workflowJson);

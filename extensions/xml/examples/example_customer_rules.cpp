@@ -13,7 +13,7 @@ int main() {
         LuaEngine engine;
 
         // Load workflow from XML file in same directory
-        std::string xmlPath = std::filesystem::current_path() / "customer_rules.xml";
+        std::string xmlPath = (std::filesystem::current_path() / "customer_rules.xml").string();
         auto workflow = XmlLoader::loadWorkflowFromFile(xmlPath);
         
         std::cout << "Loaded workflow: " << workflow.id << "\n";

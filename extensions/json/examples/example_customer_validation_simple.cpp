@@ -20,7 +20,7 @@ int main() {
     try {
         LuaEngine engine;
 
-        std::string jsonPath = std::filesystem::current_path() / "customer_validation_simple.json";
+        std::string jsonPath = (std::filesystem::current_path() / "customer_validation_simple.json").string();
         std::string workflowJson = readFile(jsonPath);
 
         auto workflow = JsonLoader::loadWorkflow(workflowJson);

@@ -12,7 +12,7 @@ int main() {
     try {
         LuaEngine engine;
 
-        std::string xmlPath = std::filesystem::current_path() / "dependency_rules.xml";
+        std::string xmlPath = (std::filesystem::current_path() / "dependency_rules.xml").string();
         auto workflow = XmlLoader::loadWorkflowFromFile(xmlPath);
         
         std::cout << "Loaded dependency rules workflow: " << workflow.id << "\n";
