@@ -36,27 +36,23 @@ int main(int argc, char* argv[]) {
         // 3. CREATE WORKFLOW AND RULES PROGRAMMATICALLY - one time
         fastrules::Workflow workflow;
         workflow.id = 1;
-        workflow.name = "Customer Processing";
+        workflow.description = "Customer Processing";
         
         // Rule 1: Validate Age
-        fastrules::Rule rule1;
-        rule1.id = 1;
-        rule1.name = "Validate Age";
-        rule1.expression = "customer.age >= 18";
+        auto rule1 = std::make_shared<fastrules::Rule>();
+        rule1->id = 1;
+        rule1->description = "Validate Age";
+        rule1->expression = "customer.age >= 18";
         // Action: set customer.processed = true when rule passes
-        fastrules::Action action1;
-        action1.type = "set_field";
-        action1.target = "customer.processed";
-        action1.value = true;
-        rule1.actions.push_back(action1);
+        rule1->action = "customer.processed = true";
         workflow.rules.push_back(rule1);
         
         // Rule 2: Check Active
-        fastrules::Rule rule2;
-        rule2.id = 2;
-        rule2.name = "Check Active";
-        rule2.expression = "customer.isActive";
-        // No actions for this rule
+        auto rule2 = std::make_shared<fastrules::Rule>();
+        rule2->id = 2;
+        rule2->description = "Check Active";
+        rule2->expression = "customer.isActive";
+        // No action for this rule
         workflow.rules.push_back(rule2);
         
         // Compile the workflow
