@@ -1,0 +1,281 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{EF41E7C5-D941-350A-82D1-C094D9C3CEB0}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <VcpkgEnabled>false</VcpkgEnabled>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>fastrules</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="do_not_import_user.props" Condition="exists('do_not_import_user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\asulw\.openclaw\workspace\main\fastrules\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">fastrules.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">fastrules</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\asulw\.openclaw\workspace\main\fastrules\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">fastrules.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">fastrules</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\asulw\.openclaw\workspace\main\fastrules\MinSizeRel\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">fastrules.dir\MinSizeRel\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">fastrules</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\asulw\.openclaw\workspace\main\fastrules\RelWithDebInfo\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">fastrules.dir\RelWithDebInfo\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">fastrules</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.lib</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\asulw\.openclaw\workspace\main\fastrules\include;C:\Users\asulw\.openclaw\workspace\main\fastrules\src;C:\Users\asulw\.openclaw\workspace\main\fastrules\_deps\luabridge3-src\Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Users/asulw/.openclaw/workspace/main/fastrules/vcpkg_installed/x64-windows/include"</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <MinimalRebuild></MinimalRebuild>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;FASTRULES_USE_LUABRIDGE3;LUA_BUILD_AS_DLL;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;FASTRULES_USE_LUABRIDGE3;LUA_BUILD_AS_DLL;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\asulw\.openclaw\workspace\main\fastrules\include;C:\Users\asulw\.openclaw\workspace\main\fastrules\src;C:\Users\asulw\.openclaw\workspace\main\fastrules\_deps\luabridge3-src\Source;C:\Users\asulw\.openclaw\workspace\main\fastrules\vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\asulw\.openclaw\workspace\main\fastrules\include;C:\Users\asulw\.openclaw\workspace\main\fastrules\src;C:\Users\asulw\.openclaw\workspace\main\fastrules\_deps\luabridge3-src\Source;C:\Users\asulw\.openclaw\workspace\main\fastrules\vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\asulw\.openclaw\workspace\main\fastrules\include;C:\Users\asulw\.openclaw\workspace\main\fastrules\src;C:\Users\asulw\.openclaw\workspace\main\fastrules\_deps\luabridge3-src\Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Users/asulw/.openclaw/workspace/main/fastrules/vcpkg_installed/x64-windows/include"</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <MinimalRebuild></MinimalRebuild>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;FASTRULES_USE_LUABRIDGE3;LUA_BUILD_AS_DLL;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;FASTRULES_USE_LUABRIDGE3;LUA_BUILD_AS_DLL;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\asulw\.openclaw\workspace\main\fastrules\include;C:\Users\asulw\.openclaw\workspace\main\fastrules\src;C:\Users\asulw\.openclaw\workspace\main\fastrules\_deps\luabridge3-src\Source;C:\Users\asulw\.openclaw\workspace\main\fastrules\vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\asulw\.openclaw\workspace\main\fastrules\include;C:\Users\asulw\.openclaw\workspace\main\fastrules\src;C:\Users\asulw\.openclaw\workspace\main\fastrules\_deps\luabridge3-src\Source;C:\Users\asulw\.openclaw\workspace\main\fastrules\vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\asulw\.openclaw\workspace\main\fastrules\include;C:\Users\asulw\.openclaw\workspace\main\fastrules\src;C:\Users\asulw\.openclaw\workspace\main\fastrules\_deps\luabridge3-src\Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Users/asulw/.openclaw/workspace/main/fastrules/vcpkg_installed/x64-windows/include"</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <MinimalRebuild></MinimalRebuild>
+      <Optimization>MinSpace</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;FASTRULES_USE_LUABRIDGE3;LUA_BUILD_AS_DLL;CMAKE_INTDIR="MinSizeRel"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;FASTRULES_USE_LUABRIDGE3;LUA_BUILD_AS_DLL;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\asulw\.openclaw\workspace\main\fastrules\include;C:\Users\asulw\.openclaw\workspace\main\fastrules\src;C:\Users\asulw\.openclaw\workspace\main\fastrules\_deps\luabridge3-src\Source;C:\Users\asulw\.openclaw\workspace\main\fastrules\vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\asulw\.openclaw\workspace\main\fastrules\include;C:\Users\asulw\.openclaw\workspace\main\fastrules\src;C:\Users\asulw\.openclaw\workspace\main\fastrules\_deps\luabridge3-src\Source;C:\Users\asulw\.openclaw\workspace\main\fastrules\vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Users\asulw\.openclaw\workspace\main\fastrules\include;C:\Users\asulw\.openclaw\workspace\main\fastrules\src;C:\Users\asulw\.openclaw\workspace\main\fastrules\_deps\luabridge3-src\Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "C:/Users/asulw/.openclaw/workspace/main/fastrules/vcpkg_installed/x64-windows/include"</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <MinimalRebuild></MinimalRebuild>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;FASTRULES_USE_LUABRIDGE3;LUA_BUILD_AS_DLL;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;FASTRULES_USE_LUABRIDGE3;LUA_BUILD_AS_DLL;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\asulw\.openclaw\workspace\main\fastrules\include;C:\Users\asulw\.openclaw\workspace\main\fastrules\src;C:\Users\asulw\.openclaw\workspace\main\fastrules\_deps\luabridge3-src\Source;C:\Users\asulw\.openclaw\workspace\main\fastrules\vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\asulw\.openclaw\workspace\main\fastrules\include;C:\Users\asulw\.openclaw\workspace\main\fastrules\src;C:\Users\asulw\.openclaw\workspace\main\fastrules\_deps\luabridge3-src\Source;C:\Users\asulw\.openclaw\workspace\main\fastrules\vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\src\action_callback.cpp" />
+    <ClCompile Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\src\async_workflow.cpp" />
+    <ClCompile Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\src\lua_engine.cpp" />
+    <ClCompile Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\src\rule.cpp" />
+    <ClCompile Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\src\rule_context.cpp" />
+    <ClCompile Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\src\workflow.cpp" />
+    <ClCompile Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\src\execution_tracer.cpp" />
+    <ClCompile Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\src\parameter_validator.cpp" />
+    <ClCompile Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\src\expression_validator.cpp" />
+    <ClCompile Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\src\rate_limiter.cpp" />
+    <ClCompile Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\src\performance_counters.cpp" />
+    <ClCompile Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\src\aot_compiler.cpp" />
+    <ClCompile Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\src\rule_versioning.cpp" />
+    <ClCompile Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\src\lua_backend_factory.cpp" />
+    <ClCompile Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\src\lua_backend_luabridge.cpp" />
+    <ClInclude Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp" />
+    <ClInclude Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\aot_compiler.hpp" />
+    <ClInclude Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\async_workflow.hpp" />
+    <ClInclude Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\execution_tracer.hpp" />
+    <ClInclude Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\expression_validator.hpp" />
+    <ClInclude Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\fastrules.hpp" />
+    <ClInclude Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\logger.hpp" />
+    <ClInclude Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\lua_backend.hpp" />
+    <ClInclude Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\lua_backend_luabridge.hpp" />
+    <ClInclude Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\lua_engine.hpp" />
+    <ClInclude Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\parameter_validator.hpp" />
+    <ClInclude Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\performance_counters.hpp" />
+    <ClInclude Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rate_limiter.hpp" />
+    <ClInclude Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp" />
+    <ClInclude Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule_context.hpp" />
+    <ClInclude Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule_result.hpp" />
+    <ClInclude Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule_versioning.hpp" />
+    <ClInclude Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\streaming_result.hpp" />
+    <ClInclude Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\type_registry.hpp" />
+    <ClInclude Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\workflow.hpp" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

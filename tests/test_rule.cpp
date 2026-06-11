@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <fastrules.hpp>
+#include <thread>
 
 using namespace fastrules;
 
@@ -209,4 +210,71 @@ TEST_CASE("Rule child rules execution", "[rule]") {
     REQUIRE(!result.childResults.empty());
     REQUIRE(result.childResults.size() == 2);
     REQUIRE(result.isFullySuccessful() == true);
+}
+
+TEST_CASE("Rule cache invalidation on property change", "[rule]") {
+    LuaEngine engine;
+    RuleContext ctx;
+
+    // Create a rule with caching enabled
+    auto rule = Rule::Builder(1)
+        .withExpression("true")
+        .withCacheDuration(std::chrono::milliseconds(1000))
+        .build();
+
+    rule->compile(engine);
+    std::vector<RuleParameter> params;
+
+    // First execution - should succeed and cache
+    auto result1 = rule->execute(engine, ctx, params);
+    REQUIRE(result1.isSuccess() == true);
+
+    // Second execution - should use cached result (same success)
+    auto result2 = rule->execute(engine, ctx, params);
+    REQUIRE(result2.isSuccess() == true);
+    // Cached results have same timestamp
+    REQUIRE(result2.executedAt == result1.executedAt);
+
+    // Modify the rule's expression and invalidate cache
+    rule->expression = "false";
+    rule->invalidateCache();
+
+    // Re-compile with new expression
+    rule->compile(engine);
+
+    // Third execution - should use NEW expression (should fail now)
+    auto result3 = rule->execute(engine, ctx, params);
+    REQUIRE(result3.isSuccess() == false);
+}
+
+TEST_CASE("Rule cache expires after TTL", "[rule]") {
+    LuaEngine engine;
+    RuleContext ctx;
+
+    // Create a rule with very short cache duration
+    auto rule = Rule::Builder(1)
+        .withExpression("true")
+        .withCacheDuration(std::chrono::milliseconds(50))  // 50ms cache
+        .build();
+
+    rule->compile(engine);
+    std::vector<RuleParameter> params;
+
+    // First execution - caches result
+    auto result1 = rule->execute(engine, ctx, params);
+    REQUIRE(result1.isSuccess() == true);
+
+    // Immediately execute again - should be cached
+    auto result2 = rule->execute(engine, ctx, params);
+    REQUIRE(result2.isSuccess() == true);
+    REQUIRE(result2.executedAt == result1.executedAt);
+
+    // Wait for cache to expire
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    // Execute again - cache should be expired, re-evaluate
+    auto result3 = rule->execute(engine, ctx, params);
+    REQUIRE(result3.isSuccess() == true);
+    // Should have different timestamp since it was re-executed
+    REQUIRE(result3.executedAt > result1.executedAt);
 }

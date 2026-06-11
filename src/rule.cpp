@@ -318,8 +318,13 @@ std::vector<Rule::Id> Rule::getDependencyChain(const std::vector<std::reference_
 
 void Rule::storeInCache(const std::vector<RuleParameter>& parameters, const RuleResult& result) const {
     if (cacheDuration.has_value() && cacheDuration->count() > 0) {
+        std::lock_guard<std::mutex> lock(*cacheMutex_);
         auto cacheKey = buildCacheKey(parameters);
-        cache_[cacheKey] = {std::make_shared<RuleResult>(result), std::chrono::steady_clock::now() + cacheDuration.value()};
+        cache_[cacheKey] = {
+            std::make_shared<RuleResult>(result), 
+            std::chrono::steady_clock::now() + cacheDuration.value(),
+            cacheGeneration_
+        };
     }
 }
 
@@ -339,17 +344,20 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
 
     // Check cache first if cacheDuration is set
     if (cacheDuration.has_value() && cacheDuration->count() > 0) {
+        std::lock_guard<std::mutex> lock(*cacheMutex_);
         auto cacheKey = buildCacheKey(parameters);
         auto it = cache_.find(cacheKey);
         if (it != cache_.end()) {
-            if (std::chrono::steady_clock::now() < it->second.expiresAt) {
+            // Check if cache entry is still valid (not expired and same generation)
+            if (std::chrono::steady_clock::now() < it->second.expiresAt && 
+                it->second.generation == cacheGeneration_) {
                 // Cache hit - return cached result
                 log->debug("Cache hit for rule {}", id);
                 PerformanceCounters::instance().recordExecution(it->second.result->isSuccess(), false, true, false, false);
                 return *it->second.result;
             }
-            // Cache expired - remove it
-            log->debug("Cache expired for rule {}", id);
+            // Cache expired or invalidated - remove it
+            log->debug("Cache expired or invalidated for rule {}", id);
             cache_.erase(it);
         }
     }
@@ -581,6 +589,17 @@ Rule::Builder Rule::create(const Id& id, const std::string& expression, bool act
     return Builder(id)
         .withExpression(expression)
         .active(active);
+}
+
+// ============================================================================
+// Cache invalidation
+// ============================================================================
+
+int Rule::invalidateCache() {
+    std::lock_guard<std::mutex> lock(*cacheMutex_);
+    ++cacheGeneration_;
+    cache_.clear();  // Clear all cached entries
+    return cacheGeneration_;
 }
 
 } // namespace fastrules

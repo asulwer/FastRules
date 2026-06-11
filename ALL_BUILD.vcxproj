@@ -1,0 +1,178 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ResolveNugetPackages>false</ResolveNugetPackages>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{FE2D90C5-2161-3116-A5A2-017D7092BC36}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>ALL_BUILD</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\asulw\.openclaw\workspace\main\fastrules\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\asulw\.openclaw\workspace\main\fastrules\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\asulw\.openclaw\workspace\main\fastrules\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>C:\Users\asulw\.openclaw\workspace\main\fastrules\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\console_logging_example.vcxproj">
+      <Project>{8031BDC4-7D66-367A-BC03-B0AA7E3ED007}</Project>
+      <Name>console_logging_example</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\core_only_example.vcxproj">
+      <Project>{F0DA047F-6DA2-361D-8DEC-9D14B97929BD}</Project>
+      <Name>core_only_example</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\custom_methods_example.vcxproj">
+      <Project>{4BA3C81C-D805-3F47-8CCE-3C4EE7C43A00}</Project>
+      <Name>custom_methods_example</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\debug_context.vcxproj">
+      <Project>{3FFBE998-6E16-324A-BBA1-7EDF2E4C6CAB}</Project>
+      <Name>debug_context</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\fastrules.vcxproj">
+      <Project>{EF41E7C5-D941-350A-82D1-C094D9C3CEB0}</Project>
+      <Name>fastrules</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\fastrules_tests.vcxproj">
+      <Project>{22BF1919-F56A-3FE2-9935-A9866B333C8B}</Project>
+      <Name>fastrules_tests</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\luabridge3_basic_example.vcxproj">
+      <Project>{8D735D2F-9BF3-345E-88DB-386CA77A311A}</Project>
+      <Name>luabridge3_basic_example</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\macro_example.vcxproj">
+      <Project>{3DA017D1-104E-38F6-BD09-41EFC0C18435}</Project>
+      <Name>macro_example</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\multi_object_example.vcxproj">
+      <Project>{8EFD9D2A-1AB5-3472-9A63-401F70F3C062}</Project>
+      <Name>multi_object_example</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\no_globals_example.vcxproj">
+      <Project>{FECC4535-BBEA-35DB-9894-E1ED0FC4DD47}</Project>
+      <Name>no_globals_example</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\parent_child_example.vcxproj">
+      <Project>{371D255A-0B5C-301C-B276-6E19A84D4F5F}</Project>
+      <Name>parent_child_example</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\repl_example.vcxproj">
+      <Project>{C4B870F8-B332-3E62-8D78-46D68121FC52}</Project>
+      <Name>repl_example</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\simple_example.vcxproj">
+      <Project>{F2B6B635-134B-3A2E-BC99-4BAC4817549B}</Project>
+      <Name>simple_example</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\typed_example.vcxproj">
+      <Project>{6BBC9D07-F2E5-35FE-8077-AA1F83189422}</Project>
+      <Name>typed_example</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\asulw\.openclaw\workspace\main\fastrules\workflow_bubble_up.vcxproj">
+      <Project>{BF920153-C561-3DAE-8514-2AF633A9A6F6}</Project>
+      <Name>workflow_bubble_up</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

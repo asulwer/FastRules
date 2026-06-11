@@ -56,7 +56,8 @@ struct TypeRegistrar {
         } else {
             luaType = "userdata";
         }
-        fields.push_back({name, reinterpret_cast<size_t>(&(temp.*member)), luaType});
+        // Calculate member offset using nullptr (valid for standard layout types)
+        fields.push_back({name, reinterpret_cast<size_t>(&(static_cast<T*>(nullptr)->*member)), luaType});
     }
     
     // Register a method (member function) that takes no args and returns Ret

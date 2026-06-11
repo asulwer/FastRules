@@ -88,7 +88,7 @@ TEST_CASE("Workflow executeWithTrace", "[execution_tracing]") {
     rule1->expression = "true";
 
     auto rule2 = std::make_shared<Rule>();
-    rule2->id = 1;
+    rule2->id = 2;
     rule2->expression = "false";
 
     workflow.rules.push_back(rule1);

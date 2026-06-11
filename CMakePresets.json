@@ -61,6 +61,40 @@
             }
         },
         {
+            "name": "linux-tsan",
+            "hidden": false,
+            "generator": "Ninja",
+            "inherits": "linux-default",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_CXX_FLAGS": "-fsanitize=thread -g -O2",
+                "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=thread",
+                "CMAKE_SHARED_LINKER_FLAGS": "-fsanitize=thread"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            }
+        },
+        {
+            "name": "linux-asan",
+            "hidden": false,
+            "generator": "Ninja",
+            "inherits": "linux-default",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_CXX_FLAGS": "-fsanitize=address,undefined -g -fno-omit-frame-pointer",
+                "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=address,undefined",
+                "CMAKE_SHARED_LINKER_FLAGS": "-fsanitize=address,undefined"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            }
+        },
+        {
             "name": "windows-release",
             "inherits": "windows-default",
             "cacheVariables": {
@@ -85,12 +119,60 @@
             "name": "windows-debug",
             "configurePreset": "windows-debug",
             "configuration": "Debug"
+        },
+        {
+            "name": "linux-release",
+            "configurePreset": "linux-default",
+            "configuration": "Release"
+        },
+        {
+            "name": "linux-debug",
+            "configurePreset": "linux-default",
+            "configuration": "Debug"
+        },
+        {
+            "name": "macos-release",
+            "configurePreset": "macos-default",
+            "configuration": "Release"
+        },
+        {
+            "name": "macos-debug",
+            "configurePreset": "macos-default",
+            "configuration": "Debug"
         }
     ],
     "testPresets": [
         {
             "name": "windows-test",
             "configurePreset": "windows-default",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "linux-test",
+            "configurePreset": "linux-default",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "macos-test",
+            "configurePreset": "macos-default",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "linux-tsan-test",
+            "configurePreset": "linux-tsan",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "linux-asan-test",
+            "configurePreset": "linux-asan",
             "output": {
                 "outputOnFailure": true
             }

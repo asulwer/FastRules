@@ -33,6 +33,16 @@ endif()
 # PUC-Rio Lua doesn't ship lua.hpp, but LuaBridge3 requires it.
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+# Define options BEFORE collecting vcpkg features
+option(FASTRULES_BUILD_TESTS "Build tests" ON)
+option(FASTRULES_BUILD_EXAMPLES "Build examples" ON)
+option(FASTRULES_BUILD_EXTENSIONS "Build optional persistence extensions" OFF)
+option(FASTRULES_BUILD_DB "Build database persistence extension (requires SOCI)" OFF)
+option(FASTRULES_BUILD_COVERAGE "Build with coverage instrumentation" OFF)
+option(FASTRULES_USE_LUAJIT "Use LuaJIT instead of PUC-Rio Lua (requires manual build on Windows)" OFF)
+# LuaBridge3 backend only
+set(FASTRULES_LUA_BACKEND "luabridge3" CACHE STRING "Lua binding backend")
+
 # Collect requested vcpkg features based on build options
 set(VCPKG_MANIFEST_FEATURES "")
 if(FASTRULES_BUILD_TESTS)
@@ -48,15 +58,6 @@ if(VCPKG_MANIFEST_FEATURES)
     message(STATUS "vcpkg manifest features: ${VCPKG_MANIFEST_FEATURES}")
 endif()
 
-option(FASTRULES_BUILD_TESTS "Build tests" ON)
-option(FASTRULES_BUILD_EXAMPLES "Build examples" ON)
-option(FASTRULES_BUILD_EXTENSIONS "Build optional persistence extensions" OFF)
-option(FASTRULES_BUILD_DB "Build database persistence extension (requires SOCI)" OFF)
-option(FASTRULES_BUILD_COVERAGE "Build with coverage instrumentation" OFF)
-option(FASTRULES_USE_LUAJIT "Use LuaJIT instead of PUC-Rio Lua (requires manual build on Windows)" OFF)
-# LuaBridge3 backend only
-set(FASTRULES_LUA_BACKEND "luabridge3" CACHE STRING "Lua binding backend")
-
 # Suppress CTest dashboard targets from all dependencies
 set_property(GLOBAL PROPERTY CTEST_TARGETS_ADDED 1)
 
@@ -70,6 +71,9 @@ FetchContent_Declare(
     GIT_TAG v3.11.3
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/_deps/json-src"
+    DOWNLOAD_COMMAND ""
+    UPDATE_COMMAND ""
 )
 
 FetchContent_Declare(
@@ -78,6 +82,9 @@ FetchContent_Declare(
     GIT_TAG v5.4.7
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/_deps/lua-src"
+    DOWNLOAD_COMMAND ""
+    UPDATE_COMMAND ""
 )
 
 FetchContent_Declare(
@@ -86,6 +93,9 @@ FetchContent_Declare(
     GIT_TAG v1.14.1
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/_deps/spdlog-src"
+    DOWNLOAD_COMMAND ""
+    UPDATE_COMMAND ""
 )
 
 FetchContent_Declare(
@@ -94,6 +104,9 @@ FetchContent_Declare(
     GIT_TAG v3.5.2
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/_deps/catch2-src"
+    DOWNLOAD_COMMAND ""
+    UPDATE_COMMAND ""
 )
 
 FetchContent_Declare(
@@ -102,6 +115,9 @@ FetchContent_Declare(
     GIT_TAG master
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/_deps/luabridge3-src"
+    DOWNLOAD_COMMAND ""
+    UPDATE_COMMAND ""
 )
 
 # LuaJIT option — fetch and build automatically if requested
@@ -223,45 +239,63 @@ if(FASTRULES_USE_LUAJIT)
         set_target_properties(luabridge3 PROPERTIES FOLDER "ThirdParty")
     endif()
 else()
-    FetchContent_MakeAvailable(lua json luabridge3 spdlog catch2)
+    # Only use FetchContent when NOT in vcpkg manifest mode
+    if(NOT VCPKG_MANIFEST_MODE)
+        FetchContent_MakeAvailable(lua json luabridge3 spdlog catch2)
 
-    # Organize external targets in VS solution
-    if(TARGET nlohmann_json)
-        set_target_properties(nlohmann_json PROPERTIES FOLDER "ThirdParty")
-    endif()
-    if(TARGET spdlog)
-        set_target_properties(spdlog PROPERTIES FOLDER "ThirdParty")
-    endif()
-    if(TARGET Catch2)
-        set_target_properties(Catch2 PROPERTIES FOLDER "ThirdParty")
-    endif()
-    if(TARGET Catch2WithMain)
-        set_target_properties(Catch2WithMain PROPERTIES FOLDER "ThirdParty")
-    endif()
-    if(TARGET luabridge3)
-        set_target_properties(luabridge3 PROPERTIES FOLDER "ThirdParty")
-    endif()
-    if(TARGET Documentation)
-        set_target_properties(Documentation PROPERTIES FOLDER "ThirdParty")
-        set_property(TARGET Documentation PROPERTY EXCLUDE_FROM_ALL TRUE)
+        # Organize external targets in VS solution
+        if(TARGET nlohmann_json)
+            set_target_properties(nlohmann_json PROPERTIES FOLDER "ThirdParty")
+        endif()
+        if(TARGET spdlog)
+            set_target_properties(spdlog PROPERTIES FOLDER "ThirdParty")
+        endif()
+        if(TARGET Catch2)
+            set_target_properties(Catch2 PROPERTIES FOLDER "ThirdParty")
+        endif()
+        if(TARGET Catch2WithMain)
+            set_target_properties(Catch2WithMain PROPERTIES FOLDER "ThirdParty")
+        endif()
+        if(TARGET luabridge3)
+            set_target_properties(luabridge3 PROPERTIES FOLDER "ThirdParty")
+        endif()
+        if(TARGET Documentation)
+            set_target_properties(Documentation PROPERTIES FOLDER "ThirdParty")
+            set_property(TARGET Documentation PROPERTY EXCLUDE_FROM_ALL TRUE)
+        endif()
+    else()
+        # In vcpkg manifest mode, just make luabridge3 available (header-only, not in vcpkg)
+        FetchContent_MakeAvailable(luabridge3)
+        if(TARGET luabridge3)
+            set_target_properties(luabridge3 PROPERTIES FOLDER "ThirdParty")
+        endif()
+        # Find vcpkg packages
+        find_package(spdlog CONFIG REQUIRED)
+        if(FASTRULES_BUILD_TESTS)
+            find_package(Catch2 3 CONFIG REQUIRED)
+        endif()
     endif()
 endif()
 
 # If we chose PUC-Rio Lua (not LuaJIT)
 if(NOT FASTRULES_USE_LUAJIT)
-    # Check if lua was fetched
-    if(NOT DEFINED lua_SOURCE_DIR OR NOT EXISTS ${lua_SOURCE_DIR})
-        message(FATAL_ERROR "Lua source not available. Make sure FetchContent succeeded.")
+    if(VCPKG_MANIFEST_MODE)
+        # Using vcpkg lua - find the package
+        # vcpkg's lua provides unofficial-lua config
+        find_package(unofficial-lua CONFIG REQUIRED)
+        # Create an interface library that wraps unofficial::lua::lua
+        if(NOT TARGET lua_static)
+            add_library(lua_static INTERFACE)
+            target_link_libraries(lua_static INTERFACE unofficial::lua::lua)
+        endif()
+    elseif(DEFINED lua_SOURCE_DIR AND EXISTS ${lua_SOURCE_DIR})
+        # Fetched via FetchContent - build from source
+        file(GLOB LUA_SRCS ${lua_SOURCE_DIR}/*.c)
+        list(FILTER LUA_SRCS EXCLUDE REGEX "luac?\\.c$")
+        add_library(lua_static STATIC ${LUA_SRCS})
+        set_target_properties(lua_static PROPERTIES FOLDER "ThirdParty")
+        target_include_directories(lua_static PUBLIC ${lua_SOURCE_DIR})
     endif()
-    
-    # For PUC-Rio Lua, create a library target manually
-    file(GLOB LUA_SRCS ${lua_SOURCE_DIR}/*.c)
-    # Exclude luac.c and lua.c (the standalone interpreter/compiler)
-    list(FILTER LUA_SRCS EXCLUDE REGEX "luac?\\.c$")
-
-    add_library(lua_static STATIC ${LUA_SRCS})
-    set_target_properties(lua_static PROPERTIES FOLDER "ThirdParty")
-    target_include_directories(lua_static PUBLIC ${lua_SOURCE_DIR})
 endif()
 
 # === fastrules library ===
@@ -377,14 +411,22 @@ if(FASTRULES_BUILD_TESTS)
         set(FASTRULES_IN_TREE_TESTS TRUE CACHE BOOL "" FORCE)
     endif()
 
-
-    FetchContent_Declare(
-        Catch2
-        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-        GIT_TAG v3.5.2
-        GIT_SHALLOW TRUE
-    )
-    FetchContent_MakeAvailable(Catch2)
+    # Try to find Catch2 via find_package (e.g., from vcpkg) first
+    find_package(Catch2 3 CONFIG QUIET)
+    if(NOT Catch2_FOUND)
+        FetchContent_Declare(
+            Catch2
+            GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+            GIT_TAG v3.5.2
+            GIT_SHALLOW TRUE
+        )
+        FetchContent_MakeAvailable(Catch2)
+    endif()
+    
+    # Ensure Catch.cmake module is available (from vcpkg or FetchContent)
+    if(NOT DEFINED Catch2_DIR)
+        set(Catch2_DIR "${Catch2_SOURCE_DIR}")
+    endif()
 
     add_executable(fastrules_tests
         tests/test_main.cpp
@@ -414,8 +456,18 @@ if(FASTRULES_BUILD_TESTS)
     # Suppress CTest dashboard targets from VS solution
     set_property(GLOBAL PROPERTY CTEST_USE_LAUNCHERS OFF)
 
-    include(Catch)
-    catch_discover_tests(fastrules_tests)
+    # Include the Catch module from Catch2 (path varies between vcpkg and FetchContent)
+    # When using vcpkg, Catch.cmake is in <vcpkg>/share/catch2/
+    find_file(CATCH_CMAKE_FILE "Catch.cmake" 
+        PATHS "${Catch2_DIR}" "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/catch2"
+        NO_DEFAULT_PATH)
+    if(CATCH_CMAKE_FILE)
+        include("${CATCH_CMAKE_FILE}")
+        catch_discover_tests(fastrules_tests)
+    else()
+        # Fallback: just add the test executable directly
+        add_test(NAME fastrules_tests COMMAND fastrules_tests)
+    endif()
 endif()
 
 # === Examples ===
@@ -599,4 +651,3 @@ install(FILES
     "${CMAKE_CURRENT_BINARY_DIR}/fastrules-config-version.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/fastrules
 )
-

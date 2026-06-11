@@ -57,6 +57,17 @@ $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 if (-not $root) { $root = Get-Location }
 
+# Auto-detect vcpkg from Visual Studio installation
+if (-not $env:VCPKG_ROOT) {
+    $vsVcpkg = "${env:ProgramFiles}\Microsoft Visual Studio\2022\Professional\VC\vcpkg"
+    if (Test-Path $vsVcpkg) {
+        $env:VCPKG_ROOT = $vsVcpkg
+        Write-Host "Auto-detected vcpkg: $vsVcpkg" -ForegroundColor Gray
+    } else {
+        Write-Warning "VCPKG_ROOT not set and vcpkg not found in VS installation"
+    }
+}
+
 # ============================================================================
 # Clean
 # ============================================================================
@@ -135,6 +146,22 @@ $cmakeArgs = @(
     '-DFASTRULES_BUILD_EXAMPLES=ON'
     '-DFASTRULES_BUILD_EXTENSIONS=ON'
 )
+
+# Add vcpkg toolchain if available
+if ($env:VCPKG_ROOT) {
+    $toolchain = Join-Path $env:VCPKG_ROOT 'scripts/buildsystems/vcpkg.cmake'
+    if (Test-Path $toolchain) {
+        $cmakeArgs += "-DCMAKE_TOOLCHAIN_FILE=$toolchain"
+    }
+}
+
+# Add vcpkg features based on options
+$vcpkgFeatures = @('tests', 'json', 'xml')
+if ($BuildDB) {
+    $vcpkgFeatures += 'db'
+}
+$featureList = $vcpkgFeatures -join ';'
+$cmakeArgs += "-DVCPKG_MANIFEST_FEATURES=$featureList"
 
 if ($UseLuaJIT) {
     $cmakeArgs += '-DFASTRULES_USE_LUAJIT=ON'

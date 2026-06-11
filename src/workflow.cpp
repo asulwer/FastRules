@@ -522,4 +522,74 @@ Workflow Workflow::Builder::build() {
     return std::move(*workflow_);
 }
 
+// ============================================================================
+// Dependency Graph Visualization
+// ============================================================================
+
+std::string Workflow::toGraph() const {
+    std::ostringstream oss;
+    
+    // DOT graph header
+    oss << "digraph Workflow {\n";
+    oss << "  rankdir=TB;\n";
+    oss << "  node [shape=box, style=filled, fillcolor=lightblue];\n";
+    oss << "  edge [arrowhead=vee];\n\n";
+    
+    // Graph title
+    oss << "  label=\"Workflow " << id;
+    if (!description.empty()) {
+        oss << "\\n" << description;
+    }
+    oss << "\";\n";
+    oss << "  labelloc=t;\n\n";
+    
+    // Collect all rules (including nested children)
+    std::function<void(const std::vector<std::shared_ptr<Rule>>&)> collectRules = 
+        [&](const std::vector<std::shared_ptr<Rule>>& ruleList) {
+        for (const auto& rule : ruleList) {
+            // Add rule node
+            oss << "  \"rule_" << rule->id << "\" [label=\"Rule " << rule->id;
+            if (!rule->description.empty()) {
+                oss << "\\n" << rule->description;
+            }
+            // Show expression snippet
+            if (!rule->expression.empty()) {
+                std::string expr = rule->expression;
+                if (expr.length() > 30) expr = expr.substr(0, 27) + "...";
+                std::string newline = "\\n";
+                std::string quote = "\"";
+                oss << newline << "[" << quote << expr << " " << quote << "]";
+            }
+            // Color inactive rules differently
+            if (!rule->isActive) {
+                oss << "\", fillcolor=gray, fontcolor=white";
+            }
+            oss << "\"];\n";
+            
+            // Add dependency edges
+            if (rule->dependsOnRuleId.has_value()) {
+                int parentId = rule->dependsOnRuleId.value();
+                oss << "  \"rule_" << parentId << "\" -> \"rule_" << rule->id << "\"";
+                oss << " [color=red, penwidth=2.0, label=\"depends on\"];\n";
+            }
+            
+            // Recurse into child rules
+            if (!rule->childRules.empty()) {
+                oss << "  \"rule_" << rule->id << "\" -> {\n";
+                for (const auto& child : rule->childRules) {
+                    oss << "    \"rule_" << child->id << "\"\n";
+                }
+                oss << "  } [style=dashed, label=\"parent/child\"];\n";
+                collectRules(rule->childRules);
+            }
+        }
+    };
+    
+    collectRules(rules);
+    
+    // Footer
+    oss << "}\n";
+    return oss.str();
+}
+
 } // namespace fastrules

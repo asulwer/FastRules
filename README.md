@@ -76,7 +76,7 @@ FastRules has a **minimal core** plus **optional persistence extensions**:
 ### Core
 - ✅ Lua expressions and actions
 - ✅ C++20 coroutines (`co_await`)
-- ✅ Parallel execution
+- ✅ [Parallel execution](docs/parallel-execution.md) - executeParallel vs AsyncWorkflow guidance
 - ✅ Streaming results
 - ✅ Dependency chains
 - ✅ Type registration (C++ structs in Lua)

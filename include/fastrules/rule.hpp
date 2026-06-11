@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <typeindex>
 #include <stdexcept>
+#include <mutex>
 
 #include "rule_result.hpp"
 
@@ -61,9 +62,9 @@ public:
 
     Rule() = default;
     ~Rule() = default;
-    Rule(const Rule&) = default;
+    Rule(const Rule&) = delete;
     Rule(Rule&&) noexcept = default;
-    Rule& operator=(const Rule&) = default;
+    Rule& operator=(const Rule&) = delete;
     Rule& operator=(Rule&&) noexcept = default;
 
     // --- Public fields ---
@@ -84,6 +85,11 @@ public:
     std::optional<std::chrono::milliseconds> cacheDuration;
 
     std::optional<std::shared_ptr<RateLimiter>> rateLimiter;
+
+    // --- Cache invalidation ---
+    // Call this after modifying rule properties (expression, action, etc.)
+    // to invalidate cached results. Returns the new generation number.
+    int invalidateCache();
 
     // --- Validated setters ---
     void setTimeout(std::optional<std::chrono::milliseconds> value) {
@@ -210,6 +216,10 @@ private:
     bool isCompiled = false;
     bool isValidated = false;
 
+    // Cache generation - incremented on modifications to invalidate stale cache
+    mutable int cacheGeneration_ = 0;
+    mutable std::unique_ptr<std::mutex> cacheMutex_ = std::make_unique<std::mutex>();
+
     // Compiled refs cached by compile() - per-engine for parallel execution support
     std::optional<int> compiledExpressionRef;
     std::optional<int> compiledActionRef;
@@ -219,6 +229,7 @@ private:
     struct CacheEntry {
         std::shared_ptr<RuleResult> result;
         std::chrono::steady_clock::time_point expiresAt;
+        int generation;  // Store generation at time of caching
     };
     mutable std::unordered_map<std::string, CacheEntry> cache_;
 

@@ -63,7 +63,7 @@ AsyncWorkflow::ThreadPool::~ThreadPool() {
 
 AsyncWorkflow::AsyncWorkflow() : threadPool_(std::make_unique<ThreadPool>()) {}
 
-AsyncWorkflow::AsyncWorkflow(Workflow workflow) 
+AsyncWorkflow::AsyncWorkflow(Workflow&& workflow) 
     : workflow_(std::move(workflow))
     , threadPool_(std::make_unique<ThreadPool>()) {}
 
@@ -142,6 +142,7 @@ std::vector<AsyncRuleResult> AsyncWorkflow::executeParallelAsync(
             if (!rule->isActive) continue;
             
             auto engineClone = engine.clone();
+            rule->compile(*engineClone);  // Compile rule into the clone
             auto paramsCopy = parameters;
             futures.push_back(
                 threadPool_->enqueue([this, eng = std::move(engineClone), params = std::move(paramsCopy), rule, &context]() {

@@ -171,13 +171,13 @@ Workflow RuleVersionManager::rollbackWorkflow(int workflowId,
     for (const auto& [ruleId, history] : histories_) {
         try {
             auto rule = history.rollbackTo(versionId);
-            workflow.rules.push_back(std::make_shared<Rule>(rule));
+            workflow.rules.push_back(std::make_shared<Rule>(std::move(rule)));
         } catch (...) {
             // Rule didn't have that version, skip
         }
     }
     
-    return workflow;
+    return std::move(workflow);
 }
 
 std::vector<std::string> RuleVersionManager::getTrackedRuleIds() const {

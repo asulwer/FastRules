@@ -8,13 +8,11 @@
 #include <filesystem>
 #include <mutex>
 
+#include "lua_engine.hpp"
 #include "rule.hpp"
 #include "rule_result.hpp"
 #include "streaming_result.hpp"
 #include "execution_tracer.hpp"
-
-// Forward declaration — unique_ptr<LuaEngine> destructor is in workflow.cpp
-class LuaEngine;
 
 namespace fastrules {
 
@@ -55,7 +53,12 @@ public:
     [[nodiscard]] bool isCompiled() const noexcept;
 
     // Execution modes
+    // Synchronous sequential execution - rules execute one at a time
     [[nodiscard]] std::vector<RuleResult> execute(LuaEngine& engine, const std::vector<RuleParameter>& parameters);
+    
+    // Parallel execution - rules in each dependency level execute concurrently
+    // NOTE: Creates thread pool per execution. For repeated execution, use AsyncWorkflow.
+    // See docs/parallel-execution.md for executeParallel vs AsyncWorkflow guidance.
     [[nodiscard]] std::vector<RuleResult> executeParallel(LuaEngine& engine, const std::vector<RuleParameter>& parameters);
 
     // Streaming execution — yields results as they complete
@@ -99,7 +102,7 @@ private:
     // Engine clone pool for parallel execution optimization
     // Pre-created and pre-compiled clones avoid per-task allocation overhead
     std::vector<std::unique_ptr<LuaEngine>> enginePool_;
-    std::mutex poolMutex_;
+    std::unique_ptr<std::mutex> poolMutex_;
     size_t poolNextIndex_ = 0;
 
     // Helper: topological sort for dependency-aware execution
@@ -114,6 +117,11 @@ private:
     // Helper: get next available engine from the pool (round-robin)
     LuaEngine* acquireEngine();
     void releaseEngine(LuaEngine* engine);
+
+    // Dependency graph visualization
+    // Returns a DOT format graph string for debugging/visualization
+    // Usage: workflow.toGraph() | dot -Tpng > workflow.png
+    [[nodiscard]] std::string toGraph() const;
 };
 
 } // namespace fastrules

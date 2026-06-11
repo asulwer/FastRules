@@ -12,6 +12,12 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for changelog
+
+      - name: Get version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
       - name: Build
         run: |
@@ -21,9 +27,62 @@ jobs:
       - name: Test
         run: cd build && ctest --output-on-failure
 
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get commits since last tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+            echo "### Changes in ${{ steps.version.outputs.VERSION }}" >> $GITHUB_OUTPUT
+            git log --pretty=format:"- %s (%h)" --no-merges >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+            echo "### Changes since $PREV_TAG" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            git log --pretty=format:"- %s (%h)" --no-merges $PREV_TAG..HEAD >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Package artifacts
+        run: |
+          mkdir -p artifacts/fastrules-${{ steps.version.outputs.VERSION }}
+          cp -r include artifacts/fastrules-${{ steps.version.outputs.VERSION }}/
+          cp build/Release/*.lib artifacts/fastrules-${{ steps.version.outputs.VERSION }}/ 2>/dev/null || true
+          cp build/Release/*.a artifacts/fastrules-${{ steps.version.outputs.VERSION }}/ 2>/dev/null || true
+          cp build/Release/*.so artifacts/fastrules-${{ steps.version.outputs.VERSION }}/ 2>/dev/null || true
+          cp README.md artifacts/fastrules-${{ steps.version.outputs.VERSION}}/
+          cp LICENSE artifacts/fastrules-${{ steps.version.outputs.VERSION}}/
+          tar -czf fastrules-${{ steps.version.outputs.VERSION }}-linux-x64.tar.gz -C artifacts fastrules-${{ steps.version.outputs.VERSION }}
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          generate_release_notes: true
+          name: FastRules ${{ steps.version.outputs.VERSION }}
+          body: |
+            ## What's Changed
+
+            ${{ steps.changelog.outputs.CHANGELOG }}
+
+            ### Assets
+            - Static library for Linux x64
+            - Header files
+            - See README.md for build instructions
+
+            ### Installation
+            ```bash
+            # Using vcpkg
+            vcpkg install fastrules
+
+            # Or build from source
+            cmake -B build -S . -DFASTRULES_BUILD_EXTENSIONS=ON
+            cmake --build build
+            ```
+          files: |
+            fastrules-*-linux-x64.tar.gz
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

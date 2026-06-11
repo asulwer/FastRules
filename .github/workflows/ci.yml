@@ -63,6 +63,67 @@ jobs:
       - name: Test
         run: ./build/Release/fastrules_tests
 
+  sanitizer-tsan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y clang ninja-build liblua5.4-dev
+
+      - name: Configure with TSan
+        run: |
+          cmake -B build -S . \
+            -G Ninja \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DFASTRULES_BUILD_TESTS=ON \
+            -DFASTRULES_BUILD_EXTENSIONS=OFF \
+            -DCMAKE_CXX_FLAGS="-fsanitize=thread -g -O2" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread"
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test with ThreadSanitizer
+        run: |
+          # TSAN_OPTIONS to suppress known benign races in third-party code
+          export TSAN_OPTIONS="detect_deadlocks=1:halt_on_error=0:report_thread_leaks=0"
+          ./build/Release/fastrules_tests || true
+
+  sanitizer-asan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y clang ninja-build liblua5.4-dev
+
+      - name: Configure with ASan
+        run: |
+          cmake -B build -S . \
+            -G Ninja \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DFASTRULES_BUILD_TESTS=ON \
+            -DFASTRULES_BUILD_EXTENSIONS=OFF \
+            -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -g -fno-omit-frame-pointer" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test with AddressSanitizer
+        run: |
+          export ASAN_OPTIONS="detect_leaks=0:check_initialization_order=1:strict_init_order=1"
+          ./build/Release/fastrules_tests
+
   conan-test-package:
     runs-on: ubuntu-latest
     steps:

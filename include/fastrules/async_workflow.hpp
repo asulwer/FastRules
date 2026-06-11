@@ -150,11 +150,18 @@ private:
 // ============================================================================
 // AsyncWorkflow Class
 // ============================================================================
+// Provides persistent thread pool and engine clones for high-throughput async
+// execution. Use this instead of Workflow::executeParallel for repeated
+// executions or when you need async/non-blocking behavior.
+//
+// For guidance on when to use AsyncWorkflow vs executeParallel, see:
+// docs/parallel-execution.md
+// ============================================================================
 
 class AsyncWorkflow {
 public:
     AsyncWorkflow();
-    explicit AsyncWorkflow(Workflow workflow);
+    explicit AsyncWorkflow(Workflow&& workflow);
     ~AsyncWorkflow();
     
     // Disable copy, enable move

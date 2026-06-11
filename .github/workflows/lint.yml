@@ -3,8 +3,20 @@ name: Lint
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - 'extensions/**'
+      - '.clang-tidy'
+      - '.github/workflows/lint.yml'
   pull_request:
     branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - 'extensions/**'
+      - '.clang-tidy'
+      - '.github/workflows/lint.yml'
 
 jobs:
   clang-tidy:
@@ -12,16 +24,47 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache vcpkg
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/vcpkg
+          key: ${{ runner.os }}-vcpkg-${{ hashFiles('**/vcpkg.json') }}
+          restore-keys: |
+            ${{ runner.os }}-vcpkg-
+
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y clang-tidy liblua5.4-dev
+          sudo apt install -y clang-tidy ninja-build
 
-      - name: Configure
-        run: cmake -B build -S . -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-
-      - name: Run clang-tidy
+      - name: Configure with vcpkg
         run: |
-          clang-tidy -p build src/*.cpp extensions/*/src/*.cpp -- \
-            -I include -I extensions/*/include \
-            $(pkg-config --cflags lua5.4) || true
+          cmake -B build -S . \
+            -G Ninja \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DVCPKG_MANIFEST_MODE=OFF
+
+      - name: Run clang-tidy (src only)
+        run: |
+          # Only check our source files, not generated/third-party
+          find src -name '*.cpp' -print0 | \
+            xargs -0 clang-tidy -p build --config-file=.clang-tidy \
+            --header-filter='include/fastrules/.*' 2>&1 | \
+            tee clang-tidy-output.log
+
+      - name: Check for warnings
+        run: |
+          # Fail if there are actual warnings (not just "X warnings generated")
+          if grep -E '(warning:|error:)' clang-tidy-output.log | grep -v 'clang-tidy'; then
+            echo "::error::Clang-tidy found issues"
+            exit 1
+          fi
+          echo "✅ No clang-tidy warnings found"
+
+      - name: Upload results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clang-tidy-report
+          path: clang-tidy-output.log

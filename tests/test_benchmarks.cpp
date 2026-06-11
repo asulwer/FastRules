@@ -238,3 +238,46 @@ TEST_CASE("Benchmark cached vs uncached execution", "[benchmark][cache]") {
     };
 }
 
+// ============================================================================
+// Expression parsing benchmarks (post-regex removal #4)
+// ============================================================================
+
+TEST_CASE("Benchmark expression parsing (post-regex)", "[benchmark][parsing]") {
+    SKIP_IN_DEBUG();
+    LuaEngine engine;
+
+    // Complex expression with multiple identifiers, operators, and literals
+    // This would have been slow with std::regex but is fast with hand-rolled parser
+    std::string complexExpr = 
+        "customer_age >= 18 and customer_age <= 65 and "
+        "(customer_tier == 'premium' or customer_tier == 'gold') and "
+        "order_total > 100.00 and (item_count > 5 or discount_code ~= 'VIP')";
+
+    BENCHMARK("compile complex expression") {
+        Rule rule;
+        rule.id = 1;
+        rule.expression = complexExpr;
+        rule.compile(engine);
+        return rule.id;  // Return something to prevent optimization
+    };
+
+    // Benchmark multiple simple expressions (batch compilation)
+    std::vector<std::string> expressions = {
+        "x > 0", "y < 100", "z == 'active'",
+        "a ~= 'test'", "b >= 10", "c <= 50",
+        "d == true", "e ~= 'pattern'", "f > 3.14"
+    };
+
+    BENCHMARK("compile 9 simple expressions (batch)") {
+        int compiled = 0;
+        for (size_t i = 0; i < expressions.size(); ++i) {
+            Rule rule;
+            rule.id = static_cast<int>(i);
+            rule.expression = expressions[i];
+            rule.compile(engine);
+            compiled += rule.id;  // Use rule to prevent optimization
+        }
+        return compiled;
+    };
+}
+
