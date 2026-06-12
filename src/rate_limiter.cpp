@@ -18,7 +18,7 @@ RateLimiter& RateLimiter::global() {
 void RateLimiter::checkAllowed(const std::string& ruleName) {
     if (!isAllowed(ruleName)) {
         std::ostringstream oss;
-        oss << "Rate limit exceeded for rule '" << ruleId << "'";
+        oss << "Rate limit exceeded for rule '" << ruleName << "'";
         throw RateLimitException(oss.str());
     }
 }
