@@ -333,15 +333,15 @@ std::vector<Rule::Id> Rule::getDependencyChain(const std::vector<std::reference_
         visited.insert(current);
 
         // Move to next dependency
-        auto it = ruleMap.find(current);
-        if (it == ruleMap.end() || !it->second->dependsOnRuleName.has_value()) {
+        auto ruleIt = ruleMap.find(current);
+        if (ruleIt == ruleMap.end() || !ruleIt->second->dependsOnRuleName.has_value()) {
             break;
         }
-        auto nameIt = nameToId.find(it->second->dependsOnRuleName.value());
-        if (nameIt == nameToId.end()) {
+        auto nextNameIt = nameToId.find(ruleIt->second->dependsOnRuleName.value());
+        if (nextNameIt == nameToId.end()) {
             break;
         }
-        current = nameIt->second;
+        current = nextNameIt->second;
     }
 
     return chain;

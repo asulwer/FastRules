@@ -438,7 +438,7 @@ std::vector<std::vector<std::shared_ptr<Rule>>> Workflow::buildDependencyLevels(
     for (const auto& rule : rules) {
         if (rule->dependsOnRuleName.has_value()) {
             // Look up the rule by name in the map
-            for (const auto& [id, r] : ruleMap) {
+            for (const auto& [lookupId, r] : ruleMap) {
                 if (r->name == rule->dependsOnRuleName.value().c_str()) {
                     inDegree[rule->id]++;
                     break;
