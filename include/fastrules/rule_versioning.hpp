@@ -20,7 +20,7 @@ class LuaEngine;
 // Represents a snapshot of a rule at a point in time
 struct RuleVersion {
     std::string versionId;       // e.g., "v1", "v2", "2024-06-05-a1b2"
-    std::string ruleId;          // Original rule ID
+    std::string ruleName;          // Human-readable rule name
     std::string expression;
     std::string action;
     int priority = 0;
