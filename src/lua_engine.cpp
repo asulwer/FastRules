@@ -290,7 +290,7 @@ void LuaEngine::setupContextTable(RuleContext& context) {
         auto tbl = backend_->createTable();
         if (result.has_value()) {
             tbl->set("success", *backend_->makeBool(result->success));
-            tbl->set("ruleId", *backend_->makeString(std::to_string(result->ruleId)));
+            tbl->set("ruleId", *backend_->makeString(result->ruleName));
         } else {
             tbl->set("success", *backend_->makeBool(false));
             tbl->set("ruleId", *backend_->makeString(ruleName));
