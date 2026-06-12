@@ -20,7 +20,7 @@ class Workflow;
 class AotBundle {
 public:
     struct CompiledRule {
-        std::string ruleId;
+        std::string ruleName;
         std::string expression;
         std::string action;
         

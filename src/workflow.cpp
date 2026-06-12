@@ -187,7 +187,7 @@ std::vector<RuleResult> Workflow::executeWithTrace(LuaEngine& engine,
     for (auto& rule : executionOrder) {
         // Preference: skip inactive rules entirely - no evaluation, no result
         if (!rule->isActive) {
-            tracer.record(rule->id, "skip", true, "Rule is inactive");
+            tracer.record(rule->name, "skip", true, "Rule is inactive");
             continue;
         }
 
