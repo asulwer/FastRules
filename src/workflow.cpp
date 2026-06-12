@@ -274,6 +274,15 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
                     // Acquire a pre-compiled engine clone from the pool
                     auto* threadEngine = acquireEngine();
                     
+                    // Safety check: if pool exhausted, return error
+                    if (!threadEngine) {
+                        RuleResult errorResult;
+                        errorResult.ruleId = rule->id;
+                        errorResult.success = false;
+                        errorResult.exception = RuleException("Failed to acquire engine from pool - timeout or pool empty");
+                        return std::make_pair(rule->id, errorResult);
+                    }
+                    
                     // Check dependency before execution
                     if (rule->dependsOnRuleName.has_value()) {
                         auto depResult = context.getResult(rule->dependsOnRuleName.value());
@@ -337,11 +346,24 @@ LuaEngine* Workflow::acquireEngine() {
 #endif
         }
         
-        // If spinning didn't work, block and wait with yield
+        // If spinning didn't work, block and wait with yield (max 10 seconds)
+        auto startTime = std::chrono::steady_clock::now();
         while (!engine) {
             engine = enginePool_->pop();
-            if (!engine) {
-                std::this_thread::yield();
+            if (engine) {
+                return engine;
+            }
+            std::this_thread::yield();
+            
+            // Safety timeout: if waiting more than 10 seconds, something is wrong
+            auto elapsed = std::chrono::steady_clock::now() - startTime;
+            if (elapsed > std::chrono::seconds(10)) {
+                auto log = fastrules::logger();
+                if (log) {
+                    log->error("Timeout waiting for engine from pool. "
+                               "Pool may be exhausted or deadlock detected.");
+                }
+                return nullptr;
             }
         }
         return engine;
