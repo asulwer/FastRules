@@ -438,7 +438,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
             for (const auto& childResult : result.childResults) {
                 if (!childResult.isSuccess()) {
                     log->info("Child rule {} failed — parent {} aborted", childResult.ruleName, id);
-                    setFailure(result, "Child rule " + std::to_string(childResult.ruleName) + " failed");
+                    setFailure(result, "Child rule " + childResult.ruleName + " failed");
                     storeInCache(parameters, result);
                     context.setResult(name, result);
                     return result;
