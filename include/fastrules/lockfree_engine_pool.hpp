@@ -156,18 +156,21 @@ public:
      * 
      * On 64-bit systems, packs a 16-bit version counter into the upper
      * 16 bits of the 64-bit pointer value.
+     * 
+     * Templated to work with any pointer type (Node*, LuaEngine*, etc.)
      */
+    template<typename T>
     struct TaggedPtr {
         uintptr_t ptrAndTag;  // Combined pointer and version
         
         TaggedPtr() : ptrAndTag(0) {}
         
-        TaggedPtr(LuaEngine* ptr, uint16_t tag) 
+        TaggedPtr(T* ptr, uint16_t tag) 
             : ptrAndTag(reinterpret_cast<uintptr_t>(ptr) | 
                        (static_cast<uintptr_t>(tag) << 48)) {}
         
-        LuaEngine* ptr() const { 
-            return reinterpret_cast<LuaEngine*>(ptrAndTag & 0x0000FFFFFFFFFFFFULL); 
+        T* ptr() const { 
+            return reinterpret_cast<T*>(ptrAndTag & 0x0000FFFFFFFFFFFFULL); 
         }
         
         uint16_t tag() const { 
@@ -177,10 +180,11 @@ public:
         uintptr_t raw() const { return ptrAndTag; }
     };
     
-    static_assert(sizeof(TaggedPtr) == sizeof(uintptr_t), "TaggedPtr must be atomic");
+    // Size check - TaggedPtr must be same size as uintptr_t for atomic operations
+    static_assert(sizeof(TaggedPtr<void>) == sizeof(uintptr_t), "TaggedPtr must be atomic");
 
     struct Node {
-        TaggedPtr next;
+        TaggedPtr<Node> next;
         LuaEngine* engine;
         
         explicit Node(LuaEngine* e) : engine(e) {}
@@ -188,14 +192,14 @@ public:
 
 private:
     // Stack head - cache line aligned to prevent false sharing
-    alignas(64) std::atomic<TaggedPtr> head_{TaggedPtr()};
+    alignas(64) std::atomic<TaggedPtr<Node>> head_{TaggedPtr<Node>()};
     
     // Hazard pointers for safe memory reclamation
     static constexpr size_t MAX_THREADS = 64;
     alignas(64) std::atomic<Node*> hazardPointers_[MAX_THREADS];
     
     // Retired nodes (simplified reclamation - freed in destructor)
-    alignas(64) std::atomic<Node*> retiredList_{nullptr};
+    alignas(64) std::atomic<TaggedPtr<Node>> retiredList_{TaggedPtr<Node>()};
     alignas(64) std::atomic<uint64_t> globalEpoch_{0};
     alignas(64) std::atomic<uint64_t> threadEpochs_[MAX_THREADS];
     alignas(64) std::atomic<size_t> nextThreadId_{0};
@@ -219,11 +223,11 @@ public:
 
     void push(LuaEngine* engine) {
         Node* newNode = new Node(engine);
-        TaggedPtr oldHead = head_.load(std::memory_order_relaxed);
+        TaggedPtr<Node> oldHead = head_.load(std::memory_order_relaxed);
         
         for (;;) {
             newNode->next = oldHead;
-            TaggedPtr newHead(engine, oldHead.tag() + 1);
+            TaggedPtr<Node> newHead(newNode, oldHead.tag() + 1);
             
             if (head_.compare_exchange_weak(oldHead, newHead,
                                             std::memory_order_release,
@@ -237,8 +241,8 @@ public:
         size_t tid = getThreadId();
         
         for (;;) {
-            TaggedPtr oldHead = head_.load(std::memory_order_acquire);
-            Node* node = reinterpret_cast<Node*>(oldHead.ptr());
+            TaggedPtr<Node> oldHead = head_.load(std::memory_order_acquire);
+            Node* node = oldHead.ptr();
             
             if (node == nullptr) {
                 return nullptr;
@@ -248,13 +252,13 @@ public:
             hazardPointers_[tid].store(node, std::memory_order_release);
             
             // Verify head hasn't changed
-            TaggedPtr currentHead = head_.load(std::memory_order_acquire);
+            TaggedPtr<Node> currentHead = head_.load(std::memory_order_acquire);
             if (currentHead.raw() != oldHead.raw()) {
                 hazardPointers_[tid].store(nullptr, std::memory_order_release);
                 continue;
             }
             
-            TaggedPtr newHead(node->next.ptr(), oldHead.tag() + 1);
+            TaggedPtr<Node> newHead(node->next.ptr(), oldHead.tag() + 1);
             
             if (head_.compare_exchange_weak(oldHead, newHead,
                                             std::memory_order_release,
@@ -280,12 +284,12 @@ public:
 
 private:
     void retireNode(Node* node) {
-        Node* oldRetired = retiredList_.load(std::memory_order_relaxed);
+        TaggedPtr<Node> oldRetired = retiredList_.load(std::memory_order_relaxed);
         
         for (;;) {
-            node->next = TaggedPtr(reinterpret_cast<LuaEngine*>(oldRetired), 0);
+            node->next = TaggedPtr<Node>(oldRetired.ptr(), 0);
             
-            if (retiredList_.compare_exchange_weak(oldRetired, node,
+            if (retiredList_.compare_exchange_weak(oldRetired, TaggedPtr<Node>(node, oldRetired.tag()),
                                                   std::memory_order_release,
                                                   std::memory_order_relaxed)) {
                 break;
@@ -294,21 +298,21 @@ private:
     }
 
     void reclaimAll() {
-        TaggedPtr head = head_.exchange(TaggedPtr(), std::memory_order_acquire);
-        Node* node = reinterpret_cast<Node*>(head.ptr());
+        TaggedPtr<Node> head = head_.exchange(TaggedPtr<Node>(), std::memory_order_acquire);
+        Node* node = head.ptr();
         
         while (node) {
-            Node* next = reinterpret_cast<Node*>(node->next.ptr());
+            Node* next = node->next.ptr();
             delete node;
             node = next;
         }
         
         // Free retired nodes
-        Node* retired = retiredList_.exchange(nullptr, std::memory_order_acquire);
-        while (retired) {
-            Node* next = reinterpret_cast<Node*>(retired->next.ptr());
-            delete retired;
-            retired = next;
+        TaggedPtr<Node> retired = retiredList_.exchange(TaggedPtr<Node>(), std::memory_order_acquire);
+        while (retired.ptr()) {
+            Node* node = retired.ptr();
+            retired = node->next;
+            delete node;
         }
     }
 };
