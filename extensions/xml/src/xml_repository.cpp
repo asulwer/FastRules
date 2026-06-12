@@ -128,7 +128,7 @@ void XmlRuleRepository::ruleToXml(const Rule& rule, pugi::xml_node& parent) cons
     if (rule.dependsOnRuleName) {
         auto deps = node.append_child("dependencies");
         auto dep = deps.append_child("dep");
-        dep.append_child(pugi::node_pcdata).set_value(std::to_string(*rule.dependsOnRuleName).c_str());
+        dep.append_child(pugi::node_pcdata).set_value(rule.dependsOnRuleName->c_str());
     }
 }
 
@@ -146,7 +146,7 @@ Rule XmlRuleRepository::xmlToRule(const pugi::xml_node& node) const {
     
     auto deps = node.child("dependencies");
     for (auto d = deps.child("dep"); d; d = d.next_sibling("dep")) {
-        rule.dependsOnRuleName = std::stoi(d.child_value());
+        rule.dependsOnRuleName = d.child_value();
     }
     
     return rule;

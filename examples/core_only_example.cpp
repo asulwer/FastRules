@@ -42,19 +42,22 @@ int main() {
         // ================================================================
         auto adultCheck = std::make_shared<Rule>();
         adultCheck->id = 1;
+        adultCheck->name = "adultCheck";
         adultCheck->expression = "customer.age >= 18";
         adultCheck->action = "isAdult = true";
         adultCheck->timeout = std::chrono::milliseconds(100);
 
         auto creditCheck = std::make_shared<Rule>();
         creditCheck->id = 2;
+        creditCheck->name = "creditCheck";
         creditCheck->expression = "customer.creditScore >= 650";
         creditCheck->action = "isCreditWorthy = true";
-        creditCheck->dependsOnRuleName = 1;  // Runs after adult-check (id=1)
+        creditCheck->dependsOnRuleName = "adultCheck";  // Runs after adult-check
         creditCheck->timeout = std::chrono::milliseconds(200);
 
         auto nameCheck = std::make_shared<Rule>();
         nameCheck->id = 3;
+        nameCheck->name = "nameCheck";
         nameCheck->expression = "isNotEmpty(customer.name)";
         nameCheck->action = "hasValidName = true";
 

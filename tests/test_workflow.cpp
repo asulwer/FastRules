@@ -49,12 +49,14 @@ TEST_CASE("Workflow dependency resolution", "[workflow]") {
 
     auto baseRule = std::make_shared<Rule>();
     baseRule->id = 1;
+    baseRule->name = "baseRule";
     baseRule->priority = 0;
 
     auto dependentRule = std::make_shared<Rule>();
     dependentRule->id = 2;
+    dependentRule->name = "dependentRule";
     dependentRule->priority = 1;
-    dependentRule->dependsOnRuleName = 1;
+    dependentRule->dependsOnRuleName = "baseRule";
 
     workflow.rules.push_back(dependentRule); // Add in wrong order
     workflow.rules.push_back(baseRule);
@@ -72,11 +74,13 @@ TEST_CASE("Workflow circular dependency detection", "[workflow]") {
 
     auto rule1 = std::make_shared<Rule>();
     rule1->id = 1;
-    rule1->dependsOnRuleName = 2;
+    rule1->name = "rule1";
+    rule1->dependsOnRuleName = "rule2";
 
     auto rule2 = std::make_shared<Rule>();
     rule2->id = 2;
-    rule2->dependsOnRuleName = 1;
+    rule2->name = "rule2";
+    rule2->dependsOnRuleName = "rule1";
 
     workflow.rules.push_back(rule1);
     workflow.rules.push_back(rule2);

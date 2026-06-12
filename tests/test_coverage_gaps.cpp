@@ -329,13 +329,13 @@ TEST_CASE("RuleContext result management", "[context]") {
     RuleResult result;
     result.ruleId = 1;
     result.success = true;
-    ctx.setResult(1, result);
+    ctx.setResult(1, "", result);
     
-    auto retrieved = ctx.getResult(1);
+    auto retrieved = ctx.getResult("");
     REQUIRE(retrieved.has_value());
     REQUIRE(retrieved->success == true);
     
-    auto missing = ctx.getResult(2);
+    auto missing = ctx.getResult("missing");
     REQUIRE_FALSE(missing.has_value());
 }
 

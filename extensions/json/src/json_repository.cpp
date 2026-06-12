@@ -139,8 +139,8 @@ Rule JsonRuleRepository::jsonToRule(const nlohmann::json& j) const {
             if (j.contains("timeout") && j["timeout"].is_number_integer()) {
                 rule.timeout = std::chrono::milliseconds(j["timeout"].get<int>());
             }
-            if (j.contains("dependsOn") && j["dependsOn"].is_number_integer()) {
-                rule.dependsOnRuleName = j["dependsOn"].get<int>();
+            if (j.contains("dependsOn") && j["dependsOn"].is_string()) {
+                rule.dependsOnRuleName = j["dependsOn"].get<std::string>();
             }
         }
     } catch (...) {

@@ -304,13 +304,15 @@ TEST_CASE("Workflow handles large rule sets", "[security][fuzz]") {
 TEST_CASE("Workflow handles circular dependencies gracefully", "[security][fuzz]") {
     auto rule1 = Rule::Builder(5)
         .withExpression("true")
-        .dependsOn(2)
+        .dependsOn("rule2")
         .build();
+    rule1.name = "rule1";
     
     auto rule2 = Rule::Builder(6)
         .withExpression("true")
-        .dependsOn(1)
+        .dependsOn("rule1")
         .build();
+    rule2.name = "rule2";
     
     Workflow workflow;
     workflow.id = 1;
