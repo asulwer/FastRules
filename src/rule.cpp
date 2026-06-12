@@ -485,7 +485,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
     } catch (const RuleException& ex) {
         log->error("Rule {} exception: {}", id, ex.what());
         setFailure(result, ex.what());
-        context.setLastError(id, ex.what());
+        context.setLastError(name, ex.what());
     } catch (const std::exception& ex) {
         log->error("Standard exception in rule {}: {}", id, ex.what());
         setFailure(result, ex.what());
