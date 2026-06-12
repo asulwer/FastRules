@@ -306,13 +306,13 @@ TEST_CASE("Workflow handles circular dependencies gracefully", "[security][fuzz]
         .withExpression("true")
         .dependsOn("rule2")
         .build();
-    rule1.name = "rule1";
+    rule1->name = "rule1";
     
     auto rule2 = Rule::Builder(6)
         .withExpression("true")
         .dependsOn("rule1")
         .build();
-    rule2.name = "rule2";
+    rule2->name = "rule2";
     
     Workflow workflow;
     workflow.id = 1;
