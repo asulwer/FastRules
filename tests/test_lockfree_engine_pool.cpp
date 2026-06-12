@@ -44,8 +44,8 @@ TEST_CASE("LockFreeEnginePool basic push/pop", "[lockfree][pool]") {
     }
 }
 
-// REMOVED: Concurrent test hangs due to lock-free algorithm livelock under high contention
-// TODO: Replace with mutex-based pool or fix Treiber stack ABA handling
+// Concurrent test temporarily disabled - test has logic issues causing hangs
+// TODO: Fix test logic (popper threads compete for limited items)
 
 TEST_CASE("LockFreeEnginePool tagged pointer ABA protection", "[lockfree][pool][aba]") {
     LockFreeEnginePool pool;
