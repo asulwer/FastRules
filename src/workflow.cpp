@@ -11,7 +11,11 @@
 #include <unordered_set>
 #include <future>
 #include <thread>
-#include <mutex>
+
+// For _mm_pause on x86 spin-wait loops
+#if defined(_MSC_VER)
+#include <intrin.h>
+#endif
 
 namespace fastrules {
 
@@ -89,25 +93,33 @@ void Workflow::compile(LuaEngine& engine) {
     size_t poolSize = std::thread::hardware_concurrency();
     if (poolSize < 2) poolSize = 2;
     
-    log->debug("Creating engine clone pool with {} clones for workflow {}", poolSize, id);
-    enginePool_.clear();
-    enginePool_.reserve(poolSize);
-    poolMutex_ = std::make_unique<std::mutex>();
-    poolCv_ = std::make_unique<std::condition_variable>();
+    log->debug("Creating lock-free engine clone pool with {} clones for workflow {}", poolSize, id);
     
+    // Clear and rebuild the engine storage
+    enginePoolStorage_.clear();
+    enginePoolStorage_.reserve(poolSize);
+    
+    // Create engine clones and compile rules into them
     for (size_t i = 0; i < poolSize; ++i) {
         auto clone = engine.clone();
         // Pre-compile all rules into the clone
         for (auto& rule : rules) {
             rule->compile(*clone);
         }
-        enginePool_.push_back(std::move(clone));
+        enginePoolStorage_.push_back(std::move(clone));
     }
-    // Initialize availability tracking - all engines start available
-    engineAvailable_.assign(poolSize, true);
-    availableCount_ = poolSize;
+    
+    // Initialize the lock-free pool with the engines
+    // We pass the storage which contains unique_ptrs, but the pool stores raw pointers
+    // The pool doesn't own the memory - Workflow owns the engines in enginePoolStorage_
+    enginePool_ = std::make_unique<LockFreeEnginePool>();
+    for (const auto& enginePtr : enginePoolStorage_) {
+        enginePool_->push(enginePtr.get());
+    }
+    
+    useLockFreePool_ = true;
 
-    log->info("Workflow {} compiled successfully ({} engine clones ready)", id, poolSize);
+    log->info("Workflow {} compiled successfully ({} engine clones ready, lock-free pool initialized)", id, poolSize);
     compiled_ = true;
 }
 
@@ -302,34 +314,43 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
 }
 
 LuaEngine* Workflow::acquireEngine() {
-    std::unique_lock<std::mutex> lock(*poolMutex_);
-    // Wait until an engine is available
-    poolCv_->wait(lock, [this] { return availableCount_ > 0; });
-    
-    // Find first available engine
-    for (size_t i = 0; i < enginePool_.size(); ++i) {
-        if (engineAvailable_[i]) {
-            engineAvailable_[i] = false;
-            --availableCount_;
-            return enginePool_[i].get();
+    // Use lock-free pool when available, otherwise fall back to mutex-based
+    if (useLockFreePool_ && enginePool_) {
+        // Spin briefly waiting for an engine (busy-wait with yield)
+        // This is more efficient for short waits than blocking
+        LuaEngine* engine = nullptr;
+        int spinAttempts = 100;  // Spin for ~1ms before yielding
+        
+        while (spinAttempts-- > 0) {
+            engine = enginePool_->pop();
+            if (engine) {
+                return engine;
+            }
+            // Brief pause to reduce contention
+            _mm_pause();  // x86 pause instruction hints to CPU we're spinning
         }
+        
+        // If spinning didn't work, block and wait with yield
+        while (!engine) {
+            engine = enginePool_->pop();
+            if (!engine) {
+                std::this_thread::yield();
+            }
+        }
+        return engine;
     }
-    return nullptr; // Should never reach here due to wait condition
+    
+    // Legacy fallback: should not reach here if compiled properly
+    return nullptr;
 }
 
 void Workflow::releaseEngine(LuaEngine* engine) {
     if (!engine) return;
     
-    std::lock_guard<std::mutex> lock(*poolMutex_);
-    // Find the engine in the pool and mark it available
-    for (size_t i = 0; i < enginePool_.size(); ++i) {
-        if (enginePool_[i].get() == engine) {
-            engineAvailable_[i] = true;
-            ++availableCount_;
-            break;
-        }
+    if (useLockFreePool_ && enginePool_) {
+        // Push back to lock-free stack
+        enginePool_->push(engine);
     }
-    poolCv_->notify_one();
 }
 
 StreamingResult Workflow::executeStreaming(LuaEngine& engine, const std::vector<RuleParameter>& parameters) {

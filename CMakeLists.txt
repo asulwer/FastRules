@@ -313,6 +313,7 @@ set(FASTRULES_PUBLIC_HEADERS
     include/fastrules/expression_validator.hpp
     include/fastrules/fastrules.hpp
     include/fastrules/fastrules_export.hpp
+    include/fastrules/lockfree_engine_pool.hpp
     include/fastrules/logger.hpp
     include/fastrules/lua_backend.hpp
     include/fastrules/lua_backend_luabridge.hpp

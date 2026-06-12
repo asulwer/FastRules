@@ -103,8 +103,8 @@ private:
     // Engine clone pool for parallel execution optimization
     // Pre-created and pre-compiled clones avoid per-task allocation overhead
     std::vector<std::unique_ptr<LuaEngine>> enginePoolStorage_;  // Owns the engines
-    LockFreeEnginePool enginePool_;  // Lock-free stack for checkout
-    bool useLockFreePool_ = true;
+    std::unique_ptr<LockFreeEnginePool> enginePool_;  // Lock-free stack for checkout (pointer allows move)
+    bool useLockFreePool_ = false;
 
     // Helper: topological sort for dependency-aware execution
     [[nodiscard]] std::vector<std::vector<std::shared_ptr<Rule>>> buildDependencyLevels() const;
