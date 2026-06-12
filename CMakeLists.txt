@@ -470,8 +470,13 @@ if(FASTRULES_BUILD_TESTS)
         NO_DEFAULT_PATH)
     if(CATCH_CMAKE_FILE)
         include("${CATCH_CMAKE_FILE}")
-        # On Windows, copy vcpkg DLLs before test discovery
-        catch_discover_tests(fastrules_tests)
+        # On Windows, skip automatic test discovery due to DLL timing issues
+        # Tests still work via add_test, just without individual test listing in IDE
+        if(NOT WIN32)
+            catch_discover_tests(fastrules_tests)
+        else()
+            add_test(NAME fastrules_tests COMMAND fastrules_tests)
+        endif()
     else()
         # Fallback: just add the test executable directly
         add_test(NAME fastrules_tests COMMAND fastrules_tests)
