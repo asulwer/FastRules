@@ -436,6 +436,7 @@ if(FASTRULES_BUILD_TESTS)
         tests/test_benchmarks.cpp
         tests/test_error_paths.cpp
         tests/test_fuzz_expression.cpp
+        tests/test_lockfree_engine_pool.cpp
     )
 
     set_property(TARGET fastrules_tests PROPERTY FOLDER "Tests")
