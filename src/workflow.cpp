@@ -234,7 +234,7 @@ std::vector<RuleResult> Workflow::executeWithTrace(LuaEngine& engine,
 
         tracer.addStep(std::move(execStep));
 
-        context.setResult(rule->id, rule->name, result);
+        context.setResult(rule->name, result);
 
         if (!result.skipped) {
             results.push_back(result);
@@ -277,7 +277,7 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
                     // Safety check: if pool exhausted, return error
                     if (!threadEngine) {
                         RuleResult errorResult;
-                        errorResult.ruleName = rule->id;
+                        errorResult.ruleName = rule->name;
                         errorResult.success = false;
                         errorResult.exception = RuleException("Failed to acquire engine from pool - timeout or pool empty");
                         return std::make_pair(rule->id, errorResult);
@@ -288,7 +288,7 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
                         auto depResult = context.getResult(rule->dependsOnRuleName.value());
                         if (!depResult.has_value() || !depResult->isSuccess()) {
                             RuleResult skipResult;
-                            skipResult.ruleName = rule->id;
+                            skipResult.ruleName = rule->name;
                             skipResult.success = false;
                             skipResult.exception = RuleException("Dependency failed: " + rule->dependsOnRuleName.value());
                             releaseEngine(threadEngine);
@@ -315,7 +315,7 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
             results.push_back(result);
 
             // Add to context for dependent rules
-            context.setResult(ruleId, "", result);
+            context.setResult(result.ruleName, result);
         }
     }
 
@@ -396,7 +396,7 @@ StreamingResult Workflow::executeStreaming(LuaEngine& engine, const std::vector<
             }
 
             auto result = rule->execute(engine, *ctx, parameters);
-            ctx->setResult(rule->id, rule->name, result);
+            ctx->setResult(rule->name, result);
 
             if (!result.skipped) {
                 return result;

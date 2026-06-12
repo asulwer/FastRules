@@ -163,7 +163,7 @@ std::vector<AsyncRuleResult> AsyncWorkflow::executeParallelAsync(
             auto result = future.get();
             allResults.push_back(result);
             if (result.isSuccess()) {
-                context.setResult(result.result.ruleName, "", result.result);
+                context.setResult(result.result.ruleName, result.result);
             }
         }
     }
@@ -242,7 +242,7 @@ static std::vector<RuleResult> executeWorkflowLevels(
                 auto depResult = context.getResult(rule->dependsOnRuleName.value());
                 if (!depResult.has_value() || !depResult->isSuccess()) {
                     RuleResult skipResult;
-                    skipResult.ruleName = rule->id;
+                    skipResult.ruleName = rule->name;
                     skipResult.success = false;
                     skipResult.exception = RuleException("Dependency failed: " + rule->dependsOnRuleName.value());
                     results.push_back(skipResult);
