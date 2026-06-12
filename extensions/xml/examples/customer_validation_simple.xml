@@ -3,18 +3,18 @@
   <rules>
     <rule id="1" name="processAdult" isActive="true" priority="2">
       <description>Process adult customers</description>
-      <expression>customer.age >= 18 and isNotEmpty(customer.name)</expression>
-      <action>print('Adult processed: ' .. customer.name)</action>
+      <expression>customer.age &gt;= 18 and isNotEmpty(customer.name)</expression>
+      <action>print(&apos;Adult processed: &apos; .. customer.name)</action>
     </rule>
     <rule id="2" name="processMinor" isActive="true" priority="0">
       <description>Process minor customers</description>
-      <expression>customer.age < 18</expression>
-      <action>print('Minor processed: ' .. customer.name)</action>
+      <expression>customer.age &lt; 18</expression>
+      <action>print(&apos;Minor processed: &apos; .. customer.name)</action>
     </rule>
     <rule id="3" name="processVip" isActive="false" priority="1">
       <description>VIP processing (inactive)</description>
-      <expression>customer.age >= 50</expression>
-      <action>print('VIP processed: ' .. customer.name)</action>
+      <expression>customer.age &gt;= 50</expression>
+      <action>print(&apos;VIP processed: &apos; .. customer.name)</action>
     </rule>
   </rules>
 </workflow>

@@ -2,11 +2,11 @@
 <workflow id="1" name="customerValidationTyped" isActive="true">
   <rules>
     <rule id="1" name="checkAdultAndName" isActive="true" priority="2">
-      <expression>context.getResult('checkAge').success == true and context.getResult('checkName').success == true</expression>
+      <expression>context.getResult(&apos;checkAge&apos;).success == true and context.getResult(&apos;checkName&apos;).success == true</expression>
       <action>customer.processed = true</action>
       <childRules>
         <rule id="10" name="checkAge" isActive="true">
-          <expression>customer.age >= 18</expression>
+          <expression>customer.age &gt;= 18</expression>
         </rule>
         <rule id="11" name="checkName" isActive="true">
           <expression>isNotEmpty(customer.name)</expression>
@@ -14,20 +14,20 @@
       </childRules>
     </rule>
     <rule id="2" name="checkMinor" isActive="true" priority="0">
-      <expression>context.getResult('checkUnder18').success == true</expression>
+      <expression>context.getResult(&apos;checkUnder18&apos;).success == true</expression>
       <action>customer.processed = false</action>
       <childRules>
         <rule id="20" name="checkUnder18" isActive="true">
-          <expression>customer.age < 18</expression>
+          <expression>customer.age &lt; 18</expression>
         </rule>
       </childRules>
     </rule>
     <rule id="3" name="checkSenior" isActive="false" priority="1">
-      <expression>context.getResult('checkOver50').success == true</expression>
+      <expression>context.getResult(&apos;checkOver50&apos;).success == true</expression>
       <action>customer.processed = true</action>
       <childRules>
         <rule id="30" name="checkOver50" isActive="true">
-          <expression>customer.age >= 50</expression>
+          <expression>customer.age &gt;= 50</expression>
         </rule>
       </childRules>
     </rule>
