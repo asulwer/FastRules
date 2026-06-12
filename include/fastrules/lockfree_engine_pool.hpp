@@ -231,6 +231,7 @@ public:
     void push(LuaEngine* engine) {
         Node* newNode = new Node(engine);
         TaggedPtr<Node> oldHead = head_.load(std::memory_order_relaxed);
+        int attempts = 0;
         
         for (;;) {
             newNode->next = oldHead;
@@ -241,11 +242,18 @@ public:
                                             std::memory_order_relaxed)) {
                 break;
             }
+            
+            // Safety: prevent infinite loop on contention
+            if (++attempts > 10000) {
+                std::this_thread::yield();
+                attempts = 0;
+            }
         }
     }
 
     LuaEngine* pop() {
         size_t tid = getThreadId();
+        int attempts = 0;
         
         for (;;) {
             TaggedPtr<Node> oldHead = head_.load(std::memory_order_acquire);
@@ -262,6 +270,10 @@ public:
             TaggedPtr<Node> currentHead = head_.load(std::memory_order_acquire);
             if (currentHead.raw() != oldHead.raw()) {
                 hazardPointers_[tid].store(nullptr, std::memory_order_release);
+                if (++attempts > 1000) {
+                    std::this_thread::yield();
+                    attempts = 0;
+                }
                 continue;
             }
             
@@ -278,6 +290,10 @@ public:
             }
             
             hazardPointers_[tid].store(nullptr, std::memory_order_release);
+            if (++attempts > 1000) {
+                std::this_thread::yield();
+                attempts = 0;
+            }
         }
     }
 
@@ -317,9 +333,9 @@ private:
         // Free retired nodes
         TaggedPtr<Node> retired = retiredList_.exchange(TaggedPtr<Node>(), std::memory_order_acquire);
         while (retired.ptr()) {
-            Node* node = retired.ptr();
-            retired = node->next;
-            delete node;
+            Node* retiredNode = retired.ptr();
+            retired = retiredNode->next;
+            delete retiredNode;
         }
     }
 };

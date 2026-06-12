@@ -73,11 +73,9 @@ TEST_CASE("LockFreeEnginePool concurrent operations", "[lockfree][pool][concurre
             } else {
                 // Popper threads
                 threads.emplace_back([&pool, &popCount]() {
-                    int popped = 0;
-                    while (popped < NUM_ENGINES / 2) {
+                    while (popCount.load() < NUM_ENGINES) {
                         auto* engine = pool.pop();
                         if (engine) {
-                            popped++;
                             popCount++;
                         } else {
                             std::this_thread::yield();
