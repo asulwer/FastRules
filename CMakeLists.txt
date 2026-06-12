@@ -535,6 +535,11 @@ if(FASTRULES_BUILD_EXAMPLES)
     set_property(TARGET loop_example PROPERTY FOLDER "Examples")
     target_link_libraries(loop_example PRIVATE fastrules)
 
+    # Performance test executable
+    add_executable(performance_test examples/performance_test.cpp)
+    set_property(TARGET performance_test PROPERTY FOLDER "Examples")
+    target_link_libraries(performance_test PRIVATE fastrules)
+
     # ============================================================================
     # C API Wrapper for Python/C# FFI
     # ============================================================================
