@@ -18,7 +18,7 @@ TEST_CASE("JSON to XML roundtrip", "[json][xml][integration]") {
                 "action": "result = x * 2",
                 "isActive": true,
                 "priority": 5,
-                "dependsOnRuleId": null,
+                "dependsOnRuleName": null,
                 "childRules": [],
                 "timeout": 1000,
                 "cacheDuration": "5000ms"
@@ -30,7 +30,7 @@ TEST_CASE("JSON to XML roundtrip", "[json][xml][integration]") {
                 "action": "flag = true",
                 "isActive": false,
                 "priority": 1,
-                "dependsOnRuleId": 1,
+                "dependsOnRuleName": 1,
                 "childRules": [],
                 "timeout": null,
                 "cacheDuration": null
@@ -52,8 +52,8 @@ TEST_CASE("JSON to XML roundtrip", "[json][xml][integration]") {
     REQUIRE(workflow.rules[0]->cacheDuration->count() == 5000);
 
     REQUIRE(workflow.rules[1]->id == 2);
-    REQUIRE(workflow.rules[1]->dependsOnRuleId.has_value());
-    REQUIRE(workflow.rules[1]->dependsOnRuleId.value() == 1);
+    REQUIRE(workflow.rules[1]->dependsOnRuleName.has_value());
+    REQUIRE(workflow.rules[1]->dependsOnRuleName.value() == 1);
     REQUIRE(workflow.rules[1]->isActive == false);
 
     // 2. Save to XML
@@ -85,8 +85,8 @@ TEST_CASE("JSON to XML roundtrip", "[json][xml][integration]") {
     }
 
     REQUIRE(restored.rules[1]->id == workflow.rules[1]->id);
-    if (workflow.rules[1]->dependsOnRuleId.has_value()) {
-        REQUIRE(restored.rules[1]->dependsOnRuleId.has_value());
-        REQUIRE(restored.rules[1]->dependsOnRuleId.value() == workflow.rules[1]->dependsOnRuleId.value());
+    if (workflow.rules[1]->dependsOnRuleName.has_value()) {
+        REQUIRE(restored.rules[1]->dependsOnRuleName.has_value());
+        REQUIRE(restored.rules[1]->dependsOnRuleName.value() == workflow.rules[1]->dependsOnRuleName.value());
     }
 }

@@ -103,7 +103,7 @@ TEST_CASE("Parallel workflow execution", "[async][parallel]") {
     auto rule3 = std::make_shared<Rule>();
     rule3->id = 3;
     rule3->expression = "context.getResult(1).success";
-    rule3->dependsOnRuleId = 1;
+    rule3->dependsOnRuleName = 1;
     workflow.rules.push_back(rule3);
     
     SECTION("Sequential execution") {
@@ -146,13 +146,13 @@ TEST_CASE("Parallel execution with dependencies", "[async][parallel]") {
     auto ruleB = std::make_shared<Rule>();
     ruleB->id = 2;
     ruleB->expression = "context.getResult(1).success";
-    ruleB->dependsOnRuleId = 1;
+    ruleB->dependsOnRuleName = 1;
     workflow.rules.push_back(ruleB);
     
     auto ruleC = std::make_shared<Rule>();
     ruleC->id = 3;
     ruleC->expression = "context.getResult(2).success";
-    ruleC->dependsOnRuleId = 2;
+    ruleC->dependsOnRuleName = 2;
     workflow.rules.push_back(ruleC);
     
     auto ruleD = std::make_shared<Rule>();

@@ -103,7 +103,7 @@ private:
     // Pre-created and pre-compiled clones avoid per-task allocation overhead
     std::vector<std::unique_ptr<LuaEngine>> enginePool_;
     std::unique_ptr<std::mutex> poolMutex_;
-    std::condition_variable poolCv_;
+    std::unique_ptr<std::condition_variable> poolCv_;
     std::vector<bool> engineAvailable_;
     size_t availableCount_ = 0;
 

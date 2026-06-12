@@ -93,6 +93,7 @@ void Workflow::compile(LuaEngine& engine) {
     enginePool_.clear();
     enginePool_.reserve(poolSize);
     poolMutex_ = std::make_unique<std::mutex>();
+    poolCv_ = std::make_unique<std::condition_variable>();
     
     for (size_t i = 0; i < poolSize; ++i) {
         auto clone = engine.clone();
@@ -221,7 +222,7 @@ std::vector<RuleResult> Workflow::executeWithTrace(LuaEngine& engine,
 
         tracer.addStep(std::move(execStep));
 
-        context.setResult(rule->id, "", rule->name, result);
+        context.setResult(rule->id, rule->name, result);
 
         if (!result.skipped) {
             results.push_back(result);
@@ -293,7 +294,7 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
             results.push_back(result);
 
             // Add to context for dependent rules
-            context.setResult(ruleId, "", "", result);
+            context.setResult(ruleId, "", result);
         }
     }
 
@@ -303,7 +304,7 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
 LuaEngine* Workflow::acquireEngine() {
     std::unique_lock<std::mutex> lock(*poolMutex_);
     // Wait until an engine is available
-    poolCv_.wait(lock, [this] { return availableCount_ > 0; });
+    poolCv_->wait(lock, [this] { return availableCount_ > 0; });
     
     // Find first available engine
     for (size_t i = 0; i < enginePool_.size(); ++i) {
@@ -328,7 +329,7 @@ void Workflow::releaseEngine(LuaEngine* engine) {
             break;
         }
     }
-    poolCv_.notify_one();
+    poolCv_->notify_one();
 }
 
 StreamingResult Workflow::executeStreaming(LuaEngine& engine, const std::vector<RuleParameter>& parameters) {
@@ -447,7 +448,7 @@ std::vector<std::vector<std::shared_ptr<Rule>>> Workflow::buildDependencyLevels(
             // Decrease in-degree for rules depending on this one
             for (const auto& [remainingId, r] : ruleMap) {
                 (void)remainingId;
-                if (r->dependsOnRuleName == rule->id) {
+                if (r->dependsOnRuleName.has_value() && r->dependsOnRuleName.value() == rule->name) {
                     inDegree[r->id]--;
                 }
             }
@@ -479,12 +480,21 @@ void Workflow::checkCircularDependencies() const {
 
         auto it = ruleMap.find(ruleId);
         if (it != ruleMap.end() && it->second->dependsOnRuleName.has_value()) {
-            int depId = it->second->dependsOnRuleName.value();
-            if (state[depId] == VisitState::Visiting) {
-                return true; // Cycle found
+            // Look up the dependency ID from the name
+            int depId = -1;
+            for (const auto& [id, r] : ruleMap) {
+                if (r->name == it->second->dependsOnRuleName.value()) {
+                    depId = id;
+                    break;
+                }
             }
-            if (state[depId] == VisitState::Unvisited && dfs(depId)) {
-                return true;
+            if (depId != -1) {
+                if (state[depId] == VisitState::Visiting) {
+                    return true; // Cycle found
+                }
+                if (state[depId] == VisitState::Unvisited && dfs(depId)) {
+                    return true;
+                }
             }
         }
 
@@ -590,9 +600,18 @@ std::string Workflow::toGraph() const {
             
             // Add dependency edges
             if (rule->dependsOnRuleName.has_value()) {
-                int parentId = rule->dependsOnRuleName.value();
-                oss << "  \"rule_" << parentId << "\" -> \"rule_" << rule->id << "\"";
-                oss << " [color=red, penwidth=2.0, label=\"depends on\"];\n";
+                // Find parent ID by name
+                int parentId = -1;
+                for (const auto& r : rules) {
+                    if (r->name == rule->dependsOnRuleName.value()) {
+                        parentId = r->id;
+                        break;
+                    }
+                }
+                if (parentId != -1) {
+                    oss << "  \"rule_" << parentId << "\" -> \"rule_" << rule->id << "\"";
+                    oss << " [color=red, penwidth=2.0, label=\"depends on\"];\n";
+                }
             }
             
             // Recurse into child rules

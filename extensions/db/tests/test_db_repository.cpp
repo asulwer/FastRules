@@ -86,8 +86,8 @@ TEST_CASE("DbRuleRepository with SQLite", "[db]") {
         repo.save(*rule);
         
         auto found = repo.findById("complex-1");
-        REQUIRE(found->dependsOnRuleId.has_value());
-        REQUIRE(found->dependsOnRuleId.value() == "base-rule");
+        REQUIRE(found->dependsOnRuleName.has_value());
+        REQUIRE(found->dependsOnRuleName.value() == "base-rule");
     }
     }
     

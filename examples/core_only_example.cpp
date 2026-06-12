@@ -50,7 +50,7 @@ int main() {
         creditCheck->id = 2;
         creditCheck->expression = "customer.creditScore >= 650";
         creditCheck->action = "isCreditWorthy = true";
-        creditCheck->dependsOnRuleId = 1;  // Runs after adult-check (id=1)
+        creditCheck->dependsOnRuleName = 1;  // Runs after adult-check (id=1)
         creditCheck->timeout = std::chrono::milliseconds(200);
 
         auto nameCheck = std::make_shared<Rule>();

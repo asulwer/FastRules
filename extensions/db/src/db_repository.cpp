@@ -62,7 +62,7 @@ void DbRuleRepository::save(const Rule& rule) {
 void DbRuleRepository::insertRule(const Rule& rule) {
     int timeoutMs = rule.timeout.has_value() ? static_cast<int>(rule.timeout->count()) : -1;
     int cacheMs   = rule.cacheDuration.has_value() ? static_cast<int>(rule.cacheDuration->count()) : -1;
-    int dependsOn = rule.dependsOnRuleId.has_value() ? rule.dependsOnRuleId.value() : -1;
+    int dependsOn = rule.dependsOnRuleName.has_value() ? rule.dependsOnRuleName.value() : -1;
     DbBool isActive = rule.isActive;
 
     *session_ << 
@@ -75,7 +75,7 @@ void DbRuleRepository::insertRule(const Rule& rule) {
 void DbRuleRepository::updateRule(const Rule& rule) {
     int timeoutMs = rule.timeout.has_value() ? static_cast<int>(rule.timeout->count()) : -1;
     int cacheMs   = rule.cacheDuration.has_value() ? static_cast<int>(rule.cacheDuration->count()) : -1;
-    int dependsOn = rule.dependsOnRuleId.has_value() ? rule.dependsOnRuleId.value() : -1;
+    int dependsOn = rule.dependsOnRuleName.has_value() ? rule.dependsOnRuleName.value() : -1;
     DbBool isActive = rule.isActive;
 
     *session_ <<
@@ -150,7 +150,7 @@ Rule DbRuleRepository::rowToRule(soci::row& row) {
     if (cacheMs >= 0) rule.cacheDuration = std::chrono::milliseconds(cacheMs);
     
     int dependsOn = row.get<int>(8);
-    if (dependsOn >= 0) rule.dependsOnRuleId = dependsOn;
+    if (dependsOn >= 0) rule.dependsOnRuleName = dependsOn;
     
     return rule;
 }

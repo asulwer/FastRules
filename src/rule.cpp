@@ -286,7 +286,11 @@ bool Rule::hasCircularDependency(const std::vector<std::reference_wrapper<const 
         if (it == ruleMap.end() || !it->second->dependsOnRuleName.has_value()) {
             break;
         }
-        auto nameIt = nameToId.find(it->second->dependsOnRuleName.value()); if (nameIt == nameToId.end()) { break; } current = nameIt->second;
+        auto nameIt = nameToId.find(it->second->dependsOnRuleName.value());
+        if (nameIt == nameToId.end()) {
+            break;
+        }
+        current = nameIt->second;
     }
 
     return false;
@@ -302,13 +306,21 @@ std::vector<Rule::Id> Rule::getDependencyChain(const std::vector<std::reference_
 
     // Build lookup map from allRules
     std::unordered_map<int, const Rule*> ruleMap;
+    std::unordered_map<std::string, int> nameToId;
     for (const auto& ref : allRules) {
         ruleMap[ref.get().id] = &ref.get();
+        if (!ref.get().name.empty()) {
+            nameToId[ref.get().name] = ref.get().id;
+        }
     }
 
     // Follow the dependency chain
     std::unordered_set<int> visited;
-    int current = dependsOnRuleName.value();
+    auto nameIt = nameToId.find(dependsOnRuleName.value());
+    if (nameIt == nameToId.end()) {
+        return chain;
+    }
+    int current = nameIt->second;
 
     while (current != 0) {
         chain.push_back(current);
@@ -325,7 +337,11 @@ std::vector<Rule::Id> Rule::getDependencyChain(const std::vector<std::reference_
         if (it == ruleMap.end() || !it->second->dependsOnRuleName.has_value()) {
             break;
         }
-        auto nameIt = nameToId.find(it->second->dependsOnRuleName.value()); if (nameIt == nameToId.end()) { break; } current = nameIt->second;
+        auto nameIt = nameToId.find(it->second->dependsOnRuleName.value());
+        if (nameIt == nameToId.end()) {
+            break;
+        }
+        current = nameIt->second;
     }
 
     return chain;
@@ -415,7 +431,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
 
             // Store child results in context so parent expressions can access them
             for (const auto& childResult : result.childResults) {
-                context.setResult(childResult.ruleId, rule->name, childResult);
+                context.setResult(childResult.ruleId, name, childResult);
             }
 
             // Preference: parent only evaluates if ALL children pass
@@ -424,7 +440,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
                     log->info("Child rule {} failed — parent {} aborted", childResult.ruleId, id);
                     setFailure(result, "Child rule " + std::to_string(childResult.ruleId) + " failed");
                     storeInCache(parameters, result);
-                    context.setResult(id, rule->name, result);
+                    context.setResult(id, name, result);
                     return result;
                 }
             }
@@ -438,7 +454,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
                 log->info("Rule {} expression evaluated to false", id);
                 setFailure(result, "Expression evaluated to false");
                 storeInCache(parameters, result);
-                context.setResult(id, rule->name, result);
+                context.setResult(id, name, result);
                 return result;
             }
         }
@@ -494,7 +510,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
         std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime));
 
     // Store result in context for dependency access
-    context.setResult(id, rule->name, result);
+    context.setResult(id, name, result);
 
     // Store in cache if applicable
     storeInCache(parameters, result);

@@ -112,10 +112,10 @@ nlohmann::json JsonLoader::serializeRule(const Rule& rule) {
     j["expression"] = rule.expression;
     j["action"] = rule.action;
 
-    if (rule.dependsOnRuleId.has_value()) {
-        j["dependsOnRuleId"] = rule.dependsOnRuleId.value();
+    if (rule.dependsOnRuleName.has_value()) {
+        j["dependsOnRuleName"] = rule.dependsOnRuleName.value();
     } else {
-        j["dependsOnRuleId"] = nullptr;
+        j["dependsOnRuleName"] = nullptr;
     }
 
     if (rule.timeout.has_value()) {

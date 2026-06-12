@@ -17,7 +17,7 @@ TEST_CASE("JsonLoader workflow parsing", "[json]") {
                 "action": "x = 1",
                 "isActive": true,
                 "priority": 0,
-                "dependsOnRuleId": null,
+                "dependsOnRuleName": null,
                 "childRules": [],
                 "timeout": null,
                 "cacheDuration": null
@@ -43,7 +43,7 @@ TEST_CASE("JsonLoader rule parsing", "[json]") {
         "expression": "value > 0",
         "isActive": true,
         "priority": 5,
-        "dependsOnRuleId": 2,
+        "dependsOnRuleName": 2,
         "timeout": 1000,
         "cacheDuration": "5000ms"
     })";
@@ -52,8 +52,8 @@ TEST_CASE("JsonLoader rule parsing", "[json]") {
 
     REQUIRE(rule->id == 1);
     REQUIRE(rule->priority == 5);
-    REQUIRE(rule->dependsOnRuleId.has_value());
-    REQUIRE(rule->dependsOnRuleId.value() == 2);
+    REQUIRE(rule->dependsOnRuleName.has_value());
+    REQUIRE(rule->dependsOnRuleName.value() == 2);
     REQUIRE(rule->timeout.has_value());
     REQUIRE(rule->timeout->count() == 1000);
     REQUIRE(rule->cacheDuration.has_value());
