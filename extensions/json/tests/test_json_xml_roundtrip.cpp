@@ -30,7 +30,7 @@ TEST_CASE("JSON to XML roundtrip", "[json][xml][integration]") {
                 "action": "flag = true",
                 "isActive": false,
                 "priority": 1,
-                "dependsOnRuleName": 1,
+                "dependsOnRuleName": "rule1",
                 "childRules": [],
                 "timeout": null,
                 "cacheDuration": null
@@ -53,7 +53,7 @@ TEST_CASE("JSON to XML roundtrip", "[json][xml][integration]") {
 
     REQUIRE(workflow.rules[1]->id == 2);
     REQUIRE(workflow.rules[1]->dependsOnRuleName.has_value());
-    REQUIRE(workflow.rules[1]->dependsOnRuleName.value() == 1);
+    REQUIRE(workflow.rules[1]->dependsOnRuleName.value() == "rule1");
     REQUIRE(workflow.rules[1]->isActive == false);
 
     // 2. Save to XML

@@ -652,55 +652,55 @@ TEST_CASE("getDependencyChain handles A -> B -> A cycle", "[rule][circular-depen
 
 TEST_CASE("Builder dependsOn without validation allows cycle", "[rule][builder][circular-dependency]") {
     // This should NOT throw because we're using the simple dependsOn
-    auto ruleA = Rule::Builder(4).dependsOn(2).build();
-    auto ruleB = Rule::Builder(3).dependsOn(1).build();
+    auto ruleA = Rule::Builder(4).dependsOn("rule2").build();
+    auto ruleB = Rule::Builder(3).dependsOn("rule1").build();
 
     // Cycle is allowed at build time
-    REQUIRE(ruleA->dependsOnRuleName == 2);
-    REQUIRE(ruleB->dependsOnRuleName == 1);
+    REQUIRE(ruleA->dependsOnRuleName == "rule2");
+    REQUIRE(ruleB->dependsOnRuleName == "rule1");
 }
 
 TEST_CASE("Builder dependsOn with validation throws on self-dependency", "[rule][builder][circular-dependency]") {
-    Rule a; a.id = 1;
+    Rule a; a.id = 1; a.name = "rule1";
     std::vector<std::reference_wrapper<const Rule>> all = {a};
 
     // Building "A" that depends on "A" should throw when validation is enabled
     REQUIRE_THROWS_AS(
-        Rule::Builder(1).dependsOn(1, all),
+        Rule::Builder(1).dependsOn("rule1", all),
         RuleValidationException
     );
 }
 
 TEST_CASE("Builder dependsOn with validation throws on A -> B -> A", "[rule][builder][circular-dependency]") {
-    Rule b; b.id = 1; b.dependsOnRuleName = "rule4";
+    Rule b; b.id = 1; b.name = "rule1"; b.dependsOnRuleName = "rule4";
     std::vector<std::reference_wrapper<const Rule>> all = {b};
 
     // Building "A" that depends on "B" should throw because B already depends on A
     REQUIRE_THROWS_AS(
-        Rule::Builder(4).dependsOn(2, all),
+        Rule::Builder(4).dependsOn("rule1", all),
         RuleValidationException
     );
 }
 
 TEST_CASE("Builder dependsOn with validation passes for valid chain", "[rule][builder][circular-dependency]") {
-    Rule b; b.id = 1; b.dependsOnRuleName = "rule5";
-    Rule c; c.id = 2; // No dependency
+    Rule b; b.id = 1; b.name = "rule1"; b.dependsOnRuleName = "rule5";
+    Rule c; c.id = 2; c.name = "rule2"; // No dependency
     std::vector<std::reference_wrapper<const Rule>> all = {b, c};
 
     // Building "A" that depends on "B" should succeed (A -> B -> C, no cycle)
-    auto ruleA = Rule::Builder(4).dependsOn(2, all).build();
-    REQUIRE(ruleA->dependsOnRuleName == 2);
+    auto ruleA = Rule::Builder(4).dependsOn("rule2", all).build();
+    REQUIRE(ruleA->dependsOnRuleName == "rule2");
 }
 
 TEST_CASE("Builder dependsOn with validation passes for long chain", "[rule][builder][circular-dependency]") {
-    Rule b; b.id = 1; b.dependsOnRuleName = "rule5";
-    Rule c; c.id = 2; c.dependsOnRuleName = "rule10";
-    Rule d; d.id = 3; d.dependsOnRuleName = "rule11";
-    Rule e; e.id = 4; // No dependency
+    Rule b; b.id = 1; b.name = "rule1"; b.dependsOnRuleName = "rule5";
+    Rule c; c.id = 2; c.name = "rule2"; b.dependsOnRuleName = "rule10";
+    Rule d; d.id = 3; d.name = "rule3"; b.dependsOnRuleName = "rule11";
+    Rule e; e.id = 4; e.name = "rule4"; // No dependency
     std::vector<std::reference_wrapper<const Rule>> all = {b, c, d, e};
 
     // Building "A" that depends on "B" should succeed (A -> B -> C -> D -> E, no cycle)
-    auto ruleA = Rule::Builder(6).dependsOn(1, all).build();
-    REQUIRE(ruleA->dependsOnRuleName == 1);
+    auto ruleA = Rule::Builder(6).dependsOn("rule1", all).build();
+    REQUIRE(ruleA->dependsOnRuleName == "rule1");
 }
 

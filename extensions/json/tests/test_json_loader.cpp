@@ -43,7 +43,7 @@ TEST_CASE("JsonLoader rule parsing", "[json]") {
         "expression": "value > 0",
         "isActive": true,
         "priority": 5,
-        "dependsOnRuleName": 2,
+        "dependsOnRuleName": "dependencyRule",
         "timeout": 1000,
         "cacheDuration": "5000ms"
     })";
@@ -53,7 +53,7 @@ TEST_CASE("JsonLoader rule parsing", "[json]") {
     REQUIRE(rule->id == 1);
     REQUIRE(rule->priority == 5);
     REQUIRE(rule->dependsOnRuleName.has_value());
-    REQUIRE(rule->dependsOnRuleName.value() == 2);
+    REQUIRE(rule->dependsOnRuleName.value() == "dependencyRule");
     REQUIRE(rule->timeout.has_value());
     REQUIRE(rule->timeout->count() == 1000);
     REQUIRE(rule->cacheDuration.has_value());
