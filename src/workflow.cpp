@@ -12,9 +12,9 @@
 #include <future>
 #include <thread>
 
-// For _mm_pause on x86 spin-wait loops
-#if defined(_MSC_VER)
-#include <intrin.h>
+// Platform-specific intrinsics for spin-wait
+#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
+    #include <intrin.h>  // For _mm_pause on MSVC x86/x64
 #endif
 
 namespace fastrules {
@@ -326,8 +326,15 @@ LuaEngine* Workflow::acquireEngine() {
             if (engine) {
                 return engine;
             }
-            // Brief pause to reduce contention
+            // Brief pause to reduce contention on x86
+            // On non-x86 platforms, just yield to reduce CPU usage
+#if defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)
             _mm_pause();  // x86 pause instruction hints to CPU we're spinning
+#elif defined(__arm__) || defined(__aarch64__) || defined(_M_ARM) || defined(_M_ARM64)
+            __asm__ __volatile__("yield" ::: "memory");  // ARM yield
+#else
+            std::this_thread::yield();  // Generic fallback
+#endif
         }
         
         // If spinning didn't work, block and wait with yield
