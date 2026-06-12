@@ -20,4 +20,7 @@ target_link_libraries(fastrules-db-tests PRIVATE
 )
 
 include(Catch)
-catch_discover_tests(fastrules-db-tests)
+# Skip automatic test discovery on Windows (causes MSB3073 when DLLs not in PATH)
+if(NOT WIN32)
+    catch_discover_tests(fastrules-db-tests)
+endif()

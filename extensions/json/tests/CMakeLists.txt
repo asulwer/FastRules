@@ -19,4 +19,7 @@ target_link_libraries(fastrules-json-tests PRIVATE
 )
 
 include(Catch)
-catch_discover_tests(fastrules-json-tests)
+# Skip automatic test discovery on Windows (causes MSB3073 when DLLs not in PATH)
+if(NOT WIN32)
+    catch_discover_tests(fastrules-json-tests)
+endif()
