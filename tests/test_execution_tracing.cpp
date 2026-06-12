@@ -9,8 +9,8 @@ TEST_CASE("ExecutionTracer basic", "[execution_tracing]") {
     tracer.start();
     REQUIRE(tracer.isActive());
 
-    tracer.record(1, "compile", true, "Compiled successfully");
-    tracer.record(1, "execute", true, "Rule evaluated to true");
+    tracer.record("rule1", "compile", true, "Compiled successfully");
+    tracer.record("rule1", "execute", true, "Rule evaluated to true");
 
     tracer.finish(true);
     REQUIRE(!tracer.isActive());
@@ -54,7 +54,7 @@ TEST_CASE("ExecutionTrace query methods", "[execution_tracing]") {
     const auto& trace = tracer.getTrace();
 
     // getStepsForRule
-    auto ruleASteps = trace.getStepsForRule(1);
+    auto ruleASteps = trace.getStepsForRule("rule1");
     REQUIRE(ruleASteps.size() == 2);
 
     // getTotalTimeInStage
@@ -71,7 +71,7 @@ TEST_CASE("ExecutionTrace JSON serialization", "[execution_tracing]") {
     ExecutionTracer tracer(3);
     tracer.start();
 
-    tracer.record(1, "execute", true, "OK");
+    tracer.record("rule1", "execute", true, "OK");
     tracer.finish(true);
 
     // toJson() has been removed from core — use JsonSerialization::serialize(trace)
@@ -105,6 +105,6 @@ TEST_CASE("Workflow executeWithTrace", "[execution_tracing]") {
     const auto& trace = tracer.getTrace();
     REQUIRE(trace.steps.size() >= 2);  // At least execute steps for both rules
 
-    auto rule1Steps = trace.getStepsForRule(1);
+    auto rule1Steps = trace.getStepsForRule("rule1");
     REQUIRE(!rule1Steps.empty());
 }

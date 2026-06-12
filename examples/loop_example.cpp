@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
                       << " (age " << customer.age << ")" << std::endl;
 
             for (const auto& result : results) {
-                std::cout << "    " << result.ruleId
+                std::cout << "    " << result.ruleName
                           << ": " << (result.isSuccess() ? "PASS" : "FAIL")
                           << std::endl;
             }

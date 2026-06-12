@@ -134,7 +134,7 @@ int main() {
 
         auto stream = workflow.executeStreaming(engine, params);
         for (const auto& result : stream) {
-            std::cout << result.ruleId << ": " << (result.isSuccess() ? "PASS" : "FAIL") << std::endl;
+            std::cout << result.ruleName << ": " << (result.isSuccess() ? "PASS" : "FAIL") << std::endl;
         }
 
         // ================================================================

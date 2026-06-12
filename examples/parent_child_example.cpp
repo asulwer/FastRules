@@ -83,7 +83,7 @@ int main() {
             auto results = workflow.execute(engine, params);
 
             for (const auto& result : results) {
-                std::cout << "  Rule: " << result.ruleId
+                std::cout << "  Rule: " << result.ruleName
                           << " - Success: " << (result.isSuccess() ? "Yes" : "No")
                           << std::endl;
             }

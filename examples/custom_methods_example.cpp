@@ -237,7 +237,7 @@ int main() {
 
             std::cout << "  Results:" << std::endl;
             for (const auto& result : results) {
-                std::cout << "    " << result.ruleId
+                std::cout << "    " << result.ruleName
                           << ": " << (result.isSuccess() ? "PASS" : "FAIL");
                 if (result.exception.has_value()) {
                     std::cout << " [ERROR: " << result.exception.value().what() << "]";

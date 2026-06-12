@@ -229,7 +229,7 @@ TEST_CASE("ExecutionTracer recording", "[tracing]") {
     ExecutionTracer tracer;
     
     tracer.start();  // Must start before recording
-    tracer.record(1, "evaluate", true, "passed");
+    tracer.record("rule1", "evaluate", true, "passed");
     
     auto trace = tracer.getTrace();
     REQUIRE(trace.steps.size() == 1);
@@ -242,7 +242,7 @@ TEST_CASE("ExecutionTracer failure recording", "[tracing]") {
     ExecutionTracer tracer;
     
     tracer.start();  // Must start before recording
-    tracer.record(1, "evaluate", false, "failed");
+    tracer.record("rule1", "evaluate", false, "failed");
     
     auto trace = tracer.getTrace();
     REQUIRE(trace.steps.size() == 1);
@@ -253,7 +253,7 @@ TEST_CASE("ExecutionTracer clear", "[tracing]") {
     ExecutionTracer tracer;
     
     tracer.start();  // Must start before recording
-    tracer.record(1, "evaluate");
+    tracer.record("rule1", "evaluate");
     
     auto trace = tracer.getTrace();
     // steps is const access; just verify it was recorded
@@ -329,7 +329,7 @@ TEST_CASE("RuleContext result management", "[context]") {
     RuleResult result;
     result.ruleName = 1;
     result.success = true;
-    ctx.setResult(1, "testRule", result);
+    ctx.setResult("rule1", "testRule", result);
     
     auto retrieved = ctx.getResult("testRule");
     REQUIRE(retrieved.has_value());

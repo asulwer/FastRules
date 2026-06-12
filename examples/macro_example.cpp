@@ -136,7 +136,7 @@ int main() {
             auto results = workflow.execute(engine, params);
 
             for (const auto& result : results) {
-                std::cout << "  Rule " << result.ruleId
+                std::cout << "  Rule " << result.ruleName
                           << ": " << (result.isSuccess() ? "PASS" : "FAIL");
                 if (result.exception.has_value()) {
                     std::cout << " [ERROR: " << result.exception.value().what() << "]";
