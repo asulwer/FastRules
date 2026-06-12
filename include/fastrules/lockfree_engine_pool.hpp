@@ -7,7 +7,6 @@
 #include <vector>
 #include <thread>
 #include <mutex>
-#include <condition_variable>
 #include <stack>
 
 namespace fastrules {
@@ -16,11 +15,13 @@ namespace fastrules {
 class LuaEngine;
 
 /**
- * @brief Thread-safe engine pool using mutex-based stack
+ * @brief Thread-safe engine pool with try-lock optimization
  * 
- * This implementation uses a std::stack with mutex protection.
- * It provides reliable thread-safety without the complexity and
- * potential livelock issues of lock-free algorithms.
+ * Fast path: Try to acquire mutex without blocking
+ * Slow path: Block with condition variable
+ * 
+ * This provides good performance under low contention while
+ * avoiding the livelock issues of pure lock-free algorithms.
  */
 class LockFreeEnginePool {
 public:
@@ -31,35 +32,59 @@ public:
     /**
      * @brief Push an engine onto the pool
      * 
-     * Thread-safe: acquires mutex, adds engine to stack.
+     * Thread-safe, wakes up waiting threads.
      */
     void push(LuaEngine* engine) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        stack_.push(engine);
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            stack_.push(engine);
+        }
+        cv_.notify_one();
     }
 
     /**
      * @brief Pop an engine from the pool
      * 
-     * Thread-safe: acquires mutex, returns top engine if available.
-     * Returns nullptr if pool is empty.
+     * Thread-safe: returns immediately if available, nullptr if empty.
+     * Non-blocking - use tryPop() for blocking behavior.
      * 
      * @return Pointer to LuaEngine, or nullptr if pool is empty
      */
     LuaEngine* pop() {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (stack_.empty()) {
-            return nullptr;
+        // Fast path: try non-blocking pop
+        {
+            std::unique_lock<std::mutex> lock(mutex_, std::try_to_lock);
+            if (lock.owns_lock() && !stack_.empty()) {
+                LuaEngine* engine = stack_.top();
+                stack_.pop();
+                return engine;
+            }
         }
-        LuaEngine* engine = stack_.top();
-        stack_.pop();
-        return engine;
+        return nullptr;
+    }
+
+    /**
+     * @brief Try to pop with timeout
+     * 
+     * Blocks until engine available or timeout.
+     * Used by acquireEngine() in workflow.cpp
+     */
+    LuaEngine* tryPop(std::chrono::milliseconds timeout = std::chrono::milliseconds(100)) {
+        std::unique_lock<std::mutex> lock(mutex_);
+        
+        // Wait with timeout
+        bool gotEngine = cv_.wait_for(lock, timeout, [this] { return !stack_.empty(); });
+        
+        if (gotEngine && !stack_.empty()) {
+            LuaEngine* engine = stack_.top();
+            stack_.pop();
+            return engine;
+        }
+        return nullptr;
     }
 
     /**
      * @brief Initialize pool with pre-created engines
-     * 
-     * Adds all engines from the vector to the pool.
      */
     void initializePool(const std::vector<std::unique_ptr<LuaEngine>>& engines) {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -78,9 +103,6 @@ public:
         return stack_.empty();
     }
 
-    /**
-     * @brief Get approximate size (for debugging)
-     */
     size_t size() const {
         std::lock_guard<std::mutex> lock(mutex_);
         return stack_.size();
@@ -88,6 +110,7 @@ public:
 
 private:
     mutable std::mutex mutex_;
+    std::condition_variable cv_;
     std::stack<LuaEngine*> stack_;
 };
 

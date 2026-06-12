@@ -325,49 +325,25 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
 LuaEngine* Workflow::acquireEngine() {
     // Use lock-free pool when available, otherwise fall back to mutex-based
     if (useLockFreePool_ && enginePool_) {
-        // Spin briefly waiting for an engine (busy-wait with yield)
-        // This is more efficient for short waits than blocking
-        LuaEngine* engine = nullptr;
-        int spinAttempts = 100;  // Spin for ~1ms before yielding
-        
-        while (spinAttempts-- > 0) {
-            engine = enginePool_->pop();
-            if (engine) {
-                return engine;
-            }
-            // Brief pause to reduce contention on x86
-            // On non-x86 platforms, just yield to reduce CPU usage
-#if defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)
-            _mm_pause();  // x86 pause instruction hints to CPU we're spinning
-#elif defined(__arm__) || defined(__aarch64__) || defined(_M_ARM) || defined(_M_ARM64)
-            __asm__ __volatile__("yield" ::: "memory");  // ARM yield
-#else
-            std::this_thread::yield();  // Generic fallback
-#endif
+        // Fast path: try immediate pop
+        LuaEngine* engine = enginePool_->pop();
+        if (engine) {
+            return engine;
         }
         
-        // If spinning didn't work, block and wait with yield (max 1 second)
-        auto startTime = std::chrono::steady_clock::now();
-        while (!engine) {
-            engine = enginePool_->pop();
-            if (engine) {
-                return engine;
-            }
-            std::this_thread::yield();
-            
-            // Safety timeout: if waiting more than 1 second, something is wrong
-            auto elapsed = std::chrono::steady_clock::now() - startTime;
-            if (elapsed > std::chrono::seconds(1)) {
-                auto log = fastrules::logger();
-                if (log) {
-                    log->warn("Timeout waiting for engine from pool after 1s. "
-                               "Pool size: {} threads requesting engines may exceed pool size.",
-                               enginePoolStorage_.size());
-                }
-                return nullptr;
-            }
+        // Slow path: wait with timeout
+        engine = enginePool_->tryPop(std::chrono::milliseconds(100));
+        if (engine) {
+            return engine;
         }
-        return engine;
+        
+        // Timeout - log warning and return nullptr
+        auto log = fastrules::logger();
+        if (log) {
+            log->warn("Timeout waiting for engine from pool (pool size: {})", 
+                       enginePoolStorage_.size());
+        }
+        return nullptr;
     }
     
     // Legacy fallback: should not reach here if compiled properly

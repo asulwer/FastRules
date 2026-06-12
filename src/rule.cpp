@@ -282,11 +282,11 @@ bool Rule::hasCircularDependency(const std::vector<std::reference_wrapper<const 
         visited.insert(current);
 
         // Move to next dependency
-        auto it = ruleMap.find(current);
-        if (it == ruleMap.end() || !it->second->dependsOnRuleName.has_value()) {
+        auto depIt = ruleMap.find(current);
+        if (depIt == ruleMap.end() || !depIt->second->dependsOnRuleName.has_value()) {
             break;
         }
-        auto nameIt = nameToId.find(it->second->dependsOnRuleName.value());
+        auto nameIt = nameToId.find(depIt->second->dependsOnRuleName.value());
         if (nameIt == nameToId.end()) {
             break;
         }
