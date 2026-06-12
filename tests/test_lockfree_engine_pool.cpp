@@ -3,6 +3,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
+#include <iostream>  // For std::cout in benchmark test
 #include "fastrules/lockfree_engine_pool.hpp"
 #include "fastrules/lua_engine.hpp"
 #include <thread>
