@@ -474,13 +474,13 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
         log->error("Rate limit exception in rule {}: {}", id, ex.what());
         result.success = false;
         result.exception = RuleException(ex.what());
-        context.setLastError(id, "Rate limit exceeded: " + std::string(ex.what()));
+        context.setLastError(name, "Rate limit exceeded: " + std::string(ex.what()));
         PerformanceCounters::instance().recordExecution(false, false, false, false, true);
     } catch (const RuleTimeoutException& ex) {
         log->error("Timeout in rule {}: {}", id, ex.what());
         result.success = false;
         result.exception = ex;
-        context.setLastError(id, "Timeout: " + std::string(ex.what()));
+        context.setLastError(name, "Timeout: " + std::string(ex.what()));
         PerformanceCounters::instance().recordExecution(false, false, false, true, false);
     } catch (const RuleException& ex) {
         log->error("Rule {} exception: {}", id, ex.what());
