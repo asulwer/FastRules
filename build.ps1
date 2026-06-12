@@ -152,7 +152,7 @@ $cmakeArgs = @(
     '-B', $buildDir
     '-S', $root
     '-G', 'Visual Studio 17 2022'
-    '-T', 'host=x64'
+    '-A', 'x64'
     '-DCMAKE_CXX_STANDARD=23'
     '-DCMAKE_CXX_STANDARD_REQUIRED=ON'
     '-DFASTRULES_BUILD_TESTS=ON'
