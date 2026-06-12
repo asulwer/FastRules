@@ -327,11 +327,11 @@ TEST_CASE("RuleContext result management", "[context]") {
     RuleContext ctx;
     
     RuleResult result;
-    result.ruleName = 1;
+    result.ruleName = "rule1";
     result.success = true;
-    ctx.setResult("rule1", "testRule", result);
+    ctx.setResult("rule1", result);
     
-    auto retrieved = ctx.getResult("testRule");
+    auto retrieved = ctx.getResult("rule1");
     REQUIRE(retrieved.has_value());
     REQUIRE(retrieved->success == true);
     

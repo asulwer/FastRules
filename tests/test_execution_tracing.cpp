@@ -64,7 +64,7 @@ TEST_CASE("ExecutionTrace query methods", "[execution_tracing]") {
     // getSlowestStep
     auto slowest = trace.getSlowestStep();
     REQUIRE(slowest.has_value());
-    REQUIRE(slowest->ruleId == 2);
+    REQUIRE(slowest->ruleName == "rule2");
 }
 
 TEST_CASE("ExecutionTrace JSON serialization", "[execution_tracing]") {
