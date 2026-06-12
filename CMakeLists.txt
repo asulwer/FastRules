@@ -448,24 +448,15 @@ if(FASTRULES_BUILD_TESTS)
 
     target_link_libraries(fastrules_tests PRIVATE fastrules Catch2::Catch2WithMain)
 
-    # Copy vcpkg DLLs to output directory on Windows so tests can find them
-    # Use generator expression to select correct path for Release vs Debug
+        # Copy vcpkg DLLs to output directory on Windows so tests can find them
+    # Use generator expression to select correct DLLs for each configuration
     if(WIN32 AND VCPKG_INSTALLED_DIR)
-        # Copy Release DLLs for Release configuration
+        # $<IF:condition,true_value,false_value> selects based on build type
         add_custom_command(TARGET fastrules_tests POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin"
+                "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin>"
                 "$<TARGET_FILE_DIR:fastrules_tests>"
-            COMMENT "Copying vcpkg Release DLLs to output directory"
-            CONFIGURATION Release
-        )
-        # Copy Debug DLLs for Debug configuration
-        add_custom_command(TARGET fastrules_tests POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin"
-                "$<TARGET_FILE_DIR:fastrules_tests>"
-            COMMENT "Copying vcpkg Debug DLLs to output directory"
-            CONFIGURATION Debug
+            COMMENT "Copying vcpkg DLLs ($<CONFIG>) to output directory"
         )
     endif()
 
