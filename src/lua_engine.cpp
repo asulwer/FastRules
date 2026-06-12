@@ -279,21 +279,21 @@ void LuaEngine::setupContextTable(RuleContext& context) {
         if (args.empty() || currentContext_ == nullptr) {
             return results;
         }
-        int ruleId = 0;
+        std::string ruleName;
         if (args[0]->isString()) {
             std::string ruleIdStr = args[0]->toString();
-            ruleId = std::stoi(ruleIdStr);
+            ruleName = ruleIdStr;
         } else {
-            ruleId = static_cast<int>(args[0]->toNumber());
+            ruleName = std::to_string(static_cast<int>(args[0]->toNumber()));
         }
-        auto result = currentContext_->getResult(ruleId);
+        auto result = currentContext_->getResult(ruleName);
         auto tbl = backend_->createTable();
         if (result.has_value()) {
             tbl->set("success", *backend_->makeBool(result->success));
             tbl->set("ruleId", *backend_->makeString(std::to_string(result->ruleId)));
         } else {
             tbl->set("success", *backend_->makeBool(false));
-            tbl->set("ruleId", *backend_->makeString(std::to_string(ruleId)));
+            tbl->set("ruleId", *backend_->makeString(ruleName));
         }
         results.push_back(std::move(tbl));
         return results;

@@ -200,9 +200,9 @@ TEST_CASE("Circular dependency A -> B -> A detected", "[rule][validation][circul
 }
 
 TEST_CASE("Circular dependency A -> B -> C -> A detected", "[rule][validation][circular]") {
-    Rule a; a.id = 1; a.dependsOnRuleName = "rule3";
-    Rule b; b.id = 1; b.dependsOnRuleName = "rule5";
-    Rule c; c.id = 1; c.dependsOnRuleName = "rule4";
+    Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule3";
+    Rule b; b.id = 1; b.name = "rule1"; b.dependsOnRuleName = "rule5";
+    Rule c; c.id = 1; c.name = "rule1"; c.dependsOnRuleName = "rule4";
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b, c};
 
@@ -220,7 +220,7 @@ TEST_CASE("Self-dependency detected", "[rule][validation][circular]") {
 }
 
 TEST_CASE("No circular dependency passes validation", "[rule][validation][circular]") {
-    Rule a; a.id = 1; a.dependsOnRuleName = "rule2";
+    Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule2";
     Rule b; b.id = 2;
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b};
@@ -514,8 +514,8 @@ TEST_CASE("hasCircularDependency detects self-dependency", "[rule][circular-depe
 }
 
 TEST_CASE("hasCircularDependency detects A -> B -> A", "[rule][circular-dependency]") {
-    Rule a; a.id = 1; a.dependsOnRuleName = "rule2";
-    Rule b; b.id = 2; b.dependsOnRuleName = "rule1";
+    Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule2";
+    Rule b; b.id = 2; b.name = "rule2"; b.dependsOnRuleName = "rule1";
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b};
 
@@ -524,9 +524,9 @@ TEST_CASE("hasCircularDependency detects A -> B -> A", "[rule][circular-dependen
 }
 
 TEST_CASE("hasCircularDependency detects A -> B -> C -> A", "[rule][circular-dependency]") {
-    Rule a; a.id = 1; a.dependsOnRuleName = "rule2";
-    Rule b; b.id = 2; b.dependsOnRuleName = "rule3";
-    Rule c; c.id = 3; c.dependsOnRuleName = "rule1";
+    Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule2";
+    Rule b; b.id = 2; b.name = "rule2"; b.dependsOnRuleName = "rule3";
+    Rule c; c.id = 3; c.name = "rule3"; c.dependsOnRuleName = "rule1";
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b, c};
 
@@ -536,10 +536,10 @@ TEST_CASE("hasCircularDependency detects A -> B -> C -> A", "[rule][circular-dep
 }
 
 TEST_CASE("hasCircularDependency returns false for long chain without cycle", "[rule][circular-dependency]") {
-    Rule a; a.id = 1; a.dependsOnRuleName = "rule2";
-    Rule b; b.id = 2; b.dependsOnRuleName = "rule3";
-    Rule c; c.id = 3; c.dependsOnRuleName = "rule4";
-    Rule d; d.id = 4; // No dependency
+    Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule2";
+    Rule b; b.id = 2; b.name = "rule2"; b.dependsOnRuleName = "rule3";
+    Rule c; c.id = 3; c.name = "rule3"; c.dependsOnRuleName = "rule4";
+    Rule d; d.id = 4; d.name = "rule4"; // No dependency
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b, c, d};
 
@@ -550,7 +550,7 @@ TEST_CASE("hasCircularDependency returns false for long chain without cycle", "[
 }
 
 TEST_CASE("hasCircularDependency returns false for no dependency", "[rule][circular-dependency]") {
-    Rule a; a.id = 1; // No dependency
+    Rule a; a.id = 1; a.name = "rule1"; // No dependency
 
     std::vector<std::reference_wrapper<const Rule>> all = {a};
 
@@ -558,7 +558,7 @@ TEST_CASE("hasCircularDependency returns false for no dependency", "[rule][circu
 }
 
 TEST_CASE("hasCircularDependency handles missing dependency", "[rule][circular-dependency]") {
-    Rule a; a.id = 1; a.dependsOnRuleName = "rule3"; // B not in allRules
+    Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule3"; // B not in allRules
 
     std::vector<std::reference_wrapper<const Rule>> all = {a};
 
@@ -583,8 +583,8 @@ TEST_CASE("getDependencyChain returns just ID for no dependency", "[rule][circul
 }
 
 TEST_CASE("getDependencyChain returns chain for single dependency", "[rule][circular-dependency]") {
-    Rule a; a.id = 1; a.dependsOnRuleName = "rule2";
-    Rule b; b.id = 2; // No dependency
+    Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule2";
+    Rule b; b.id = 2; b.name = "rule2"; // No dependency
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b};
 
@@ -597,10 +597,10 @@ TEST_CASE("getDependencyChain returns chain for single dependency", "[rule][circ
 }
 
 TEST_CASE("getDependencyChain returns full chain for long chain", "[rule][circular-dependency]") {
-    Rule a; a.id = 1; a.dependsOnRuleName = "rule2";
-    Rule b; b.id = 2; b.dependsOnRuleName = "rule3";
-    Rule c; c.id = 3; c.dependsOnRuleName = "rule4";
-    Rule d; d.id = 4; // No dependency
+    Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule2";
+    Rule b; b.id = 2; b.name = "rule2"; b.dependsOnRuleName = "rule3";
+    Rule c; c.id = 3; c.name = "rule3"; c.dependsOnRuleName = "rule4";
+    Rule d; d.id = 4; d.name = "rule4"; // No dependency
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b, c, d};
 
@@ -615,7 +615,7 @@ TEST_CASE("getDependencyChain returns full chain for long chain", "[rule][circul
 }
 
 TEST_CASE("getDependencyChain handles self-dependency cycle", "[rule][circular-dependency]") {
-    Rule a; a.id = 1; a.dependsOnRuleName = "rule1";
+    Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule1";
 
     std::vector<std::reference_wrapper<const Rule>> all = {a};
 
@@ -630,8 +630,8 @@ TEST_CASE("getDependencyChain handles self-dependency cycle", "[rule][circular-d
 }
 
 TEST_CASE("getDependencyChain handles A -> B -> A cycle", "[rule][circular-dependency]") {
-    Rule a; a.id = 1; a.dependsOnRuleName = "rule2";
-    Rule b; b.id = 2; b.dependsOnRuleName = "rule1";
+    Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule2";
+    Rule b; b.id = 2; b.name = "rule2"; b.dependsOnRuleName = "rule1";
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b};
 
