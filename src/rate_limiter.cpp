@@ -15,17 +15,17 @@ RateLimiter& RateLimiter::global() {
     return *globalInstance_;
 }
 
-void RateLimiter::checkAllowed(const std::string& ruleId) {
-    if (!isAllowed(ruleId)) {
+void RateLimiter::checkAllowed(const std::string& ruleName) {
+    if (!isAllowed(ruleName)) {
         std::ostringstream oss;
         oss << "Rate limit exceeded for rule '" << ruleId << "'";
         throw RateLimitException(oss.str());
     }
 }
 
-bool RateLimiter::isAllowed(const std::string& ruleId) {
+bool RateLimiter::isAllowed(const std::string& ruleName) {
     std::lock_guard<std::mutex> lock(statesMutex_);
-    auto it = states_.find(ruleId);
+    auto it = states_.find(ruleName);
     if (it == states_.end()) {
         return true;  // No rate limit configured
     }
@@ -71,14 +71,14 @@ void RateLimiter::configure(const Config& config) {
     states_[config.ruleName].config = config;
 }
 
-void RateLimiter::remove(const std::string& ruleId) {
+void RateLimiter::remove(const std::string& ruleName) {
     std::lock_guard<std::mutex> lock(statesMutex_);
-    states_.erase(ruleId);
+    states_.erase(ruleName);
 }
 
-int RateLimiter::getCurrentExecutionsPerSecond(const std::string& ruleId) const {
+int RateLimiter::getCurrentExecutionsPerSecond(const std::string& ruleName) const {
     std::lock_guard<std::mutex> lock(statesMutex_);
-    auto it = states_.find(ruleId);
+    auto it = states_.find(ruleName);
     if (it == states_.end()) return 0;
 
     RuleState& state = const_cast<RuleState&>(it->second);
@@ -87,9 +87,9 @@ int RateLimiter::getCurrentExecutionsPerSecond(const std::string& ruleId) const 
     return static_cast<int>(state.secondWindow.size());
 }
 
-int RateLimiter::getCurrentExecutionsPerMinute(const std::string& ruleId) const {
+int RateLimiter::getCurrentExecutionsPerMinute(const std::string& ruleName) const {
     std::lock_guard<std::mutex> lock(statesMutex_);
-    auto it = states_.find(ruleId);
+    auto it = states_.find(ruleName);
     if (it == states_.end()) return 0;
 
     RuleState& state = const_cast<RuleState&>(it->second);

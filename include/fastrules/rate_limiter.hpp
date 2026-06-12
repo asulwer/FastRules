@@ -14,7 +14,7 @@ namespace fastrules {
 class RateLimiter {
 public:
     struct Config {
-        std::string ruleId;
+        std::string ruleName;
         int maxExecutionsPerSecond = 0;  // 0 = unlimited
         int maxExecutionsPerMinute = 0;    // 0 = unlimited
         int burstSize = 0;               // 0 = no burst
@@ -27,10 +27,10 @@ public:
     RateLimiter() = default;
 
     // Check if execution is allowed. Throws RateLimitException if not.
-    void checkAllowed(const std::string& ruleId);
+    void checkAllowed(const std::string& ruleName);
 
     // Non-throwing version
-    [[nodiscard]] bool isAllowed(const std::string& ruleId);
+    [[nodiscard]] bool isAllowed(const std::string& ruleName);
 
     // Global singleton for default rate limiting
     [[nodiscard]] static RateLimiter& global();
