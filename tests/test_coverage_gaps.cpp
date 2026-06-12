@@ -342,11 +342,11 @@ TEST_CASE("RuleContext result management", "[context]") {
 TEST_CASE("RuleContext last error", "[context]") {
     RuleContext ctx;
     
-    ctx.setLastError(1, "Error message");
+    ctx.setLastError("rule1", "Error message");
     
     auto error = ctx.getLastError();
     REQUIRE(error.has_value());
-    REQUIRE(error.value().first == 1);
+    REQUIRE(error.value().first == "rule1");
     REQUIRE(error.value().second == "Error message");
 }
 
