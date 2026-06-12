@@ -233,7 +233,7 @@ TEST_CASE("ExecutionTracer recording", "[tracing]") {
     
     auto trace = tracer.getTrace();
     REQUIRE(trace.steps.size() == 1);
-    REQUIRE(trace.steps[0].ruleName == 1);
+    REQUIRE(trace.steps[0].ruleName == "rule1");
     REQUIRE(trace.steps[0].stage == "evaluate");
     REQUIRE(trace.steps[0].success == true);
 }
@@ -274,7 +274,7 @@ TEST_CASE("RuleResult construction", "[result]") {
     result.ruleName = 3;
     result.success = true;
     
-    REQUIRE(result.ruleName == 3);
+    REQUIRE(result.ruleName == "rule3");
     REQUIRE(result.success == true);
     REQUIRE_FALSE(result.exception.has_value());
 }
@@ -414,8 +414,8 @@ TEST_CASE("Workflow execution order", "[workflow][execution]") {
     
     REQUIRE(results.size() >= 2);
     if (results.size() >= 2) {
-        REQUIRE(results[0].ruleName == 1);
-        REQUIRE(results[1].ruleName == 2);
+        REQUIRE(results[0].ruleName == "rule1");
+        REQUIRE(results[1].ruleName == "rule2");
     }
 }
 
@@ -480,7 +480,7 @@ TEST_CASE("Single rule workflow", "[workflow][edge]") {
     auto results = workflow.execute(engine, params);
     
     REQUIRE(results.size() == 1);
-    REQUIRE(results[0].ruleName == 1);
+    REQUIRE(results[0].ruleName == "rule1");
 }
 
 TEST_CASE("Rule with empty expression always succeeds", "[rule][edge]") {

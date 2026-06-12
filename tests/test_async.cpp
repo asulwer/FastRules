@@ -123,9 +123,9 @@ TEST_CASE("Parallel workflow execution", "[async][parallel]") {
         // Find results by rule ID
         bool foundRule1 = false, foundRule2 = false, foundRule3 = false;
         for (const auto& result : results) {
-            if (result.ruleName == 1) foundRule1 = result.isSuccess();
-            if (result.ruleName == 2) foundRule2 = result.isSuccess();
-            if (result.ruleName == 3) foundRule3 = result.isSuccess();
+            if (result.ruleName == "rule1") foundRule1 = result.isSuccess();
+            if (result.ruleName == "rule2") foundRule2 = result.isSuccess();
+            if (result.ruleName == "rule3") foundRule3 = result.isSuccess();
         }
         REQUIRE(foundRule1);
         REQUIRE(foundRule2);

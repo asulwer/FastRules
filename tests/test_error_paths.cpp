@@ -32,7 +32,7 @@ TEST_CASE("Rule timeout fires on long-running expression", "[rule][timeout][!may
     auto result = rule.execute(engine, ctx, params);
 
     REQUIRE_FALSE(result.isSuccess());
-    REQUIRE(result.ruleName == 1);
+    REQUIRE(result.ruleName == "rule1");
 }
 
 TEST_CASE("Rule timeout does not fire on fast expression", "[rule][timeout]") {

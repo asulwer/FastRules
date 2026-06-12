@@ -28,9 +28,9 @@ TEST_CASE("Streaming execution basic", "[workflow][streaming]") {
         streamed.push_back(result);
     }
     REQUIRE(streamed.size() == 2);
-    REQUIRE(streamed[0].ruleName == 1);
+    REQUIRE(streamed[0].ruleName == "rule1");
     REQUIRE(streamed[0].isSuccess() == true);
-    REQUIRE(streamed[1].ruleName == 2);
+    REQUIRE(streamed[1].ruleName == "rule2");
     REQUIRE(streamed[1].isSuccess() == false);
 }
 
