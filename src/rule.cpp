@@ -489,11 +489,11 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
     } catch (const std::exception& ex) {
         log->error("Standard exception in rule {}: {}", id, ex.what());
         setFailure(result, ex.what());
-        context.setLastError(id, ex.what());
+        context.setLastError(name, ex.what());
     } catch (...) {
         log->critical("Unknown exception during rule {} execution", id);
         setFailure(result, "Unknown exception during rule execution");
-        context.setLastError(id, "Unknown exception");
+        context.setLastError(name, "Unknown exception");
     }
 
     auto endTime = std::chrono::steady_clock::now();
