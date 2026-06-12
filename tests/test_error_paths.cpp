@@ -221,7 +221,7 @@ TEST_CASE("Self-dependency detected", "[rule][validation][circular]") {
 
 TEST_CASE("No circular dependency passes validation", "[rule][validation][circular]") {
     Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule2";
-    Rule b; b.id = 2;
+    Rule b; b.id = 2; b.name = "rule2"; // No dependency
 
     std::vector<std::reference_wrapper<const Rule>> all = {a, b};
 
@@ -230,10 +230,11 @@ TEST_CASE("No circular dependency passes validation", "[rule][validation][circul
 }
 
 TEST_CASE("Circular dependency via child rules detected", "[rule][validation][circular]") {
-    Rule parent; parent.id = 1;
+    Rule parent; parent.id = 1; parent.name = "rule1";
     
     auto child = std::make_shared<Rule>();
     child->id = 2;
+    child->name = "rule2";
     child->dependsOnRuleName = "rule1"; // Child depends on parent
     
     parent.childRules.push_back(child);
@@ -244,10 +245,10 @@ TEST_CASE("Circular dependency via child rules detected", "[rule][validation][ci
 }
 
 TEST_CASE("Diamond dependency passes validation", "[rule][validation][circular]") {
-    Rule top;    top.id = 1;
-    Rule left;   left.id = 2;  left.dependsOnRuleName = "rule1";
-    Rule right;  right.id = 3; right.dependsOnRuleName = "rule1";
-    Rule bottom; bottom.id = 4; bottom.dependsOnRuleName = "rule2";
+    Rule top;    top.id = 1; top.name = "rule1";
+    Rule left;   left.id = 2; left.name = "rule2"; left.dependsOnRuleName = "rule1";
+    Rule right;  right.id = 3; right.name = "rule3"; right.dependsOnRuleName = "rule1";
+    Rule bottom; bottom.id = 4; bottom.name = "rule4"; bottom.dependsOnRuleName = "rule2";
 
     std::vector<std::reference_wrapper<const Rule>> all = {top, left, right, bottom};
 
@@ -506,6 +507,7 @@ TEST_CASE("LuaEngine handles boolean string conversion", "[lua][edge]") {
 TEST_CASE("hasCircularDependency detects self-dependency", "[rule][circular-dependency]") {
     Rule a;
     a.id = 1;
+    a.name = "rule1";
     a.dependsOnRuleName = "rule1";
 
     std::vector<std::reference_wrapper<const Rule>> all = {a};
@@ -673,9 +675,10 @@ TEST_CASE("Builder dependsOn with validation throws on self-dependency", "[rule]
 
 TEST_CASE("Builder dependsOn with validation throws on A -> B -> A", "[rule][builder][circular-dependency]") {
     Rule b; b.id = 1; b.name = "rule1"; b.dependsOnRuleName = "rule4";
-    std::vector<std::reference_wrapper<const Rule>> all = {b};
+    Rule a; a.id = 4; a.name = "rule4"; // The rule we're building
+    std::vector<std::reference_wrapper<const Rule>> all = {b, a};
 
-    // Building "A" that depends on "B" should throw because B already depends on A
+    // Building "A" (id=4) that depends on "B" (rule1) should throw because B already depends on A (rule4)
     REQUIRE_THROWS_AS(
         Rule::Builder(4).dependsOn("rule1", all),
         RuleValidationException
