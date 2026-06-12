@@ -148,6 +148,13 @@ class LuaEngine;
  * Each push increments the version. Even if the same address is reused,
  * the version tag will differ, causing CAS to fail safely.
  */
+
+// Suppress MSVC warning about struct padding - intentional for cache-line alignment
+#if defined(_MSC_VER)
+    #pragma warning(push)
+    #pragma warning(disable: 4324)  // structure was padded due to alignment specifier
+#endif
+
 class LockFreeEnginePool {
 public:
     /**
@@ -317,6 +324,10 @@ private:
     }
 };
 
+#if defined(_MSC_VER)
+    #pragma warning(pop)
+#endif
+
 // ============================================================================
 // 32-BIT MUTEX-BASED FALLBACK IMPLEMENTATION
 // ============================================================================
@@ -345,6 +356,12 @@ private:
  * The mutex-based pool is also used if the lock-free implementation
  * encounters issues - it's a safe, well-tested fallback.
  */
+
+#if defined(_MSC_VER)
+    #pragma warning(push)
+    #pragma warning(disable: 4324)
+#endif
+
 class LockFreeEnginePool {
 public:
     LockFreeEnginePool() = default;
@@ -421,6 +438,10 @@ private:
     std::vector<LuaEngine*> availableEngines_;
     bool running_ = true;
 };
+
+#if defined(_MSC_VER)
+    #pragma warning(pop)
+#endif
 
 #endif // FASTRULES_LOCKFREE_POOL_64BIT
 
