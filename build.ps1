@@ -28,9 +28,20 @@
 .PARAMETER BuildDB
     Enable database persistence extension (requires SOCI installed).
 
+.PARAMETER Configuration
+    Build configuration: Debug, Release, or All (both). Default is Release.
+
 .EXAMPLE
     .\build.ps1
-    Generates solution with default settings (LuaBridge3 backend).
+    Generates solution with default settings (Release).
+
+.EXAMPLE
+    .\build.ps1 -Configuration Debug
+    Build Debug configuration only.
+
+.EXAMPLE
+    .\build.ps1 -Configuration All
+    Build both Debug and Release.
 
 .EXAMPLE
     .\build.ps1 -Clean
@@ -50,7 +61,9 @@ param(
     [switch]$UseLuaJIT,
     [switch]$NoBuild,
     [switch]$NoTest,
-    [switch]$BuildDB
+    [switch]$BuildDB,
+    [ValidateSet('Debug', 'Release', 'All')]
+    [string]$Configuration = 'Release'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -123,7 +136,7 @@ if (-not $cmakeVer) {
 # ============================================================================
 Write-Host "Configuration:"
 Write-Host "  Generator:      Visual Studio 17 2022"
-Write-Host "  Platform:       x64"
+Write-Host "  Configuration:  $Configuration"
 Write-Host "  C++ Standard:   23"
 Write-Host "  Tests:          ON"
 Write-Host "  Examples:       ON"
@@ -139,7 +152,7 @@ $cmakeArgs = @(
     '-B', $buildDir
     '-S', $root
     '-G', 'Visual Studio 17 2022'
-    '-A', 'x64'
+    '-T', 'host=x64'
     '-DCMAKE_CXX_STANDARD=23'
     '-DCMAKE_CXX_STANDARD_REQUIRED=ON'
     '-DFASTRULES_BUILD_TESTS=ON'
@@ -192,12 +205,16 @@ if ($NoBuild) {
 # ============================================================================
 # Step 2: Build
 # ============================================================================
-Write-Host ""
-Write-Host "[2/3] Building Release configuration..." -ForegroundColor Yellow
-& cmake --build $buildDir --config Release
+$configsToBuild = if ($Configuration -eq 'All') { @('Debug', 'Release') } else { @($Configuration) }
 
-if ($LASTEXITCODE -ne 0) {
-    Write-Warning "Build had errors, but solution is generated."
+foreach ($config in $configsToBuild) {
+    Write-Host ""
+    Write-Host "[2/3] Building $config configuration..." -ForegroundColor Yellow
+    & cmake --build $buildDir --config $config
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "Build had errors for $config configuration."
+    }
 }
 
 if ($NoTest) {
@@ -211,9 +228,10 @@ if ($NoTest) {
 # ============================================================================
 # Step 3: Test
 # ============================================================================
+$testConfig = if ($Configuration -eq 'All') { 'Release' } else { $Configuration }
 Write-Host ""
-Write-Host "[3/3] Running tests..." -ForegroundColor Yellow
-& ctest --test-dir $buildDir --build-config Release --output-on-failure
+Write-Host "[3/3] Running tests ($testConfig)..." -ForegroundColor Yellow
+& ctest --test-dir $buildDir --build-config $testConfig --output-on-failure
 
 # ============================================================================
 # Summary
