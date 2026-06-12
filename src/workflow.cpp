@@ -346,7 +346,7 @@ LuaEngine* Workflow::acquireEngine() {
 #endif
         }
         
-        // If spinning didn't work, block and wait with yield (max 10 seconds)
+        // If spinning didn't work, block and wait with yield (max 1 second)
         auto startTime = std::chrono::steady_clock::now();
         while (!engine) {
             engine = enginePool_->pop();
@@ -355,13 +355,14 @@ LuaEngine* Workflow::acquireEngine() {
             }
             std::this_thread::yield();
             
-            // Safety timeout: if waiting more than 10 seconds, something is wrong
+            // Safety timeout: if waiting more than 1 second, something is wrong
             auto elapsed = std::chrono::steady_clock::now() - startTime;
-            if (elapsed > std::chrono::seconds(10)) {
+            if (elapsed > std::chrono::seconds(1)) {
                 auto log = fastrules::logger();
                 if (log) {
-                    log->error("Timeout waiting for engine from pool. "
-                               "Pool may be exhausted or deadlock detected.");
+                    log->warn("Timeout waiting for engine from pool after 1s. "
+                               "Pool size: {} threads requesting engines may exceed pool size.",
+                               enginePoolStorage_.size());
                 }
                 return nullptr;
             }
