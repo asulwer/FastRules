@@ -67,7 +67,7 @@ bool AotBundle::saveToFile(const std::string& path) const {
     file.write(writeUint32(static_cast<uint32_t>(rules.size())).data(), 4);
     
     for (const auto& rule : rules) {
-        auto rid = serializeString(rule.ruleId);
+        auto rid = serializeString(rule.ruleName);
         auto expr = serializeString(rule.expression);
         auto act = serializeString(rule.action);
         auto pnames = serializeString(std::string());  // placeholder for parameter names
@@ -116,7 +116,7 @@ std::optional<AotBundle> AotBundle::loadFromFile(const std::string& path) {
         CompiledRule rule;
         
         auto [rid, off2] = deserializeString(data, offset);
-        rule.ruleId = rid;
+        rule.ruleName = rid;
         offset = off2;
         
         auto [expr, off3] = deserializeString(data, offset);
@@ -161,7 +161,7 @@ std::string AotBundle::toHexString() const {
     oss.write(count.data(), 4);
     
     for (const auto& rule : rules) {
-        auto rid = serializeString(rule.ruleId);
+        auto rid = serializeString(rule.ruleName);
         auto expr = serializeString(rule.expression);
         auto act = serializeString(rule.action);
         auto exprBc = serializeString(rule.expressionBytecode);
@@ -216,7 +216,7 @@ std::optional<AotBundle> AotBundle::fromHexString(const std::string& hex) {
         CompiledRule rule;
         
         auto [rid, off2] = deserializeString(binary, offset);
-        rule.ruleId = rid;
+        rule.ruleName = rid;
         offset = off2;
         
         auto [expr, off3] = deserializeString(binary, offset);
@@ -264,7 +264,7 @@ AotBundle AotCompiler::compileWorkflow(const Workflow& workflow, LuaEngine& engi
 
 AotBundle::CompiledRule AotCompiler::compileRule(const Rule& rule, LuaEngine& engine) {
     AotBundle::CompiledRule compiled;
-    compiled.ruleId = std::to_string(rule.id);
+    compiled.ruleName = std::to_string(rule.id);
     compiled.expression = rule.expression;
     compiled.action = rule.action;
     

@@ -18,7 +18,7 @@ void ExecutionTracer::addStep(ExecutionTraceStep step) {
     }
 }
 
-void ExecutionTracer::record(int ruleId,
+void ExecutionTracer::record(const std::string& ruleName,
                              const std::string& stage,
                              bool success,
                              const std::optional<std::string>& message,
@@ -26,11 +26,11 @@ void ExecutionTracer::record(int ruleId,
     if (!active_) return;
 
     ExecutionTraceStep step;
-    step.ruleId = ruleId;
+    step.ruleName = ruleName;
     step.stage = stage;
     step.success = success;
     step.startedAt = std::chrono::steady_clock::now();
-    step.endedAt = step.startedAt;  // Instant step unless timed separately
+    step.endedAt = step.startedAt;
     step.message = message;
     step.dependencyId = dependencyId;
     trace_.steps.push_back(std::move(step));
@@ -42,10 +42,10 @@ void ExecutionTracer::finish(bool overallSuccess) {
     active_ = false;
 }
 
-std::vector<ExecutionTraceStep> ExecutionTrace::getStepsForRule(int ruleId) const {
+std::vector<ExecutionTraceStep> ExecutionTrace::getStepsForRule(const std::string& ruleName) const {
     std::vector<ExecutionTraceStep> result;
     for (const auto& step : steps) {
-        if (step.ruleId == ruleId) {
+        if (step.ruleName == ruleName) {
             result.push_back(step);
         }
     }

@@ -61,7 +61,7 @@ Rule RuleVersionHistory::rollbackTo(const std::string& versionId) const {
     
     const auto& version = versionOpt.value();
     Rule rule;
-    rule.id = std::stoi(version.ruleId);
+    rule.id = std::stoi(version.ruleName);
     rule.expression = version.expression;
     rule.action = version.action;
     rule.priority = version.priority;
@@ -134,7 +134,7 @@ void RuleVersionManager::snapshotRule(const Rule& rule, const std::string& autho
     
     RuleVersion version;
     version.versionId = generateVersionId();
-    version.ruleId = std::to_string(rule.id);
+    version.ruleName = std::to_string(rule.id);
     version.expression = rule.expression;
     version.action = rule.action;
     version.priority = rule.priority;
@@ -149,7 +149,7 @@ void RuleVersionManager::snapshotRule(const Rule& rule, const std::string& autho
         version.parentVersionId = latest->versionId;
     }
     
-    history.ruleId = std::to_string(rule.id);
+    history.ruleName = std::to_string(rule.id);
     history.addVersion(version);
 }
 

@@ -194,7 +194,7 @@ std::vector<RuleResult> Workflow::executeWithTrace(LuaEngine& engine,
         // Check dependency
         if (rule->dependsOnRuleName.has_value()) {
             ExecutionTraceStep depStep;
-            depStep.ruleId = rule->id;
+            depStep.ruleName = rule->name;
             depStep.stage = "dependency_check";
             depStep.dependencyId = -1;
             depStep.startedAt = std::chrono::steady_clock::now();
@@ -214,7 +214,7 @@ std::vector<RuleResult> Workflow::executeWithTrace(LuaEngine& engine,
 
         // Execute rule with timing
         ExecutionTraceStep execStep;
-        execStep.ruleId = rule->id;
+        execStep.ruleName = rule->name;
         execStep.stage = "execute";
         execStep.expression = rule->expression;
         execStep.action = rule->action;
@@ -277,7 +277,7 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
                     // Safety check: if pool exhausted, return error
                     if (!threadEngine) {
                         RuleResult errorResult;
-                        errorResult.ruleId = rule->id;
+                        errorResult.ruleName = rule->id;
                         errorResult.success = false;
                         errorResult.exception = RuleException("Failed to acquire engine from pool - timeout or pool empty");
                         return std::make_pair(rule->id, errorResult);
@@ -288,7 +288,7 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
                         auto depResult = context.getResult(rule->dependsOnRuleName.value());
                         if (!depResult.has_value() || !depResult->isSuccess()) {
                             RuleResult skipResult;
-                            skipResult.ruleId = rule->id;
+                            skipResult.ruleName = rule->id;
                             skipResult.success = false;
                             skipResult.exception = RuleException("Dependency failed: " + rule->dependsOnRuleName.value());
                             releaseEngine(threadEngine);

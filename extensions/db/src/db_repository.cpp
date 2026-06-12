@@ -328,7 +328,7 @@ std::vector<RuleVersion> DbVersionRepository::findVersionsForRule(int ruleId) {
     for (auto& row : rs) {
         RuleVersion rv;
         rv.versionId = row.get<std::string>(0);
-        rv.ruleId = std::to_string(ruleId);
+        rv.ruleName = std::to_string(ruleId);
         rv.expression = row.get<std::string>(1);
         rv.action = row.get<std::string>(2);
         rv.priority = row.get<int>(3);
@@ -350,7 +350,7 @@ std::optional<RuleVersion> DbVersionRepository::findVersion(int ruleId, const st
     for (auto& row : rs) {
         RuleVersion rv;
         rv.versionId = row.get<std::string>(0);
-        rv.ruleId = std::to_string(ruleId);
+        rv.ruleName = std::to_string(ruleId);
         rv.expression = row.get<std::string>(1);
         rv.action = row.get<std::string>(2);
         rv.priority = row.get<int>(3);

@@ -431,14 +431,14 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
 
             // Store child results in context so parent expressions can access them
             for (const auto& childResult : result.childResults) {
-                context.setResult(childResult.ruleId, name, childResult);
+                context.setResult(childResult.ruleName, name, childResult);
             }
 
             // Preference: parent only evaluates if ALL children pass
             for (const auto& childResult : result.childResults) {
                 if (!childResult.isSuccess()) {
-                    log->info("Child rule {} failed — parent {} aborted", childResult.ruleId, id);
-                    setFailure(result, "Child rule " + std::to_string(childResult.ruleId) + " failed");
+                    log->info("Child rule {} failed — parent {} aborted", childResult.ruleName, id);
+                    setFailure(result, "Child rule " + std::to_string(childResult.ruleName) + " failed");
                     storeInCache(parameters, result);
                     context.setResult(id, name, result);
                     return result;

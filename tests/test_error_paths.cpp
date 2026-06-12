@@ -32,7 +32,7 @@ TEST_CASE("Rule timeout fires on long-running expression", "[rule][timeout][!may
     auto result = rule.execute(engine, ctx, params);
 
     REQUIRE_FALSE(result.isSuccess());
-    REQUIRE(result.ruleId == 1);
+    REQUIRE(result.ruleName == 1);
 }
 
 TEST_CASE("Rule timeout does not fire on fast expression", "[rule][timeout]") {
@@ -294,7 +294,7 @@ TEST_CASE("Rate limiter blocks excessive calls", "[rule][rate-limit]") {
     auto limiter = std::make_shared<RateLimiter>();
 
     RateLimiter::Config config;
-    config.ruleId = "1";
+    config.ruleName = "1";
     config.maxExecutionsPerSecond = 2;
     limiter->configure(config);
 

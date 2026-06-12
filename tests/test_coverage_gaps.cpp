@@ -233,7 +233,7 @@ TEST_CASE("ExecutionTracer recording", "[tracing]") {
     
     auto trace = tracer.getTrace();
     REQUIRE(trace.steps.size() == 1);
-    REQUIRE(trace.steps[0].ruleId == 1);
+    REQUIRE(trace.steps[0].ruleName == 1);
     REQUIRE(trace.steps[0].stage == "evaluate");
     REQUIRE(trace.steps[0].success == true);
 }
@@ -271,17 +271,17 @@ TEST_CASE("ExecutionTracer clear", "[tracing]") {
 
 TEST_CASE("RuleResult construction", "[result]") {
     RuleResult result;
-    result.ruleId = 3;
+    result.ruleName = 3;
     result.success = true;
     
-    REQUIRE(result.ruleId == 3);
+    REQUIRE(result.ruleName == 3);
     REQUIRE(result.success == true);
     REQUIRE_FALSE(result.exception.has_value());
 }
 
 TEST_CASE("RuleResult with exception", "[result]") {
     RuleResult result;
-    result.ruleId = 3;
+    result.ruleName = 3;
     result.success = false;
     result.exception = RuleException("Something went wrong");
     
@@ -327,7 +327,7 @@ TEST_CASE("RuleContext result management", "[context]") {
     RuleContext ctx;
     
     RuleResult result;
-    result.ruleId = 1;
+    result.ruleName = 1;
     result.success = true;
     ctx.setResult(1, "testRule", result);
     
@@ -414,8 +414,8 @@ TEST_CASE("Workflow execution order", "[workflow][execution]") {
     
     REQUIRE(results.size() >= 2);
     if (results.size() >= 2) {
-        REQUIRE(results[0].ruleId == 1);
-        REQUIRE(results[1].ruleId == 2);
+        REQUIRE(results[0].ruleName == 1);
+        REQUIRE(results[1].ruleName == 2);
     }
 }
 
@@ -480,7 +480,7 @@ TEST_CASE("Single rule workflow", "[workflow][edge]") {
     auto results = workflow.execute(engine, params);
     
     REQUIRE(results.size() == 1);
-    REQUIRE(results[0].ruleId == 1);
+    REQUIRE(results[0].ruleName == 1);
 }
 
 TEST_CASE("Rule with empty expression always succeeds", "[rule][edge]") {

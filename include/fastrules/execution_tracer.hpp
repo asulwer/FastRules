@@ -10,7 +10,7 @@ namespace fastrules {
 
 // A single step in the execution trace
 struct ExecutionTraceStep {
-    int ruleId = 0;
+    std::string ruleName;        // Human-readable rule name (was ruleId)
     std::string stage;           // "compile", "evaluate", "action", "skip", "dependency_check"
     bool success = true;
     std::chrono::steady_clock::time_point startedAt;
@@ -38,7 +38,7 @@ struct ExecutionTrace {
     }
 
     // Get steps for a specific rule
-    [[nodiscard]] std::vector<ExecutionTraceStep> getStepsForRule(int ruleId) const;
+    [[nodiscard]] std::vector<ExecutionTraceStep> getStepsForRule(const std::string& ruleName) const;
 
     // Get total time spent in a specific stage across all rules
     [[nodiscard]] std::chrono::nanoseconds getTotalTimeInStage(const std::string& stage) const;
@@ -60,7 +60,7 @@ public:
     void addStep(ExecutionTraceStep step);
 
     // Convenience: record with auto timestamps
-    void record(int ruleId,
+    void record(const std::string& ruleName,
                 const std::string& stage,
                 bool success = true,
                 const std::optional<std::string>& message = std::nullopt,

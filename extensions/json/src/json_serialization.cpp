@@ -15,14 +15,14 @@ using json = nlohmann::json;
 
 std::string JsonSerialization::serialize(const RuleVersionHistory& history) {
     json j;
-    j["ruleId"] = history.ruleId;
+    j["ruleId"] = history.ruleName;
     j["ruleName"] = history.ruleName;
     
     json versions = json::array();
     for (const auto& v : history.getVersions()) {
         json ver;
         ver["versionId"] = v.versionId;
-        ver["ruleId"] = v.ruleId;
+        ver["ruleId"] = v.ruleName;
         ver["expression"] = v.expression;
         ver["action"] = v.action;
         ver["priority"] = v.priority;
@@ -56,13 +56,13 @@ std::optional<RuleVersionHistory> JsonSerialization::deserializeRuleVersionHisto
         json j = json::parse(jsonStr);
         
         RuleVersionHistory history;
-        history.ruleId = j.value("ruleId", "");
+        history.ruleName = j.value("ruleId", "");
         history.ruleName = j.value("ruleName", "");
         
         for (const auto& ver : j["versions"]) {
             RuleVersion v;
             v.versionId = ver.value("versionId", "");
-            v.ruleId = ver.value("ruleId", "");
+            v.ruleName = ver.value("ruleId", "");
             v.expression = ver.value("expression", "");
             v.action = ver.value("action", "");
             
@@ -127,7 +127,7 @@ void JsonSerialization::deserialize(RuleVersionManager& manager, const std::stri
             if (historyOpt) {
                 for (const auto& ver : historyOpt->getVersions()) {
                     Rule rule;
-                    rule.id = std::stoi(ver.ruleId);
+                    rule.id = std::stoi(ver.ruleName);
                     rule.expression = ver.expression;
                     rule.action = ver.action;
                     rule.isActive = ver.isActive;
@@ -156,7 +156,7 @@ std::string JsonSerialization::serialize(const ExecutionTrace& trace) {
     json stepsArray = json::array();
     for (const auto& step : trace.steps) {
         json stepJson;
-        stepJson["ruleId"] = step.ruleId;
+        stepJson["ruleId"] = step.ruleName;
         stepJson["stage"] = step.stage;
         stepJson["success"] = step.success;
         stepJson["durationNs"] = step.duration().count();

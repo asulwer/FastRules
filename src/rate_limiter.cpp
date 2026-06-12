@@ -68,7 +68,7 @@ bool RateLimiter::isAllowed(const std::string& ruleId) {
 
 void RateLimiter::configure(const Config& config) {
     std::lock_guard<std::mutex> lock(statesMutex_);
-    states_[config.ruleId].config = config;
+    states_[config.ruleName].config = config;
 }
 
 void RateLimiter::remove(const std::string& ruleId) {

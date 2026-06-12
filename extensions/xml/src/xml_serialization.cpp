@@ -78,14 +78,14 @@ static pugi::xml_node appendTextChild(pugi::xml_node& parent, const char* name, 
 std::string XmlSerialization::serialize(const RuleVersionHistory& history) {
     pugi::xml_document doc;
     auto root = doc.append_child("ruleVersionHistory");
-    root.append_attribute("ruleId").set_value(history.ruleId.c_str());
+    root.append_attribute("ruleId").set_value(history.ruleName.c_str());
     root.append_attribute("ruleName").set_value(history.ruleName.c_str());
 
     auto versionsNode = root.append_child("versions");
     for (const auto& v : history.getVersions()) {
         auto ver = versionsNode.append_child("version");
         appendTextChild(ver, "versionId", v.versionId);
-        appendTextChild(ver, "ruleId", v.ruleId);
+        appendTextChild(ver, "ruleId", v.ruleName);
         appendTextChild(ver, "expression", v.expression);
         appendTextChild(ver, "action", v.action);
         appendTextChild(ver, "priority", v.priority);
@@ -111,13 +111,13 @@ std::optional<RuleVersionHistory> XmlSerialization::deserializeRuleVersionHistor
         if (!root) return std::nullopt;
 
         RuleVersionHistory history;
-        history.ruleId = root.attribute("ruleId").as_string("");
+        history.ruleName = root.attribute("ruleId").as_string("");
         history.ruleName = root.attribute("ruleName").as_string("");
 
         for (auto ver : root.child("versions").children("version")) {
             RuleVersion v;
             v.versionId = ver.child("versionId").text().as_string("");
-            v.ruleId = ver.child("ruleId").text().as_string("");
+            v.ruleName = ver.child("ruleId").text().as_string("");
             v.expression = ver.child("expression").text().as_string("");
             v.action = ver.child("action").text().as_string("");
             v.priority = ver.child("priority").text().as_int(0);
@@ -202,7 +202,7 @@ void XmlSerialization::deserialize(RuleVersionManager& manager, const std::strin
             if (historyOpt) {
                 for (const auto& ver : historyOpt->getVersions()) {
                     Rule rule;
-                    rule.id = std::stoi(ver.ruleId);
+                    rule.id = std::stoi(ver.ruleName);
                     rule.expression = ver.expression;
                     rule.action = ver.action;
                     rule.isActive = ver.isActive;
@@ -233,7 +233,7 @@ std::string XmlSerialization::serialize(const ExecutionTrace& trace) {
     auto stepsNode = root.append_child("steps");
     for (const auto& step : trace.steps) {
         auto stepNode = stepsNode.append_child("step");
-        appendTextChild(stepNode, "ruleId", step.ruleId);
+        appendTextChild(stepNode, "ruleId", step.ruleName);
         appendTextChild(stepNode, "stage", step.stage);
         appendTextChild(stepNode, "success", step.success);
 
