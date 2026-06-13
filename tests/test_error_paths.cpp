@@ -21,6 +21,7 @@ TEST_CASE("Rule timeout fires on long-running expression", "[rule][timeout][!may
 
     Rule rule;
     rule.id = 1;
+    rule.name = "rule1";
     // Pure computation without assignment - uses recursion via repeated math
     rule.expression = "(function() local s = 0; for i = 1, 1000000 do s = s + i end; return s > 0 end)()";
     rule.timeout = std::chrono::milliseconds(1);
