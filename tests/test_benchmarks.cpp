@@ -30,8 +30,8 @@ TEST_CASE("Benchmark rule compilation", "[benchmark][compilation]") {
 
     Rule rule;
     rule.id = 1;
-    rule.expression = "x > 0 and y < 100";
-    rule.action = "result = x + y";
+    rule.expression = "1 > 0 and 2 < 100";
+    rule.action = "result = 42";
 
     BENCHMARK("compile simple rule") {
         rule.compile(engine);
@@ -47,7 +47,7 @@ TEST_CASE("Benchmark workflow compilation", "[benchmark][compilation]") {
     for (int i = 0; i < 10; ++i) {
         auto rule = std::make_shared<Rule>();
         rule->id = 100 + i;
-        rule->expression = "x > " + std::to_string(i);
+        rule->expression = std::to_string(i) + " > 0";
         workflow.rules.push_back(rule);
     }
 
