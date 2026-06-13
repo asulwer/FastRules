@@ -10,10 +10,12 @@ TEST_CASE("Streaming execution basic", "[workflow][streaming]") {
     
     auto rule1 = std::make_shared<Rule>();
     rule1->id = 1;
+    rule1->name = "rule1";
     rule1->expression = "true";
     
     auto rule2 = std::make_shared<Rule>();
     rule2->id = 2;
+    rule2->name = "rule2";
     rule2->expression = "false";
     
     workflow.rules.push_back(rule1);

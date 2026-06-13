@@ -26,7 +26,7 @@ TEST_CASE("ExecutionTrace query methods", "[execution_tracing]") {
     tracer.start();
 
     ExecutionTraceStep step1;
-    step1.ruleName = 1;
+    step1.ruleName = "rule1";
     step1.stage = "compile";
     step1.success = true;
     step1.startedAt = std::chrono::steady_clock::now();
@@ -34,7 +34,7 @@ TEST_CASE("ExecutionTrace query methods", "[execution_tracing]") {
     tracer.addStep(step1);
 
     ExecutionTraceStep step2;
-    step2.ruleName = 2;
+    step2.ruleName = "rule2";
     step2.stage = "execute";
     step2.success = true;
     step2.startedAt = std::chrono::steady_clock::now();
@@ -42,7 +42,7 @@ TEST_CASE("ExecutionTrace query methods", "[execution_tracing]") {
     tracer.addStep(step2);
 
     ExecutionTraceStep step3;
-    step3.ruleName = 1;
+    step3.ruleName = "rule1";
     step3.stage = "execute";
     step3.success = false;
     step3.startedAt = std::chrono::steady_clock::now();
