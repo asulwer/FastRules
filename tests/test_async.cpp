@@ -104,6 +104,7 @@ TEST_CASE("Parallel workflow execution", "[async][parallel]") {
     // Rule 3: Depends on rule-1
     auto rule3 = std::make_shared<Rule>();
     rule3->id = 3;
+    rule3->name = "rule3";
     rule3->expression = "context.getResult(\"rule1\").success";
     rule3->dependsOnRuleName = "rule1";
     workflow.rules.push_back(rule3);
