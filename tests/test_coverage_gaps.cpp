@@ -271,7 +271,7 @@ TEST_CASE("ExecutionTracer clear", "[tracing]") {
 
 TEST_CASE("RuleResult construction", "[result]") {
     RuleResult result;
-    result.ruleName = "3";
+    result.ruleName = "rule3";
     result.success = true;
     
     REQUIRE(result.ruleName == "rule3");
