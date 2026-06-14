@@ -283,21 +283,24 @@ def example_basic_usage():
         results = workflow.execute({"age": 25, "name": "Alice"})
         for result in results:
             status = "PASS" if result.success else "FAIL"
-            print(f"  Rule {result.rule_id}: {status}")
+            name = result.rule_name if result.rule_name else "(unnamed)"
+            print(f"  {name}: {status}")
         
         # Test with invalid customer (minor)
         print("\n--- Testing Minor Customer (Bob, age 15) ---")
         results = workflow.execute({"age": 15, "name": "Bob"})
         for result in results:
             status = "PASS" if result.success else "FAIL"
-            print(f"  Rule {result.rule_id}: {status}")
+            name = result.rule_name if result.rule_name else "(unnamed)"
+            print(f"  {name}: {status}")
         
         # Test with empty name
         print("\n--- Testing Empty Name ---")
         results = workflow.execute({"age": 30, "name": ""})
         for result in results:
             status = "PASS" if result.success else "FAIL"
-            print(f"  Rule {result.rule_id}: {status}")
+            name = result.rule_name if result.rule_name else "(unnamed)"
+            print(f"  {name}: {status}")
         
     except Exception as e:
         print(f"Error: {e}")
@@ -329,13 +332,15 @@ def example_order_processing():
         results = workflow.execute({"order_total": 100.00, "is_vip": False})
         for result in results:
             status = "PASS" if result.success else "FAIL"
-            print(f"  Rule {result.rule_id}: {status}")
+            name = result.rule_name if result.rule_name else "(unnamed)"
+            print(f"  {name}: {status}")
         
         print("\n--- Processing VIP Order ($100, VIP) ---")
         results = workflow.execute({"order_total": 100.00, "is_vip": True})
         for result in results:
             status = "PASS" if result.success else "FAIL"
-            print(f"  Rule {result.rule_id}: {status}")
+            name = result.rule_name if result.rule_name else "(unnamed)"
+            print(f"  {name}: {status}")
         
     except Exception as e:
         print(f"Error: {e}")
