@@ -132,6 +132,25 @@ class FastRulesEngine:
         
         lib.fastrules_get_version.restype = ctypes.c_char_p
         lib.fastrules_get_version.argtypes = []
+        
+        # Complex Object Support
+        lib.fastrules_register_type.restype = ctypes.c_void_p
+        lib.fastrules_register_type.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
+        
+        lib.fastrules_object_create.restype = ctypes.c_void_p
+        lib.fastrules_object_create.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+        
+        lib.fastrules_object_set_field.restype = ctypes.c_int
+        lib.fastrules_object_set_field.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
+        
+        lib.fastrules_object_destroy.restype = None
+        lib.fastrules_object_destroy.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+        
+        lib.fastrules_add_object_param.restype = ctypes.c_int
+        lib.fastrules_add_object_param.argtypes = [
+            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, 
+            ctypes.c_void_p, ctypes.POINTER(ctypes.c_char_p)
+        ]
     
     def __del__(self):
         """Cleanup the engine."""
@@ -148,6 +167,34 @@ class FastRulesEngine:
         """Get FastRules version."""
         return self._lib.fastrules_get_version().decode('utf-8')
     
+    def register_type(self, type_name: str, fields: str) -> 'ComplexType':
+        """Register a complex type with the engine.
+        
+        Fields format: "field1:type1;field2:type2"
+        Supported types: int, double, bool, string
+        """
+        name = type_name.encode('utf-8')
+        fields_b = fields.encode('utf-8')
+        
+        type_ptr = self._lib.fastrules_register_type(self._engine, name, fields_b)
+        if not type_ptr:
+            raise RuntimeError(f"Failed to register type: {self.get_last_error()}")
+        
+        return ComplexType(self, type_ptr, type_name)
+    
+    def create_object(self, type: 'ComplexType') -> 'ComplexObject':
+        """Create an object instance of a registered type."""
+        obj_ptr = self._lib.fastrules_object_create(self._engine, type.handle)
+        if not obj_ptr:
+            raise RuntimeError(f"Failed to create object: {self.get_last_error()}")
+        
+        return ComplexObject(self, obj_ptr, type)
+    
+    def destroy_object(self, obj: 'ComplexObject'):
+        """Destroy an object instance."""
+        if obj and obj.handle:
+            self._lib.fastrules_object_destroy(self._engine, obj.handle)
+
     def create_workflow(self, workflow_id: int, description: str = ""):
         """Create a workflow in-memory."""
         desc = description.encode('utf-8') if description else None
@@ -155,6 +202,63 @@ class FastRulesEngine:
         if not workflow:
             raise RuntimeError(f"Failed to create workflow: {self.get_last_error()}")
         return Workflow(self, workflow)
+
+
+class ComplexType:
+    """Represents a registered complex type."""
+    
+    def __init__(self, engine: FastRulesEngine, handle, name: str):
+        self._engine = engine
+        self.handle = handle
+        self.name = name
+
+
+class ComplexObject:
+    """Represents an instance of a complex type."""
+    
+    def __init__(self, engine: FastRulesEngine, handle, type: ComplexType):
+        self._engine = engine
+        self.handle = handle
+        self.type = type
+    
+    def set_field(self, field_name: str, value):
+        """Set a field value on the object."""
+        field_b = field_name.encode('utf-8')
+        
+        # Convert value to string
+        if isinstance(value, bool):
+            value_str = "true" if value else "false"
+        else:
+            value_str = str(value)
+        value_b = value_str.encode('utf-8')
+        
+        result = self._engine._lib.fastrules_object_set_field(
+            self._engine._engine, self.handle, field_b, value_b
+        )
+        if result != ErrorCode.OK:
+            raise RuntimeError(f"Failed to set field: {self._engine.get_last_error()}")
+    
+    def to_parameter_string(self, param_name: str) -> str:
+        """Convert this object to a parameter string for workflow execution."""
+        name_b = param_name.encode('utf-8')
+        out_params = ctypes.c_char_p()
+        
+        result = self._engine._lib.fastrules_add_object_param(
+            self._engine._engine, None, name_b, self.handle, ctypes.byref(out_params)
+        )
+        if result != ErrorCode.OK:
+            raise RuntimeError(f"Failed to convert to parameter: {self._engine.get_last_error()}")
+        
+        try:
+            return out_params.value.decode('utf-8')
+        finally:
+            self._engine._lib.fastrules_free(out_params)
+    
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._engine.destroy_object(self)
 
 
 class Workflow:
@@ -198,16 +302,21 @@ class Workflow:
         """Execute the workflow with parameters.
         
         Parameters format: "key=value;key2=value2"
-        Supported types: int, float, bool, str
+        Supported types: int, float, bool, str, ComplexObject
         """
         # Convert parameters to "key=value;key2=value2" format
         parts = []
         for key, value in parameters.items():
-            if isinstance(value, bool):
+            if isinstance(value, ComplexObject):
+                # Complex object - use the parameter string from the object
+                param_str = value.to_parameter_string(key)
+                parts.append(param_str)
+            elif isinstance(value, bool):
                 val_str = "true" if value else "false"
+                parts.append(f"{key}={val_str}")
             else:
                 val_str = str(value)
-            parts.append(f"{key}={val_str}")
+                parts.append(f"{key}={val_str}")
         params_str = ";".join(parts).encode('utf-8')
         
         results_ptr = ctypes.c_char_p()
@@ -270,7 +379,11 @@ class Customer:
         self.tier = tier
     
     def to_parameters(self, prefix: str = "customer") -> Dict[str, Any]:
-        """Convert Customer to parameter dictionary for FastRules."""
+        """Convert Customer to parameter dictionary for FastRules.
+        
+        This converts the object to flattened parameters.
+        For true ComplexObject usage, use to_fastrules_object().
+        """
         return {
             f"{prefix}.age": self.age,
             f"{prefix}.name": self.name,
@@ -278,6 +391,16 @@ class Customer:
             f"{prefix}.is_active": self.is_active,
             f"{prefix}.tier": self.tier
         }
+    
+    def to_fastrules_object(self, engine: FastRulesEngine, customer_type: ComplexType) -> ComplexObject:
+        """Convert Customer to a FastRules ComplexObject."""
+        obj = engine.create_object(customer_type)
+        obj.set_field("age", self.age)
+        obj.set_field("name", self.name)
+        obj.set_field("balance", self.balance)
+        obj.set_field("is_active", self.is_active)
+        obj.set_field("tier", self.tier)
+        return obj
 
 
 def example_basic_usage():
@@ -423,6 +546,10 @@ def example_complex_types():
     try:
         engine = FastRulesEngine()
         
+        # Register Customer type with the engine
+        customer_type = engine.register_type("Customer", "age:int;name:string;balance:double;is_active:bool;tier:string")
+        print("Registered Customer type with fields: age, name, balance, is_active, tier")
+        
         # Create workflow with customer validation rules
         workflow = engine.create_workflow(4, "Customer Validation")
         
@@ -447,50 +574,60 @@ def example_complex_types():
         
         workflow.compile()
         
-        # Test: Valid customer using Customer class
+        # Test: Valid customer using ComplexObject
         print("\n--- Test: Valid Customer (Alice, 25, $100, Active) ---")
         customer1 = Customer(age=25, name="Alice", balance=100.0, is_active=True, tier="gold")
-        results = workflow.execute(customer1.to_parameters())
+        obj1 = customer1.to_fastrules_object(engine, customer_type)
+        results = workflow.execute({"customer": obj1})
         for result in results:
             status = "PASS" if result.success else "FAIL"
             name = result.rule_name if result.rule_name else "(unnamed)"
             print(f"  {name}: {status}")
+        engine.destroy_object(obj1)
         
         # Test: Minor customer
         print("\n--- Test: Minor Customer (Bob, 15, $50) ---")
         customer2 = Customer(age=15, name="Bob", balance=50.0)
-        results = workflow.execute(customer2.to_parameters())
+        obj2 = customer2.to_fastrules_object(engine, customer_type)
+        results = workflow.execute({"customer": obj2})
         for result in results:
             status = "PASS" if result.success else "FAIL"
             name = result.rule_name if result.rule_name else "(unnamed)"
             print(f"  {name}: {status}")
+        engine.destroy_object(obj2)
         
         # Test: Inactive customer
         print("\n--- Test: Inactive Customer (Charlie, 30, $200, Inactive) ---")
         customer3 = Customer(age=30, name="Charlie", balance=200.0, is_active=False)
-        results = workflow.execute(customer3.to_parameters())
+        obj3 = customer3.to_fastrules_object(engine, customer_type)
+        results = workflow.execute({"customer": obj3})
         for result in results:
             status = "PASS" if result.success else "FAIL"
             name = result.rule_name if result.rule_name else "(unnamed)"
             print(f"  {name}: {status}")
+        engine.destroy_object(obj3)
         
         # Test: Negative balance
         print("\n--- Test: Negative Balance (Dave, 40, -$50) ---")
         customer4 = Customer(age=40, name="Dave", balance=-50.0)
-        results = workflow.execute(customer4.to_parameters())
+        obj4 = customer4.to_fastrules_object(engine, customer_type)
+        results = workflow.execute({"customer": obj4})
         for result in results:
             status = "PASS" if result.success else "FAIL"
             name = result.rule_name if result.rule_name else "(unnamed)"
             print(f"  {name}: {status}")
+        engine.destroy_object(obj4)
         
         # Test: Empty name
         print("\n--- Test: Empty Name (Eve, 35, $500, No name) ---")
         customer5 = Customer(age=35, name="", balance=500.0)
-        results = workflow.execute(customer5.to_parameters())
+        obj5 = customer5.to_fastrules_object(engine, customer_type)
+        results = workflow.execute({"customer": obj5})
         for result in results:
             status = "PASS" if result.success else "FAIL"
             name = result.rule_name if result.rule_name else "(unnamed)"
             print(f"  {name}: {status}")
+        engine.destroy_object(obj5)
         
     except Exception as e:
         print(f"Error: {e}")
