@@ -87,7 +87,7 @@ int main() {
 
         auto results = workflow.execute(engine, params);
         for (const auto& r : results) {
-            std::cout << r.ruleId << ": " << (r.isSuccess() ? "PASS" : "FAIL");
+            std::cout << r.ruleName << ": " << (r.isSuccess() ? "PASS" : "FAIL");
             if (r.isSuccess()) {
                 std::cout << " (time: " << r.metrics.totalExecutionTime.count() << "ns)";
             }
@@ -104,7 +104,7 @@ int main() {
 
         results = workflow.execute(engine, params);
         for (const auto& r : results) {
-            std::cout << r.ruleId << ": " << (r.isSuccess() ? "PASS" : "FAIL");
+            std::cout << r.ruleName << ": " << (r.isSuccess() ? "PASS" : "FAIL");
             if (r.skipped) {
                 std::cout << " (SKIPPED — dependency failed)";
             }
@@ -121,7 +121,7 @@ int main() {
 
         auto parResults = workflow.executeParallel(engine, params);
         for (const auto& r : parResults) {
-            std::cout << r.ruleId << ": " << (r.isSuccess() ? "PASS" : "FAIL") << std::endl;
+            std::cout << r.ruleName << ": " << (r.isSuccess() ? "PASS" : "FAIL") << std::endl;
         }
 
         // ================================================================
@@ -143,6 +143,7 @@ int main() {
         std::cout << "\n--- Priority & Timeout ---" << std::endl;
         auto slowRule = std::make_shared<Rule>();
         slowRule->id = 4;
+        slowRule->name = "slowRule";
         slowRule->expression = "true";
         slowRule->action = "x = 1";
         slowRule->priority = 999;  // Runs first
@@ -151,7 +152,11 @@ int main() {
         Workflow priorityWorkflow;
         priorityWorkflow.id = 6;
         priorityWorkflow.rules.push_back(slowRule);
-        priorityWorkflow.rules.push_back(adultCheck);  // priority 0, runs after
+        auto adultCheck2 = std::make_shared<Rule>();
+        adultCheck2->id = 5;
+        adultCheck2->name = "adultCheck";
+        adultCheck2->expression = "customer.age >= 18";
+        priorityWorkflow.rules.push_back(adultCheck2);  // priority 0, runs after
         priorityWorkflow.compile(engine);
 
         Customer customer5{5, "Eve", 35, 600};
@@ -160,8 +165,8 @@ int main() {
 
         auto priorityResults = priorityWorkflow.execute(engine, params);
         for (const auto& r : priorityResults) {
-            std::cout << r.ruleId << " (priority " << 
-                (r.ruleId == 4 ? "999" : "0") << "): " <<
+            std::cout << r.ruleName << " (priority " << 
+                (r.ruleName == "slowRule" ? "999" : "0") << "): " <<
                 (r.isSuccess() ? "PASS" : "FAIL") << std::endl;
         }
 

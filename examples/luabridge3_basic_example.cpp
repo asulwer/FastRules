@@ -35,7 +35,7 @@ int main() {
 
         auto results = workflow.execute(engine, params);
         for (const auto& r : results) {
-            std::cout << "Rule: " << r.ruleId
+            std::cout << "Rule: " << r.ruleName
                       << " - Success: " << (r.isSuccess() ? "Yes" : "No") << std::endl;
         }
 
@@ -44,7 +44,7 @@ int main() {
         params.emplace_back("age", 15);
         results = workflow.execute(engine, params);
         for (const auto& r : results) {
-            std::cout << "Rule: " << r.ruleId
+            std::cout << "Rule: " << r.ruleName
                       << " - Success: " << (r.isSuccess() ? "Yes" : "No") << std::endl;
         }
 
