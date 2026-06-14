@@ -364,8 +364,9 @@ def example_parent_child():
         workflow.add_rule(2, "len(name) > 0", name="name-check",
                          description="Name validation")
         
-        # Add parent rule referencing children via context
-        workflow.add_rule(3, "context.getResult(1).success == true and context.getResult(2).success == true",
+        # Add parent rule referencing children by NAME (not ID)
+        # context.getResult("age-check") gets result of child rule named "age-check"
+        workflow.add_rule(3, 'context.getResult("age-check").success == true and context.getResult("name-check").success == true',
                          name="parent-validation",
                          description="Parent validates children")
         

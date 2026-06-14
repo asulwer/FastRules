@@ -486,8 +486,9 @@ namespace FastRulesExample
             workflow.AddRule(1, "age >= 18", name: "age-check", description: "Age validation");
             workflow.AddRule(2, "len(name) > 0", name: "name-check", description: "Name validation");
             
-            // Add parent rule that references children via context
-            workflow.AddRule(3, "context.getResult(1).success == true and context.getResult(2).success == true", 
+            // Add parent rule that references children by NAME (not ID)
+            // context.getResult("age-check") gets result of child rule named "age-check"
+            workflow.AddRule(3, "context.getResult('age-check').success == true and context.getResult('name-check').success == true", 
                             name: "parent-validation", 
                             description: "Parent checks all children passed");
             
