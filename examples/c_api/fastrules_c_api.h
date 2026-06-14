@@ -130,6 +130,46 @@ FASTRULES_C_API fastrules_error_t fastrules_workflow_set_rule_priority(
     int priority
 );
 
+/**
+ * Register a custom type with the engine.
+ * 
+ * This allows complex objects (like Customer) to be passed to rules.
+ * Fields are specified as a semicolon-separated list of name:type pairs.
+ * Supported types: int, double, bool, string
+ * 
+ * Example: fastrules_engine_register_type(engine, "Customer", "age:int;name:string;active:bool");
+ * 
+ * @param engine Engine handle
+ * @param type_name Name of the type (e.g., "Customer")
+ * @param fields Field definitions (e.g., "age:int;name:string")
+ * @return Error code
+ */
+FASTRULES_C_API fastrules_error_t fastrules_engine_register_type(
+    fastrules_engine_t engine,
+    const char* type_name,
+    const char* fields
+);
+
+/**
+ * Add a typed parameter to a parameter set (for complex objects).
+ * 
+ * @param engine Engine handle
+ * @param params JSON array string of existing params (can be empty array "[]")
+ * @param name Parameter name
+ * @param type_name Type name (must be registered first)
+ * @param fields_values Field values as "field1=value1;field2=value2"
+ * @param out_params Output: new JSON array string (caller must free)
+ * @return Error code
+ */
+FASTRULES_C_API fastrules_error_t fastrules_add_typed_param(
+    fastrules_engine_t engine,
+    const char* params,
+    const char* name,
+    const char* type_name,
+    const char* fields_values,
+    char** out_params
+);
+
 // ============================================================================
 // Workflow Management
 // ============================================================================

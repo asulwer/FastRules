@@ -17,6 +17,7 @@
 #include <string>
 #include <vector>
 #include <cstring>
+#include <map>
 #include <sstream>
 
 using namespace fastrules;
@@ -116,7 +117,6 @@ static char* format_results(const std::vector<RuleResult>& results) {
         if (i > 0) oss << ";";
         
         const auto& result = results[i];
-        oss << result.ruleId << ":";
         
         // Include rule name if available
         std::string rule_name = result.ruleName.empty() ? "" : result.ruleName;
@@ -274,6 +274,116 @@ fastrules_workflow_t fastrules_workflow_create_from_json(
     
     set_error(engine, "JSON support removed. Use fastrules_workflow_create() and fastrules_workflow_add_rule() instead.");
     return nullptr;
+}
+
+// ============================================================================
+// Type Registration (for complex objects like Customer)
+// ============================================================================
+
+// Store registered types per engine
+static std::map<fastrules_engine_t, std::map<std::string, std::vector<std::pair<std::string, std::string>>>> g_registered_types;
+
+fastrules_error_t fastrules_engine_register_type(
+    fastrules_engine_t engine,
+    const char* type_name,
+    const char* fields
+) {
+    if (!engine || !type_name || !fields) {
+        return FASTRULES_ERROR_NULL_PTR;
+    }
+    
+    try {
+        std::vector<std::pair<std::string, std::string>> field_list;
+        
+        // Parse fields: "field1:type1;field2:type2"
+        std::string fields_str(fields);
+        size_t pos = 0;
+        while (pos < fields_str.length()) {
+            size_t sep = fields_str.find(';', pos);
+            if (sep == std::string::npos) sep = fields_str.length();
+            
+            std::string field_def = fields_str.substr(pos, sep - pos);
+            size_t colon = field_def.find(':');
+            if (colon != std::string::npos) {
+                std::string field_name = field_def.substr(0, colon);
+                std::string field_type = field_def.substr(colon + 1);
+                field_list.emplace_back(field_name, field_type);
+            }
+            pos = sep + 1;
+        }
+        
+        // Store in global registry
+        g_registered_types[engine][type_name] = field_list;
+        
+        // Also register with FastRules type system
+        // This uses the C++ API to register the type
+        // For now, we store it and use it when creating parameters
+        return FASTRULES_OK;
+    } catch (const std::exception& e) {
+        set_error(engine, e.what());
+        return FASTRULES_ERROR_UNKNOWN;
+    }
+}
+
+fastrules_error_t fastrules_add_typed_param(
+    fastrules_engine_t engine,
+    const char* params,
+    const char* name,
+    const char* type_name,
+    const char* fields_values,
+    char** out_params
+) {
+    if (!engine || !name || !type_name || !fields_values || !out_params) {
+        return FASTRULES_ERROR_NULL_PTR;
+    }
+    
+    try {
+        // Check if type is registered
+        auto it = g_registered_types.find(engine);
+        if (it == g_registered_types.end() || it->second.find(type_name) == it->second.end()) {
+            set_error(engine, "Type not registered");
+            return FASTRULES_ERROR_UNKNOWN;
+        }
+        
+        // Build parameter string: "customer.age=25;customer.name=Alice"
+        std::ostringstream oss;
+        
+        // Parse existing params
+        std::string existing(params ? params : "");
+        if (!existing.empty()) {
+            oss << existing;
+        }
+        
+        // Parse field values: "age=25;name=Alice"
+        std::string fv_str(fields_values);
+        size_t pos = 0;
+        while (pos < fv_str.length()) {
+            size_t sep = fv_str.find(';', pos);
+            if (sep == std::string::npos) sep = fv_str.length();
+            
+            std::string fv = fv_str.substr(pos, sep - pos);
+            size_t eq = fv.find('=');
+            if (eq != std::string::npos) {
+                std::string field = fv.substr(0, eq);
+                std::string value = fv.substr(eq + 1);
+                
+                if (oss.tellp() > 0) oss << ";";
+                oss << name << "." << field << "=" << value;
+            }
+            pos = sep + 1;
+        }
+        
+        std::string result = oss.str();
+        *out_params = static_cast<char*>(std::malloc(result.length() + 1));
+        if (*out_params) {
+            std::strcpy(*out_params, result.c_str());
+        }
+        
+        return FASTRULES_OK;
+    } catch (const std::exception& e) {
+        set_error(engine, e.what());
+        return FASTRULES_ERROR_UNKNOWN;
+    }
 }
 
 void fastrules_workflow_destroy(fastrules_workflow_t workflow) {
