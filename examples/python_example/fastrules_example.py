@@ -36,6 +36,7 @@ class ErrorCode(IntEnum):
 class RuleResult:
     """Represents the result of rule execution."""
     rule_id: int
+    rule_name: str
     success: bool
     error_message: Optional[str] = None
 
@@ -108,7 +109,7 @@ class FastRulesEngine:
         lib.fastrules_workflow_add_rule.restype = ctypes.c_int
         lib.fastrules_workflow_add_rule.argtypes = [
             ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int,
-            ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_bool
+            ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_bool
         ]
         
         lib.fastrules_workflow_set_rule_priority.restype = ctypes.c_int
@@ -164,15 +165,16 @@ class Workflow:
         self._engine = engine
         self._workflow = workflow_ptr
     
-    def add_rule(self, rule_id: int, expression: str, action: str = None, 
+    def add_rule(self, rule_id: int, expression: str, name: str = None, action: str = None, 
                  description: str = None, is_active: bool = True):
         """Add a rule to the workflow."""
         expr = expression.encode('utf-8')
+        name_b = name.encode('utf-8') if name else None
         act = action.encode('utf-8') if action else None
         desc = description.encode('utf-8') if description else None
         
         result = self._engine._lib.fastrules_workflow_add_rule(
-            self._engine._engine, self._workflow, rule_id, expr, act, desc, is_active
+            self._engine._engine, self._workflow, rule_id, name_b, expr, act, desc, is_active
         )
         if result != ErrorCode.OK:
             raise RuntimeError(f"Failed to add rule: {self._engine.get_last_error()}")
@@ -226,7 +228,7 @@ class Workflow:
             self._engine._lib.fastrules_free(results_ptr)
     
     def _parse_results(self, result_str: str) -> List[RuleResult]:
-        """Parse result string (format: "id1:success1:error1;id2:success2:error2")"""
+        """Parse result string (format: "id1:name1:success1:error1;id2:name2:success2:error2")"""
         results = []
         if not result_str:
             return results
@@ -235,13 +237,16 @@ class Workflow:
             if not part.strip():
                 continue
             fields = part.split(':')
-            if len(fields) >= 2:
+            # Format: id:name:success:error
+            if len(fields) >= 3:
                 try:
                     rule_id = int(fields[0])
-                    success = fields[1] == '1'
-                    error = fields[2] if len(fields) > 2 else None
+                    rule_name = fields[1]
+                    success = fields[2] == '1'
+                    error = fields[3] if len(fields) > 3 else None
                     results.append(RuleResult(
                         rule_id=rule_id,
+                        rule_name=rule_name,
                         success=success,
                         error_message=error
                     ))
@@ -341,6 +346,51 @@ def example_order_processing():
         traceback.print_exc()
 
 
+def example_parent_child():
+    """Example: Parent-child rules with context."""
+    print("\n" + "=" * 60)
+    print("FastRules Python Example - Parent-Child Rules")
+    print("=" * 60)
+    
+    try:
+        engine = FastRulesEngine()
+        
+        # Create workflow with parent-child hierarchy
+        workflow = engine.create_workflow(3, "Parent-Child Example")
+        
+        # Add child rules
+        workflow.add_rule(1, "age >= 18", name="age-check",
+                         description="Age validation")
+        workflow.add_rule(2, "len(name) > 0", name="name-check",
+                         description="Name validation")
+        
+        # Add parent rule referencing children via context
+        workflow.add_rule(3, "context.getResult(1).success == true and context.getResult(2).success == true",
+                         name="parent-validation",
+                         description="Parent validates children")
+        
+        workflow.compile()
+        
+        print("\n--- Testing Valid Customer (Alice, age 25) ---")
+        results = workflow.execute({"age": 25, "name": "Alice"})
+        for result in results:
+            status = "PASS" if result.success else "FAIL"
+            name = result.rule_name if result.rule_name else f"Rule {result.rule_id}"
+            print(f"  {name} (ID {result.rule_id}): {status}")
+        
+        print("\n--- Testing Minor (Bob, age 15) ---")
+        results = workflow.execute({"age": 15, "name": "Bob"})
+        for result in results:
+            status = "PASS" if result.success else "FAIL"
+            name = result.rule_name if result.rule_name else f"Rule {result.rule_id}"
+            print(f"  {name} (ID {result.rule_id}): {status}")
+        
+    except Exception as e:
+        print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
+
+
 def main():
     """Run all examples."""
     print("FastRules Python Examples")
@@ -350,6 +400,7 @@ def main():
     
     example_basic_usage()
     example_order_processing()
+    example_parent_child()
     
     print("\n" + "=" * 60)
     print("Examples completed!")

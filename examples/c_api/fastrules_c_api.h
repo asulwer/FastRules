@@ -97,6 +97,7 @@ FASTRULES_C_API fastrules_workflow_t fastrules_workflow_create(
  * @param engine Engine handle
  * @param workflow Workflow handle
  * @param id Rule ID
+ * @param name Rule name (can be NULL)
  * @param expression Lua expression string
  * @param action Optional action (can be NULL)
  * @param description Optional description (can be NULL)
@@ -107,6 +108,7 @@ FASTRULES_C_API fastrules_error_t fastrules_workflow_add_rule(
     fastrules_engine_t engine,
     fastrules_workflow_t workflow,
     int id,
+    const char* name,
     const char* expression,
     const char* action,
     const char* description,

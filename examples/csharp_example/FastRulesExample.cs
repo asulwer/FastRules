@@ -39,7 +39,7 @@ namespace FastRulesExample
 
         [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
         private static extern int fastrules_workflow_add_rule(IntPtr engine, IntPtr workflow, int id, 
-            string expression, string action, string description, bool isActive);
+            string name, string expression, string action, string description, bool isActive);
 
         [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
         private static extern int fastrules_workflow_set_rule_priority(IntPtr engine, IntPtr workflow, 
@@ -171,9 +171,9 @@ namespace FastRulesExample
         /// <summary>
         /// Add a rule to the workflow.
         /// </summary>
-        public void AddRule(int id, string expression, string action = null, string description = null, bool isActive = true)
+        public void AddRule(int id, string expression, string name = null, string action = null, string description = null, bool isActive = true)
         {
-            var result = fastrules_workflow_add_rule(_engine.Handle, _workflow, id, expression, action, description, isActive);
+            var result = fastrules_workflow_add_rule(_engine.Handle, _workflow, id, name, expression, action, description, isActive);
             if (result != 0)
             {
                 throw new InvalidOperationException($"Failed to add rule: {_engine.GetLastError()}");
@@ -270,7 +270,7 @@ namespace FastRulesExample
         }
 
         /// <summary>
-        /// Parse result string (format: "id1:success1:error1;id2:success2:error2")
+        /// Parse result string (format: "id1:name1:success1:error1;id2:name2:success2:error2")
         /// </summary>
         private List<RuleResult> ParseResults(string resultStr)
         {
@@ -285,14 +285,20 @@ namespace FastRulesExample
                     continue;
 
                 var fields = part.Split(':');
-                if (fields.Length >= 2 && int.TryParse(fields[0], out int ruleId) && int.TryParse(fields[1], out int successInt))
+                // Format: id:name:success:error
+                if (fields.Length >= 3 && int.TryParse(fields[0], out int ruleId))
                 {
-                    results.Add(new RuleResult
+                    string ruleName = fields[1];
+                    if (int.TryParse(fields[2], out int successInt))
                     {
-                        RuleId = ruleId,
-                        Success = successInt == 1,
-                        Error = fields.Length > 2 ? fields[2] : null
-                    });
+                        results.Add(new RuleResult
+                        {
+                            RuleId = ruleId,
+                            RuleName = ruleName,
+                            Success = successInt == 1,
+                            Error = fields.Length > 3 ? fields[3] : null
+                        });
+                    }
                 }
             }
             return results;
@@ -314,6 +320,7 @@ namespace FastRulesExample
     public class RuleResult
     {
         public int RuleId { get; set; }
+        public string RuleName { get; set; }
         public bool Success { get; set; }
         public string Error { get; set; }
         public string ActionResult { get; set; }
@@ -342,6 +349,9 @@ namespace FastRulesExample
 
                 // Example 3: Parallel execution
                 RunParallelExecutionExample(engine);
+
+                // Example 4: Parent-child rules
+                RunParentChildExample(engine);
             }
             catch (DllNotFoundException)
             {
@@ -464,12 +474,66 @@ namespace FastRulesExample
             Console.WriteLine();
         }
 
+        static void RunParentChildExample(FastRulesEngine engine)
+        {
+            Console.WriteLine("Example 4: Parent-Child Rules");
+            Console.WriteLine("-----------------------------");
+
+            // Create workflow in-memory with parent-child rule hierarchy
+            using var workflow = engine.CreateWorkflow(4, "Parent-Child Example");
+            
+            // Add child rules (execute first)
+            workflow.AddRule(1, "age >= 18", name: "age-check", description: "Age validation");
+            workflow.AddRule(2, "len(name) > 0", name: "name-check", description: "Name validation");
+            
+            // Add parent rule that references children via context
+            workflow.AddRule(3, "context.getResult(1).success == true and context.getResult(2).success == true", 
+                            name: "parent-validation", 
+                            description: "Parent checks all children passed");
+            
+            workflow.Compile();
+
+            // Test: Valid adult with name
+            Console.WriteLine("\nTest: Valid customer (Alice, age 25)");
+            var results = workflow.Execute(new Dictionary<string, object>
+            {
+                ["age"] = 25,
+                ["name"] = "Alice"
+            });
+            PrintResultsWithNames(results);
+
+            // Test: Minor (age check fails)
+            Console.WriteLine("\nTest: Minor (Bob, age 15)");
+            results = workflow.Execute(new Dictionary<string, object>
+            {
+                ["age"] = 15,
+                ["name"] = "Bob"
+            });
+            PrintResultsWithNames(results);
+
+            Console.WriteLine();
+        }
+
         static void PrintResults(List<RuleResult> results)
         {
             foreach (var result in results)
             {
                 var status = result.Success ? "PASS" : "FAIL";
                 Console.WriteLine($"  Rule {result.RuleId}: {status}");
+                if (!string.IsNullOrEmpty(result.Error))
+                {
+                    Console.WriteLine($"    Error: {result.Error}");
+                }
+            }
+        }
+
+        static void PrintResultsWithNames(List<RuleResult> results)
+        {
+            foreach (var result in results)
+            {
+                var status = result.Success ? "PASS" : "FAIL";
+                var name = string.IsNullOrEmpty(result.RuleName) ? $"Rule {result.RuleId}" : result.RuleName;
+                Console.WriteLine($"  {name} (ID {result.RuleId}): {status}");
                 if (!string.IsNullOrEmpty(result.Error))
                 {
                     Console.WriteLine($"    Error: {result.Error}");

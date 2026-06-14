@@ -107,8 +107,8 @@ static std::vector<RuleParameter> parse_params(const char* params_str) {
     return params;
 }
 
-// Format results as: "id1:success1:error1;id2:success2:error2"
-// success: 1 or 0, error: optional message
+// Format results as: "id1:name1:success1:error1;id2:name2:success2:error2"
+// name: rule name, success: 1 or 0, error: optional message
 static char* format_results(const std::vector<RuleResult>& results) {
     std::ostringstream oss;
     
@@ -116,7 +116,13 @@ static char* format_results(const std::vector<RuleResult>& results) {
         if (i > 0) oss << ";";
         
         const auto& result = results[i];
-        oss << result.ruleId << ":" << (result.isSuccess() ? 1 : 0);
+        oss << result.ruleId << ":";
+        
+        // Include rule name if available
+        std::string rule_name = result.ruleName.empty() ? "" : result.ruleName;
+        oss << rule_name << ":";
+        
+        oss << (result.isSuccess() ? 1 : 0);
         
         if (result.exception.has_value()) {
             oss << ":" << result.exception->what();
@@ -190,6 +196,7 @@ fastrules_error_t fastrules_workflow_add_rule(
     fastrules_engine_t engine,
     fastrules_workflow_t workflow,
     int id,
+    const char* name,
     const char* expression,
     const char* action,
     const char* description,
@@ -207,6 +214,9 @@ fastrules_error_t fastrules_workflow_add_rule(
     try {
         auto rule = std::make_shared<Rule>();
         rule->id = id;
+        if (name) {
+            rule->name = name;
+        }
         rule->expression = expression;
         if (action) {
             rule->action = action;
