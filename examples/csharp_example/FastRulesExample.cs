@@ -270,7 +270,7 @@ namespace FastRulesExample
         }
 
         /// <summary>
-        /// Parse result string (format: "id1:name1:success1:error1;id2:name2:success2:error2")
+        /// Parse result string (format: "name:success:error;name:success:error")
         /// </summary>
         private List<RuleResult> ParseResults(string resultStr)
         {
@@ -285,18 +285,17 @@ namespace FastRulesExample
                     continue;
 
                 var fields = part.Split(':');
-                // Format: id:name:success:error
-                if (fields.Length >= 3 && int.TryParse(fields[0], out int ruleId))
+                // Format: name:success:error
+                if (fields.Length >= 2)
                 {
-                    string ruleName = fields[1];
-                    if (int.TryParse(fields[2], out int successInt))
+                    string ruleName = fields[0];
+                    if (int.TryParse(fields[1], out int successInt))
                     {
                         results.Add(new RuleResult
                         {
-                            RuleId = ruleId,
                             RuleName = ruleName,
                             Success = successInt == 1,
-                            Error = fields.Length > 3 ? fields[3] : null
+                            Error = fields.Length > 2 ? fields[2] : null
                         });
                     }
                 }
@@ -319,7 +318,6 @@ namespace FastRulesExample
     /// </summary>
     public class RuleResult
     {
-        public int RuleId { get; set; }
         public string RuleName { get; set; }
         public bool Success { get; set; }
         public string Error { get; set; }

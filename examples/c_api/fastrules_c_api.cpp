@@ -108,7 +108,7 @@ static std::vector<RuleParameter> parse_params(const char* params_str) {
     return params;
 }
 
-// Format results as: "id1:name1:success1:error1;id2:name2:success2:error2"
+// Format results as: "name:success:error;name:success:error"
 // name: rule name, success: 1 or 0, error: optional message
 static char* format_results(const std::vector<RuleResult>& results) {
     std::ostringstream oss;

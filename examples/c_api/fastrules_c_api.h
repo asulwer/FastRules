@@ -214,10 +214,15 @@ FASTRULES_C_API fastrules_error_t fastrules_workflow_compile(
  * Parameters format: "key=value;key2=value2"
  * Supported types: int, double, bool (true/false), string
  * 
+ * Results format: "name:success:error;name:success:error"
+ * - name: rule name
+ * - success: 1 or 0
+ * - error: optional error message
+ *
  * @param engine Engine handle
  * @param workflow Workflow handle
  * @param params_str Parameter string (format: "key=value;key2=value2")
- * @param results Output: Result string (format: "id1:success1:error1;id2:success2:error2")
+ * @param results Output: Result string (format: "name:success:error;name:success:error")
  *                  Caller must free with fastrules_free()
  * @return Error code
  */
@@ -234,10 +239,15 @@ FASTRULES_C_API fastrules_error_t fastrules_workflow_execute(
  * Parameters format: "key=value;key2=value2"
  * Supported types: int, double, bool (true/false), string
  * 
+ * Results format: "name:success:error;name:success:error"
+ * - name: rule name
+ * - success: 1 or 0  
+ * - error: optional error message
+ *
  * @param engine Engine handle
  * @param workflow Workflow handle
  * @param params_str Parameter string (format: "key=value;key2=value2")
- * @param results Output: Result string (format: "id1:success1:error1;id2:success2:error2")
+ * @param results Output: Result string (format: "name:success:error;name:success:error")
  *                  Caller must free with fastrules_free()
  * @return Error code
  */

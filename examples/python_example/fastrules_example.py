@@ -35,7 +35,6 @@ class ErrorCode(IntEnum):
 @dataclass
 class RuleResult:
     """Represents the result of rule execution."""
-    rule_id: int
     rule_name: str
     success: bool
     error_message: Optional[str] = None
@@ -228,7 +227,7 @@ class Workflow:
             self._engine._lib.fastrules_free(results_ptr)
     
     def _parse_results(self, result_str: str) -> List[RuleResult]:
-        """Parse result string (format: "id1:name1:success1:error1;id2:name2:success2:error2")"""
+        """Parse result string (format: "name:success:error;name:success:error")"""
         results = []
         if not result_str:
             return results
@@ -237,15 +236,13 @@ class Workflow:
             if not part.strip():
                 continue
             fields = part.split(':')
-            # Format: id:name:success:error
-            if len(fields) >= 3:
+            # Format: name:success:error
+            if len(fields) >= 2:
                 try:
-                    rule_id = int(fields[0])
-                    rule_name = fields[1]
-                    success = fields[2] == '1'
-                    error = fields[3] if len(fields) > 3 else None
+                    rule_name = fields[0]
+                    success = fields[1] == '1'
+                    error = fields[2] if len(fields) > 2 else None
                     results.append(RuleResult(
-                        rule_id=rule_id,
                         rule_name=rule_name,
                         success=success,
                         error_message=error
