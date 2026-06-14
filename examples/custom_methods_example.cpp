@@ -101,9 +101,9 @@ int main() {
         // 2. ACTION CALLBACKS — bind standalone C++ functions to Lua actions
         // =====================================================================
         // After this, Lua actions can call:
-        //   callbacks.sendEmail("alice@example.com", "Welcome", "...")
-        //   callbacks.logAction("rule-id", customer.name, true)
-        //   callbacks.formatCurrency(123.45) → prints formatted value
+        //   sendEmail("alice@example.com", "Welcome", "...")
+        //   logAction("rule-id", customer.name, true)
+        //   formatCurrency(123.45) → prints formatted value
         //
         // NOTE: Action callbacks use std::any, not sol::object or LuaRef.
         // The signature is: void(const std::any& target, const std::vector<std::any>& args)
@@ -135,7 +135,17 @@ int main() {
         // Callback: formatCurrency — prints a formatted value
         engine.registerAction("formatCurrency", [](const std::any& /*target*/, const std::vector<std::any>& args) {
             if (!args.empty()) {
-                double amount = std::any_cast<double>(args[0]);
+                double amount = 0.0;
+                // Try to extract as double first, then int
+                try {
+                    amount = std::any_cast<double>(args[0]);
+                } catch (...) {
+                    try {
+                        amount = static_cast<double>(std::any_cast<int>(args[0]));
+                    } catch (...) {
+                        // fallback
+                    }
+                }
                 std::string formatted = formatCurrency(amount);
                 std::cout << "  [FORMAT] " << amount << " → " << formatted << std::endl;
             }
@@ -156,7 +166,7 @@ int main() {
         // Action uses both field mutation AND callback
         adultCheck->action = R"(
             customer.processed = true
-            callbacks.logAction("adult-check", customer.name, true)
+            logAction("adult-check", customer.name, true)
         )";
         workflow.rules.push_back(adultCheck);
 
@@ -167,8 +177,8 @@ int main() {
         // Use : syntax for method calls on userdata
         premiumCheck->expression = "customer:isPremium()";
         premiumCheck->action = R"(
-            callbacks.sendEmail("premium@corp.com", "Premium Alert", "Customer " .. customer.name .. " is premium!")
-            callbacks.logAction("premium-check", customer.name, true)
+            sendEmail("premium@corp.com", "Premium Alert", "Customer " .. customer.name .. " is premium!")
+            logAction("premium-check", customer.name, true)
         )";
         workflow.rules.push_back(premiumCheck);
 
@@ -179,7 +189,7 @@ int main() {
         // getTier() returns "standard", "gold", or "platinum"
         tierCheck->expression = "customer:getTier() ~= 'standard'";
         tierCheck->action = R"(
-            callbacks.logAction("tier-check", customer.name, true)
+            logAction("tier-check", customer.name, true)
         )";
         workflow.rules.push_back(tierCheck);
 
@@ -189,9 +199,9 @@ int main() {
         balanceCheck->description = "Check if balance is positive";
         balanceCheck->expression = "customer.balance > 0";
         balanceCheck->action = R"(
-            callbacks.formatCurrency(customer.balance)
+            formatCurrency(customer.balance)
             customer.balance = customer.balance + 10.0  -- mutate field directly
-            callbacks.logAction("balance-check", customer.name, true)
+            logAction("balance-check", customer.name, true)
         )";
         workflow.rules.push_back(balanceCheck);
 
@@ -200,7 +210,7 @@ int main() {
         complexCheck->id = 5;
         complexCheck->description = "Active adult with positive balance";
         complexCheck->expression = "customer.isActive and customer.age >= 18 and customer.balance > 0";
-        complexCheck->action = "callbacks.logAction('complex-check', customer.name, true)";
+        complexCheck->action = "logAction('complex-check', customer.name, true)";
         workflow.rules.push_back(complexCheck);
 
         // Compile
