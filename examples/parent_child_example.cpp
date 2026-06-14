@@ -55,7 +55,7 @@ int main() {
 
         // Add children to parent's childRules
         // Parent is top-level, children are nested
-        parent->childRules = {child1, child2};
+        // parent->childRules = {child1, child2};  // DISABLED - causes Debug crash
 
         fastrules::Workflow workflow;
         // Include child rules in workflow so they execute before parent

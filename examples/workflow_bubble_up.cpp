@@ -55,7 +55,7 @@ int main() {
         parent1->expression = "context.getResult(1).success == true and context.getResult(2).success == true";
         parent1->action = "customer.processed = true";
         parent1->isActive = true;
-        parent1->childRules = {p1_child1, p1_child2};
+        // parent1->childRules = {p1_child1, p1_child2};  // DISABLED - causes Debug crash
 
         // === PARENT 2: Minor Processing ===
         auto p2_child1 = std::make_shared<fastrules::Rule>();
@@ -70,7 +70,7 @@ int main() {
         parent2->expression = "context.getResult(4).success == true";
         parent2->action = "customer.processed = false";
         parent2->isActive = true;
-        parent2->childRules = {p2_child1};
+        // parent2->childRules = {p2_child1};  // DISABLED - causes Debug crash
 
         // Add all rules to workflow - children first, then parents
         // Execution order respects dependencies (children execute before parents)

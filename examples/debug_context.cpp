@@ -42,7 +42,7 @@ int main() {
         parent->expression = "context.getResult(1).success == true and context.getResult(2).success == true";
         parent->action = "customer.processed = true";
         parent->isActive = true;
-        parent->childRules = {child, child2};
+        // Note: childRules not set - children are in workflow.rules instead
 
         // Parent 2 (minor)
         auto minorChild = std::make_shared<fastrules::Rule>();
@@ -57,7 +57,7 @@ int main() {
         parent2->expression = "context.getResult(4).success == true";
         parent2->action = "customer.processed = false";
         parent2->isActive = true;
-        parent2->childRules = {minorChild};
+        // Note: childRules not set - child is in workflow.rules instead
 
         fastrules::Workflow workflow;
         // Include child rules in workflow so they execute before parents
