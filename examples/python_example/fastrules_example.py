@@ -394,10 +394,31 @@ def example_parent_child():
         traceback.print_exc()
 
 
+class Customer:
+    """Customer class demonstrating complex type usage."""
+    
+    def __init__(self, age: int, name: str, balance: float, is_active: bool = True, tier: str = "standard"):
+        self.age = age
+        self.name = name
+        self.balance = balance
+        self.is_active = is_active
+        self.tier = tier
+    
+    def to_parameters(self, prefix: str = "customer") -> Dict[str, Any]:
+        """Convert Customer to parameter dictionary for FastRules."""
+        return {
+            f"{prefix}.age": self.age,
+            f"{prefix}.name": self.name,
+            f"{prefix}.balance": self.balance,
+            f"{prefix}.is_active": self.is_active,
+            f"{prefix}.tier": self.tier
+        }
+
+
 def example_complex_types():
-    """Example: Complex types (simulated Customer object)."""
+    """Example: Complex types using Customer class."""
     print("\n" + "=" * 60)
-    print("FastRules Python Example - Complex Types")
+    print("FastRules Python Example - Complex Types (Customer)")
     print("=" * 60)
     
     try:
@@ -413,60 +434,69 @@ def example_complex_types():
                          description="Customer must have name")
         workflow.add_rule(3, "customer.balance >= 0", name="balance-check",
                          description="Balance must be positive")
+        workflow.add_rule(4, "customer.is_active == true", name="active-check",
+                         description="Customer must be active")
         
         # Add parent rule that checks all validations
-        workflow.add_rule(4, 
+        workflow.add_rule(5, 
             'context.getResult("age-validation").success == true and '
             'context.getResult("name-validation").success == true and '
-            'context.getResult("balance-check").success == true',
+            'context.getResult("balance-check").success == true and '
+            'context.getResult("active-check").success == true',
             name="customer-approved",
             description="Customer passes all validations")
         
         workflow.compile()
         
-        print("\n--- Test: Valid Customer (Alice, 25, Balance: $100) ---")
-        results = workflow.execute({
-            "customer.age": 25,
-            "customer.name": "Alice",
-            "customer.balance": 100.0
-        })
+        # Test: Valid customer using Customer class
+        print("\n--- Test: Valid Customer (Alice, 25, $100, Active) ---")
+        customer1 = Customer(age=25, name="Alice", balance=100.0, is_active=True, tier="gold")
+        results = workflow.execute(customer1.to_parameters())
         for result in results:
             status = "PASS" if result.success else "FAIL"
             name = result.rule_name if result.rule_name else "(unnamed)"
             print(f"  {name}: {status}")
         
-        print("\n--- Test: Minor Customer (Bob, 15, Balance: $50) ---")
-        results = workflow.execute({
-            "customer.age": 15,
-            "customer.name": "Bob",
-            "customer.balance": 50.0
-        })
+        # Test: Minor customer
+        print("\n--- Test: Minor Customer (Bob, 15, $50) ---")
+        customer2 = Customer(age=15, name="Bob", balance=50.0)
+        results = workflow.execute(customer2.to_parameters())
         for result in results:
             status = "PASS" if result.success else "FAIL"
             name = result.rule_name if result.rule_name else "(unnamed)"
             print(f"  {name}: {status}")
         
-        print("\n--- Test: Empty Name (Charlie, 30, No name) ---")
-        results = workflow.execute({
-            "customer.age": 30,
-            "customer.name": "",
-            "customer.balance": 200.0
-        })
+        # Test: Inactive customer
+        print("\n--- Test: Inactive Customer (Charlie, 30, $200, Inactive) ---")
+        customer3 = Customer(age=30, name="Charlie", balance=200.0, is_active=False)
+        results = workflow.execute(customer3.to_parameters())
         for result in results:
             status = "PASS" if result.success else "FAIL"
             name = result.rule_name if result.rule_name else "(unnamed)"
             print(f"  {name}: {status}")
         
-        print("\n--- Test: Negative Balance (Dave, 40, Balance: -$50) ---")
-        results = workflow.execute({
-            "customer.age": 40,
-            "customer.name": "Dave",
-            "customer.balance": -50.0
-        })
+        # Test: Negative balance
+        print("\n--- Test: Negative Balance (Dave, 40, -$50) ---")
+        customer4 = Customer(age=40, name="Dave", balance=-50.0)
+        results = workflow.execute(customer4.to_parameters())
         for result in results:
             status = "PASS" if result.success else "FAIL"
             name = result.rule_name if result.rule_name else "(unnamed)"
             print(f"  {name}: {status}")
+        
+        # Test: Empty name
+        print("\n--- Test: Empty Name (Eve, 35, $500, No name) ---")
+        customer5 = Customer(age=35, name="", balance=500.0)
+        results = workflow.execute(customer5.to_parameters())
+        for result in results:
+            status = "PASS" if result.success else "FAIL"
+            name = result.rule_name if result.rule_name else "(unnamed)"
+            print(f"  {name}: {status}")
+        
+    except Exception as e:
+        print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
         
     except Exception as e:
         print(f"Error: {e}")

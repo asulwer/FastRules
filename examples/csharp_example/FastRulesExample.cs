@@ -527,7 +527,7 @@ namespace FastRulesExample
             foreach (var result in results)
             {
                 var status = result.Success ? "PASS" : "FAIL";
-                Console.WriteLine($"  Rule {result.RuleId}: {status}");
+                Console.WriteLine($"  Rule {result.RuleName}: {status}");
                 if (!string.IsNullOrEmpty(result.Error))
                 {
                     Console.WriteLine($"    Error: {result.Error}");
@@ -549,6 +549,42 @@ namespace FastRulesExample
             }
         }
 
+    /// <summary>
+    /// Example Customer class demonstrating complex type usage
+    /// </summary>    
+    public class Customer
+    {
+        public int Age { get; set; }
+        public string Name { get; set; }
+        public double Balance { get; set; }
+        public bool IsActive { get; set; }
+        public string Tier { get; set; }
+
+        public Customer(int age, string name, double balance, bool isActive = true, string tier = "standard")
+        {
+            Age = age;
+            Name = name;
+            Balance = balance;
+            IsActive = isActive;
+            Tier = tier;
+        }
+
+        /// <summary>
+        /// Convert Customer to parameter dictionary for FastRules
+        /// </summary>
+        public Dictionary<string, object> ToParameters(string prefix = "customer")
+        {
+            return new Dictionary<string, object>
+            {
+                [$"{prefix}.age"] = Age,
+                [$"{prefix}.name"] = Name,
+                [$"{prefix}.balance"] = Balance,
+                [$"{prefix}.isActive"] = IsActive,
+                [$"{prefix}.tier"] = Tier
+            };
+        }
+    }
+
         static void RunComplexTypeExample(FastRulesEngine engine)
         {
             Console.WriteLine("Example 5: Complex Types (Customer Object)");
@@ -561,42 +597,53 @@ namespace FastRulesExample
             workflow.AddRule(1, "customer.age >= 18", name: "age-validation", description: "Customer must be adult");
             workflow.AddRule(2, "len(customer.name) > 0", name: "name-validation", description: "Customer must have name");
             workflow.AddRule(3, "customer.balance >= 0", name: "balance-check", description: "Balance must be positive");
+            workflow.AddRule(4, "customer.isActive == true", name: "active-check", description: "Customer must be active");
             
             // Add parent rule that checks all validations
-            workflow.AddRule(4, 
+            workflow.AddRule(5, 
                 "context.getResult('age-validation').success == true and " +
                 "context.getResult('name-validation').success == true and " +
-                "context.getResult('balance-check').success == true",
+                "context.getResult('balance-check').success == true and " +
+                "context.getResult('active-check').success == true",
                 name: "customer-approved",
                 description: "Customer passes all validations");
             
             workflow.Compile();
 
-            // Test: Valid customer
-            Console.WriteLine("\nTest: Valid Customer (Alice, 25, Balance: $100)");
-            var results = workflow.Execute(new Dictionary<string, object>
-            {
-                ["customer.age"] = 25,
-                ["customer.name"] = "Alice",
-                ["customer.balance"] = 100.0
-            });
+            // Test: Valid customer using Customer class
+            Console.WriteLine("\nTest: Valid Customer (Alice, 25, Balance: $100, Active)");
+            var customer1 = new Customer(age: 25, name: "Alice", balance: 100.0, isActive: true, tier: "gold");
+            var results = workflow.Execute(customer1.ToParameters());
             PrintResultsWithNames(results);
 
             // Test: Minor customer
             Console.WriteLine("\nTest: Minor Customer (Bob, 15, Balance: $50)");
-            results = workflow.Execute(new Dictionary<string, object>
-            {
-                ["customer.age"] = 15,
-                ["customer.name"] = "Bob",
-                ["customer.balance"] = 50.0
-            });
+            var customer2 = new Customer(age: 15, name: "Bob", balance: 50.0);
+            results = workflow.Execute(customer2.ToParameters());
+            PrintResultsWithNames(results);
+
+            // Test: Inactive customer
+            Console.WriteLine("\nTest: Inactive Customer (Charlie, 30, Inactive)");
+            var customer3 = new Customer(age: 30, name: "Charlie", balance: 200.0, isActive: false);
+            results = workflow.Execute(customer3.ToParameters());
+            PrintResultsWithNames(results);
+
+            // Test: Negative balance
+            Console.WriteLine("\nTest: Negative Balance (Dave, 40, Balance: -$50)");
+            var customer4 = new Customer(age: 40, name: "Dave", balance: -50.0);
+            results = workflow.Execute(customer4.ToParameters());
             PrintResultsWithNames(results);
 
             // Test: Empty name
-            Console.WriteLine("\nTest: Empty Name (Charlie, 30, No name)");
-            results = workflow.Execute(new Dictionary<string, object>
-            {
-                ["customer.age"] = 30,
+            Console.WriteLine("\nTest: Empty Name (Eve, 35, No name)");
+            var customer5 = new Customer(age: 35, name: "", balance: 500.0);
+            results = workflow.Execute(customer5.ToParameters());
+            PrintResultsWithNames(results);
+
+            Console.WriteLine();
+        }
+    }
+}
                 ["customer.name"] = "",
                 ["customer.balance"] = 200.0
             });
