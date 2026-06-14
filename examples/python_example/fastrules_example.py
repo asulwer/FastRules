@@ -378,15 +378,95 @@ def example_parent_child():
         results = workflow.execute({"age": 25, "name": "Alice"})
         for result in results:
             status = "PASS" if result.success else "FAIL"
-            name = result.rule_name if result.rule_name else f"Rule {result.rule_id}"
-            print(f"  {name} (ID {result.rule_id}): {status}")
+            name = result.rule_name if result.rule_name else "(unnamed)"
+            print(f"  {name}: {status}")
         
         print("\n--- Testing Minor (Bob, age 15) ---")
         results = workflow.execute({"age": 15, "name": "Bob"})
         for result in results:
             status = "PASS" if result.success else "FAIL"
-            name = result.rule_name if result.rule_name else f"Rule {result.rule_id}"
-            print(f"  {name} (ID {result.rule_id}): {status}")
+            name = result.rule_name if result.rule_name else "(unnamed)"
+            print(f"  {name}: {status}")
+        
+    except Exception as e:
+        print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
+
+
+def example_complex_types():
+    """Example: Complex types (simulated Customer object)."""
+    print("\n" + "=" * 60)
+    print("FastRules Python Example - Complex Types")
+    print("=" * 60)
+    
+    try:
+        engine = FastRulesEngine()
+        
+        # Create workflow with customer validation rules
+        workflow = engine.create_workflow(4, "Customer Validation")
+        
+        # Add rules that access customer fields
+        workflow.add_rule(1, "customer.age >= 18", name="age-validation",
+                         description="Customer must be adult")
+        workflow.add_rule(2, "len(customer.name) > 0", name="name-validation",
+                         description="Customer must have name")
+        workflow.add_rule(3, "customer.balance >= 0", name="balance-check",
+                         description="Balance must be positive")
+        
+        # Add parent rule that checks all validations
+        workflow.add_rule(4, 
+            'context.getResult("age-validation").success == true and '
+            'context.getResult("name-validation").success == true and '
+            'context.getResult("balance-check").success == true',
+            name="customer-approved",
+            description="Customer passes all validations")
+        
+        workflow.compile()
+        
+        print("\n--- Test: Valid Customer (Alice, 25, Balance: $100) ---")
+        results = workflow.execute({
+            "customer.age": 25,
+            "customer.name": "Alice",
+            "customer.balance": 100.0
+        })
+        for result in results:
+            status = "PASS" if result.success else "FAIL"
+            name = result.rule_name if result.rule_name else "(unnamed)"
+            print(f"  {name}: {status}")
+        
+        print("\n--- Test: Minor Customer (Bob, 15, Balance: $50) ---")
+        results = workflow.execute({
+            "customer.age": 15,
+            "customer.name": "Bob",
+            "customer.balance": 50.0
+        })
+        for result in results:
+            status = "PASS" if result.success else "FAIL"
+            name = result.rule_name if result.rule_name else "(unnamed)"
+            print(f"  {name}: {status}")
+        
+        print("\n--- Test: Empty Name (Charlie, 30, No name) ---")
+        results = workflow.execute({
+            "customer.age": 30,
+            "customer.name": "",
+            "customer.balance": 200.0
+        })
+        for result in results:
+            status = "PASS" if result.success else "FAIL"
+            name = result.rule_name if result.rule_name else "(unnamed)"
+            print(f"  {name}: {status}")
+        
+        print("\n--- Test: Negative Balance (Dave, 40, Balance: -$50) ---")
+        results = workflow.execute({
+            "customer.age": 40,
+            "customer.name": "Dave",
+            "customer.balance": -50.0
+        })
+        for result in results:
+            status = "PASS" if result.success else "FAIL"
+            name = result.rule_name if result.rule_name else "(unnamed)"
+            print(f"  {name}: {status}")
         
     except Exception as e:
         print(f"Error: {e}")
@@ -404,6 +484,7 @@ def main():
     example_basic_usage()
     example_order_processing()
     example_parent_child()
+    example_complex_types()
     
     print("\n" + "=" * 60)
     print("Examples completed!")
