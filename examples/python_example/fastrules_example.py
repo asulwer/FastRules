@@ -2,9 +2,8 @@
 """
 FastRules Python Example
 
-This example demonstrates how to use FastRules from Python via ctypes.
-For production use, consider creating a proper Python extension module
-using pybind11 or Cython for better performance and type safety.
+This example demonstrates how to use FastRules from Python via ctypes
+with in-memory workflow/rule creation (no JSON required).
 
 Requirements:
 - Python 3.7+
@@ -16,6 +15,7 @@ Build the shared library:
 """
 
 import ctypes
+import json
 import os
 import sys
 from typing import List, Dict, Any, Optional
@@ -23,41 +23,15 @@ from dataclasses import dataclass
 from enum import IntEnum
 
 
-# Load the FastRules C API library
-def load_fastrules_library():
-    """Load the FastRules C API shared library based on platform."""
-    if sys.platform == "win32":
-        lib_name = "fastrules_c_api.dll"
-    elif sys.platform == "linux":
-        lib_name = "libfastrules_c_api.so"
-    elif sys.platform == "darwin":
-        lib_name = "libfastrules_c_api.dylib"
-    else:
-        raise RuntimeError(f"Unsupported platform: {sys.platform}")
-    
-    # Try to find library in the current directory first
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    search_paths = [
-        script_dir,
-        os.path.join(script_dir, "..", "..", "Release"),
-        os.path.join(script_dir, "..", "..", "build", "Release"),
-    ]
-    
-    for path in search_paths:
-        full_path = os.path.join(path, lib_name)
-        if os.path.exists(full_path):
-            return ctypes.CDLL(full_path)
-    
-    # Try system paths
-    try:
-        return ctypes.CDLL(lib_name)
-    except OSError as e:
-        raise RuntimeError(
-            f"Could not find {lib_name}. "
-            f"Please build FastRules with -DFASTRULES_BUILD_SHARED=ON "
-            f"or ensure the library is in your PATH/LD_LIBRARY_PATH. "
-            f"Error: {e}"
-        )
+class ErrorCode(IntEnum):
+    """FastRules error codes."""
+    OK = 0
+    NULL_PTR = -1
+    INVALID_JSON = -2
+    COMPILATION_FAILED = -3
+    EXECUTION_FAILED = -4
+    MEMORY = -5
+    UNKNOWN = -99
 
 
 @dataclass
@@ -69,214 +43,287 @@ class RuleResult:
 
 
 class FastRulesEngine:
-    """Python wrapper for FastRules C++ library."""
+    """Python wrapper for FastRules C++ library using ctypes."""
     
     def __init__(self):
         """Initialize the FastRules engine."""
-        self._lib = load_fastrules_library()
+        self._lib = self._load_library()
         self._setup_function_signatures()
-        self._engine = None
-        self._create_engine()
+        
+        # Create engine
+        self._engine = self._lib.fastrules_engine_create()
+        if not self._engine:
+            raise RuntimeError("Failed to create FastRules engine")
+    
+    def _load_library(self) -> ctypes.CDLL:
+        """Load the FastRules C API shared library."""
+        if sys.platform == "win32":
+            lib_name = "fastrules_c_api.dll"
+        elif sys.platform == "linux":
+            lib_name = "libfastrules_c_api.so"
+        elif sys.platform == "darwin":
+            lib_name = "libfastrules_c_api.dylib"
+        else:
+            raise RuntimeError(f"Unsupported platform: {sys.platform}")
+        
+        # Try to find library in the current directory first
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        search_paths = [
+            script_dir,
+            os.path.join(script_dir, "..", "..", "build_vs", "Release"),
+            os.path.join(script_dir, "..", "..", "build_vs", "Debug"),
+        ]
+        
+        for path in search_paths:
+            full_path = os.path.join(path, lib_name)
+            if os.path.exists(full_path):
+                return ctypes.CDLL(full_path)
+        
+        # Try system paths
+        try:
+            return ctypes.CDLL(lib_name)
+        except OSError as e:
+            raise RuntimeError(
+                f"Could not find {lib_name}. "
+                f"Please build FastRules C API first. "
+                f"Error: {e}"
+            )
     
     def _setup_function_signatures(self):
         """Setup ctypes function signatures for C API functions."""
-        # Note: This assumes a C API wrapper exists. If not, you'll need to
-        # create one or use a different approach (e.g., pybind11, Cython)
+        lib = self._lib
         
-        # Example C API function signatures:
-        # extern "C" {
-        #     void* fastrules_engine_create();
-        #     void fastrules_engine_destroy(void* engine);
-        #     int fastrules_execute_workflow(void* engine, const char* json, ...);
-        # }
+        # Engine functions
+        lib.fastrules_engine_create.restype = ctypes.c_void_p
+        lib.fastrules_engine_create.argtypes = []
         
-        # For now, this is a placeholder that demonstrates the approach
-        pass
-    
-    def _create_engine(self):
-        """Create the underlying LuaEngine instance."""
-        # This would call the C API to create an engine
-        # self._engine = self._lib.fastrules_engine_create()
-        pass
+        lib.fastrules_engine_destroy.restype = None
+        lib.fastrules_engine_destroy.argtypes = [ctypes.c_void_p]
+        
+        lib.fastrules_engine_get_last_error.restype = ctypes.c_char_p
+        lib.fastrules_engine_get_last_error.argtypes = [ctypes.c_void_p]
+        
+        # Workflow creation (in-memory)
+        lib.fastrules_workflow_create.restype = ctypes.c_void_p
+        lib.fastrules_workflow_create.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_char_p]
+        
+        lib.fastrules_workflow_add_rule.restype = ctypes.c_int
+        lib.fastrules_workflow_add_rule.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int,
+            ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_bool
+        ]
+        
+        lib.fastrules_workflow_set_rule_priority.restype = ctypes.c_int
+        lib.fastrules_workflow_set_rule_priority.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c_int
+        ]
+        
+        lib.fastrules_workflow_destroy.restype = None
+        lib.fastrules_workflow_destroy.argtypes = [ctypes.c_void_p]
+        
+        lib.fastrules_workflow_compile.restype = ctypes.c_int
+        lib.fastrules_workflow_compile.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+        
+        lib.fastrules_workflow_execute.restype = ctypes.c_int
+        lib.fastrules_workflow_execute.argtypes = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p)
+        ]
+        
+        lib.fastrules_free.restype = None
+        lib.fastrules_free.argtypes = [ctypes.c_void_p]
+        
+        lib.fastrules_get_version.restype = ctypes.c_char_p
+        lib.fastrules_get_version.argtypes = []
     
     def __del__(self):
         """Cleanup the engine."""
-        if self._engine:
-            # self._lib.fastrules_engine_destroy(self._engine)
-            pass
+        if hasattr(self, '_engine') and self._engine:
+            self._lib.fastrules_engine_destroy(self._engine)
+            self._engine = None
     
-    def execute_rules(self, rules_json: str, context: Dict[str, Any]) -> List[RuleResult]:
-        """
-        Execute rules defined in JSON format.
+    def get_last_error(self) -> str:
+        """Get the last error message."""
+        msg = self._lib.fastrules_engine_get_last_error(self._engine)
+        return msg.decode('utf-8') if msg else "Unknown error"
+    
+    def get_version(self) -> str:
+        """Get FastRules version."""
+        return self._lib.fastrules_get_version().decode('utf-8')
+    
+    def create_workflow(self, workflow_id: int, description: str = ""):
+        """Create a workflow in-memory."""
+        desc = description.encode('utf-8') if description else None
+        workflow = self._lib.fastrules_workflow_create(self._engine, workflow_id, desc)
+        if not workflow:
+            raise RuntimeError(f"Failed to create workflow: {self.get_last_error()}")
+        return Workflow(self, workflow)
+
+
+class Workflow:
+    """Represents a FastRules workflow."""
+    
+    def __init__(self, engine: FastRulesEngine, workflow_ptr):
+        self._engine = engine
+        self._workflow = workflow_ptr
+    
+    def add_rule(self, rule_id: int, expression: str, action: str = None, 
+                 description: str = None, is_active: bool = True):
+        """Add a rule to the workflow."""
+        expr = expression.encode('utf-8')
+        act = action.encode('utf-8') if action else None
+        desc = description.encode('utf-8') if description else None
         
-        Args:
-            rules_json: JSON string defining the workflow and rules
-            context: Dictionary of parameters to pass to the rules
+        result = self._engine._lib.fastrules_workflow_add_rule(
+            self._engine._engine, self._workflow, rule_id, expr, act, desc, is_active
+        )
+        if result != ErrorCode.OK:
+            raise RuntimeError(f"Failed to add rule: {self._engine.get_last_error()}")
+    
+    def set_rule_priority(self, rule_id: int, priority: int):
+        """Set rule priority."""
+        result = self._engine._lib.fastrules_workflow_set_rule_priority(
+            self._engine._engine, self._workflow, rule_id, priority
+        )
+        if result != ErrorCode.OK:
+            raise RuntimeError(f"Failed to set priority: {self._engine.get_last_error()}")
+    
+    def compile(self):
+        """Compile the workflow."""
+        result = self._engine._lib.fastrules_workflow_compile(
+            self._engine._engine, self._workflow
+        )
+        if result != ErrorCode.OK:
+            raise RuntimeError(f"Failed to compile workflow: {self._engine.get_last_error()}")
+    
+    def execute(self, parameters: Dict[str, Any]) -> List[RuleResult]:
+        """Execute the workflow with given parameters."""
+        params_json = json.dumps(parameters).encode('utf-8')
+        results_ptr = ctypes.c_char_p()
         
-        Returns:
-            List of RuleResult objects
-        """
-        # This would serialize the context to JSON and call the C API
-        # For demonstration, we'll show how it would work:
+        result = self._engine._lib.fastrules_workflow_execute(
+            self._engine._engine, self._workflow, params_json,
+            ctypes.byref(results_ptr)
+        )
         
-        # Serialize context to JSON
-        import json
-        context_json = json.dumps(context)
+        if result != ErrorCode.OK:
+            raise RuntimeError(f"Execution failed: {self._engine.get_last_error()}")
         
-        # Call C API (placeholder)
-        # result_ptr = self._lib.fastrules_execute_workflow(
-        #     self._engine,
-        #     rules_json.encode('utf-8'),
-        #     context_json.encode('utf-8')
-        # )
-        
-        # Parse results (placeholder)
-        results = []
-        # ... parse C results into Python objects
-        
-        return results
+        try:
+            results_json = json.loads(results_ptr.value.decode('utf-8'))
+            return [
+                RuleResult(
+                    rule_id=r['ruleId'],
+                    success=r['success'],
+                    error_message=r.get('error')
+                )
+                for r in results_json
+            ]
+        finally:
+            self._engine._lib.fastrules_free(results_ptr)
+    
+    def __del__(self):
+        """Cleanup the workflow."""
+        if hasattr(self, '_workflow') and self._workflow:
+            self._engine._lib.fastrules_workflow_destroy(self._workflow)
+            self._workflow = None
 
 
 def example_basic_usage():
-    """Example: Basic rule execution."""
+    """Example: Basic rule execution using in-memory workflow creation."""
     print("=" * 60)
-    print("FastRules Python Example - Basic Usage")
+    print("FastRules Python Example - Basic Usage (In-Memory)")
     print("=" * 60)
-    
-    # Define rules in JSON format (using the JSON extension)
-    workflow_json = """
-    {
-        "id": 1,
-        "description": "Customer Validation",
-        "rules": [
-            {
-                "id": 1,
-                "description": "Age check",
-                "expression": "age >= 18"
-            },
-            {
-                "id": 2,
-                "description": "Name check",
-                "expression": "name ~= '^[A-Za-z]+$'"
-            }
-        ]
-    }
-    """
     
     try:
         engine = FastRulesEngine()
+        print(f"FastRules Version: {engine.get_version()}\n")
+        
+        # Create workflow in-memory (no JSON)
+        workflow = engine.create_workflow(1, "Customer Validation")
+        
+        # Add rules programmatically
+        workflow.add_rule(1, "age >= 18", description="Age check")
+        workflow.add_rule(2, "len(name) > 0", description="Name check")
+        
+        workflow.compile()
         
         # Test with valid customer
-        print("\n--- Testing Valid Customer (Alice, age 25) ---")
-        context = {"age": 25, "name": "Alice"}
-        results = engine.execute_rules(workflow_json, context)
+        print("--- Testing Valid Customer (Alice, age 25) ---")
+        results = workflow.execute({"age": 25, "name": "Alice"})
         for result in results:
             status = "PASS" if result.success else "FAIL"
             print(f"  Rule {result.rule_id}: {status}")
         
         # Test with invalid customer (minor)
         print("\n--- Testing Minor Customer (Bob, age 15) ---")
-        context = {"age": 15, "name": "Bob"}
-        results = engine.execute_rules(workflow_json, context)
+        results = workflow.execute({"age": 15, "name": "Bob"})
         for result in results:
             status = "PASS" if result.success else "FAIL"
             print(f"  Rule {result.rule_id}: {status}")
         
-        # Test with invalid name
-        print("\n--- Testing Invalid Name (Charlie123) ---")
-        context = {"age": 30, "name": "Charlie123"}
-        results = engine.execute_rules(workflow_json, context)
+        # Test with empty name
+        print("\n--- Testing Empty Name ---")
+        results = workflow.execute({"age": 30, "name": ""})
         for result in results:
             status = "PASS" if result.success else "FAIL"
             print(f"  Rule {result.rule_id}: {status}")
         
     except Exception as e:
         print(f"Error: {e}")
-        print("\nNote: This example requires:")
-        print("  1. A C API wrapper for FastRules (see fastrules_c_api.h)")
-        print("  2. The FastRules shared library built with -DFASTRULES_BUILD_SHARED=ON")
+        import traceback
+        traceback.print_exc()
 
 
-def example_workflow_with_actions():
-    """Example: Workflow with actions."""
+def example_order_processing():
+    """Example: Order processing with actions."""
     print("\n" + "=" * 60)
-    print("FastRules Python Example - Actions")
+    print("FastRules Python Example - Order Processing")
     print("=" * 60)
-    
-    workflow_json = """
-    {
-        "id": 2,
-        "description": "Order Processing",
-        "rules": [
-            {
-                "id": 1,
-                "description": "Check minimum order",
-                "expression": "total >= 10.00",
-                "action": "applyDiscount(0.10)"
-            },
-            {
-                "id": 2,
-                "description": "Check VIP status",
-                "expression": "isVip == true",
-                "action": "applyDiscount(0.20)"
-            }
-        ]
-    }
-    """
     
     try:
         engine = FastRulesEngine()
         
+        # Create workflow in-memory
+        workflow = engine.create_workflow(2, "Order Processing")
+        
+        # Add rules
+        workflow.add_rule(1, "order_total >= 10.00", 
+                         description="Minimum order")
+        workflow.add_rule(2, "is_vip == true", 
+                         description="VIP bonus")
+        
+        workflow.compile()
+        
         print("\n--- Processing Standard Order ($100, non-VIP) ---")
-        context = {"total": 100.00, "isVip": False}
-        results = engine.execute_rules(workflow_json, context)
+        results = workflow.execute({"order_total": 100.00, "is_vip": False})
         for result in results:
             status = "PASS" if result.success else "FAIL"
             print(f"  Rule {result.rule_id}: {status}")
         
         print("\n--- Processing VIP Order ($100, VIP) ---")
-        context = {"total": 100.00, "isVip": True}
-        results = engine.execute_rules(workflow_json, context)
+        results = workflow.execute({"order_total": 100.00, "is_vip": True})
         for result in results:
             status = "PASS" if result.success else "FAIL"
             print(f"  Rule {result.rule_id}: {status}")
         
     except Exception as e:
         print(f"Error: {e}")
-
-
-def example_parallel_execution():
-    """Example: Parallel rule execution."""
-    print("\n" + "=" * 60)
-    print("FastRules Python Example - Parallel Execution")
-    print("=" * 60)
-    
-    # This would require exposing executeParallel via C API
-    print("\nNote: Parallel execution requires additional C API bindings.")
-    print("See AsyncWorkflow documentation for details.")
+        import traceback
+        traceback.print_exc()
 
 
 def main():
     """Run all examples."""
     print("FastRules Python Examples")
     print("=" * 60)
-    print()
-    print("Note: These examples demonstrate the Python API structure.")
-    print("To run them, you need:")
-    print("  1. A C API wrapper for FastRules (fastrules_c_api.h/cpp)")
-    print("  2. Python bindings (ctypes, pybind11, or Cython)")
-    print("  3. FastRules built as a shared library")
+    print("Using in-memory workflow/rule creation (no JSON required)")
     print()
     
     example_basic_usage()
-    example_workflow_with_actions()
-    example_parallel_execution()
+    example_order_processing()
     
     print("\n" + "=" * 60)
-    print("For production use, consider:")
-    print("  - Using pybind11 for better C++ integration")
-    print("  - Creating a proper Python package with setup.py/pyproject.toml")
-    print("  - Adding type hints and documentation")
+    print("Examples completed!")
     print("=" * 60)
 
 

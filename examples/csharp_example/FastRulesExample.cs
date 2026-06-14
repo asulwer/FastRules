@@ -14,6 +14,11 @@ namespace FastRulesExample
         private IntPtr _engine;
         private bool _disposed;
 
+        /// <summary>
+        /// Internal handle for use by Workflow class.
+        /// </summary>
+        internal IntPtr Handle => _engine;
+
         // P/Invoke declarations - import from fastrules_c_api.dll
         [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr fastrules_engine_create();
@@ -25,7 +30,15 @@ namespace FastRulesExample
         private static extern IntPtr fastrules_engine_get_last_error(IntPtr engine);
 
         [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr fastrules_workflow_create_from_json(IntPtr engine, string json);
+        private static extern IntPtr fastrules_workflow_create(IntPtr engine, int id, string description);
+
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        private static extern int fastrules_workflow_add_rule(IntPtr engine, IntPtr workflow, int id, 
+            string expression, string action, string description, bool isActive);
+
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        private static extern int fastrules_workflow_set_rule_priority(IntPtr engine, IntPtr workflow, 
+            int rule_id, int priority);
 
         [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
         private static extern void fastrules_workflow_destroy(IntPtr workflow);
@@ -75,20 +88,27 @@ namespace FastRulesExample
             }
         }
 
-        public Workflow LoadWorkflow(string json)
+        /// <summary>
+        /// Create a workflow in-memory (no JSON required).
+        /// </summary>
+        public Workflow CreateWorkflow(int id, string description = "")
         {
-            if (!fastrules_validate_workflow_json(json))
-            {
-                throw new ArgumentException("Invalid workflow JSON");
-            }
-
-            var workflowPtr = fastrules_workflow_create_from_json(_engine, json);
+            var workflowPtr = fastrules_workflow_create(_engine, id, description);
             if (workflowPtr == IntPtr.Zero)
             {
-                throw new InvalidOperationException($"Failed to load workflow: {GetLastError()}");
+                throw new InvalidOperationException($"Failed to create workflow: {GetLastError()}");
             }
 
             return new Workflow(this, workflowPtr);
+        }
+
+        /// <summary>
+        /// Load a workflow from JSON (legacy method).
+        /// </summary>
+        [Obsolete("Use CreateWorkflow with AddRule instead")]
+        public Workflow LoadWorkflow(string json)
+        {
+            throw new NotImplementedException("JSON loading requires JSON extension. Use CreateWorkflow with AddRule instead.");
         }
 
         internal string GetLastError()
@@ -141,6 +161,30 @@ namespace FastRulesExample
         {
             _engine = engine;
             _workflow = workflow;
+        }
+
+        /// <summary>
+        /// Add a rule to the workflow.
+        /// </summary>
+        public void AddRule(int id, string expression, string action = null, string description = null, bool isActive = true)
+        {
+            var result = fastrules_workflow_add_rule(_engine.Handle, _workflow, id, expression, action, description, isActive);
+            if (result != 0)
+            {
+                throw new InvalidOperationException($"Failed to add rule: {_engine.GetLastError()}");
+            }
+        }
+
+        /// <summary>
+        /// Set rule priority.
+        /// </summary>
+        public void SetRulePriority(int ruleId, int priority)
+        {
+            var result = fastrules_workflow_set_rule_priority(_engine.Handle, _workflow, ruleId, priority);
+            if (result != 0)
+            {
+                throw new InvalidOperationException($"Failed to set rule priority: {_engine.GetLastError()}");
+            }
         }
 
         public void Compile()
@@ -265,25 +309,13 @@ namespace FastRulesExample
             Console.WriteLine("Example 1: Basic Customer Validation");
             Console.WriteLine("------------------------------------");
 
-            var workflowJson = @"
-            {
-                ""id"": 1,
-                ""description"": ""Customer Validation"",
-                ""rules"": [
-                    {
-                        ""id"": 1,
-                        ""description"": ""Age check"",
-                        ""expression"": ""age >= 18""
-                    },
-                    {
-                        ""id"": 2,
-                        ""description"": ""Name check"",
-                        ""expression"": ""string.len(name) > 0""
-                    }
-                ]
-            }";
-
-            using var workflow = engine.LoadWorkflow(workflowJson);
+            // Create workflow in-memory (no JSON)
+            using var workflow = engine.CreateWorkflow(1, "Customer Validation");
+            
+            // Add rules programmatically
+            workflow.AddRule(1, "age >= 18", description: "Age check");
+            workflow.AddRule(2, "string.len(name) > 0", description: "Name check");
+            
             workflow.Compile();
 
             // Test case 1: Valid adult
@@ -312,25 +344,13 @@ namespace FastRulesExample
             Console.WriteLine("Example 2: Order Processing");
             Console.WriteLine("---------------------------");
 
-            var workflowJson = @"
-            {
-                ""id"": 2,
-                ""description"": ""Order Processing"",
-                ""rules"": [
-                    {
-                        ""id"": 1,
-                        ""description"": ""Minimum order"",
-                        ""expression"": ""orderTotal >= 10.0""
-                    },
-                    {
-                        ""id"": 2,
-                        ""description"": ""VIP bonus"",
-                        ""expression"": ""isVip == true""
-                    }
-                ]
-            }";
-
-            using var workflow = engine.LoadWorkflow(workflowJson);
+            // Create workflow in-memory (no JSON)
+            using var workflow = engine.CreateWorkflow(2, "Order Processing");
+            
+            // Add rules programmatically
+            workflow.AddRule(1, "orderTotal >= 10.0", description: "Minimum order");
+            workflow.AddRule(2, "isVip == true", description: "VIP bonus");
+            
             workflow.Compile();
 
             // Test: Standard order
@@ -359,19 +379,15 @@ namespace FastRulesExample
             Console.WriteLine("Example 3: Parallel Execution");
             Console.WriteLine("-----------------------------");
 
-            var workflowJson = @"
-            {
-                ""id"": 3,
-                ""description"": ""Parallel Rules"",
-                ""rules"": [
-                    { ""id"": 1, ""expression"": ""x > 0"" },
-                    { ""id"": 2, ""expression"": ""y > 0"" },
-                    { ""id"": 3, ""expression"": ""z > 0"" },
-                    { ""id"": 4, ""expression"": ""w > 0"" }
-                ]
-            }";
-
-            using var workflow = engine.LoadWorkflow(workflowJson);
+            // Create workflow in-memory (no JSON)
+            using var workflow = engine.CreateWorkflow(3, "Parallel Rules");
+            
+            // Add rules programmatically
+            workflow.AddRule(1, "x > 0");
+            workflow.AddRule(2, "y > 0");
+            workflow.AddRule(3, "z > 0");
+            workflow.AddRule(4, "w > 0");
+            
             workflow.Compile();
 
             Console.WriteLine("\nSequential Execution:");

@@ -124,6 +124,99 @@ const char* fastrules_engine_get_last_error(fastrules_engine_t engine) {
 }
 
 // ============================================================================
+// Workflow Creation (In-Memory)
+// ============================================================================
+
+fastrules_workflow_t fastrules_workflow_create(
+    fastrules_engine_t engine,
+    int id,
+    const char* description
+) {
+    if (!engine) {
+        return nullptr;
+    }
+    
+    try {
+        auto* workflow = new FastRulesWorkflow();
+        workflow->workflow = std::make_unique<Workflow>();
+        workflow->workflow->id = id;
+        if (description) {
+            workflow->workflow->description = description;
+        }
+        return workflow;
+    } catch (const std::exception& e) {
+        set_error(engine, e.what());
+        return nullptr;
+    } catch (...) {
+        set_error(engine, "Unknown error creating workflow");
+        return nullptr;
+    }
+}
+
+fastrules_error_t fastrules_workflow_add_rule(
+    fastrules_engine_t engine,
+    fastrules_workflow_t workflow,
+    int id,
+    const char* expression,
+    const char* action,
+    const char* description,
+    bool isActive
+) {
+    if (!engine || !workflow) {
+        return FASTRULES_ERROR_NULL_PTR;
+    }
+    
+    if (!expression) {
+        set_error(engine, "Expression cannot be null");
+        return FASTRULES_ERROR_NULL_PTR;
+    }
+    
+    try {
+        auto rule = std::make_shared<Rule>();
+        rule->id = id;
+        rule->expression = expression;
+        if (action) {
+            rule->action = action;
+        }
+        if (description) {
+            rule->description = description;
+        }
+        rule->isActive = isActive;
+        
+        workflow->workflow->rules.push_back(rule);
+        return FASTRULES_OK;
+    } catch (const std::exception& e) {
+        set_error(engine, e.what());
+        return FASTRULES_ERROR_UNKNOWN;
+    }
+}
+
+fastrules_error_t fastrules_workflow_set_rule_priority(
+    fastrules_engine_t engine,
+    fastrules_workflow_t workflow,
+    int rule_id,
+    int priority
+) {
+    if (!engine || !workflow) {
+        return FASTRULES_ERROR_NULL_PTR;
+    }
+    
+    try {
+        for (auto& rule : workflow->workflow->rules) {
+            if (rule->id == rule_id) {
+                rule->priority = priority;
+                return FASTRULES_OK;
+            }
+        }
+        set_error(engine, "Rule not found");
+        return FASTRULES_ERROR_UNKNOWN;
+    } catch (const std::exception& e) {
+        set_error(engine, e.what());
+        return FASTRULES_ERROR_UNKNOWN;
+    }
+}
+
+// ============================================================================
 // Workflow Management
 // ============================================================================
 

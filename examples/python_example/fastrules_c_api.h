@@ -74,6 +74,59 @@ FASTRULES_C_API void fastrules_engine_destroy(fastrules_engine_t engine);
 FASTRULES_C_API const char* fastrules_engine_get_last_error(fastrules_engine_t engine);
 
 // ============================================================================
+// Workflow Creation (In-Memory)
+// ============================================================================
+
+/**
+ * Create an empty workflow.
+ * @param engine Engine handle
+ * @param id Workflow ID
+ * @param description Workflow description (can be NULL)
+ * @return Workflow handle or NULL on error
+ */
+FASTRULES_C_API fastrules_workflow_t fastrules_workflow_create(
+    fastrules_engine_t engine,
+    int id,
+    const char* description
+);
+
+/**
+ * Add a rule to a workflow.
+ * @param engine Engine handle
+ * @param workflow Workflow handle
+ * @param id Rule ID
+ * @param expression Lua expression string
+ * @param action Optional action (can be NULL)
+ * @param description Optional description (can be NULL)
+ * @param isActive Whether rule is active
+ * @return Error code
+ */
+FASTRULES_C_API fastrules_error_t fastrules_workflow_add_rule(
+    fastrules_engine_t engine,
+    fastrules_workflow_t workflow,
+    int id,
+    const char* expression,
+    const char* action,
+    const char* description,
+    bool isActive
+);
+
+/**
+ * Set rule priority.
+ * @param engine Engine handle
+ * @param workflow Workflow handle
+ * @param rule_id Rule ID
+ * @param priority Priority value
+ * @return Error code
+ */
+FASTRULES_C_API fastrules_error_t fastrules_workflow_set_rule_priority(
+    fastrules_engine_t engine,
+    fastrules_workflow_t workflow,
+    int rule_id,
+    int priority
+);
+
+// ============================================================================
 // Workflow Management
 // ============================================================================
 
