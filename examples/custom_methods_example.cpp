@@ -56,7 +56,7 @@ void sendEmail(const std::string& to, const std::string& subject, const std::str
 // Standalone C++ function for logging
 void logAction(const std::string& ruleId, const std::string& customerName, bool success) {
     std::cout << "  [LOG] Rule '" << ruleId << "' for customer '" << customerName
-              << "' — " << (success ? "PASSED" : "FAILED") << std::endl;
+              << "' - " << (success ? "PASSED" : "FAILED") << std::endl;
 }
 
 // Standalone C++ function that returns a value
@@ -103,7 +103,7 @@ int main() {
         // After this, Lua actions can call:
         //   sendEmail("alice@example.com", "Welcome", "...")
         //   logAction("rule-id", customer.name, true)
-        //   formatCurrency(123.45) → prints formatted value
+        //   formatCurrency(123.45) => prints formatted value
         //
         // NOTE: Action callbacks use std::any, not sol::object or LuaRef.
         // The signature is: void(const std::any& target, const std::vector<std::any>& args)
@@ -147,7 +147,7 @@ int main() {
                     }
                 }
                 std::string formatted = formatCurrency(amount);
-                std::cout << "  [FORMAT] " << amount << " → " << formatted << std::endl;
+                std::cout << "  [FORMAT] " << amount << " => " << formatted << std::endl;
             }
         });
 
