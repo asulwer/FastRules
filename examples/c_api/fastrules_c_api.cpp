@@ -476,6 +476,145 @@ void fastrules_free(char* ptr) {
 }
 
 // ============================================================================
+// Complex Object Support
+// ============================================================================
+
+// Internal structures for complex objects
+struct FastRulesType {
+    std::string name;
+    std::vector<std::pair<std::string, std::string>> fields; // field_name -> type
+};
+
+struct FastRulesObject {
+    fastrules_type_t type;
+    std::map<std::string, std::string> field_values; // field_name -> value_as_string
+};
+
+// Global type registry per engine
+static std::map<fastrules_engine_t, std::map<std::string, std::shared_ptr<FastRulesType>>> g_type_registry;
+
+fastrules_type_t fastrules_register_type(
+    fastrules_engine_t engine,
+    const char* type_name,
+    const char* fields
+) {
+    if (!engine || !type_name || !fields) {
+        return nullptr;
+    }
+    
+    try {
+        auto type = std::make_shared<FastRulesType>();
+        type->name = type_name;
+        
+        // Parse fields: "field1:type1;field2:type2"
+        std::string fields_str(fields);
+        size_t pos = 0;
+        while (pos < fields_str.length()) {
+            size_t sep = fields_str.find(';', pos);
+            if (sep == std::string::npos) sep = fields_str.length();
+            
+            std::string field_def = fields_str.substr(pos, sep - pos);
+            size_t colon = field_def.find(':');
+            if (colon != std::string::npos) {
+                std::string field_name = field_def.substr(0, colon);
+                std::string field_type = field_def.substr(colon + 1);
+                type->fields.emplace_back(field_name, field_type);
+            }
+            pos = sep + 1;
+        }
+        
+        // Store in global registry
+        auto type_ptr = type.get();
+        g_type_registry[engine][type_name] = type;
+        
+        return type_ptr;
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+fastrules_object_t fastrules_object_create(
+    fastrules_engine_t engine,
+    fastrules_type_t type
+) {
+    if (!engine || !type) {
+        return nullptr;
+    }
+    
+    try {
+        auto obj = new FastRulesObject();
+        obj->type = type;
+        return obj;
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+fastrules_error_t fastrules_object_set_field(
+    fastrules_engine_t engine,
+    fastrules_object_t obj,
+    const char* field_name,
+    const char* value
+) {
+    if (!engine || !obj || !field_name || !value) {
+        return FASTRULES_ERROR_NULL_PTR;
+    }
+    
+    try {
+        obj->field_values[field_name] = value;
+        return FASTRULES_OK;
+    } catch (...) {
+        return FASTRULES_ERROR_UNKNOWN;
+    }
+}
+
+void fastrules_object_destroy(
+    fastrules_engine_t engine,
+    fastrules_object_t obj
+) {
+    delete obj;
+}
+
+fastrules_error_t fastrules_add_object_param(
+    fastrules_engine_t engine,
+    const char* existing_params,
+    const char* param_name,
+    fastrules_object_t obj,
+    char** out_params
+) {
+    if (!engine || !param_name || !obj || !out_params) {
+        return FASTRULES_ERROR_NULL_PTR;
+    }
+    
+    try {
+        // Build parameter string from object fields
+        std::ostringstream oss;
+        
+        // Include existing params
+        if (existing_params && strlen(existing_params) > 0) {
+            oss << existing_params << ";";
+        }
+        
+        // Add object fields as prefixed parameters
+        // e.g., "customer" + "age" = "customer.age=25"
+        for (const auto& [field_name, value] : obj->field_values) {
+            if (oss.tellp() > 0) oss << ";";
+            oss << param_name << "." << field_name << "=" << value;
+        }
+        
+        std::string result = oss.str();
+        *out_params = static_cast<char*>(std::malloc(result.length() + 1));
+        if (*out_params) {
+            std::strcpy(*out_params, result.c_str());
+        }
+        
+        return FASTRULES_OK;
+    } catch (...) {
+        return FASTRULES_ERROR_UNKNOWN;
+    }
+}
+
+// ============================================================================
 // Utility
 // ============================================================================
 

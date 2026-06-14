@@ -63,6 +63,22 @@ namespace FastRulesExample
         [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
         private static extern int fastrules_add_typed_param(IntPtr engine, string existingParams, string name, string typeName, string fieldValues, out IntPtr outParams);
 
+        // Complex Object Support
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl, EntryPoint = "fastrules_register_type")]
+        private static extern IntPtr fastrules_register_type_native(IntPtr engine, string typeName, string fields);
+
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl, EntryPoint = "fastrules_object_create")]
+        private static extern IntPtr fastrules_object_create_native(IntPtr engine, IntPtr type);
+
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl, EntryPoint = "fastrules_object_set_field")]
+        private static extern int fastrules_object_set_field_native(IntPtr engine, IntPtr obj, string fieldName, string value);
+
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl, EntryPoint = "fastrules_object_destroy")]
+        private static extern void fastrules_object_destroy_native(IntPtr engine, IntPtr obj);
+
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl, EntryPoint = "fastrules_add_object_param")]
+        private static extern int fastrules_add_object_param_native(IntPtr engine, string existingParams, string paramName, IntPtr obj, out IntPtr outParams);
+
         [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
         private static extern void fastrules_free(IntPtr ptr);
 
@@ -111,6 +127,55 @@ namespace FastRulesExample
             }
 
             return new Workflow(this, workflowPtr);
+        }
+
+        /// <summary>
+        /// Register a complex type with the engine.
+        /// Fields format: "field1:type1;field2:type2"
+        /// Supported types: int, double, bool, string
+        /// </summary>
+        public ComplexType RegisterType(string typeName, string fields)
+        {
+            var type = fastrules_register_type_native(_engine, typeName, fields);
+            if (type == IntPtr.Zero)
+            {
+                throw new InvalidOperationException($"Failed to register type: {GetLastError()}");
+            }
+            return new ComplexType(this, type, typeName);
+        }
+
+        /// <summary>
+        /// Create an object instance of a registered type.
+        /// </summary>
+        public ComplexObject CreateObject(ComplexType type)
+        {
+            var obj = fastrules_object_create_native(_engine, type.Handle);
+            if (obj == IntPtr.Zero)
+            {
+                throw new InvalidOperationException($"Failed to create object: {GetLastError()}");
+            }
+            return new ComplexObject(this, obj, type);
+        }
+
+        /// <summary>
+        /// Destroy a complex object.
+        /// </summary>
+        public void DestroyObject(ComplexObject obj)
+        {
+            if (obj?.Handle != IntPtr.Zero)
+            {
+                fastrules_object_destroy_native(_engine, obj.Handle);
+            }
+        }
+
+        internal int AddObjectParam(string existingParams, string paramName, ComplexObject obj, out IntPtr outParams)
+        {
+            return fastrules_add_object_param_native(_engine, existingParams, paramName, obj.Handle, out outParams);
+        }
+
+        internal int SetObjectField(ComplexObject obj, string fieldName, string value)
+        {
+            return fastrules_object_set_field_native(_engine, obj.Handle, fieldName, value);
         }
 
         /// <summary>
@@ -314,6 +379,92 @@ namespace FastRulesExample
             if (!_disposed)
             {
                 // Note: workflow destruction is handled by the engine
+                _disposed = true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Represents a registered complex type
+    /// </summary>
+    public class ComplexType
+    {
+        private readonly FastRulesEngine _engine;
+        public IntPtr Handle { get; }
+        public string Name { get; }
+
+        internal ComplexType(FastRulesEngine engine, IntPtr handle, string name)
+        {
+            _engine = engine;
+            Handle = handle;
+            Name = name;
+        }
+    }
+
+    /// <summary>
+    /// Represents an instance of a complex type
+    /// </summary>
+    public class ComplexObject : IDisposable
+    {
+        private readonly FastRulesEngine _engine;
+        private readonly ComplexType _type;
+        private bool _disposed;
+
+        public IntPtr Handle { get; }
+        public ComplexType Type => _type;
+
+        internal ComplexObject(FastRulesEngine engine, IntPtr handle, ComplexType type)
+        {
+            _engine = engine;
+            Handle = handle;
+            _type = type;
+        }
+
+        /// <summary>
+        /// Set a field value on the object.
+        /// </summary>
+        public void SetField(string fieldName, object value)
+        {
+            string valueStr = value switch
+            {
+                bool b => b ? "true" : "false",
+                _ => value?.ToString() ?? ""
+            };
+
+            var result = _engine.SetObjectField(this, fieldName, valueStr);
+            if (result != 0)
+            {
+                throw new InvalidOperationException($"Failed to set field: {_engine.GetLastError()}");
+            }
+        }
+
+        /// <summary>
+        /// Convert this object to a parameter string for workflow execution.
+        /// </summary>
+        public string ToParameterString(string paramName)
+        {
+            IntPtr outParams;
+            var result = _engine.AddObjectParam("", paramName, this, out outParams);
+            if (result != 0)
+            {
+                throw new InvalidOperationException($"Failed to convert to parameter: {_engine.GetLastError()}");
+            }
+
+            try
+            {
+                return Marshal.PtrToStringAnsi(outParams) ?? "";
+            }
+            finally
+            {
+                FastRulesEngine.FreeResults(outParams);
+            }
+        }
+
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                _engine.DestroyObject(this);
                 _disposed = true;
             }
         }

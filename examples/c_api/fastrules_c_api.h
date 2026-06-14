@@ -171,6 +171,100 @@ FASTRULES_C_API fastrules_error_t fastrules_add_typed_param(
 );
 
 // ============================================================================
+// Complex Object Support
+// ============================================================================
+
+/**
+ * Opaque handle for a registered type.
+ */
+typedef struct FastRulesType* fastrules_type_t;
+
+/**
+ * Opaque handle for an object instance.
+ */
+typedef struct FastRulesObject* fastrules_object_t;
+
+/**
+ * Register a complex type with the engine.
+ * 
+ * This creates a type that can be used for passing objects to rules.
+ * Fields are specified as a semicolon-separated list of name:type pairs.
+ * Supported field types: int, double, bool, string
+ * 
+ * Example: fastrules_register_type(engine, "Customer", "age:int;name:string;balance:double;active:bool")
+ * 
+ * @param engine Engine handle
+ * @param type_name Name of the type (e.g., "Customer")
+ * @param fields Field definitions (e.g., "age:int;name:string")
+ * @return Type handle or NULL on error
+ */
+FASTRULES_C_API fastrules_type_t fastrules_register_type(
+    fastrules_engine_t engine,
+    const char* type_name,
+    const char* fields
+);
+
+/**
+ * Create an object instance of a registered type.
+ * 
+ * @param engine Engine handle
+ * @param type Type handle (from fastrules_register_type)
+ * @return Object handle or NULL on error
+ */
+FASTRULES_C_API fastrules_object_t fastrules_object_create(
+    fastrules_engine_t engine,
+    fastrules_type_t type
+);
+
+/**
+ * Set a field value on an object.
+ * 
+ * @param engine Engine handle
+ * @param obj Object handle
+ * @param field_name Field name
+ * @param value Field value as string (will be converted to appropriate type)
+ * @return Error code
+ */
+FASTRULES_C_API fastrules_error_t fastrules_object_set_field(
+    fastrules_engine_t engine,
+    fastrules_object_t obj,
+    const char* field_name,
+    const char* value
+);
+
+/**
+ * Destroy an object instance.
+ * 
+ * @param engine Engine handle
+ * @param obj Object handle
+ */
+FASTRULES_C_API void fastrules_object_destroy(
+    fastrules_engine_t engine,
+    fastrules_object_t obj
+);
+
+/**
+ * Add an object as a parameter for workflow execution.
+ * 
+ * The object will be bound to the Lua state and accessible in rules
+ * by the parameter name (e.g., "customer" -> "customer.age" in expressions).
+ * 
+ * @param engine Engine handle
+ * @param existing_params Existing parameter string (can be NULL or empty)
+ * @param param_name Parameter name (e.g., "customer")
+ * @param obj Object handle
+ * @param out_params Output: new parameter string with object reference (caller must free)
+ * @return Error code
+ */
+FASTRULES_C_API fastrules_error_t fastrules_add_object_param(
+    fastrules_engine_t engine,
+    const char* existing_params,
+    const char* param_name,
+    fastrules_object_t obj,
+    char** out_params
+);
+
+// ============================================================================
 // Workflow Management
 // ============================================================================
 
