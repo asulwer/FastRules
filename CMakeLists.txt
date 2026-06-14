@@ -557,9 +557,8 @@ if(FASTRULES_BUILD_EXAMPLES)
         target_include_directories(fastrules_c_api PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/examples/c_api
             ${CMAKE_CURRENT_SOURCE_DIR}/include
-            ${json_SOURCE_DIR}/single_include
+            # JSON header removed - C API uses only FastRules core
             ${luabridge3_SOURCE_DIR}/Source
-            ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include
         )
         target_link_libraries(fastrules_c_api PRIVATE fastrules)
         

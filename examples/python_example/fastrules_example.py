@@ -15,7 +15,6 @@ Build the shared library:
 """
 
 import ctypes
-import json
 import os
 import sys
 from typing import List, Dict, Any, Optional
@@ -27,7 +26,6 @@ class ErrorCode(IntEnum):
     """FastRules error codes."""
     OK = 0
     NULL_PTR = -1
-    INVALID_JSON = -2
     COMPILATION_FAILED = -3
     EXECUTION_FAILED = -4
     MEMORY = -5
@@ -196,12 +194,25 @@ class Workflow:
             raise RuntimeError(f"Failed to compile workflow: {self._engine.get_last_error()}")
     
     def execute(self, parameters: Dict[str, Any]) -> List[RuleResult]:
-        """Execute the workflow with given parameters."""
-        params_json = json.dumps(parameters).encode('utf-8')
+        """Execute the workflow with parameters.
+        
+        Parameters format: "key=value;key2=value2"
+        Supported types: int, float, bool, str
+        """
+        # Convert parameters to "key=value;key2=value2" format
+        parts = []
+        for key, value in parameters.items():
+            if isinstance(value, bool):
+                val_str = "true" if value else "false"
+            else:
+                val_str = str(value)
+            parts.append(f"{key}={val_str}")
+        params_str = ";".join(parts).encode('utf-8')
+        
         results_ptr = ctypes.c_char_p()
         
         result = self._engine._lib.fastrules_workflow_execute(
-            self._engine._engine, self._workflow, params_json,
+            self._engine._engine, self._workflow, params_str,
             ctypes.byref(results_ptr)
         )
         
@@ -209,17 +220,35 @@ class Workflow:
             raise RuntimeError(f"Execution failed: {self._engine.get_last_error()}")
         
         try:
-            results_json = json.loads(results_ptr.value.decode('utf-8'))
-            return [
-                RuleResult(
-                    rule_id=r['ruleId'],
-                    success=r['success'],
-                    error_message=r.get('error')
-                )
-                for r in results_json
-            ]
+            result_str = results_ptr.value.decode('utf-8')
+            return self._parse_results(result_str)
         finally:
             self._engine._lib.fastrules_free(results_ptr)
+    
+    def _parse_results(self, result_str: str) -> List[RuleResult]:
+        """Parse result string (format: "id1:success1:error1;id2:success2:error2")"""
+        results = []
+        if not result_str:
+            return results
+        
+        for part in result_str.split(';'):
+            if not part.strip():
+                continue
+            fields = part.split(':')
+            if len(fields) >= 2:
+                try:
+                    rule_id = int(fields[0])
+                    success = fields[1] == '1'
+                    error = fields[2] if len(fields) > 2 else None
+                    results.append(RuleResult(
+                        rule_id=rule_id,
+                        success=success,
+                        error_message=error
+                    ))
+                except (ValueError, IndexError):
+                    pass  # Skip malformed entries
+        
+        return results
     
     def __del__(self):
         """Cleanup the workflow."""

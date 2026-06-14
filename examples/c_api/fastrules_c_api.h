@@ -4,6 +4,8 @@
  * This header defines a C-compatible API for FastRules to enable
  * interoperability with other languages (Python, C#, etc.) via FFI.
  * 
+ * Uses only FastRules core - no JSON dependency.
+ * 
  * Build with:
  *   extern "C" wrapper functions that expose the C++ API
  * 
@@ -43,7 +45,7 @@ typedef struct FastRulesResult* fastrules_result_t;
 typedef enum {
     FASTRULES_OK = 0,
     FASTRULES_ERROR_NULL_PTR = -1,
-    FASTRULES_ERROR_INVALID_JSON = -2,
+    FASTRULES_ERROR_INVALID_JSON = -2,  /* Deprecated - kept for compatibility */
     FASTRULES_ERROR_COMPILATION_FAILED = -3,
     FASTRULES_ERROR_EXECUTION_FAILED = -4,
     FASTRULES_ERROR_MEMORY = -5,
@@ -132,6 +134,8 @@ FASTRULES_C_API fastrules_error_t fastrules_workflow_set_rule_priority(
 
 /**
  * Create a workflow from JSON.
+ * @deprecated Use fastrules_workflow_create() and fastrules_workflow_add_rule() instead.
+ *             This function now returns NULL and sets an error message.
  * @param engine Engine handle
  * @param json JSON string defining workflow and rules
  * @return Workflow handle or NULL on error
@@ -164,31 +168,41 @@ FASTRULES_C_API fastrules_error_t fastrules_workflow_compile(
 
 /**
  * Execute a workflow with parameters.
+ * 
+ * Parameters format: "key=value;key2=value2"
+ * Supported types: int, double, bool (true/false), string
+ * 
  * @param engine Engine handle
  * @param workflow Workflow handle
- * @param json_params JSON object with parameter values
- * @param results Output: JSON array of results (caller must free)
+ * @param params_str Parameter string (format: "key=value;key2=value2")
+ * @param results Output: Result string (format: "id1:success1:error1;id2:success2:error2")
+ *                  Caller must free with fastrules_free()
  * @return Error code
  */
 FASTRULES_C_API fastrules_error_t fastrules_workflow_execute(
     fastrules_engine_t engine,
     fastrules_workflow_t workflow,
-    const char* json_params,
+    const char* params_str,
     char** results
 );
 
 /**
  * Execute a workflow in parallel.
+ * 
+ * Parameters format: "key=value;key2=value2"
+ * Supported types: int, double, bool (true/false), string
+ * 
  * @param engine Engine handle
  * @param workflow Workflow handle
- * @param json_params JSON object with parameter values
- * @param results Output: JSON array of results (caller must free)
+ * @param params_str Parameter string (format: "key=value;key2=value2")
+ * @param results Output: Result string (format: "id1:success1:error1;id2:success2:error2")
+ *                  Caller must free with fastrules_free()
  * @return Error code
  */
 FASTRULES_C_API fastrules_error_t fastrules_workflow_execute_parallel(
     fastrules_engine_t engine,
     fastrules_workflow_t workflow,
-    const char* json_params,
+    const char* params_str,
     char** results
 );
 
@@ -210,8 +224,9 @@ FASTRULES_C_API const char* fastrules_get_version(void);
 
 /**
  * Check if a JSON string is valid workflow definition.
+ * @deprecated JSON support removed. Always returns false.
  * @param json JSON string to validate
- * @return true if valid
+ * @return false (JSON support removed)
  */
 FASTRULES_C_API bool fastrules_validate_workflow_json(const char* json);
 

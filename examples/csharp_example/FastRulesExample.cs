@@ -203,10 +203,22 @@ namespace FastRulesExample
 
         public List<RuleResult> Execute(Dictionary<string, object> parameters)
         {
-            var jsonParams = JsonSerializer.Serialize(parameters);
+            // Convert dictionary to "key=value;key2=value2" format
+            var paramParts = new List<string>();
+            foreach (var kvp in parameters)
+            {
+                string valueStr = kvp.Value switch
+                {
+                    bool b => b ? "true" : "false",
+                    _ => kvp.Value?.ToString() ?? ""
+                };
+                paramParts.Add($"{kvp.Key}={valueStr}");
+            }
+            string paramsStr = string.Join(";", paramParts);
+            
             IntPtr resultsPtr;
 
-            var result = _engine.ExecuteWorkflow(_workflow, jsonParams, out resultsPtr);
+            var result = _engine.ExecuteWorkflow(_workflow, paramsStr, out resultsPtr);
             if (result != 0)
             {
                 throw new InvalidOperationException($"Failed to execute workflow: {_engine.GetLastError()}");
@@ -214,8 +226,8 @@ namespace FastRulesExample
 
             try
             {
-                var json = Marshal.PtrToStringAnsi(resultsPtr);
-                return JsonSerializer.Deserialize<List<RuleResult>>(json);
+                var resultStr = Marshal.PtrToStringAnsi(resultsPtr);
+                return ParseResults(resultStr);
             }
             finally
             {
@@ -225,10 +237,22 @@ namespace FastRulesExample
 
         public List<RuleResult> ExecuteParallel(Dictionary<string, object> parameters)
         {
-            var jsonParams = JsonSerializer.Serialize(parameters);
+            // Convert dictionary to "key=value;key2=value2" format
+            var paramParts = new List<string>();
+            foreach (var kvp in parameters)
+            {
+                string valueStr = kvp.Value switch
+                {
+                    bool b => b ? "true" : "false",
+                    _ => kvp.Value?.ToString() ?? ""
+                };
+                paramParts.Add($"{kvp.Key}={valueStr}");
+            }
+            string paramsStr = string.Join(";", paramParts);
+            
             IntPtr resultsPtr;
 
-            var result = _engine.ExecuteWorkflowParallel(_workflow, jsonParams, out resultsPtr);
+            var result = _engine.ExecuteWorkflowParallel(_workflow, paramsStr, out resultsPtr);
             if (result != 0)
             {
                 throw new InvalidOperationException($"Failed to execute workflow in parallel: {_engine.GetLastError()}");
@@ -236,13 +260,42 @@ namespace FastRulesExample
 
             try
             {
-                var json = Marshal.PtrToStringAnsi(resultsPtr);
-                return JsonSerializer.Deserialize<List<RuleResult>>(json);
+                var resultStr = Marshal.PtrToStringAnsi(resultsPtr);
+                return ParseResults(resultStr);
             }
             finally
             {
                 FastRulesEngine.FreeResults(resultsPtr);
             }
+        }
+
+        /// <summary>
+        /// Parse result string (format: "id1:success1:error1;id2:success2:error2")
+        /// </summary>
+        private List<RuleResult> ParseResults(string resultStr)
+        {
+            var results = new List<RuleResult>();
+            if (string.IsNullOrEmpty(resultStr))
+                return results;
+
+            var ruleParts = resultStr.Split(';');
+            foreach (var part in ruleParts)
+            {
+                if (string.IsNullOrWhiteSpace(part))
+                    continue;
+
+                var fields = part.Split(':');
+                if (fields.Length >= 2 && int.TryParse(fields[0], out int ruleId) && int.TryParse(fields[1], out int successInt))
+                {
+                    results.Add(new RuleResult
+                    {
+                        RuleId = ruleId,
+                        Success = successInt == 1,
+                        Error = fields.Length > 2 ? fields[2] : null
+                    });
+                }
+            }
+            return results;
         }
 
         public void Dispose()
@@ -260,16 +313,9 @@ namespace FastRulesExample
     /// </summary>
     public class RuleResult
     {
-        [JsonPropertyName("ruleId")]
         public int RuleId { get; set; }
-
-        [JsonPropertyName("success")]
         public bool Success { get; set; }
-
-        [JsonPropertyName("error")]
         public string Error { get; set; }
-
-        [JsonPropertyName("actionResult")]
         public string ActionResult { get; set; }
     }
 

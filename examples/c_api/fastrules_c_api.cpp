@@ -3,6 +3,8 @@
  * 
  * This file implements the C API by wrapping the C++ FastRules classes.
  * Build as a shared library for use with Python, C#, etc.
+ * 
+ * Uses only FastRules core - no JSON dependency.
  */
 
 // Define FASTRULES_C_API_BUILDING so functions are exported
@@ -10,15 +12,14 @@
 
 #include "fastrules_c_api.h"
 #include <fastrules.hpp>
-#include <nlohmann/json.hpp>
 
 #include <memory>
 #include <string>
 #include <vector>
-#include <map>
+#include <cstring>
+#include <sstream>
 
 using namespace fastrules;
-using json = nlohmann::json;
 
 // Internal state tracking
 struct FastRulesEngine {
@@ -40,62 +41,94 @@ static void set_error(FastRulesEngine* engine, const char* msg) {
     }
 }
 
-static json parameters_to_json(const char* json_params) {
-    if (!json_params || strlen(json_params) == 0) {
-        return json::object();
-    }
-    return json::parse(json_params);
-}
-
-static std::vector<RuleParameter> json_to_parameters(const json& j) {
+// Simple parameter parser: "key=value;key2=value2"
+// Supports: int, double, bool, string
+static std::vector<RuleParameter> parse_params(const char* params_str) {
     std::vector<RuleParameter> params;
     
-    for (auto& [key, value] : j.items()) {
-        if (value.is_number_integer()) {
-            int val = value.get<int>();
-            params.emplace_back(key, val);
-        } else if (value.is_number_float()) {
-            double val = value.get<double>();
-            params.emplace_back(key, val);
-        } else if (value.is_boolean()) {
-            bool val = value.get<bool>();
-            params.emplace_back(key, val);
-        } else if (value.is_string()) {
-            std::string val = value.get<std::string>();
-            params.emplace_back(key, val);
+    if (!params_str || strlen(params_str) == 0) {
+        return params;
+    }
+    
+    std::string input(params_str);
+    size_t pos = 0;
+    
+    while (pos < input.length()) {
+        // Find '='
+        size_t eq_pos = input.find('=', pos);
+        if (eq_pos == std::string::npos) break;
+        
+        std::string key = input.substr(pos, eq_pos - pos);
+        
+        // Find ';' or end
+        size_t end_pos = input.find(';', eq_pos + 1);
+        if (end_pos == std::string::npos) {
+            end_pos = input.length();
         }
+        
+        std::string value_str = input.substr(eq_pos + 1, end_pos - eq_pos - 1);
+        
+        // Trim whitespace
+        auto trim = [](std::string& s) {
+            size_t start = s.find_first_not_of(" \t");
+            size_t end = s.find_last_not_of(" \t");
+            if (start == std::string::npos) s = "";
+            else s = s.substr(start, end - start + 1);
+        };
+        trim(key);
+        trim(value_str);
+        
+        // Parse value based on content
+        if (value_str == "true" || value_str == "TRUE") {
+            params.emplace_back(key, true);
+        } else if (value_str == "false" || value_str == "FALSE") {
+            params.emplace_back(key, false);
+        } else {
+            // Try integer
+            char* endptr;
+            long ival = strtol(value_str.c_str(), &endptr, 10);
+            if (*endptr == '\0') {
+                params.emplace_back(key, static_cast<int>(ival));
+            } else {
+                // Try double
+                double dval = strtod(value_str.c_str(), &endptr);
+                if (*endptr == '\0') {
+                    params.emplace_back(key, dval);
+                } else {
+                    // String
+                    params.emplace_back(key, value_str);
+                }
+            }
+        }
+        
+        pos = end_pos + 1;
     }
     
     return params;
 }
 
-static json results_to_json(const std::vector<RuleResult>& results) {
-    json arr = json::array();
+// Format results as: "id1:success1:error1;id2:success2:error2"
+// success: 1 or 0, error: optional message
+static char* format_results(const std::vector<RuleResult>& results) {
+    std::ostringstream oss;
     
-    for (const auto& result : results) {
-        json r;
-        r["ruleId"] = result.ruleId;
-        r["success"] = result.isSuccess();
-        r["executedAt"] = result.executedAt.time_since_epoch().count();
+    for (size_t i = 0; i < results.size(); ++i) {
+        if (i > 0) oss << ";";
+        
+        const auto& result = results[i];
+        oss << result.ruleId << ":" << (result.isSuccess() ? 1 : 0);
         
         if (result.exception.has_value()) {
-            r["error"] = result.exception->what();
+            oss << ":" << result.exception->what();
         }
-        
-        if (result.isSuccess()) {
-            if (result.value.has_value()) {
-                try {
-                    r["value"] = std::any_cast<std::string>(result.value.value());
-                } catch (...) {
-                    r["value"] = nullptr;
-                }
-            }
-        }
-        
-        arr.push_back(r);
     }
     
-    return arr;
+    std::string str = oss.str();
+    char* output = static_cast<char*>(std::malloc(str.length() + 1));
+    if (output) {
+        std::strcpy(output, str.c_str());
+    }
+    return output;
 }
 
 // ============================================================================
@@ -217,7 +250,7 @@ fastrules_error_t fastrules_workflow_set_rule_priority(
 }
 
 // ============================================================================
-// Workflow Management
+// Workflow Management (Legacy - deprecated, kept for compatibility)
 // ============================================================================
 
 fastrules_workflow_t fastrules_workflow_create_from_json(
@@ -229,45 +262,8 @@ fastrules_workflow_t fastrules_workflow_create_from_json(
         return nullptr;
     }
     
-    try {
-        auto* workflow = new FastRulesWorkflow();
-        
-        // Parse JSON
-        auto j = json::parse(json_str);
-        
-        // Create workflow from JSON
-        // This assumes the JSON extension is available
-        // For core-only builds, you'd need to parse manually
-        workflow->workflow = std::make_unique<Workflow>();
-        workflow->workflow->id = j.value("id", 0);
-        workflow->workflow->description = j.value("description", "");
-        
-        // Parse rules
-        if (j.contains("rules") && j["rules"].is_array()) {
-            for (const auto& rule_json : j["rules"]) {
-                auto rule = std::make_shared<Rule>();
-                rule->id = rule_json.value("id", 0);
-                rule->description = rule_json.value("description", "");
-                rule->expression = rule_json.value("expression", "");
-                rule->action = rule_json.value("action", "");
-                rule->isActive = rule_json.value("isActive", true);
-                
-                if (rule_json.contains("priority")) {
-                    rule->priority = rule_json.value("priority", 0);
-                }
-                
-                workflow->workflow->rules.push_back(rule);
-            }
-        }
-        
-        return workflow;
-    } catch (const std::exception& e) {
-        set_error(engine, e.what());
-        return nullptr;
-    } catch (...) {
-        set_error(engine, "Unknown error creating workflow");
-        return nullptr;
-    }
+    set_error(engine, "JSON support removed. Use fastrules_workflow_create() and fastrules_workflow_add_rule() instead.");
+    return nullptr;
 }
 
 void fastrules_workflow_destroy(fastrules_workflow_t workflow) {
@@ -298,7 +294,7 @@ fastrules_error_t fastrules_workflow_compile(
 fastrules_error_t fastrules_workflow_execute(
     fastrules_engine_t engine,
     fastrules_workflow_t workflow,
-    const char* json_params,
+    const char* params_str,
     char** results
 ) {
     if (!engine || !workflow || !results) {
@@ -306,23 +302,17 @@ fastrules_error_t fastrules_workflow_execute(
     }
     
     try {
-        // Parse parameters
-        auto params_json = parameters_to_json(json_params);
-        auto params = json_to_parameters(params_json);
+        // Parse parameters (format: "key=value;key2=value2")
+        auto params = parse_params(params_str);
         
         // Execute
         auto results_vec = workflow->workflow->execute(*engine->engine, params);
         
-        // Convert to JSON
-        auto results_json = results_to_json(results_vec);
-        std::string results_str = results_json.dump();
-        
-        // Allocate and copy result string
-        *results = static_cast<char*>(std::malloc(results_str.length() + 1));
+        // Format results
+        *results = format_results(results_vec);
         if (!*results) {
             return FASTRULES_ERROR_MEMORY;
         }
-        std::strcpy(*results, results_str.c_str());
         
         return FASTRULES_OK;
     } catch (const std::exception& e) {
@@ -334,7 +324,7 @@ fastrules_error_t fastrules_workflow_execute(
 fastrules_error_t fastrules_workflow_execute_parallel(
     fastrules_engine_t engine,
     fastrules_workflow_t workflow,
-    const char* json_params,
+    const char* params_str,
     char** results
 ) {
     if (!engine || !workflow || !results) {
@@ -342,19 +332,17 @@ fastrules_error_t fastrules_workflow_execute_parallel(
     }
     
     try {
-        auto params_json = parameters_to_json(json_params);
-        auto params = json_to_parameters(params_json);
+        // Parse parameters
+        auto params = parse_params(params_str);
         
+        // Execute
         auto results_vec = workflow->workflow->executeParallel(*engine->engine, params);
         
-        auto results_json = results_to_json(results_vec);
-        std::string results_str = results_json.dump();
-        
-        *results = static_cast<char*>(std::malloc(results_str.length() + 1));
+        // Format results
+        *results = format_results(results_vec);
         if (!*results) {
             return FASTRULES_ERROR_MEMORY;
         }
-        std::strcpy(*results, results_str.c_str());
         
         return FASTRULES_OK;
     } catch (const std::exception& e) {
@@ -372,29 +360,12 @@ void fastrules_free(char* ptr) {
 // ============================================================================
 
 const char* fastrules_get_version(void) {
-    return "1.0.0";  // TODO: Get from version header
+    return "1.0.0";
 }
 
 bool fastrules_validate_workflow_json(const char* json_str) {
-    if (!json_str) return false;
-    
-    try {
-        auto j = json::parse(json_str);
-        
-        // Basic validation
-        if (!j.contains("id")) return false;
-        if (!j.contains("rules")) return false;
-        if (!j["rules"].is_array()) return false;
-        
-        for (const auto& rule : j["rules"]) {
-            if (!rule.contains("id")) return false;
-            if (!rule.contains("expression")) return false;
-        }
-        
-        return true;
-    } catch (...) {
-        return false;
-    }
+    // JSON validation removed - use in-memory workflow creation instead
+    return false;
 }
 
 } // extern "C"
