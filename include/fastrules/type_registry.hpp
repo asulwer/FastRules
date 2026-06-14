@@ -103,7 +103,8 @@ public:
         // Store extractor for T* — extracts void* from std::any containing T*
         desc.extractPointer = [](const std::any& value) -> void* {
             try {
-                return std::any_cast<T*>(value);
+                // The any contains T* (pointer), cast to T* not T**
+                return std::any_cast<std::add_pointer_t<T>>(value);
             } catch (...) {
                 return nullptr;
             }

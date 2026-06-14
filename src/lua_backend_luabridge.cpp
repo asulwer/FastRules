@@ -719,19 +719,19 @@ void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
         }
         lua_settable(pImpl_->L, -3);
 
-        // __index closure
+        // __index closure - handles both fields and methods
         lua_pushstring(pImpl_->L, "__index");
         lua_pushcfunction(pImpl_->L, [](lua_State* L) -> int {
             // arg1: userdata (pointer to object pointer — void**)
-            // arg2: field name
+            // arg2: key (field or method name)
             void** ud = static_cast<void**>(lua_touserdata(L, 1));
             if (!ud || !*ud) {
                 lua_pushnil(L);
                 return 1;
             }
             void* obj = *ud;
-            const char* fieldName = lua_tostring(L, 2);
-            if (!fieldName) {
+            const char* key = lua_tostring(L, 2);
+            if (!key) {
                 lua_pushnil(L);
                 return 1;
             }
@@ -741,6 +741,18 @@ void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
                 lua_pushnil(L);
                 return 1;
             }
+
+            // First check if this is a method (stored directly in metatable)
+            lua_pushstring(L, key);
+            lua_rawget(L, -2); // look up key in metatable
+            if (!lua_isnil(L, -1)) {
+                // Found a method - leave it on stack and return
+                lua_remove(L, -2); // remove metatable, leave method
+                return 1;
+            }
+            lua_pop(L, 1); // pop nil
+
+            // Not a method, check fields
             lua_pushstring(L, "__fields");
             lua_rawget(L, -2); // get fields table
             if (!lua_istable(L, -1)) {
@@ -749,7 +761,7 @@ void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
                 return 1;
             }
 
-            lua_pushstring(L, fieldName);
+            lua_pushstring(L, key);
             lua_rawget(L, -2); // get field info table
             if (!lua_istable(L, -1)) {
                 lua_pop(L, 3);
@@ -905,25 +917,25 @@ void LuaBridge3Backend::bindActions(ActionCallbacks* callbacks) {
                 return 0;
             }
             
-            // Build parameter map from Lua arguments
-            std::unordered_map<std::string, std::any> params;
+            // Build parameter map from Lua arguments - check number before string
+            // because lua_isstring returns true for numbers too
             int nargs = lua_gettop(L);
+            std::vector<std::any> args;
+            args.reserve(nargs);
             for (int i = 1; i <= nargs; ++i) {
-                if (lua_isstring(L, i)) {
-                    params["arg" + std::to_string(i)] = std::string(lua_tostring(L, i));
-                } else if (lua_isnumber(L, i)) {
-                    params["arg" + std::to_string(i)] = lua_tonumber(L, i);
+                if (lua_isnumber(L, i)) {
+                    args.push_back(lua_tonumber(L, i));
+                } else if (lua_isstring(L, i)) {
+                    args.push_back(std::string(lua_tostring(L, i)));
                 } else if (lua_isboolean(L, i)) {
-                    params["arg" + std::to_string(i)] = lua_toboolean(L, i) != 0;
+                    args.push_back(lua_toboolean(L, i) != 0);
+                } else {
+                    args.push_back(std::any{});
                 }
             }
             
             try {
                 std::any target;
-                std::vector<std::any> args;
-                for (const auto& kv : params) {
-                    args.push_back(kv.second);
-                }
                 (*backend)->pImpl_->actionHandlers_[hId](target, args);
             } catch (const std::exception& e) {
                 luaL_error(L, "Action handler error: %s", e.what());
