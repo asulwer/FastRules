@@ -4,31 +4,36 @@ This example demonstrates how to use FastRules from Python via a C API wrapper.
 
 ## Prerequisites
 
-1. **Build FastRules as a shared library:**
+1. **Build FastRules C API as a shared library:**
+   
+   The C API source files are located in `examples/c_api/`:
+   - `fastrules_c_api.h` - C API header
+   - `fastrules_c_api.cpp` - C API implementation
+
    ```bash
+   # Build using CMake (recommended)
    cmake -B build -S . \
      -DFASTRULES_BUILD_SHARED=ON \
-     -DFASTRULES_BUILD_EXTENSIONS=ON
+     -DFASTRULES_BUILD_C_API=ON
    cmake --build build --config Release
    ```
 
-2. **Python 3.7+**
-
-3. **Build the C API wrapper:**
+   Or compile manually:
    ```bash
-   # Compile the C API wrapper as a shared library
    # On Windows (MSVC):
-   cl /LD /O2 /I../../include /I../../extensions/fastrules-json/include \
-      /I_deps/json-src/single_include /I_deps/lua-src/include \
-      fastrules_c_api.cpp \
-      /link /OUT:fastrules.dll \
+   cl /LD /O2 /I../../include /I../c_api \
+      ../c_api/fastrules_c_api.cpp \
+      /link /OUT:fastrules_c_api.dll \
       ../../build/Release/fastrules.lib
    
    # On Linux:
-   g++ -shared -fPIC -O3 -o libfastrules.so fastrules_c_api.cpp \
-       -L../../build -lfastrules -L../../extensions/fastrules-json \
-       -lfastrules-json
+   g++ -shared -fPIC -O3 -I../../include -I../c_api \
+       -o libfastrules_c_api.so \
+       ../c_api/fastrules_c_api.cpp \
+       -L../../build -lfastrules
    ```
+
+2. **Python 3.7+**
 
 ## Usage
 
@@ -39,13 +44,13 @@ python fastrules_example.py
 ## Architecture
 
 ```
-fastrules_example.py
+fastrules_example.py (Python)
        |
        v
    [ctypes]
        |
        v
-fastrules_c_api.h / fastrules_c_api.cpp (C wrapper)
+fastrules_c_api.dll / libfastrules_c_api.so (C API)
        |
        v
    FastRules C++ Library
@@ -53,6 +58,14 @@ fastrules_c_api.h / fastrules_c_api.cpp (C wrapper)
        v
    Lua Engine
 ```
+
+## C API Location
+
+The C API is centralized in `examples/c_api/` and used by:
+- **C# Example** (`examples/csharp_example/`) - via P/Invoke
+- **Python Example** (`examples/python_example/`) - via ctypes
+
+This allows both languages to share the same C-compatible interface.
 
 ## For Production Use
 
@@ -72,10 +85,6 @@ Consider these improvements:
    - Full type stub files (.pyi)
    - IDE autocomplete support
 
-4. **Documentation**:
-   - Sphinx docs
-   - Jupyter notebook examples
-
 ## Example Code
 
 ```python
@@ -84,20 +93,17 @@ from fastrules import FastRulesEngine
 # Create engine
 engine = FastRulesEngine()
 
-# Load workflow from JSON
-workflow = engine.load_workflow("""
-{
-    "id": 1,
-    "rules": [
-        {"id": 1, "expression": "age >= 18"}
-    ]
-}
-""")
+# Create workflow in-memory (no JSON required)
+workflow = engine.create_workflow(1, "Customer Validation")
+
+# Add rules programmatically
+workflow.add_rule(1, "age >= 18", description="Age check")
+workflow.add_rule(2, "len(name) > 0", description="Name check")
 
 # Compile and execute
 workflow.compile()
-results = workflow.execute({"age": 25})
+results = workflow.execute({"age": 25, "name": "Alice"})
 
 for result in results:
-    print(f"Rule {result.rule_id}: {result.success}")
+    print(f"Rule {result.rule_id}: {'PASS' if result.success else 'FAIL'}")
 ```

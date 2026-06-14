@@ -4,6 +4,11 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Collections.Generic;
 
+// FastRules C# Example
+// This example uses the FastRules C API via P/Invoke.
+// The C API is located in: examples/c_api/
+// Build the C API shared library first before running this example.
+
 namespace FastRulesExample
 {
     /// <summary>
