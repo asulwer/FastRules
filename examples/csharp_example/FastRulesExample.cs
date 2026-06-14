@@ -1,7 +1,5 @@
 using System;
 using System.Runtime.InteropServices;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Collections.Generic;
 
 // FastRules C# Example
@@ -58,44 +56,26 @@ namespace FastRulesExample
         private static extern int fastrules_workflow_execute_parallel(IntPtr engine, IntPtr workflow, string paramsStr, out IntPtr results);
 
         [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int fastrules_engine_register_type(IntPtr engine, string typeName, string fields);
-
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int fastrules_add_typed_param(IntPtr engine, string existingParams, string name, string typeName, string fieldValues, out IntPtr outParams);
-
-        // Complex Object Support
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl, EntryPoint = "fastrules_register_type")]
-        private static extern IntPtr fastrules_register_type_native(IntPtr engine, string typeName, string fields);
-
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl, EntryPoint = "fastrules_object_create")]
-        private static extern IntPtr fastrules_object_create_native(IntPtr engine, IntPtr type);
-
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl, EntryPoint = "fastrules_object_set_field")]
-        private static extern int fastrules_object_set_field_native(IntPtr engine, IntPtr obj, string fieldName, string value);
-
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl, EntryPoint = "fastrules_object_destroy")]
-        private static extern void fastrules_object_destroy_native(IntPtr engine, IntPtr obj);
-
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl, EntryPoint = "fastrules_add_object_param")]
-        private static extern int fastrules_add_object_param_native(IntPtr engine, string existingParams, string paramName, IntPtr obj, out IntPtr outParams);
-
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
         private static extern void fastrules_free(IntPtr ptr);
 
         [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr fastrules_get_version();
 
+        // Complex Object Support
         [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
-        private static extern bool fastrules_validate_workflow_json(string json);
+        private static extern IntPtr fastrules_register_type(IntPtr engine, string typeName, string fields);
 
-        // Error codes
-        private const int FASTRULES_OK = 0;
-        private const int FASTRULES_ERROR_NULL_PTR = -1;
-        private const int FASTRULES_ERROR_INVALID_JSON = -2;
-        private const int FASTRULES_ERROR_COMPILATION_FAILED = -3;
-        private const int FASTRULES_ERROR_EXECUTION_FAILED = -4;
-        private const int FASTRULES_ERROR_MEMORY = -5;
-        private const int FASTRULES_ERROR_UNKNOWN = -99;
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr fastrules_object_create(IntPtr engine, IntPtr type);
+
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        private static extern int fastrules_object_set_field(IntPtr engine, IntPtr obj, string fieldName, string value);
+
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        private static extern void fastrules_object_destroy(IntPtr engine, IntPtr obj);
+
+        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        private static extern int fastrules_add_object_param(IntPtr engine, string existingParams, string paramName, IntPtr obj, out IntPtr outParams);
 
         public FastRulesEngine()
         {
@@ -136,7 +116,7 @@ namespace FastRulesExample
         /// </summary>
         public ComplexType RegisterType(string typeName, string fields)
         {
-            var type = fastrules_register_type_native(_engine, typeName, fields);
+            var type = fastrules_register_type(_engine, typeName, fields);
             if (type == IntPtr.Zero)
             {
                 throw new InvalidOperationException($"Failed to register type: {GetLastError()}");
@@ -149,7 +129,7 @@ namespace FastRulesExample
         /// </summary>
         public ComplexObject CreateObject(ComplexType type)
         {
-            var obj = fastrules_object_create_native(_engine, type.Handle);
+            var obj = fastrules_object_create(_engine, type.Handle);
             if (obj == IntPtr.Zero)
             {
                 throw new InvalidOperationException($"Failed to create object: {GetLastError()}");
@@ -164,27 +144,18 @@ namespace FastRulesExample
         {
             if (obj?.Handle != IntPtr.Zero)
             {
-                fastrules_object_destroy_native(_engine, obj.Handle);
+                fastrules_object_destroy(_engine, obj.Handle);
             }
         }
 
         internal int AddObjectParam(string existingParams, string paramName, ComplexObject obj, out IntPtr outParams)
         {
-            return fastrules_add_object_param_native(_engine, existingParams, paramName, obj.Handle, out outParams);
+            return fastrules_add_object_param(_engine, existingParams, paramName, obj.Handle, out outParams);
         }
 
         internal int SetObjectField(ComplexObject obj, string fieldName, string value)
         {
-            return fastrules_object_set_field_native(_engine, obj.Handle, fieldName, value);
-        }
-
-        /// <summary>
-        /// Load a workflow from JSON (legacy method).
-        /// </summary>
-        [Obsolete("Use CreateWorkflow with AddRule instead")]
-        public Workflow LoadWorkflow(string json)
-        {
-            throw new NotImplementedException("JSON loading requires JSON extension. Use CreateWorkflow with AddRule instead.");
+            return fastrules_object_set_field(_engine, obj.Handle, fieldName, value);
         }
 
         internal string GetLastError()
@@ -278,12 +249,20 @@ namespace FastRulesExample
             var paramParts = new List<string>();
             foreach (var kvp in parameters)
             {
-                string valueStr = kvp.Value switch
+                if (kvp.Value is ComplexObject obj)
                 {
-                    bool b => b ? "true" : "false",
-                    _ => kvp.Value?.ToString() ?? ""
-                };
-                paramParts.Add($"{kvp.Key}={valueStr}");
+                    // Complex object - convert to parameter string
+                    paramParts.Add(obj.ToParameterString(kvp.Key));
+                }
+                else
+                {
+                    string valueStr = kvp.Value switch
+                    {
+                        bool b => b ? "true" : "false",
+                        _ => kvp.Value?.ToString() ?? ""
+                    };
+                    paramParts.Add($"{kvp.Key}={valueStr}");
+                }
             }
             string paramsStr = string.Join(";", paramParts);
             
@@ -312,12 +291,19 @@ namespace FastRulesExample
             var paramParts = new List<string>();
             foreach (var kvp in parameters)
             {
-                string valueStr = kvp.Value switch
+                if (kvp.Value is ComplexObject obj)
                 {
-                    bool b => b ? "true" : "false",
-                    _ => kvp.Value?.ToString() ?? ""
-                };
-                paramParts.Add($"{kvp.Key}={valueStr}");
+                    paramParts.Add(obj.ToParameterString(kvp.Key));
+                }
+                else
+                {
+                    string valueStr = kvp.Value switch
+                    {
+                        bool b => b ? "true" : "false",
+                        _ => kvp.Value?.ToString() ?? ""
+                    };
+                    paramParts.Add($"{kvp.Key}={valueStr}");
+                }
             }
             string paramsStr = string.Join(";", paramParts);
             
@@ -482,6 +468,41 @@ namespace FastRulesExample
     }
 
     /// <summary>
+    /// Example Customer class demonstrating complex type usage
+    /// </summary>    
+    public class Customer
+    {
+        public int Age { get; set; }
+        public string Name { get; set; }
+        public double Balance { get; set; }
+        public bool IsActive { get; set; }
+        public string Tier { get; set; }
+
+        public Customer(int age, string name, double balance, bool isActive = true, string tier = "standard")
+        {
+            Age = age;
+            Name = name;
+            Balance = balance;
+            IsActive = isActive;
+            Tier = tier;
+        }
+
+        /// <summary>
+        /// Convert Customer to a ComplexObject for FastRules
+        /// </summary>
+        public ComplexObject ToFastRulesObject(FastRulesEngine engine, ComplexType customerType)
+        {
+            var obj = engine.CreateObject(customerType);
+            obj.SetField("age", Age);
+            obj.SetField("name", Name);
+            obj.SetField("balance", Balance);
+            obj.SetField("isActive", IsActive);
+            obj.SetField("tier", Tier);
+            return obj;
+        }
+    }
+
+    /// <summary>
     /// Example program demonstrating FastRules usage from C#
     /// </summary>
     class Program
@@ -508,7 +529,7 @@ namespace FastRulesExample
                 // Example 4: Parent-child rules
                 RunParentChildExample(engine);
 
-                // Example 5: Complex types (Customer object simulation)
+                // Example 5: Complex types (Customer object)
                 RunComplexTypeExample(engine);
             }
             catch (DllNotFoundException)
@@ -644,8 +665,7 @@ namespace FastRulesExample
             workflow.AddRule(1, "age >= 18", name: "age-check", description: "Age validation");
             workflow.AddRule(2, "len(name) > 0", name: "name-check", description: "Name validation");
             
-            // Add parent rule that references children by NAME (not ID)
-            // context.getResult("age-check") gets result of child rule named "age-check"
+            // Add parent rule that references children by NAME
             workflow.AddRule(3, "context.getResult('age-check').success == true and context.getResult('name-check').success == true", 
                             name: "parent-validation", 
                             description: "Parent checks all children passed");
@@ -661,7 +681,7 @@ namespace FastRulesExample
             });
             PrintResultsWithNames(results);
 
-            // Test: Minor (age check fails)
+            // Test: Minor
             Console.WriteLine("\nTest: Minor (Bob, age 15)");
             results = workflow.Execute(new Dictionary<string, object>
             {
@@ -669,6 +689,83 @@ namespace FastRulesExample
                 ["name"] = "Bob"
             });
             PrintResultsWithNames(results);
+
+            Console.WriteLine();
+        }
+
+        static void RunComplexTypeExample(FastRulesEngine engine)
+        {
+            Console.WriteLine("Example 5: Complex Types (Customer Object)");
+            Console.WriteLine("-------------------------------------------");
+
+            // Register Customer type with the engine
+            var customerType = engine.RegisterType("Customer", "age:int;name:string;balance:double;isActive:bool;tier:string");
+            Console.WriteLine("Registered Customer type with fields: age, name, balance, isActive, tier");
+
+            // Create workflow with customer validation rules
+            using var workflow = engine.CreateWorkflow(5, "Customer Validation with Complex Types");
+            
+            // Add rules that access customer fields
+            workflow.AddRule(1, "customer.age >= 18", name: "age-validation", description: "Customer must be adult");
+            workflow.AddRule(2, "len(customer.name) > 0", name: "name-validation", description: "Customer must have name");
+            workflow.AddRule(3, "customer.balance >= 0", name: "balance-check", description: "Balance must be positive");
+            workflow.AddRule(4, "customer.isActive == true", name: "active-check", description: "Customer must be active");
+            
+            // Add parent rule that checks all validations
+            workflow.AddRule(5, 
+                "context.getResult('age-validation').success == true and " +
+                "context.getResult('name-validation').success == true and " +
+                "context.getResult('balance-check').success == true and " +
+                "context.getResult('active-check').success == true",
+                name: "customer-approved",
+                description: "Customer passes all validations");
+            
+            workflow.Compile();
+
+            // Test: Valid customer using Customer class and ComplexObject
+            Console.WriteLine("\nTest: Valid Customer (Alice, 25, $100, Active)");
+            var customer1 = new Customer(age: 25, name: "Alice", balance: 100.0, isActive: true, tier: "gold");
+            using (var obj1 = customer1.ToFastRulesObject(engine, customerType))
+            {
+                var results = workflow.Execute(new Dictionary<string, object> { ["customer"] = obj1 });
+                PrintResultsWithNames(results);
+            }
+
+            // Test: Minor customer
+            Console.WriteLine("\nTest: Minor Customer (Bob, 15, $50)");
+            var customer2 = new Customer(age: 15, name: "Bob", balance: 50.0);
+            using (var obj2 = customer2.ToFastRulesObject(engine, customerType))
+            {
+                var results = workflow.Execute(new Dictionary<string, object> { ["customer"] = obj2 });
+                PrintResultsWithNames(results);
+            }
+
+            // Test: Inactive customer
+            Console.WriteLine("\nTest: Inactive Customer (Charlie, 30, $200, Inactive)");
+            var customer3 = new Customer(age: 30, name: "Charlie", balance: 200.0, isActive: false);
+            using (var obj3 = customer3.ToFastRulesObject(engine, customerType))
+            {
+                var results = workflow.Execute(new Dictionary<string, object> { ["customer"] = obj3 });
+                PrintResultsWithNames(results);
+            }
+
+            // Test: Negative balance
+            Console.WriteLine("\nTest: Negative Balance (Dave, 40, -$50)");
+            var customer4 = new Customer(age: 40, name: "Dave", balance: -50.0);
+            using (var obj4 = customer4.ToFastRulesObject(engine, customerType))
+            {
+                var results = workflow.Execute(new Dictionary<string, object> { ["customer"] = obj4 });
+                PrintResultsWithNames(results);
+            }
+
+            // Test: Empty name
+            Console.WriteLine("\nTest: Empty Name (Eve, 35, $500, No name)");
+            var customer5 = new Customer(age: 35, name: "", balance: 500.0);
+            using (var obj5 = customer5.ToFastRulesObject(engine, customerType))
+            {
+                var results = workflow.Execute(new Dictionary<string, object> { ["customer"] = obj5 });
+                PrintResultsWithNames(results);
+            }
 
             Console.WriteLine();
         }
@@ -698,119 +795,6 @@ namespace FastRulesExample
                     Console.WriteLine($"    Error: {result.Error}");
                 }
             }
-        }
-
-    /// <summary>
-    /// Example Customer class demonstrating complex type usage
-    /// </summary>    
-    public class Customer
-    {
-        public int Age { get; set; }
-        public string Name { get; set; }
-        public double Balance { get; set; }
-        public bool IsActive { get; set; }
-        public string Tier { get; set; }
-
-        public Customer(int age, string name, double balance, bool isActive = true, string tier = "standard")
-        {
-            Age = age;
-            Name = name;
-            Balance = balance;
-            IsActive = isActive;
-            Tier = tier;
-        }
-
-        /// <summary>
-        /// Convert Customer to parameter dictionary for FastRules
-        /// </summary>
-        public Dictionary<string, object> ToParameters(string prefix = "customer")
-        {
-            return new Dictionary<string, object>
-            {
-                [$"{prefix}.age"] = Age,
-                [$"{prefix}.name"] = Name,
-                [$"{prefix}.balance"] = Balance,
-                [$"{prefix}.isActive"] = IsActive,
-                [$"{prefix}.tier"] = Tier
-            };
-        }
-    }
-
-        static void RunComplexTypeExample(FastRulesEngine engine)
-        {
-            Console.WriteLine("Example 5: Complex Types (Customer Object)");
-            Console.WriteLine("-------------------------------------------");
-
-            // Create workflow with customer validation rules
-            using var workflow = engine.CreateWorkflow(5, "Customer Validation with Complex Types");
-            
-            // Add rules that access customer fields
-            workflow.AddRule(1, "customer.age >= 18", name: "age-validation", description: "Customer must be adult");
-            workflow.AddRule(2, "len(customer.name) > 0", name: "name-validation", description: "Customer must have name");
-            workflow.AddRule(3, "customer.balance >= 0", name: "balance-check", description: "Balance must be positive");
-            workflow.AddRule(4, "customer.isActive == true", name: "active-check", description: "Customer must be active");
-            
-            // Add parent rule that checks all validations
-            workflow.AddRule(5, 
-                "context.getResult('age-validation').success == true and " +
-                "context.getResult('name-validation').success == true and " +
-                "context.getResult('balance-check').success == true and " +
-                "context.getResult('active-check').success == true",
-                name: "customer-approved",
-                description: "Customer passes all validations");
-            
-            workflow.Compile();
-
-            // Test: Valid customer using Customer class
-            Console.WriteLine("\nTest: Valid Customer (Alice, 25, Balance: $100, Active)");
-            var customer1 = new Customer(age: 25, name: "Alice", balance: 100.0, isActive: true, tier: "gold");
-            var results = workflow.Execute(customer1.ToParameters());
-            PrintResultsWithNames(results);
-
-            // Test: Minor customer
-            Console.WriteLine("\nTest: Minor Customer (Bob, 15, Balance: $50)");
-            var customer2 = new Customer(age: 15, name: "Bob", balance: 50.0);
-            results = workflow.Execute(customer2.ToParameters());
-            PrintResultsWithNames(results);
-
-            // Test: Inactive customer
-            Console.WriteLine("\nTest: Inactive Customer (Charlie, 30, Inactive)");
-            var customer3 = new Customer(age: 30, name: "Charlie", balance: 200.0, isActive: false);
-            results = workflow.Execute(customer3.ToParameters());
-            PrintResultsWithNames(results);
-
-            // Test: Negative balance
-            Console.WriteLine("\nTest: Negative Balance (Dave, 40, Balance: -$50)");
-            var customer4 = new Customer(age: 40, name: "Dave", balance: -50.0);
-            results = workflow.Execute(customer4.ToParameters());
-            PrintResultsWithNames(results);
-
-            // Test: Empty name
-            Console.WriteLine("\nTest: Empty Name (Eve, 35, No name)");
-            var customer5 = new Customer(age: 35, name: "", balance: 500.0);
-            results = workflow.Execute(customer5.ToParameters());
-            PrintResultsWithNames(results);
-
-            Console.WriteLine();
-        }
-    }
-}
-                ["customer.name"] = "",
-                ["customer.balance"] = 200.0
-            });
-            PrintResultsWithNames(results);
-
-            // Test: Negative balance
-            Console.WriteLine("\nTest: Negative Balance (Dave, 40, Balance: -$50)");
-            results = workflow.Execute(new Dictionary<string, object>
-            {
-                ["customer.age"] = 40,
-                ["customer.name"] = "Dave",
-                ["customer.balance"] = -50.0
-            });
-            PrintResultsWithNames(results);
-
-            Console.WriteLine();
         }
     }
 }
