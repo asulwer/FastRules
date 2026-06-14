@@ -31,7 +31,7 @@ struct RuleParameter {
 
     RuleParameter() = default;
 
-    // Template constructor — type inferred from value
+    // Template constructor -- type inferred from value
     template<typename T>
     RuleParameter(std::string n, T v)
         : name(std::move(n))

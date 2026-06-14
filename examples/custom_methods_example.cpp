@@ -4,8 +4,8 @@
 // This is the FastRules equivalent of RoslynRules' ability to inject C# methods.
 //
 // Two mechanisms:
-//   1. Type Registration (registerType<T>) — bind C++ struct methods/fields to Lua
-//   2. Action Callbacks (registerAction) — bind standalone C++ functions to Lua actions
+//   1. Type Registration (registerType<T>) -- bind C++ struct methods/fields to Lua
+//   2. Action Callbacks (registerAction) -- bind standalone C++ functions to Lua actions
 //
 // Build: cmake --build build --target custom_methods_example
 
@@ -74,7 +74,7 @@ int main() {
         fastrules::LuaEngine engine;
 
         // =====================================================================
-        // 1. TYPE REGISTRATION — bind C++ struct methods/fields to Lua
+        // 1. TYPE REGISTRATION -- bind C++ struct methods/fields to Lua
         // =====================================================================
         // After this, Lua expressions can:
         //   - Read fields: customer.name, customer.age, customer.balance
@@ -94,11 +94,11 @@ int main() {
             // For methods with arguments, use direct Lua or action callbacks.
             reg.method("isPremium",  &Customer::isPremium);   // no args, returns bool
             reg.method("getTier",    &Customer::getTier);     // no args, returns string
-            // addBalance(double) is not registered — use field mutation instead: customer.balance = customer.balance + 10
+            // addBalance(double) is not registered -- use field mutation instead: customer.balance = customer.balance + 10
         });
 
         // =====================================================================
-        // 2. ACTION CALLBACKS — bind standalone C++ functions to Lua actions
+        // 2. ACTION CALLBACKS -- bind standalone C++ functions to Lua actions
         // =====================================================================
         // After this, Lua actions can call:
         //   sendEmail("alice@example.com", "Welcome", "...")
@@ -132,7 +132,7 @@ int main() {
             }
         });
 
-        // Callback: formatCurrency — prints a formatted value
+        // Callback: formatCurrency -- prints a formatted value
         engine.registerAction("formatCurrency", [](const std::any& /*target*/, const std::vector<std::any>& args) {
             if (!args.empty()) {
                 double amount = 0.0;
@@ -240,7 +240,7 @@ int main() {
                       << ", Premium: " << (customer.isPremium() ? "Yes" : "No") << std::endl;
 
             std::vector<fastrules::RuleParameter> params;
-            // Pass pointer — allows Lua to mutate the original C++ object
+            // Pass pointer -- allows Lua to mutate the original C++ object
             params.emplace_back("customer", &customer);
 
             auto results = workflow.execute(engine, params);

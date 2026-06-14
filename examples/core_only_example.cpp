@@ -1,5 +1,5 @@
 // core_only_example.cpp
-// Comprehensive example using ONLY fastrules core — no extensions.
+// Comprehensive example using ONLY fastrules core -- no extensions.
 // Demonstrates: rules, workflows, Lua expressions, actions, dependencies,
 // parallel execution, streaming, timeouts, type registration.
 
@@ -106,7 +106,7 @@ int main() {
         for (const auto& r : results) {
             std::cout << r.ruleName << ": " << (r.isSuccess() ? "PASS" : "FAIL");
             if (r.skipped) {
-                std::cout << " (SKIPPED — dependency failed)";
+                std::cout << " (SKIPPED -- dependency failed)";
             }
             std::cout << std::endl;
         }

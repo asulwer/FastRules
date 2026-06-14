@@ -9,7 +9,7 @@
 namespace fastrules {
 
 // ============================================================================
-// Action Callback System — backend-neutral
+// Action Callback System -- backend-neutral
 //
 // Handlers receive std::any instead of sol::object. Backends convert
 // between their native Lua values and std::any as needed.

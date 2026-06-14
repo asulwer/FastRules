@@ -59,7 +59,7 @@ int main() {
         std::cout << "=== Macro-Based Type Registration Example ===" << std::endl << std::endl;
 
         // =====================================================================
-        // 1. FASTRULES_REGISTER_TYPE — register fields only (explicit count)
+        // 1. FASTRULES_REGISTER_TYPE -- register fields only (explicit count)
         // =====================================================================
         std::cout << "1. FASTRULES_REGISTER_TYPE_5(engine, Customer, name, age, processed, isActive, balance);"
                   << std::endl;
@@ -67,7 +67,7 @@ int main() {
         std::cout << "   Customer type registered with 5 fields." << std::endl << std::endl;
 
         // =====================================================================
-        // 2. FASTRULES_REGISTER_METHODS — register methods on the same type
+        // 2. FASTRULES_REGISTER_METHODS -- register methods on the same type
         // =====================================================================
         std::cout << "2. FASTRULES_REGISTER_METHODS_2(engine, Customer, isPremium, getTier);"
                   << std::endl;

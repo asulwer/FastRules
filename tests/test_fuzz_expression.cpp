@@ -18,7 +18,7 @@ TEST_CASE("ExpressionValidator rejects empty input", "[security][fuzz]") {
 
 TEST_CASE("ExpressionValidator rejects os.execute patterns", "[security][fuzz]") {
     // Note: ExpressionValidator checks for specific dangerous patterns.
-    // Some obfuscated variants may slip through — this documents known limitations.
+    // Some obfuscated variants may slip through -- this documents known limitations.
     std::vector<std::string> dangerous = {
         "os.execute('rm -rf /')",
         "os.execute([[any text]])",
@@ -37,7 +37,7 @@ TEST_CASE("ExpressionValidator rejects os.execute patterns", "[security][fuzz]")
     
     for (const auto& expr : obfuscated) {
         auto result = ExpressionValidator::validate(expr);
-        // Document actual behavior — don't enforce since validator may not catch all
+        // Document actual behavior -- don't enforce since validator may not catch all
         INFO("Expression '" << expr << "' validation result: valid=" << result.valid);
     }
 }
@@ -62,7 +62,7 @@ TEST_CASE("ExpressionValidator rejects io patterns", "[security][fuzz]") {
     for (const auto& expr : maybeDangerous) {
         auto result = ExpressionValidator::validate(expr);
         INFO("Expression '" << expr << "' validation: valid=" << result.valid);
-        // Don't REQUIRE — documents current behavior
+        // Don't REQUIRE -- documents current behavior
         (void)result;
     }
 }
@@ -162,7 +162,7 @@ TEST_CASE("ExpressionValidator rejects rawget/rawset", "[security][fuzz]") {
         REQUIRE_FALSE(result.valid);
     }
     
-    // These may slip through — sandboxed at runtime
+    // These may slip through -- sandboxed at runtime
     std::vector<std::string> maybeDangerous = {
         "getfenv()",
         "setfenv(1, {})",
@@ -187,7 +187,7 @@ TEST_CASE("ExpressionValidator rejects coroutine abuse", "[security][fuzz]") {
         REQUIRE_FALSE(result.valid);
     }
     
-    // These may slip through — the Lua sandbox (not the validator) catches them at runtime
+    // These may slip through -- the Lua sandbox (not the validator) catches them at runtime
     std::vector<std::string> sandboxed = {
         "coroutine.wrap(function() while true do end end)()",
     };
@@ -195,7 +195,7 @@ TEST_CASE("ExpressionValidator rejects coroutine abuse", "[security][fuzz]") {
     for (const auto& expr : sandboxed) {
         auto result = ExpressionValidator::validate(expr);
         INFO("Expression '" << expr << "' validation: valid=" << result.valid);
-        // Validator may not catch these — sandbox removes os/io/debug
+        // Validator may not catch these -- sandbox removes os/io/debug
         (void)result;
     }
 }
@@ -249,7 +249,7 @@ TEST_CASE("LuaEngine handles string edge cases", "[security][fuzz]") {
     // String with null bytes
     params = {{"name", "string", std::string("hello\x00world", 11)}};
     result = rule->execute(engine, ctx, params);
-    // Lua strings can contain null bytes — length should be 11
+    // Lua strings can contain null bytes -- length should be 11
     REQUIRE(result.success);
 }
 

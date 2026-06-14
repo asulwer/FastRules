@@ -6,7 +6,7 @@
 namespace fastrules {
 
 // Convenience wrapper around spdlog for rule/workflow IDs.
-// All formatting is done by spdlog — no custom LogEntry or handler types.
+// All formatting is done by spdlog -- no custom LogEntry or handler types.
 //
 // Usage:
 //   auto log = fastrules::logger();

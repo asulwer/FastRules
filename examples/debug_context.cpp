@@ -33,7 +33,7 @@ int main() {
         child2->expression = "isNotEmpty(customer.name)";
         child2->isActive = true;
 
-        // Parent rule — references children by their actual IDs (1 and 2)
+        // Parent rule -- references children by their actual IDs (1 and 2)
         auto parent = std::make_shared<fastrules::Rule>();
         parent->id = 3;
         parent->expression = "context.getResult(1).success == true and context.getResult(2).success == true";

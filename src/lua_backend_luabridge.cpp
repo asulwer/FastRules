@@ -13,7 +13,7 @@
 namespace fastrules {
 
 // ============================================================================
-// LuaBridgeValue — wraps a Lua registry reference as LuaValue
+// LuaBridgeValue -- wraps a Lua registry reference as LuaValue
 // ============================================================================
 class LuaBridgeValue : public LuaValue {
 public:
@@ -691,7 +691,7 @@ std::unique_ptr<LuaValue> LuaBridge3Backend::createTable() {
 }
 
 // ============================================================================
-// Type / Action binding — stubs for now (full implementation later)
+// Type / Action binding -- stubs for now (full implementation later)
 // ============================================================================
 
 void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
@@ -722,7 +722,7 @@ void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
         // __index closure - handles both fields and methods
         lua_pushstring(pImpl_->L, "__index");
         lua_pushcfunction(pImpl_->L, [](lua_State* L) -> int {
-            // arg1: userdata (pointer to object pointer — void**)
+            // arg1: userdata (pointer to object pointer -- void**)
             // arg2: key (field or method name)
             void** ud = static_cast<void**>(lua_touserdata(L, 1));
             if (!ud || !*ud) {
@@ -876,7 +876,7 @@ void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
                 TypeMethod* method = static_cast<TypeMethod*>(lua_touserdata(L, lua_upvalueindex(1)));
                 if (!method) return 0;
                 
-                // Get self (first arg) — userdata stores void**, dereference it
+                // Get self (first arg) -- userdata stores void**, dereference it
                 void** ud = static_cast<void**>(lua_touserdata(L, 1));
                 if (!ud || !*ud) return 0;
                 void* obj = *ud;
@@ -971,7 +971,7 @@ void LuaBridge3Backend::setRegisteredTypeGlobal(const std::string& name, const s
                 luaL_getmetatable(pImpl_->L, mtName.c_str());
                 if (lua_isnil(pImpl_->L, -1)) {
                     lua_pop(pImpl_->L, 1);
-                    // Metatable doesn't exist yet — bindTypes hasn't been called
+                    // Metatable doesn't exist yet -- bindTypes hasn't been called
                     // Create it now
                     luaL_newmetatable(pImpl_->L, mtName.c_str());
                     // Leave it on stack to be set as metatable

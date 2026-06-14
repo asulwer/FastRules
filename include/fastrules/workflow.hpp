@@ -62,7 +62,7 @@ public:
     // See docs/parallel-execution.md for executeParallel vs AsyncWorkflow guidance.
     [[nodiscard]] std::vector<RuleResult> executeParallel(LuaEngine& engine, const std::vector<RuleParameter>& parameters);
 
-    // Streaming execution — yields results as they complete
+    // Streaming execution -- yields results as they complete
     [[nodiscard]] StreamingResult executeStreaming(LuaEngine& engine, const std::vector<RuleParameter>& parameters);
 
     // Execution with tracing

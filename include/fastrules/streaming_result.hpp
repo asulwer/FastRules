@@ -9,7 +9,7 @@
 
 namespace fastrules {
 
-// Streaming result — yields RuleResults as they complete
+// Streaming result -- yields RuleResults as they complete
 // Usage:
 //   auto stream = workflow.executeStreaming(engine, params);
 //   for (auto& result : stream) {

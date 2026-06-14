@@ -25,7 +25,7 @@
     reg_.method(#methodName_, &TypeName_::methodName_);
 
 // ============================================================================
-// Explicit dispatch macros (1–8 fields, 1–4 methods)
+// Explicit dispatch macros (1-8 fields, 1-4 methods)
 // These use MSVC-compatible expansion without __VA_ARGS__ counting tricks.
 // ============================================================================
 
@@ -202,7 +202,7 @@
         FASTRULES_VARG_DISPATCH_METHODS(reg, TypeName, __VA_ARGS__); \
     })
 
-// Combined macros — register fields AND methods in a single registerType call.
+// Combined macros -- register fields AND methods in a single registerType call.
 // These generate one lambda that binds both fields and methods.
 //
 // Usage: FASTRULES_REGISTER_TYPE_WITH_METHODS_2_1(engine, Order, id, total, isShipped)

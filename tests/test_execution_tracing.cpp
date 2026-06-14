@@ -74,7 +74,7 @@ TEST_CASE("ExecutionTrace JSON serialization", "[execution_tracing]") {
     tracer.record("rule1", "execute", true, "OK");
     tracer.finish(true);
 
-    // toJson() has been removed from core — use JsonSerialization::serialize(trace)
+    // toJson() has been removed from core -- use JsonSerialization::serialize(trace)
     REQUIRE(true);
 }
 

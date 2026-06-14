@@ -99,11 +99,11 @@ std::vector<std::string> RuleVersionHistory::diff(
     }
     if (from.priority != to.priority) {
         differences.push_back("Priority changed: " + std::to_string(from.priority) + 
-                              " → " + std::to_string(to.priority));
+                              " -> " + std::to_string(to.priority));
     }
     if (from.isActive != to.isActive) {
         differences.push_back("Active state changed: " + std::string(from.isActive ? "true" : "false") +
-                              " → " + std::string(to.isActive ? "true" : "false"));
+                              " -> " + std::string(to.isActive ? "true" : "false"));
     }
     
     return differences;

@@ -163,14 +163,14 @@ std::unique_ptr<LuaValue> anyToLuaValue(LuaBackend& backend, const std::any& val
         }
     } catch (const std::bad_any_cast& e) {
         // Log the error if a logger is available, then fall through to nil
-        // This indicates a type registration mismatch — worth knowing about
+        // This indicates a type registration mismatch -- worth knowing about
         try {
             auto log = fastrules::logger();
             if (log) {
                 log->warn("anyToLuaValue: bad_any_cast for type {}: {}", value.type().name(), e.what());
             }
         } catch (...) {
-            // Logger not available — ignore
+            // Logger not available -- ignore
         }
     }
     return backend.makeNil();

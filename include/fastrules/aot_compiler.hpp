@@ -15,8 +15,8 @@ class Rule;
 class Workflow;
 
 // Pre-compiled bytecode bundle for AOT distribution
-// At build time: compile rules → save bytecode to .dat file
-// At runtime: load bytecode → skip compilation overhead
+// At build time: compile rules -> save bytecode to .dat file
+// At runtime: load bytecode -> skip compilation overhead
 class AotBundle {
 public:
     struct CompiledRule {

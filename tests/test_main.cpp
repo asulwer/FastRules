@@ -9,7 +9,7 @@
 #include <exception>
 #include <cstdlib>
 
-// Global test logger — configured once per test session
+// Global test logger -- configured once per test session
 static std::shared_ptr<spdlog::logger> g_testLogger;
 
 static void setupTestLogging() {
@@ -32,7 +32,7 @@ std::shared_ptr<spdlog::logger> getTestLogger() {
 }
 
 // ------------------------------------------------------------------------------
-// MSVC debug assertion handler — forwards to spdlog
+// MSVC debug assertion handler -- forwards to spdlog
 // ------------------------------------------------------------------------------
 #ifdef _WIN32
 #include <windows.h>

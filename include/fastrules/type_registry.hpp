@@ -48,7 +48,7 @@ struct TypeDescriptor {
 };
 
 // ============================================================================
-// Type Registry — backend-neutral storage for C++ type descriptors
+// Type Registry -- backend-neutral storage for C++ type descriptors
 //
 // Backends (Sol2Backend, LuaBridge3Backend) read descriptors and create
 // their own native bindings. LuaEngine owns a TypeRegistry and passes it
@@ -100,7 +100,7 @@ public:
         }
         
         desc.size = sizeof(T);
-        // Store extractor for T* — extracts void* from std::any containing T*
+        // Store extractor for T* -- extracts void* from std::any containing T*
         desc.extractPointer = [](const std::any& value) -> void* {
             try {
                 // The any contains T* (pointer), cast to T* not T**

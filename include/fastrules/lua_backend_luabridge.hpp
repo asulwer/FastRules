@@ -10,7 +10,7 @@ struct lua_State;
 namespace fastrules {
 
 // ============================================================================
-// LuaBridge3Backend — LuaBackend implementation using LuaBridge3
+// LuaBridge3Backend -- LuaBackend implementation using LuaBridge3
 // ============================================================================
 
 class LuaBridge3Backend : public LuaBackend {
@@ -74,7 +74,7 @@ public:
     // ── Table creation ─────────────────────────────────────────────────────
     [[nodiscard]] std::unique_ptr<LuaValue> createTable() override;
 
-    // ── Type / Action binding (stubs — full implementation later) ──────────
+    // ── Type / Action binding (stubs -- full implementation later) ──────────
     void bindTypes(TypeRegistry* registry) override;
     void bindActions(ActionCallbacks* callbacks) override;
     void setRegisteredTypeGlobal(const std::string& name, const std::type_index& type, const std::any& value, TypeRegistry* registry) override;

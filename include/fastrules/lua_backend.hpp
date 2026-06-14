@@ -26,7 +26,7 @@ enum class LuaType {
 };
 
 // ============================================================================
-// Lightweight Lua value wrapper — implemented by each backend
+// Lightweight Lua value wrapper -- implemented by each backend
 // ============================================================================
 class LuaValue {
 public:
@@ -69,7 +69,7 @@ public:
 
     // ── Execution ───────────────────────────────────────────────────────────
     // Evaluate a compiled expression with parameters. Returns the result.
-    // Parameters are name→value pairs (std::any for RuleParameter compatibility).
+    // Parameters are name->value pairs (std::any for RuleParameter compatibility).
     [[nodiscard]] virtual std::unique_ptr<LuaValue> evaluate(
         const std::string& id,
         const std::vector<std::pair<std::string, std::any>>& params) = 0;

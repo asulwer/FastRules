@@ -209,7 +209,7 @@ public:
     void registerPredicates();
     [[nodiscard]] std::unique_ptr<LuaEngine> clone() const;
 
-    // Type registration — backend-neutral via TypeDescriptor
+    // Type registration -- backend-neutral via TypeDescriptor
     template<typename T>
     void registerType(const std::string& name, std::vector<TypeField> fields) {
         typeRegistry_.registerType<T>(name, std::move(fields));
@@ -233,7 +233,7 @@ public:
         return typeRegistry_.isRegistered(name);
     }
 
-    // Action registration — backend-neutral via std::any Handler
+    // Action registration -- backend-neutral via std::any Handler
     void registerAction(const std::string& name, ActionCallbacks::Handler handler) {
         actionCallbacks_.registerHandler(name, std::move(handler));
         backend_->bindActions(&actionCallbacks_);

@@ -189,10 +189,10 @@ void Rule::validate(const std::vector<std::reference_wrapper<const Rule>>& allRu
                 std::ostringstream oss;
                 oss << "Circular dependency detected: ";
                 for (auto it2 = cycleStart; it2 != stack.end(); ++it2) {
-                    if (it2 != cycleStart) oss << " → ";
+                    if (it2 != cycleStart) oss << " -> ";
                     oss << *it2;
                 }
-                oss << " → " << neighbor;
+                oss << " -> " << neighbor;
                 throw RuleValidationException(oss.str());
             }
             
@@ -399,7 +399,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
 
     // Preference: inactive rules are completely skipped - no result, no evaluation
     if (!isActive) {
-        log->debug("Rule {} inactive — skipped", id);
+        log->debug("Rule {} inactive -- skipped", id);
         result.success = false;
         result.skipped = true;
         return result;
@@ -437,7 +437,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
             // Preference: parent only evaluates if ALL children pass
             for (const auto& childResult : result.childResults) {
                 if (!childResult.isSuccess()) {
-                    log->info("Child rule {} failed — parent {} aborted", childResult.ruleName, id);
+                    log->info("Child rule {} failed -- parent {} aborted", childResult.ruleName, id);
                     setFailure(result, "Child rule " + childResult.ruleName + " failed");
                     storeInCache(parameters, result);
                     context.setResult(name, result);

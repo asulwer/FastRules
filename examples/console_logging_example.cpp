@@ -34,13 +34,13 @@ int main() {
     workflow.rules = {rule1};
     workflow.compile(engine);
 
-    // 3. Execute — all internal logging goes through spdlog
+    // 3. Execute -- all internal logging goes through spdlog
     std::vector<RuleParameter> params;
     params.emplace_back("age", 25);
 
     auto results = workflow.execute(engine, params);
 
-    // 4. Cleanup — optional, spdlog handles its own shutdown
+    // 4. Cleanup -- optional, spdlog handles its own shutdown
     spdlog::shutdown();
 
     return 0;
