@@ -5,6 +5,7 @@
 .DESCRIPTION
     This script generates a complete Visual Studio 2022 solution including:
       - Core fastrules library
+      - C API shared library (for Python/C# bindings)
       - Extensions (JSON, XML; DB when SOCI available and -BuildDB passed)
       - Test suite (fastrules_tests)
       - All examples
@@ -141,6 +142,7 @@ Write-Host "  C++ Standard:   23"
 Write-Host "  Tests:          ON"
 Write-Host "  Examples:       ON"
 Write-Host "  Extensions:     ON"
+Write-Host "  C API:          ON (shared library for Python/C#)"
 Write-Host "  DB Extension:   $(if ($BuildDB) { 'ON (requires SOCI)' } else { 'OFF' })"
 Write-Host "  LuaJIT:         $(if ($UseLuaJIT) { 'ON' } else { 'OFF' })"
 Write-Host ""
@@ -157,6 +159,8 @@ $cmakeArgs = @(
     '-DFASTRULES_BUILD_TESTS=ON'
     '-DFASTRULES_BUILD_EXAMPLES=ON'
     '-DFASTRULES_BUILD_EXTENSIONS=ON'
+    '-DFASTRULES_BUILD_SHARED=ON'
+    '-DFASTRULES_BUILD_C_API=ON'
 )
 
 # Add vcpkg toolchain if available
@@ -243,6 +247,7 @@ Write-Host "============================================================" -Foreg
 Write-Host ""
 Write-Host "Available build targets:"
 Write-Host "  - fastrules           : Core library"
+Write-Host "  - fastrules_c_api     : C API shared library (for Python/C#)"
 Write-Host "  - fastrules_tests     : Test suite"
 Write-Host "  - fastrules-json      : JSON persistence extension"
 Write-Host "  - fastrules-xml       : XML persistence extension"

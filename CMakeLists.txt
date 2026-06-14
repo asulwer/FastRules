@@ -40,6 +40,7 @@ option(FASTRULES_BUILD_EXTENSIONS "Build optional persistence extensions" OFF)
 option(FASTRULES_BUILD_DB "Build database persistence extension (requires SOCI)" OFF)
 option(FASTRULES_BUILD_COVERAGE "Build with coverage instrumentation" OFF)
 option(FASTRULES_BUILD_SHARED "Build as shared library (DLL/SO/Dylib)" OFF)
+option(FASTRULES_BUILD_C_API "Build C API shared library for Python/C# bindings" OFF)
 option(FASTRULES_USE_LUAJIT "Use LuaJIT instead of PUC-Rio Lua (requires manual build on Windows)" OFF)
 # LuaBridge3 backend only
 set(FASTRULES_LUA_BACKEND "luabridge3" CACHE STRING "Lua binding backend")
@@ -548,13 +549,13 @@ if(FASTRULES_BUILD_EXAMPLES)
     # ============================================================================
     # C API Wrapper for Python/C# FFI
     # ============================================================================
-    if(FASTRULES_BUILD_SHARED)
+    if(FASTRULES_BUILD_SHARED OR FASTRULES_BUILD_C_API)
         add_library(fastrules_c_api SHARED
-            examples/python_example/fastrules_c_api.cpp
+            examples/c_api/fastrules_c_api.cpp
         )
-        set_property(TARGET fastrules_c_api PROPERTY FOLDER "Examples")
+        set_property(TARGET fastrules_c_api PROPERTY FOLDER "C_API")
         target_include_directories(fastrules_c_api PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example
+            ${CMAKE_CURRENT_SOURCE_DIR}/examples/c_api
             ${CMAKE_CURRENT_SOURCE_DIR}/include
             ${json_SOURCE_DIR}/single_include
             ${luabridge3_SOURCE_DIR}/Source
@@ -567,6 +568,20 @@ if(FASTRULES_BUILD_EXAMPLES)
                 WINDOWS_EXPORT_ALL_SYMBOLS TRUE
             )
         endif()
+        
+        # Copy DLL to example directories for convenience
+        add_custom_command(TARGET fastrules_c_api POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "$<TARGET_FILE:fastrules_c_api>"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/"
+            COMMENT "Copying fastrules_c_api.dll to csharp_example"
+        )
+        add_custom_command(TARGET fastrules_c_api POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "$<TARGET_FILE:fastrules_c_api>"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/"
+            COMMENT "Copying fastrules_c_api.dll to python_example"
+        )
         
         message(STATUS "Building C API wrapper for FFI (Python/C#)")
     endif()
