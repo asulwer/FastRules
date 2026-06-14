@@ -259,6 +259,27 @@ class Workflow:
             self._workflow = None
 
 
+class Customer:
+    """Customer class demonstrating complex type usage."""
+    
+    def __init__(self, age: int, name: str, balance: float, is_active: bool = True, tier: str = "standard"):
+        self.age = age
+        self.name = name
+        self.balance = balance
+        self.is_active = is_active
+        self.tier = tier
+    
+    def to_parameters(self, prefix: str = "customer") -> Dict[str, Any]:
+        """Convert Customer to parameter dictionary for FastRules."""
+        return {
+            f"{prefix}.age": self.age,
+            f"{prefix}.name": self.name,
+            f"{prefix}.balance": self.balance,
+            f"{prefix}.is_active": self.is_active,
+            f"{prefix}.tier": self.tier
+        }
+
+
 def example_basic_usage():
     """Example: Basic rule execution using in-memory workflow creation."""
     print("=" * 60)
@@ -367,7 +388,6 @@ def example_parent_child():
                          description="Name validation")
         
         # Add parent rule referencing children by NAME (not ID)
-        # context.getResult("age-check") gets result of child rule named "age-check"
         workflow.add_rule(3, 'context.getResult("age-check").success == true and context.getResult("name-check").success == true',
                          name="parent-validation",
                          description="Parent validates children")
@@ -392,27 +412,6 @@ def example_parent_child():
         print(f"Error: {e}")
         import traceback
         traceback.print_exc()
-
-
-class Customer:
-    """Customer class demonstrating complex type usage."""
-    
-    def __init__(self, age: int, name: str, balance: float, is_active: bool = True, tier: str = "standard"):
-        self.age = age
-        self.name = name
-        self.balance = balance
-        self.is_active = is_active
-        self.tier = tier
-    
-    def to_parameters(self, prefix: str = "customer") -> Dict[str, Any]:
-        """Convert Customer to parameter dictionary for FastRules."""
-        return {
-            f"{prefix}.age": self.age,
-            f"{prefix}.name": self.name,
-            f"{prefix}.balance": self.balance,
-            f"{prefix}.is_active": self.is_active,
-            f"{prefix}.tier": self.tier
-        }
 
 
 def example_complex_types():
@@ -492,11 +491,6 @@ def example_complex_types():
             status = "PASS" if result.success else "FAIL"
             name = result.rule_name if result.rule_name else "(unnamed)"
             print(f"  {name}: {status}")
-        
-    except Exception as e:
-        print(f"Error: {e}")
-        import traceback
-        traceback.print_exc()
         
     except Exception as e:
         print(f"Error: {e}")
