@@ -30,6 +30,7 @@ int main() {
         // Child rule 1: Age check
         auto child1 = std::make_shared<fastrules::Rule>();
         child1->id = 1;
+        child1->name = "1";
         child1->expression = "customer.age >= 18";
         child1->isActive = true;
         child1->priority = 0;
@@ -37,6 +38,7 @@ int main() {
         // Child rule 2: Active check
         auto child2 = std::make_shared<fastrules::Rule>();
         child2->id = 2;
+        child2->name = "2";
         child2->expression = "customer.isActive == true";
         child2->isActive = true;
         child2->priority = 1;
@@ -45,6 +47,7 @@ int main() {
         // Uses context.getResult() to check child results
         auto parent = std::make_shared<fastrules::Rule>();
         parent->id = 3;
+        parent->name = "3";
         parent->expression = "context.getResult(1).success == true and context.getResult(2).success == true";
         parent->action = "customer.processed = true";
         parent->isActive = true;
@@ -55,7 +58,8 @@ int main() {
         parent->childRules = {child1, child2};
 
         fastrules::Workflow workflow;
-        workflow.rules = {parent};  // Parent is top-level, children are nested
+        // Include child rules in workflow so they execute before parent
+        workflow.rules = {child1, child2, parent};
         workflow.compile(engine);
 
         // Test data

@@ -24,18 +24,21 @@ int main() {
         // Child rule
         auto child = std::make_shared<fastrules::Rule>();
         child->id = 1;
+        child->name = "1";
         child->expression = "customer.age >= 18";
         child->isActive = true;
 
         // Child rule 2
         auto child2 = std::make_shared<fastrules::Rule>();
         child2->id = 2;
+        child2->name = "2";
         child2->expression = "isNotEmpty(customer.name)";
         child2->isActive = true;
 
         // Parent rule -- references children by their actual IDs (1 and 2)
         auto parent = std::make_shared<fastrules::Rule>();
         parent->id = 3;
+        parent->name = "3";
         parent->expression = "context.getResult(1).success == true and context.getResult(2).success == true";
         parent->action = "customer.processed = true";
         parent->isActive = true;
@@ -44,18 +47,21 @@ int main() {
         // Parent 2 (minor)
         auto minorChild = std::make_shared<fastrules::Rule>();
         minorChild->id = 4;
+        minorChild->name = "4";
         minorChild->expression = "customer.age < 18";
         minorChild->isActive = true;
 
         auto parent2 = std::make_shared<fastrules::Rule>();
         parent2->id = 5;
+        parent2->name = "5";
         parent2->expression = "context.getResult(4).success == true";
         parent2->action = "customer.processed = false";
         parent2->isActive = true;
         parent2->childRules = {minorChild};
 
         fastrules::Workflow workflow;
-        workflow.rules = {parent, parent2};
+        // Include child rules in workflow so they execute before parents
+        workflow.rules = {child, child2, parent, minorChild, parent2};
         workflow.compile(engine);
 
         Customer customer{"Alice", 25, false};

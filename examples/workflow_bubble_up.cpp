@@ -39,16 +39,19 @@ int main() {
         // === PARENT 1: Adult Processing ===
         auto p1_child1 = std::make_shared<fastrules::Rule>();
         p1_child1->id = 1;
+        p1_child1->name = "1";
         p1_child1->expression = "customer.age >= 18";
         p1_child1->isActive = true;
 
         auto p1_child2 = std::make_shared<fastrules::Rule>();
         p1_child2->id = 2;
+        p1_child2->name = "2";
         p1_child2->expression = "isNotEmpty(customer.name)";
         p1_child2->isActive = true;
 
         auto parent1 = std::make_shared<fastrules::Rule>();
         parent1->id = 3;
+        parent1->name = "3";
         parent1->expression = "context.getResult(1).success == true and context.getResult(2).success == true";
         parent1->action = "customer.processed = true";
         parent1->isActive = true;
@@ -57,18 +60,21 @@ int main() {
         // === PARENT 2: Minor Processing ===
         auto p2_child1 = std::make_shared<fastrules::Rule>();
         p2_child1->id = 4;
+        p2_child1->name = "4";
         p2_child1->expression = "customer.age < 18";
         p2_child1->isActive = true;
 
         auto parent2 = std::make_shared<fastrules::Rule>();
         parent2->id = 5;
+        parent2->name = "5";
         parent2->expression = "context.getResult(4).success == true";
         parent2->action = "customer.processed = false";
         parent2->isActive = true;
         parent2->childRules = {p2_child1};
 
-        // Add all parents to workflow
-        workflow.rules = {parent1, parent2};
+        // Add all rules to workflow - children first, then parents
+        // Execution order respects dependencies (children execute before parents)
+        workflow.rules = {p1_child1, p1_child2, parent1, p2_child1, parent2};
         workflow.compile(engine);
 
         // Test data - use heap allocation to ensure lifetime
