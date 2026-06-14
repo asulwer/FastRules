@@ -13,7 +13,7 @@
 #include "rule_result.hpp"
 #include "streaming_result.hpp"
 #include "execution_tracer.hpp"
-#include "lockfree_engine_pool.hpp"
+#include "engine_pool.hpp"
 
 namespace fastrules {
 
@@ -103,8 +103,8 @@ private:
     // Engine clone pool for parallel execution optimization
     // Pre-created and pre-compiled clones avoid per-task allocation overhead
     std::vector<std::unique_ptr<LuaEngine>> enginePoolStorage_;  // Owns the engines
-    std::unique_ptr<LockFreeEnginePool> enginePool_;  // Lock-free stack for checkout (pointer allows move)
-    bool useLockFreePool_ = false;
+    std::unique_ptr<EnginePool> enginePool_;  // Engine stack for checkout (pointer allows move)
+    bool useEnginePool_ = false;
 
     // Helper: topological sort for dependency-aware execution
     [[nodiscard]] std::vector<std::vector<std::shared_ptr<Rule>>> buildDependencyLevels() const;

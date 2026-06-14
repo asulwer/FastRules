@@ -1,10 +1,10 @@
-// test_lockfree_engine_pool.cpp
-// Tests for the lock-free engine pool implementation
+// test_engine_pool.cpp
+// Tests for the engine pool implementation
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 #include <iostream>  // For std::cout in benchmark test
-#include "fastrules/lockfree_engine_pool.hpp"
+#include "fastrules/engine_pool.hpp"
 #include "fastrules/lua_engine.hpp"
 #include <thread>
 #include <atomic>
@@ -13,8 +13,8 @@
 
 using namespace fastrules;
 
-TEST_CASE("LockFreeEnginePool basic push/pop", "[lockfree][pool]") {
-    LockFreeEnginePool pool;
+TEST_CASE("EnginePool basic push/pop", "[pool]") {
+    EnginePool pool;
     
     // Create some dummy engines
     LuaEngine* engine1 = reinterpret_cast<LuaEngine*>(0x1);
@@ -47,8 +47,8 @@ TEST_CASE("LockFreeEnginePool basic push/pop", "[lockfree][pool]") {
 // Concurrent test temporarily disabled - test has logic issues causing hangs
 // TODO: Fix test logic (popper threads compete for limited items)
 
-TEST_CASE("LockFreeEnginePool tagged pointer ABA protection", "[lockfree][pool][aba]") {
-    LockFreeEnginePool pool;
+TEST_CASE("EnginePool tagged pointer ABA protection", "[pool][aba]") {
+    EnginePool pool;
     
     // Simulate ABA scenario
     LuaEngine* engineA = reinterpret_cast<LuaEngine*>(0x1000);
@@ -63,7 +63,7 @@ TEST_CASE("LockFreeEnginePool tagged pointer ABA protection", "[lockfree][pool][
     
     // Push B, then A again
     pool.push(engineB);
-    pool.push(engineA);  // Same address, but different version tag
+    pool.push(engineA);  // Same address
     
     // Pop should get A (newest)
     auto* poppedAgain = pool.pop();
@@ -77,8 +77,8 @@ TEST_CASE("LockFreeEnginePool tagged pointer ABA protection", "[lockfree][pool][
     REQUIRE(pool.pop() == nullptr);
 }
 
-TEST_CASE("LockFreeEnginePool memory ordering", "[lockfree][pool][memory]") {
-    LockFreeEnginePool pool;
+TEST_CASE("EnginePool memory ordering", "[pool][memory]") {
+    EnginePool pool;
     constexpr int NUM_ITERATIONS = 10000;
     
     // This test verifies that memory ordering is correct
@@ -117,8 +117,8 @@ TEST_CASE("LockFreeEnginePool memory ordering", "[lockfree][pool][memory]") {
     REQUIRE(sumPop > 0);
 }
 
-TEST_CASE("LockFreeEnginePool performance benchmark", "[lockfree][pool][benchmark]") {
-    LockFreeEnginePool pool;
+TEST_CASE("EnginePool performance benchmark", "[pool][benchmark]") {
+    EnginePool pool;
     constexpr int NUM_OPERATIONS = 100000;
     constexpr int NUM_THREADS = 4;
     
@@ -154,7 +154,7 @@ TEST_CASE("LockFreeEnginePool performance benchmark", "[lockfree][pool][benchmar
     
     double opsPerSecond = (NUM_OPERATIONS * NUM_THREADS * 1.0) / (duration.count() / 1000000.0);
     
-    std::cout << "Lock-free pool: " << NUM_THREADS << " threads, " 
+    std::cout << "Engine pool: " << NUM_THREADS << " threads, " 
               << NUM_OPERATIONS << " ops/thread\n";
     std::cout << "Total time: " << duration.count() << " us\n";
     std::cout << "Throughput: " << opsPerSecond << " ops/sec\n";

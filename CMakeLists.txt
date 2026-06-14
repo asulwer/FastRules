@@ -317,7 +317,7 @@ set(FASTRULES_PUBLIC_HEADERS
     include/fastrules/expression_validator.hpp
     include/fastrules/fastrules.hpp
     include/fastrules/fastrules_export.hpp
-    include/fastrules/lockfree_engine_pool.hpp
+    include/fastrules/engine_pool.hpp
     include/fastrules/logger.hpp
     include/fastrules/lua_backend.hpp
     include/fastrules/lua_backend_luabridge.hpp
@@ -441,7 +441,7 @@ if(FASTRULES_BUILD_TESTS)
         tests/test_benchmarks.cpp
         tests/test_error_paths.cpp
         tests/test_fuzz_expression.cpp
-        tests/test_lockfree_engine_pool.cpp
+        tests/test_engine_pool.cpp
     )
 
     set_property(TARGET fastrules_tests PROPERTY FOLDER "Tests")

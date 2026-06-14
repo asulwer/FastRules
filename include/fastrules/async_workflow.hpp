@@ -16,7 +16,7 @@
 #include "rule.hpp"
 #include "rule_result.hpp"
 #include "workflow.hpp"
-#include "lockfree_engine_pool.hpp"
+#include "engine_pool.hpp"
 
 namespace fastrules {
 
@@ -176,7 +176,7 @@ private:
     std::vector<std::future<void>> pendingTasks_;
     
     std::vector<std::unique_ptr<LuaEngine>> enginePoolStorage_;
-    std::unique_ptr<LockFreeEnginePool> enginePool_;
+    std::unique_ptr<EnginePool> enginePool_;
     bool useEnginePool_ = false;
     
     size_t threadCount_;

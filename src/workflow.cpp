@@ -112,12 +112,12 @@ void Workflow::compile(LuaEngine& engine) {
     // Initialize the engine pool with the engines
     // We pass the storage which contains unique_ptrs, but the pool stores raw pointers
     // The pool doesn't own the memory - Workflow owns the engines in enginePoolStorage_
-    enginePool_ = std::make_unique<LockFreeEnginePool>();
+    enginePool_ = std::make_unique<EnginePool>();
     for (const auto& enginePtr : enginePoolStorage_) {
         enginePool_->push(enginePtr.get());
     }
     
-    useLockFreePool_ = true;
+    useEnginePool_ = true;
 
     log->info("Workflow {} compiled successfully ({} engine clones ready, pool initialized)", id, poolSize);
     compiled_ = true;
@@ -324,7 +324,7 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
 
 LuaEngine* Workflow::acquireEngine() {
     // Use engine pool when available
-    if (useLockFreePool_ && enginePool_) {
+    if (useEnginePool_ && enginePool_) {
         // Fast path: try immediate pop
         LuaEngine* engine = enginePool_->pop();
         if (engine) {
@@ -353,8 +353,8 @@ LuaEngine* Workflow::acquireEngine() {
 void Workflow::releaseEngine(LuaEngine* engine) {
     if (!engine) return;
     
-    if (useLockFreePool_ && enginePool_) {
-        // Push back to lock-free stack
+    if (useEnginePool_ && enginePool_) {
+        // Push back to engine pool
         enginePool_->push(engine);
     }
 }

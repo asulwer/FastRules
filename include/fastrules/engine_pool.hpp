@@ -34,11 +34,11 @@ class LuaEngine;
  * This provides good performance under low contention while
  * avoiding the livelock issues of pure lock-free algorithms.
  */
-class LockFreeEnginePool {
+class EnginePool {
 public:
-    LockFreeEnginePool() = default;
+    EnginePool() = default;
     
-    ~LockFreeEnginePool() = default;
+    ~EnginePool() = default;
 
     /**
      * @brief Push an engine onto the pool

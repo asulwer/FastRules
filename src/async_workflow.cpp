@@ -117,7 +117,7 @@ void AsyncWorkflow::compile(LuaEngine& engine) {
         enginePoolStorage_.push_back(std::move(clone));
     }
     
-    enginePool_ = std::make_unique<LockFreeEnginePool>();
+    enginePool_ = std::make_unique<EnginePool>();
     for (const auto& enginePtr : enginePoolStorage_) {
         enginePool_->push(enginePtr.get());
     }
