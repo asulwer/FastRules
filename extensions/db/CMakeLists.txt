@@ -43,6 +43,7 @@ source_group("Header Files" FILES
 target_include_directories(fastrules-db PUBLIC
     include
     ${FASTRULES_INCLUDE_DIR}
+    ${CMAKE_SOURCE_DIR}/extensions/include
     ${SOCI_INCLUDE_DIRS}
 )
 

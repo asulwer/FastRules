@@ -569,7 +569,7 @@ if(FASTRULES_BUILD_EXAMPLES)
             ${luabridge3_SOURCE_DIR}/Source
         )
         target_link_libraries(fastrules_c_api PRIVATE fastrules)
-        target_compile_definitions(fastrules_c_api PRIVATE FASTRULES_C_API_BUILDING)
+        # FASTRULES_C_API_BUILDING is defined in the source file (src/c_api.cpp)
         
         if(WIN32)
             set_target_properties(fastrules_c_api PROPERTIES

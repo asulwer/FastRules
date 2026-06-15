@@ -7,8 +7,11 @@
  * Uses only FastRules core - no JSON dependency.
  */
 
-// Define FASTRULES_C_API_BUILDING so functions are exported
+// FASTRULES_C_API_BUILDING is defined via compiler flags when building the DLL
+// Only define it here if not already defined
+#ifndef FASTRULES_C_API_BUILDING
 #define FASTRULES_C_API_BUILDING
+#endif
 
 #include <fastrules/c_api.h>
 #include <fastrules.hpp>
@@ -133,7 +136,11 @@ static char* format_results(const std::vector<RuleResult>& results) {
     std::string str = oss.str();
     char* output = static_cast<char*>(std::malloc(str.length() + 1));
     if (output) {
+#ifdef _WIN32
+        strcpy_s(output, str.length() + 1, str.c_str());
+#else
         std::strcpy(output, str.c_str());
+#endif
     }
     return output;
 }
@@ -365,7 +372,11 @@ fastrules_error_t fastrules_add_typed_param(
         std::string result = oss.str();
         *out_params = static_cast<char*>(std::malloc(result.length() + 1));
         if (*out_params) {
+#ifdef _WIN32
+            strcpy_s(*out_params, result.length() + 1, result.c_str());
+#else
             std::strcpy(*out_params, result.c_str());
+#endif
         }
         
         return FASTRULES_OK;
@@ -545,7 +556,8 @@ fastrules_error_t fastrules_object_set_field(
     const char* field_name,
     const char* value
 ) {
-    if (!engine || !obj || !field_name || !value) {
+    (void)engine;  // Mark as unused - engine parameter for consistency
+    if (!obj || !field_name || !value) {
         return FASTRULES_ERROR_NULL_PTR;
     }
     
@@ -561,6 +573,7 @@ void fastrules_object_destroy(
     fastrules_engine_t engine,
     fastrules_object_t obj
 ) {
+    (void)engine;  // Mark as unused - engine parameter for consistency
     delete obj;
 }
 
@@ -594,7 +607,11 @@ fastrules_error_t fastrules_add_object_param(
         std::string result = oss.str();
         *out_params = static_cast<char*>(std::malloc(result.length() + 1));
         if (*out_params) {
+#ifdef _WIN32
+            strcpy_s(*out_params, result.length() + 1, result.c_str());
+#else
             std::strcpy(*out_params, result.c_str());
+#endif
         }
         
         return FASTRULES_OK;

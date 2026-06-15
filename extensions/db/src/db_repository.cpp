@@ -25,7 +25,7 @@ DbRuleRepository::DbRuleRepository(std::shared_ptr<soci::session> session)
 void DbRuleRepository::createSchema() {
     *session_ << 
         "CREATE TABLE IF NOT EXISTS rules ("
-        "  id VARCHAR(255) PRIMARY KEY,"
+        "  id INT PRIMARY KEY,"
         "  expression TEXT NOT NULL,"
         "  action TEXT,"
         "  description TEXT,"
@@ -33,14 +33,14 @@ void DbRuleRepository::createSchema() {
         "  priority INT DEFAULT 0,"
         "  timeout_ms INT,"
         "  cache_duration_ms INT,"
-        "  depends_on_rule_id VARCHAR(255),"
+        "  depends_on_rule_name VARCHAR(255),"  // Reference by name, not ID
         "  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
         "  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
         ")";
     
     *session_ <<
         "CREATE TABLE IF NOT EXISTS rule_parameters ("
-        "  rule_id VARCHAR(255) REFERENCES rules(id) ON DELETE CASCADE,"
+        "  rule_id INT REFERENCES rules(id) ON DELETE CASCADE,"
         "  param_name VARCHAR(255),"
         "  param_order INT,"
         "  PRIMARY KEY (rule_id, param_name)"
@@ -62,11 +62,11 @@ void DbRuleRepository::save(const Rule& rule) {
 void DbRuleRepository::insertRule(const Rule& rule) {
     int timeoutMs = rule.timeout.has_value() ? static_cast<int>(rule.timeout->count()) : -1;
     int cacheMs   = rule.cacheDuration.has_value() ? static_cast<int>(rule.cacheDuration->count()) : -1;
-    int dependsOn = rule.dependsOnRuleName.has_value() ? rule.dependsOnRuleName.value() : -1;
+    std::string dependsOn = rule.dependsOnRuleName.has_value() ? rule.dependsOnRuleName.value() : "";
     DbBool isActive = rule.isActive;
 
     *session_ << 
-        "INSERT INTO rules (id, expression, action, description, is_active, priority, timeout_ms, cache_duration_ms, depends_on_rule_id) "
+        "INSERT INTO rules (id, expression, action, description, is_active, priority, timeout_ms, cache_duration_ms, depends_on_rule_name) "
         "VALUES (:id, :expr, :act, :desc, :active, :prio, :timeout, :cache, :dep)",
         soci::use(rule.id), soci::use(rule.expression), soci::use(rule.action), soci::use(rule.description),
         soci::use(isActive), soci::use(rule.priority), soci::use(timeoutMs), soci::use(cacheMs), soci::use(dependsOn);
@@ -75,13 +75,13 @@ void DbRuleRepository::insertRule(const Rule& rule) {
 void DbRuleRepository::updateRule(const Rule& rule) {
     int timeoutMs = rule.timeout.has_value() ? static_cast<int>(rule.timeout->count()) : -1;
     int cacheMs   = rule.cacheDuration.has_value() ? static_cast<int>(rule.cacheDuration->count()) : -1;
-    int dependsOn = rule.dependsOnRuleName.has_value() ? rule.dependsOnRuleName.value() : -1;
+    std::string dependsOn = rule.dependsOnRuleName.has_value() ? rule.dependsOnRuleName.value() : "";
     DbBool isActive = rule.isActive;
 
     *session_ <<
         "UPDATE rules SET "
         "  expression = :expr, action = :act, description = :desc, is_active = :active, "
-        "  priority = :prio, timeout_ms = :timeout, cache_duration_ms = :cache, depends_on_rule_id = :dep, "
+        "  priority = :prio, timeout_ms = :timeout, cache_duration_ms = :cache, depends_on_rule_name = :dep, "
         "  updated_at = CURRENT_TIMESTAMP "
         "WHERE id = :id",
         soci::use(rule.expression), soci::use(rule.action), soci::use(rule.description),
@@ -149,8 +149,8 @@ Rule DbRuleRepository::rowToRule(soci::row& row) {
     int cacheMs = row.get<int>(7);
     if (cacheMs >= 0) rule.cacheDuration = std::chrono::milliseconds(cacheMs);
     
-    int dependsOn = row.get<int>(8);
-    if (dependsOn >= 0) rule.dependsOnRuleName = dependsOn;
+    std::string dependsOn = row.get<std::string>(8);
+    if (!dependsOn.empty()) rule.dependsOnRuleName = dependsOn;
     
     return rule;
 }

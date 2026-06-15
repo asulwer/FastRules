@@ -167,17 +167,8 @@ if ($env:VCPKG_ROOT) {
 
 # Add vcpkg features based on options
 $vcpkgFeatures = @('tests', 'json', 'xml', 'db')
-
-# Run vcpkg install explicitly to ensure dependencies are available
-if ($env:VCPKG_ROOT -and (Test-Path "$env:VCPKG_ROOT\vcpkg.exe")) {
-    Write-Host ""
-    Write-Host "[0/3] Installing vcpkg dependencies..." -ForegroundColor Yellow
-    $vcpkgExe = "$env:VCPKG_ROOT\vcpkg.exe"
-    & $vcpkgExe install --triplet x64-windows --feature-flags=manifests
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warning "vcpkg install had warnings or errors, continuing anyway..."
-    }
-}
+$featureList = $vcpkgFeatures -join ';'
+$cmakeArgs += "-DVCPKG_MANIFEST_FEATURES=$featureList"
 
 if ($UseLuaJIT) {
     $cmakeArgs += '-DFASTRULES_USE_LUAJIT=ON'
