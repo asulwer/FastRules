@@ -67,6 +67,11 @@ public:
     // Usage: auto future = workflow.executeAsync(engine, params); auto results = future.get();
     [[nodiscard]] std::future<std::vector<RuleResult>> executeAsync(LuaEngine& engine, const std::vector<RuleParameter>& parameters);
 
+    // Adaptive execution - automatically chooses sequential or parallel based on rule count
+    // Threshold: <= 4 rules = sequential, > 4 rules = parallel
+    // This avoids thread overhead for small workflows while maximizing performance for large ones
+    [[nodiscard]] std::vector<RuleResult> executeAdaptive(LuaEngine& engine, const std::vector<RuleParameter>& parameters);
+
     // Streaming execution -- yields results as they complete
     [[nodiscard]] StreamingResult executeStreaming(LuaEngine& engine, const std::vector<RuleParameter>& parameters);
 

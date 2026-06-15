@@ -366,6 +366,16 @@ std::future<std::vector<RuleResult>> Workflow::executeAsync(LuaEngine& engine, c
     });
 }
 
+std::vector<RuleResult> Workflow::executeAdaptive(LuaEngine& engine, const std::vector<RuleParameter>& parameters) {
+    // Threshold: 4 rules or fewer = sequential, more than 4 = parallel
+    // This avoids thread overhead for small workflows while maximizing performance for large ones
+    if (rules.size() <= 4) {
+        return execute(engine, parameters);  // Sequential - faster for small workflows
+    } else {
+        return executeParallel(engine, parameters);  // Parallel - faster for large workflows
+    }
+}
+
 StreamingResult Workflow::executeStreaming(LuaEngine& engine, const std::vector<RuleParameter>& parameters) {
     if (!compiled_) {
         compile(engine);

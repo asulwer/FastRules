@@ -319,3 +319,51 @@ TEST_CASE("Workflow executeAsync", "[async][workflow]") {
     }
 }
 
+TEST_CASE("Workflow executeAdaptive", "[async][workflow][adaptive]") {
+    auto engine = makeTestEngine();
+    
+    SECTION("Adaptive execution with few rules (sequential)") {
+        Workflow workflow;
+        workflow.description = "Small adaptive workflow";
+        
+        // Add 2 rules (should use sequential)
+        for (int i = 0; i < 2; ++i) {
+            auto rule = std::make_shared<Rule>();
+            rule->id = 100 + i;
+            rule->expression = "true";
+            workflow.rules.push_back(rule);
+        }
+        
+        workflow.compile(engine);
+        
+        std::vector<RuleParameter> params;
+        auto results = workflow.executeAdaptive(engine, params);
+        REQUIRE(results.size() == 2);
+        for (const auto& result : results) {
+            REQUIRE(result.isSuccess());
+        }
+    }
+    
+    SECTION("Adaptive execution with many rules (parallel)") {
+        Workflow largeWorkflow;
+        largeWorkflow.description = "Large adaptive workflow";
+        
+        // Add 6 rules (should use parallel)
+        for (int i = 0; i < 6; ++i) {
+            auto rule = std::make_shared<Rule>();
+            rule->id = 100 + i;
+            rule->expression = "true";
+            largeWorkflow.rules.push_back(rule);
+        }
+        
+        largeWorkflow.compile(engine);
+        
+        std::vector<RuleParameter> params;
+        auto results = largeWorkflow.executeAdaptive(engine, params);
+        REQUIRE(results.size() == 6);
+        for (const auto& result : results) {
+            REQUIRE(result.isSuccess());
+        }
+    }
+}
+
