@@ -49,10 +49,6 @@
     Clean all build dirs and regenerate from scratch.
 
 .EXAMPLE
-    .\build.ps1 -BuildDB
-    Enable DB extension (requires SOCI).
-
-.EXAMPLE
     .\build.ps1 -UseLuaJIT
     Use LuaJIT instead of PUC-Rio Lua.
 #>
@@ -62,7 +58,6 @@ param(
     [switch]$UseLuaJIT,
     [switch]$NoBuild,
     [switch]$NoTest,
-    [switch]$BuildDB,
     [ValidateSet('Debug', 'Release', 'All')]
     [string]$Configuration = 'Release'
 )
@@ -141,9 +136,8 @@ Write-Host "  Configuration:  $Configuration"
 Write-Host "  C++ Standard:   23"
 Write-Host "  Tests:          ON"
 Write-Host "  Examples:       ON"
-Write-Host "  Extensions:     ON"
+Write-Host "  Extensions:     ON (JSON, XML, DB)"
 Write-Host "  C API:          ON (shared library for Python/C#)"
-Write-Host "  DB Extension:   $(if ($BuildDB) { 'ON (requires SOCI)' } else { 'OFF' })"
 Write-Host "  LuaJIT:         $(if ($UseLuaJIT) { 'ON' } else { 'OFF' })"
 Write-Host ""
 
@@ -172,12 +166,7 @@ if ($env:VCPKG_ROOT) {
 }
 
 # Add vcpkg features based on options
-$vcpkgFeatures = @('tests', 'json', 'xml')
-if ($BuildDB) {
-    $vcpkgFeatures += 'db'
-}
-$featureList = $vcpkgFeatures -join ';'
-$cmakeArgs += "-DVCPKG_MANIFEST_FEATURES=$featureList"
+$vcpkgFeatures = @('tests', 'json', 'xml', 'db')
 
 # Run vcpkg install explicitly to ensure dependencies are available
 if ($env:VCPKG_ROOT -and (Test-Path "$env:VCPKG_ROOT\vcpkg.exe")) {
@@ -192,10 +181,6 @@ if ($env:VCPKG_ROOT -and (Test-Path "$env:VCPKG_ROOT\vcpkg.exe")) {
 
 if ($UseLuaJIT) {
     $cmakeArgs += '-DFASTRULES_USE_LUAJIT=ON'
-}
-
-if ($BuildDB) {
-    $cmakeArgs += '-DFASTRULES_BUILD_DB=ON'
 }
 
 # ============================================================================
@@ -262,9 +247,7 @@ Write-Host "  - fastrules_c_api     : C API shared library (for Python/C#)"
 Write-Host "  - fastrules_tests     : Test suite"
 Write-Host "  - fastrules-json      : JSON persistence extension"
 Write-Host "  - fastrules-xml       : XML persistence extension"
-if ($BuildDB) {
-    Write-Host "  - fastrules-db        : Database persistence extension"
-}
+Write-Host "  - fastrules-db        : Database persistence extension (SOCI)"
 Write-Host "  - csharp_example      : C# example (run from VS or: dotnet run)"
 Write-Host "  - python_example      : Python example (run from VS or: python fastrules_example.py)"
 Write-Host "  - All C++ examples    : simple, core_only, workflow, json, xml, etc."
@@ -277,7 +260,4 @@ Write-Host "  Run: dotnet run (C#) or python fastrules_example.py (Python)"
 Write-Host ""
 Write-Host "Other options:"
 Write-Host "  .\build.ps1 -UseLuaJIT"
-if (-not $BuildDB) {
-    Write-Host "  .\build.ps1 -BuildDB    (requires SOCI)"
-}
 Write-Host ""
