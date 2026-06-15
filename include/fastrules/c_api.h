@@ -45,10 +45,9 @@ typedef struct FastRulesResult* fastrules_result_t;
 typedef enum {
     FASTRULES_OK = 0,
     FASTRULES_ERROR_NULL_PTR = -1,
-    FASTRULES_ERROR_INVALID_JSON = -2,  /* Deprecated - kept for compatibility */
-    FASTRULES_ERROR_COMPILATION_FAILED = -3,
-    FASTRULES_ERROR_EXECUTION_FAILED = -4,
-    FASTRULES_ERROR_MEMORY = -5,
+    FASTRULES_ERROR_COMPILATION_FAILED = -2,
+    FASTRULES_ERROR_EXECUTION_FAILED = -3,
+    FASTRULES_ERROR_MEMORY = -4,
     FASTRULES_ERROR_UNKNOWN = -99
 } fastrules_error_t;
 
@@ -154,11 +153,11 @@ FASTRULES_C_API fastrules_error_t fastrules_engine_register_type(
  * Add a typed parameter to a parameter set (for complex objects).
  * 
  * @param engine Engine handle
- * @param params JSON array string of existing params (can be empty array "[]")
+ * @param params Existing parameter string (can be NULL or empty)
  * @param name Parameter name
  * @param type_name Type name (must be registered first)
  * @param fields_values Field values as "field1=value1;field2=value2"
- * @param out_params Output: new JSON array string (caller must free)
+ * @param out_params Output: new parameter string with object reference (caller must free)
  * @return Error code
  */
 FASTRULES_C_API fastrules_error_t fastrules_add_typed_param(
@@ -269,19 +268,6 @@ FASTRULES_C_API fastrules_error_t fastrules_add_object_param(
 // ============================================================================
 
 /**
- * Create a workflow from JSON.
- * @deprecated Use fastrules_workflow_create() and fastrules_workflow_add_rule() instead.
- *             This function now returns NULL and sets an error message.
- * @param engine Engine handle
- * @param json JSON string defining workflow and rules
- * @return Workflow handle or NULL on error
- */
-FASTRULES_C_API fastrules_workflow_t fastrules_workflow_create_from_json(
-    fastrules_engine_t engine,
-    const char* json
-);
-
-/**
  * Destroy a workflow.
  * @param workflow Workflow handle
  */
@@ -367,14 +353,6 @@ FASTRULES_C_API void fastrules_free(char* ptr);
  * @return Version string (static, do not free)
  */
 FASTRULES_C_API const char* fastrules_get_version(void);
-
-/**
- * Check if a JSON string is valid workflow definition.
- * @deprecated JSON support removed. Always returns false.
- * @param json JSON string to validate
- * @return false (JSON support removed)
- */
-FASTRULES_C_API bool fastrules_validate_workflow_json(const char* json);
 
 #ifdef __cplusplus
 }

@@ -151,7 +151,7 @@ std::vector<RuleResult> Workflow::execute(LuaEngine& engine, const std::vector<R
         if (rule->dependsOnRuleName.has_value()) {
             auto depResult = context.getResult(rule->dependsOnRuleName.value());
             if (!depResult.has_value() || !depResult->isSuccess()) {
-                log->debug("Skipping rule {} -- dependency failed in workflow {}", rule->id, id);
+                log->debug("Skipping rule {} - dependency failed in workflow {}", rule->id, id);
                 // Dependency failed - skip this rule silently
                 continue;
             }

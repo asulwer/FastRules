@@ -10,7 +10,7 @@
 // Define FASTRULES_C_API_BUILDING so functions are exported
 #define FASTRULES_C_API_BUILDING
 
-#include "fastrules_c_api.h"
+#include <fastrules/c_api.h>
 #include <fastrules.hpp>
 
 #include <memory>
@@ -260,22 +260,7 @@ fastrules_error_t fastrules_workflow_set_rule_priority(
 }
 
 // ============================================================================
-// Workflow Management (Legacy - deprecated, kept for compatibility)
-// ============================================================================
-
-fastrules_workflow_t fastrules_workflow_create_from_json(
-    fastrules_engine_t engine,
-    const char* json_str
-) {
-    if (!engine || !json_str) {
-        if (engine) set_error(engine, "Null pointer argument");
-        return nullptr;
-    }
-    
-    set_error(engine, "JSON support removed. Use fastrules_workflow_create() and fastrules_workflow_add_rule() instead.");
-    return nullptr;
-}
-
+// Type Registration (for complex objects like Customer)
 // ============================================================================
 // Type Registration (for complex objects like Customer)
 // ============================================================================
@@ -620,11 +605,6 @@ fastrules_error_t fastrules_add_object_param(
 
 const char* fastrules_get_version(void) {
     return "1.0.0";
-}
-
-bool fastrules_validate_workflow_json(const char* json_str) {
-    // JSON validation removed - use in-memory workflow creation instead
-    return false;
 }
 
 } // extern "C"

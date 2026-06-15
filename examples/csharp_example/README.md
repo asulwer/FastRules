@@ -1,27 +1,27 @@
 # FastRules C# Example
 
-This example demonstrates how to use FastRules from C# via P/Invoke.
+This example demonstrates how to use FastRules from C# via P/Invoke with in-memory workflow/rule creation (no JSON required).
 
 ## Prerequisites
 
-1. **Build FastRules as a shared library:**
+1. **Build FastRules with C API:**
+   ```powershell
+   .\build.ps1
+   ```
+   
+   Or manually:
    ```bash
    cmake -B build -S . \
      -DFASTRULES_BUILD_SHARED=ON \
-     -DFASTRULES_BUILD_EXTENSIONS=ON
+     -DFASTRULES_BUILD_C_API=ON
    cmake --build build --config Release
    ```
 
 2. **.NET 8.0 SDK** (or later)
 
-3. **Copy the FastRules DLL** to the example directory:
-   ```powershell
-   # Windows
-   copy ..\..\build\Release\fastrules.dll .
-   copy ..\..\build\Release\fastrules-json.dll .
-   ```
-
 ## Usage
+
+The C API DLL and its dependencies are automatically copied to this directory during the build.
 
 ```powershell
 # Run the example
@@ -44,7 +44,7 @@ FastRulesExample.cs
 fastrules_c_api.h / fastrules_c_api.cpp (C wrapper)
        |
        v
-   FastRules C++ Library
+   FastRules C++ Library (Core only)
        |
        v
    Lua Engine
@@ -52,31 +52,11 @@ fastrules_c_api.h / fastrules_c_api.cpp (C wrapper)
 
 ## Key Features
 
+- **In-memory workflow creation** - No JSON required
 - **Type-safe wrapper** around the C API
-- **JSON serialization** for parameters and results
+- **Complex object support** - Pass Customer objects directly
+- **Parent-child rules** - Access child results from parent rules
 - **IDisposable pattern** for proper resource cleanup
-- **Async support** can be added for ExecuteAsync
-
-## For Production Use
-
-Consider these improvements:
-
-1. **NuGet Package**:
-   - Create a proper NuGet package
-   - Include native libraries for all platforms
-   - MSBuild targets for automatic copying
-
-2. **Source Generators**:
-   - Generate P/Invoke signatures automatically
-   - JSON contract generation
-
-3. **Async API**:
-   - Add async/await support
-   - Task-based execution
-
-4. **Span<T> and Memory<T>**:
-   - Zero-copy where possible
-   - Better performance
 
 ## Example Code
 
@@ -87,37 +67,50 @@ using FastRulesExample;
 using var engine = new FastRulesEngine();
 Console.WriteLine($"Version: {engine.Version}");
 
-// Load workflow
-var workflowJson = @"{
-    ""id"": 1,
-    ""rules"": [
-        { ""id"": 1, ""expression"": ""age >= 18"" }
-    ]
-}";
+// Create workflow in-memory (no JSON)
+using var workflow = engine.CreateWorkflow(1, "Customer Validation");
 
-using var workflow = engine.LoadWorkflow(workflowJson);
+// Add rules programmatically
+workflow.AddRule(1, "age >= 18", description: "Age check");
+workflow.AddRule(2, "len(name) > 0", description: "Name check");
+
 workflow.Compile();
 
 // Execute
 var results = workflow.Execute(new Dictionary<string, object>
 {
-    ["age"] = 25
+    ["age"] = 25,
+    ["name"] = "Alice"
 });
 
 foreach (var result in results)
 {
-    Console.WriteLine($"Rule {result.RuleId}: {(result.Success ? "PASS" : "FAIL")}");
+    Console.WriteLine($"{result.RuleName}: {(result.Success ? "PASS" : "FAIL")}");
 }
+```
+
+## Complex Types (Customer Object)
+
+```csharp
+// Register type with engine
+var customerType = engine.RegisterType("Customer", "age:int;name:string;balance:double;isActive:bool;tier:string");
+
+// Create Customer object
+var customer = new Customer(age: 25, name: "Alice", balance: 100.0, isActive: true);
+using var obj = customer.ToFastRulesObject(engine, customerType);
+
+// Execute with complex object
+var results = workflow.Execute(new Dictionary<string, object> { ["customer"] = obj });
 ```
 
 ## Troubleshooting
 
-### "Could not load fastrules.dll"
+### "Could not load fastrules_c_api.dll"
 
 Ensure the DLL is:
-1. Built as a shared library (`-DFASTRULES_BUILD_SHARED=ON`)
+1. Built with C API enabled (`-DFASTRULES_BUILD_C_API=ON`)
 2. Copied to the output directory
-3. All dependencies (Lua, fmt, spdlog) are available
+3. All dependencies (lua.dll, spdlog.dll, fmt.dll) are available
 
 ### "Entry point not found"
 

@@ -4,8 +4,8 @@ using System.Collections.Generic;
 
 // FastRules C# Example
 // This example uses the FastRules C API via P/Invoke.
-// The C API is located in: examples/c_api/
-// Build the C API shared library first before running this example.
+// The C API is part of FastRules Core: include/fastrules/c_api/fastrules_c_api.h
+// Build with: .\build.ps1 (builds fastrules_c_api.dll and copies to this directory)
 
 namespace FastRulesExample
 {

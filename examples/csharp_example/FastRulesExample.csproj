@@ -9,8 +9,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Native library reference -->
-    <Content Include="fastrules.dll" Condition="Exists('fastrules.dll')">
+    <!-- Native library references - copy all dependencies -->
+    <Content Include="fastrules_c_api.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lua.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="spdlog*.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="fmt*.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

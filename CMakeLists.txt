@@ -309,11 +309,15 @@ set(FASTRULES_CORE_SOURCES
 # Backend-specific sources
 list(APPEND FASTRULES_CORE_SOURCES src/lua_backend_factory.cpp src/lua_backend_luabridge.cpp)
 
+# C API sources (always included - part of core)
+list(APPEND FASTRULES_CORE_SOURCES src/c_api.cpp)
+
 # Collect public headers so they appear in Visual Studio projects
 set(FASTRULES_PUBLIC_HEADERS
     include/fastrules/action_callback.hpp
     include/fastrules/aot_compiler.hpp
     include/fastrules/async_workflow.hpp
+    include/fastrules/c_api.h
     include/fastrules/execution_tracer.hpp
     include/fastrules/expression_validator.hpp
     include/fastrules/fastrules.hpp
@@ -549,18 +553,23 @@ if(FASTRULES_BUILD_EXAMPLES)
     # ============================================================================
     # C API Wrapper for Python/C# FFI
     # ============================================================================
+    # C API Shared Library (for FFI - Python/C#)
+    # The C API is now part of the core, but we also build a shared library
+    # wrapper for use by other languages via FFI.
+    # ============================================================================
     if(FASTRULES_BUILD_SHARED OR FASTRULES_BUILD_C_API)
+        # The C API is already compiled into the fastrules library (src/c_api.cpp)
+        # But we also export it as a separate shared library for convenience
         add_library(fastrules_c_api SHARED
-            examples/c_api/fastrules_c_api.cpp
+            src/c_api.cpp
         )
         set_property(TARGET fastrules_c_api PROPERTY FOLDER "C_API")
         target_include_directories(fastrules_c_api PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/examples/c_api
             ${CMAKE_CURRENT_SOURCE_DIR}/include
-            # JSON header removed - C API uses only FastRules core
             ${luabridge3_SOURCE_DIR}/Source
         )
         target_link_libraries(fastrules_c_api PRIVATE fastrules)
+        target_compile_definitions(fastrules_c_api PRIVATE FASTRULES_C_API_BUILDING)
         
         if(WIN32)
             set_target_properties(fastrules_c_api PROPERTIES
@@ -568,7 +577,7 @@ if(FASTRULES_BUILD_EXAMPLES)
             )
         endif()
         
-        # Copy DLL to example directories for convenience
+        # Copy DLL and all vcpkg dependencies to example directories for convenience
         add_custom_command(TARGET fastrules_c_api POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 "$<TARGET_FILE:fastrules_c_api>"
@@ -582,7 +591,72 @@ if(FASTRULES_BUILD_EXAMPLES)
             COMMENT "Copying fastrules_c_api.dll to python_example"
         )
         
+        # Copy vcpkg dependencies (lua, spdlog, fmt) to example directories
+        if(WIN32 AND VCPKG_INSTALLED_DIR)
+            add_custom_command(TARGET fastrules_c_api POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/lua.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/lua.dll>"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/"
+                COMMENT "Copying lua.dll to csharp_example"
+            )
+            add_custom_command(TARGET fastrules_c_api POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/spdlogd.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/spdlog.dll>"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/"
+                COMMENT "Copying spdlog dll to csharp_example"
+            )
+            add_custom_command(TARGET fastrules_c_api POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/fmtd.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/fmt.dll>"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/"
+                COMMENT "Copying fmt dll to csharp_example"
+            )
+            
+            add_custom_command(TARGET fastrules_c_api POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/lua.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/lua.dll>"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/"
+                COMMENT "Copying lua.dll to python_example"
+            )
+            add_custom_command(TARGET fastrules_c_api POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/spdlogd.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/spdlog.dll>"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/"
+                COMMENT "Copying spdlog dll to python_example"
+            )
+            add_custom_command(TARGET fastrules_c_api POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/fmtd.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/fmt.dll>"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/"
+                COMMENT "Copying fmt dll to python_example"
+            )
+        endif()
+        
         message(STATUS "Building C API wrapper for FFI (Python/C#)")
+        
+        # Add custom targets for C# and Python examples (for VS solution organization)
+        # These don't actually build through CMake, but provide a convenient way to run them
+        if(WIN32)
+            # C# Example - add as a custom target so it appears in VS
+            add_custom_target(csharp_example
+                COMMAND dotnet run --project "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/FastRulesExample.csproj"
+                DEPENDS fastrules_c_api
+                WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example"
+                COMMENT "Running C# example"
+                SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/FastRulesExample.cs"
+            )
+            set_property(TARGET csharp_example PROPERTY FOLDER "Examples")
+            
+            # Python Example - add as a custom target
+            add_custom_target(python_example
+                COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/fastrules_example.py"
+                DEPENDS fastrules_c_api
+                WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example"
+                COMMENT "Running Python example"
+                SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/fastrules_example.py"
+            )
+            set_property(TARGET python_example PROPERTY FOLDER "Examples")
+        endif()
     endif()
 endif()
 
