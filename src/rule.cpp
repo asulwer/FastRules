@@ -395,6 +395,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
 
     RuleResult result;
     result.ruleName = name;  // Use human-readable name instead of ID
+    result.ruleId = id;      // Set the rule ID
     result.executedAt = std::chrono::steady_clock::now();
 
     // Preference: inactive rules are completely skipped - no result, no evaluation

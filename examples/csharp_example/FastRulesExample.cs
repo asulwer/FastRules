@@ -342,17 +342,17 @@ namespace FastRulesExample
                     continue;
 
                 var fields = part.Split(':');
-                // Format: name:success:error
-                if (fields.Length >= 2)
+                // Format: id:name:success:error
+                if (fields.Length >= 3)
                 {
-                    string ruleName = fields[0];
-                    if (int.TryParse(fields[1], out int successInt))
+                    if (int.TryParse(fields[0], out int ruleId) && int.TryParse(fields[2], out int successInt))
                     {
                         results.Add(new RuleResult
                         {
-                            RuleName = ruleName,
+                            RuleId = ruleId,
+                            RuleName = fields[1],
                             Success = successInt == 1,
-                            Error = fields.Length > 2 ? fields[2] : null
+                            Error = fields.Length > 3 ? fields[3] : null
                         });
                     }
                 }
@@ -461,6 +461,7 @@ namespace FastRulesExample
     /// </summary>
     public class RuleResult
     {
+        public int RuleId { get; set; }
         public string RuleName { get; set; }
         public bool Success { get; set; }
         public string Error { get; set; }
@@ -775,7 +776,8 @@ namespace FastRulesExample
             foreach (var result in results)
             {
                 var status = result.Success ? "PASS" : "FAIL";
-                Console.WriteLine($"  Rule {result.RuleName}: {status}");
+                var name = string.IsNullOrEmpty(result.RuleName) ? $"(rule {result.RuleId})" : result.RuleName;
+                Console.WriteLine($"  [{result.RuleId}] {name}: {status}");
                 if (!string.IsNullOrEmpty(result.Error))
                 {
                     Console.WriteLine($"    Error: {result.Error}");
@@ -788,8 +790,8 @@ namespace FastRulesExample
             foreach (var result in results)
             {
                 var status = result.Success ? "PASS" : "FAIL";
-                var name = string.IsNullOrEmpty(result.RuleName) ? "(unnamed)" : result.RuleName;
-                Console.WriteLine($"  {name}: {status}");
+                var name = string.IsNullOrEmpty(result.RuleName) ? $"(rule {result.RuleId})" : result.RuleName;
+                Console.WriteLine($"  [{result.RuleId}] {name}: {status}");
                 if (!string.IsNullOrEmpty(result.Error))
                 {
                     Console.WriteLine($"    Error: {result.Error}");

@@ -108,8 +108,8 @@ static std::vector<RuleParameter> parse_params(const char* params_str) {
     return params;
 }
 
-// Format results as: "name:success:error;name:success:error"
-// name: rule name, success: 1 or 0, error: optional message
+// Format results as: "id:name:success:error;id:name:success:error"
+// id: rule ID, name: rule name, success: 1 or 0, error: optional message
 static char* format_results(const std::vector<RuleResult>& results) {
     std::ostringstream oss;
     
@@ -118,7 +118,8 @@ static char* format_results(const std::vector<RuleResult>& results) {
         
         const auto& result = results[i];
         
-        // Include rule name if available
+        // Include rule ID and name
+        oss << result.ruleId << ":";
         std::string rule_name = result.ruleName.empty() ? "" : result.ruleName;
         oss << rule_name << ":";
         
@@ -216,6 +217,9 @@ fastrules_error_t fastrules_workflow_add_rule(
         rule->id = id;
         if (name) {
             rule->name = name;
+        } else {
+            // Generate a name based on ID if not provided
+            rule->name = "rule_" + std::to_string(id);
         }
         rule->expression = expression;
         if (action) {
