@@ -152,6 +152,60 @@ TEST_CASE("Benchmark parallel workflow execution", "[benchmark][execution]") {
     };
 }
 
+TEST_CASE("Benchmark async workflow execution", "[benchmark][execution][async]") {
+    SKIP_IN_DEBUG();
+    LuaEngine engine;
+    Workflow workflow;
+    workflow.id = 1;
+
+    for (int i = 0; i < 5; ++i) {
+        auto rule = std::make_shared<Rule>();
+        rule->id = 100 + i;
+        rule->expression = std::to_string(i) + " > -1";
+        workflow.rules.push_back(rule);
+    }
+
+    workflow.compile(engine);
+
+    std::vector<RuleParameter> params;
+
+    BENCHMARK("execute 5-rule async workflow") {
+        auto future = workflow.executeAsync(engine, params);
+        return future.get();
+    };
+}
+
+TEST_CASE("Benchmark execution comparison", "[benchmark][execution][comparison]") {
+    SKIP_IN_DEBUG();
+    LuaEngine engine;
+    Workflow workflow;
+    workflow.id = 1;
+
+    // Create 10 independent rules
+    for (int i = 0; i < 10; ++i) {
+        auto rule = std::make_shared<Rule>();
+        rule->id = 100 + i;
+        rule->expression = std::to_string(i) + " > -1";
+        workflow.rules.push_back(rule);
+    }
+
+    workflow.compile(engine);
+    std::vector<RuleParameter> params;
+
+    BENCHMARK("sequential execution") {
+        return workflow.execute(engine, params);
+    };
+
+    BENCHMARK("parallel execution") {
+        return workflow.executeParallel(engine, params);
+    };
+
+    BENCHMARK("async execution") {
+        auto future = workflow.executeAsync(engine, params);
+        return future.get();
+    };
+}
+
 // ============================================================================
 // Memory / allocation benchmarks
 // ============================================================================
