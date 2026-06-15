@@ -24,8 +24,13 @@
       "dependencies": ["pugixml"]
     },
     "db": {
-      "description": "Database persistence via SOCI",
-      "dependencies": ["soci"]
+      "description": "Database persistence via SOCI with SQLite3 support",
+      "dependencies": [
+        {
+          "name": "soci",
+          "features": ["sqlite3"]
+        }
+      ]
     },
     "tests": {
       "description": "Build test suite",
