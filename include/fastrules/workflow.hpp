@@ -72,6 +72,12 @@ public:
     // This avoids thread overhead for small workflows while maximizing performance for large ones
     [[nodiscard]] std::vector<RuleResult> executeAdaptive(LuaEngine& engine, const std::vector<RuleParameter>& parameters);
 
+    // Configure adaptive execution threshold
+    // Set to 0 to disable parallel execution (always sequential)
+    // Set to SIZE_MAX to always use parallel
+    void setAdaptiveThreshold(size_t threshold) { adaptiveThreshold_ = threshold; }
+    [[nodiscard]] size_t getAdaptiveThreshold() const { return adaptiveThreshold_; }
+
     // Streaming execution -- yields results as they complete
     [[nodiscard]] StreamingResult executeStreaming(LuaEngine& engine, const std::vector<RuleParameter>& parameters);
 
@@ -125,6 +131,17 @@ private:
     // Helper: recursively collect actions from rules and child rules
     void collectActions(const std::vector<std::shared_ptr<Rule>>& ruleList, std::vector<std::string>& out) const;
     
+    // Adaptive execution threshold
+    // Rules <= threshold use sequential, > threshold use parallel
+    // Can be configured at runtime, or use auto-detection
+    size_t adaptiveThreshold_ = 4;  // Default based on benchmarks
+    
+    // Performance tracking for auto-detection
+    mutable double sequentialAvgTime_ = 0.0;
+    mutable double parallelAvgTime_ = 0.0;
+    mutable size_t executionCount_ = 0;
+    static constexpr size_t PROFILING_INTERVAL = 100;  // Check every N executions
+
     // Helper: get next available engine from the pool (exclusive checkout)
     LuaEngine* acquireEngine();
     void releaseEngine(LuaEngine* engine);
