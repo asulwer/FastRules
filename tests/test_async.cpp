@@ -365,5 +365,42 @@ TEST_CASE("Workflow executeAdaptive", "[async][workflow][adaptive]") {
             REQUIRE(result.isSuccess());
         }
     }
+    
+    SECTION("Configurable adaptive threshold") {
+        Workflow workflow;
+        workflow.description = "Configurable threshold test";
+        
+        // Add 5 rules
+        for (int i = 0; i < 5; ++i) {
+            auto rule = std::make_shared<Rule>();
+            rule->id = 100 + i;
+            rule->expression = "true";
+            workflow.rules.push_back(rule);
+        }
+        
+        workflow.compile(engine);
+        
+        // Test default threshold
+        REQUIRE(workflow.getAdaptiveThreshold() == 4);
+        
+        // Test setting threshold to 0 (always sequential)
+        workflow.setAdaptiveThreshold(0);
+        REQUIRE(workflow.getAdaptiveThreshold() == 0);
+        
+        std::vector<RuleParameter> params;
+        auto results = workflow.executeAdaptive(engine, params);
+        REQUIRE(results.size() == 5);
+        
+        // Test setting threshold high (always parallel)
+        workflow.setAdaptiveThreshold(100);
+        REQUIRE(workflow.getAdaptiveThreshold() == 100);
+        
+        results = workflow.executeAdaptive(engine, params);
+        REQUIRE(results.size() == 5);
+        
+        // Reset to default
+        workflow.setAdaptiveThreshold(4);
+        REQUIRE(workflow.getAdaptiveThreshold() == 4);
+    }
 }
 
