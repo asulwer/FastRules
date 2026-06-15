@@ -66,27 +66,6 @@ elseif(TARGET SOCI::soci_sqlite3)
     target_link_libraries(fastrules-db PUBLIC SOCI::soci_sqlite3)
 endif()
 
-# Copy SOCI SQLite3 backend DLL to example output directory (needed at runtime)
-if(WIN32 AND VCPKG_INSTALLED_DIR)
-    # Find the SQLite3 backend DLL
-    find_file(SOCI_SQLITE3_DLL
-        NAMES soci_sqlite3_4_0.dll soci_sqlite3.dll
-        PATHS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin"
-              "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin"
-        NO_DEFAULT_PATH
-    )
-    
-    if(SOCI_SQLITE3_DLL)
-        # Copy to example output directory
-        add_custom_command(TARGET fastrules-db POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${SOCI_SQLITE3_DLL}"
-                "$<TARGET_FILE_DIR:fastrules_db_example>/"
-            COMMENT "Copying SOCI SQLite3 backend DLL to example output"
-        )
-    endif()
-endif()
-
 # Examples
 option(FASTRULES_DB_BUILD_EXAMPLES "Build DB extension examples" ON)
 if(FASTRULES_DB_BUILD_EXAMPLES)
