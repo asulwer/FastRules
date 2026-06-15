@@ -635,12 +635,11 @@ if(FASTRULES_BUILD_EXAMPLES)
         message(STATUS "Building C API wrapper for FFI (Python/C#)")
         
         # Add custom targets for C# and Python examples (for VS solution organization)
-        # These don't actually build through CMake, but provide a convenient way to run them
         if(WIN32)
             # C# Example - add as a custom target so it appears in VS
             add_custom_target(csharp_example
                 COMMAND dotnet run --project "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/FastRulesExample.csproj"
-                DEPENDS fastrules_c_api
+                DEPENDS fastrules
                 WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example"
                 COMMENT "Running C# example"
                 SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/FastRulesExample.cs"
@@ -650,7 +649,7 @@ if(FASTRULES_BUILD_EXAMPLES)
             # Python Example - add as a custom target
             add_custom_target(python_example
                 COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/fastrules_example.py"
-                DEPENDS fastrules_c_api
+                DEPENDS fastrules
                 WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example"
                 COMMENT "Running Python example"
                 SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/fastrules_example.py"

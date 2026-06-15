@@ -91,7 +91,7 @@ void DbRuleRepository::updateRule(const Rule& rule) {
 
 std::optional<Rule> DbRuleRepository::findById(int id) {
     soci::rowset<soci::row> rs = ((*session_).prepare <<
-        "SELECT id, expression, action, description, is_active, priority, timeout_ms, cache_duration_ms, depends_on_rule_id "
+        "SELECT id, expression, action, description, is_active, priority, timeout_ms, cache_duration_ms, depends_on_rule_name "
         "FROM rules WHERE id = :id", soci::use(id));
     
     for (auto& row : rs) {
@@ -103,7 +103,7 @@ std::optional<Rule> DbRuleRepository::findById(int id) {
 std::vector<Rule> DbRuleRepository::findAll() {
     std::vector<Rule> rules;
     soci::rowset<soci::row> rs = ((*session_).prepare <<
-        "SELECT id, expression, action, description, is_active, priority, timeout_ms, cache_duration_ms, depends_on_rule_id FROM rules");
+        "SELECT id, expression, action, description, is_active, priority, timeout_ms, cache_duration_ms, depends_on_rule_name FROM rules");
     
     for (auto& row : rs) {
         rules.push_back(rowToRule(row));
