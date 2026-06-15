@@ -267,3 +267,55 @@ TEST_CASE("Performance: parallel vs sequential", "[async][performance]") {
     }
 }
 
+TEST_CASE("Workflow executeAsync", "[async][workflow]") {
+    auto engine = makeTestEngine();
+    
+    Workflow workflow;
+    workflow.description = "Async test workflow";
+    
+    // Add a rule
+    auto rule = std::make_shared<Rule>();
+    rule->id = 1;
+    rule->name = "test-rule";
+    rule->expression = "x > 0";
+    workflow.rules.push_back(rule);
+    
+    workflow.compile(engine);
+    
+    SECTION("Execute asynchronously returns future") {
+        std::vector<RuleParameter> params;
+        params.emplace_back("x", 42);
+        
+        auto future = workflow.executeAsync(engine, params);
+        
+        // Future should be valid
+        REQUIRE(future.valid());
+        
+        // Wait for result (with timeout)
+        auto status = future.wait_for(std::chrono::seconds(5));
+        REQUIRE(status == std::future_status::ready);
+        
+        auto results = future.get();
+        REQUIRE(results.size() == 1);
+        REQUIRE(results[0].isSuccess());
+    }
+    
+    SECTION("Multiple async executions") {
+        std::vector<std::future<std::vector<RuleResult>>> futures;
+        
+        // Launch multiple async executions
+        for (int i = 0; i < 5; ++i) {
+            std::vector<RuleParameter> params;
+            params.emplace_back("x", i + 1);
+            futures.push_back(workflow.executeAsync(engine, params));
+        }
+        
+        // Collect all results
+        for (auto& f : futures) {
+            auto results = f.get();
+            REQUIRE(results.size() == 1);
+            REQUIRE(results[0].isSuccess());
+        }
+    }
+}
+

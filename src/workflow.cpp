@@ -359,6 +359,13 @@ void Workflow::releaseEngine(LuaEngine* engine) {
     }
 }
 
+std::future<std::vector<RuleResult>> Workflow::executeAsync(LuaEngine& engine, const std::vector<RuleParameter>& parameters) {
+    // Return future that will execute asynchronously
+    return std::async(std::launch::async, [this, &engine, &parameters]() {
+        return this->execute(engine, parameters);
+    });
+}
+
 StreamingResult Workflow::executeStreaming(LuaEngine& engine, const std::vector<RuleParameter>& parameters) {
     if (!compiled_) {
         compile(engine);

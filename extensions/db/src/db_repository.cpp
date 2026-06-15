@@ -48,6 +48,8 @@ void DbRuleRepository::createSchema() {
 }
 
 void DbRuleRepository::save(const Rule& rule) {
+    std::unique_lock<std::shared_mutex> lock(mutex_);  // Exclusive lock for writing
+    
     soci::transaction tr(*session_);
     
     if (exists(rule.id)) {
@@ -90,6 +92,8 @@ void DbRuleRepository::updateRule(const Rule& rule) {
 }
 
 std::optional<Rule> DbRuleRepository::findById(int id) {
+    std::shared_lock<std::shared_mutex> lock(mutex_);  // Shared lock for reading
+    
     soci::rowset<soci::row> rs = ((*session_).prepare <<
         "SELECT id, expression, action, description, is_active, priority, timeout_ms, cache_duration_ms, depends_on_rule_name "
         "FROM rules WHERE id = :id", soci::use(id));
@@ -101,6 +105,8 @@ std::optional<Rule> DbRuleRepository::findById(int id) {
 }
 
 std::vector<Rule> DbRuleRepository::findAll() {
+    std::shared_lock<std::shared_mutex> lock(mutex_);  // Shared lock for reading
+    
     std::vector<Rule> rules;
     soci::rowset<soci::row> rs = ((*session_).prepare <<
         "SELECT id, expression, action, description, is_active, priority, timeout_ms, cache_duration_ms, depends_on_rule_name FROM rules");
@@ -112,22 +118,30 @@ std::vector<Rule> DbRuleRepository::findAll() {
 }
 
 void DbRuleRepository::remove(int id) {
+    std::unique_lock<std::shared_mutex> lock(mutex_);  // Exclusive lock for writing
+    
     *session_ << "DELETE FROM rules WHERE id = :id", soci::use(id);
 }
 
 bool DbRuleRepository::exists(int id) {
+    std::shared_lock<std::shared_mutex> lock(mutex_);  // Shared lock for reading
+    
     int count = 0;
     *session_ << "SELECT COUNT(*) FROM rules WHERE id = :id", soci::into(count), soci::use(id);
     return count > 0;
 }
 
 size_t DbRuleRepository::count() {
+    std::shared_lock<std::shared_mutex> lock(mutex_);  // Shared lock for reading
+    
     size_t count = 0;
     *session_ << "SELECT COUNT(*) FROM rules", soci::into(count);
     return count;
 }
 
 void DbRuleRepository::clear() {
+    std::unique_lock<std::shared_mutex> lock(mutex_);  // Exclusive lock for writing
+    
     *session_ << "DELETE FROM rule_parameters";
     *session_ << "DELETE FROM rules";
 }

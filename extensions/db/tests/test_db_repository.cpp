@@ -1,6 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <fastrules/db_repository.hpp>
 #include <filesystem>
+#include <thread>
+#include <atomic>
 
 using namespace fastrules;
 using namespace fastrules::ext;
@@ -89,6 +91,96 @@ TEST_CASE("DbRuleRepository with SQLite", "[db]") {
             REQUIRE(found->priority == 100);
             REQUIRE(found->timeout == std::chrono::milliseconds(5000));
             REQUIRE(found->dependsOnRuleName == "parent-rule");
+        }
+    }
+    
+    std::filesystem::remove(tempFile);
+}
+
+TEST_CASE("DbRuleRepository concurrent access", "[db][concurrency]") {
+    auto tempFile = std::filesystem::temp_directory_path() / "test_concurrent.db";
+    std::filesystem::remove(tempFile);
+    
+    {
+        auto session = DbConnectionFactory::create("sqlite3", tempFile.string());
+        DbRuleRepository repo(session);
+        
+        // Seed with some data
+        for (int i = 1; i <= 10; ++i) {
+            auto rule = createRule(i, "rule-" + std::to_string(i), "x > " + std::to_string(i));
+            repo.save(*rule);
+        }
+        
+        SECTION("Multiple concurrent reads") {
+            std::vector<std::thread> threads;
+            std::atomic<int> successCount{0};
+            
+            // Launch 10 threads that read concurrently
+            for (int i = 0; i < 10; ++i) {
+                threads.emplace_back([&repo, &successCount]() {
+                    for (int j = 0; j < 100; ++j) {
+                        auto all = repo.findAll();
+                        if (all.size() == 10) {
+                            successCount++;
+                        }
+                    }
+                });
+            }
+            
+            // Wait for all threads
+            for (auto& t : threads) {
+                t.join();
+            }
+            
+            // All reads should succeed
+            REQUIRE(successCount == 1000);
+        }
+        
+        SECTION("Concurrent reads and writes") {
+            std::vector<std::thread> readers;
+            std::vector<std::thread> writers;
+            std::atomic<int> readSuccessCount{0};
+            std::atomic<int> writeSuccessCount{0};
+            
+            // Launch 5 reader threads
+            for (int i = 0; i < 5; ++i) {
+                readers.emplace_back([&repo, &readSuccessCount]() {
+                    for (int j = 0; j < 50; ++j) {
+                        auto all = repo.findAll();
+                        if (all.size() >= 10) {
+                            readSuccessCount++;
+                        }
+                        std::this_thread::sleep_for(std::chrono::microseconds(100));
+                    }
+                });
+            }
+            
+            // Launch 2 writer threads
+            for (int i = 0; i < 2; ++i) {
+                writers.emplace_back([&repo, &writeSuccessCount, i]() {
+                    for (int j = 0; j < 25; ++j) {
+                        auto rule = createRule(100 + i * 25 + j, "writer-rule", "true");
+                        repo.save(*rule);
+                        writeSuccessCount++;
+                        std::this_thread::sleep_for(std::chrono::microseconds(200));
+                    }
+                });
+            }
+            
+            // Wait for all threads
+            for (auto& t : readers) {
+                t.join();
+            }
+            for (auto& t : writers) {
+                t.join();
+            }
+            
+            // All operations should complete without errors
+            REQUIRE(readSuccessCount == 250);
+            REQUIRE(writeSuccessCount == 50);
+            
+            // Verify final count
+            REQUIRE(repo.count() == 60);  // 10 initial + 50 added
         }
     }
     

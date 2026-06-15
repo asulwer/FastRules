@@ -7,6 +7,7 @@
 #include <functional>
 #include <filesystem>
 #include <mutex>
+#include <future>
 
 #include "lua_engine.hpp"
 #include "rule.hpp"
@@ -61,6 +62,10 @@ public:
     // NOTE: Creates thread pool per execution. For repeated execution, use AsyncWorkflow.
     // See docs/parallel-execution.md for executeParallel vs AsyncWorkflow guidance.
     [[nodiscard]] std::vector<RuleResult> executeParallel(LuaEngine& engine, const std::vector<RuleParameter>& parameters);
+
+    // Async execution - returns future for non-blocking execution
+    // Usage: auto future = workflow.executeAsync(engine, params); auto results = future.get();
+    [[nodiscard]] std::future<std::vector<RuleResult>> executeAsync(LuaEngine& engine, const std::vector<RuleParameter>& parameters);
 
     // Streaming execution -- yields results as they complete
     [[nodiscard]] StreamingResult executeStreaming(LuaEngine& engine, const std::vector<RuleParameter>& parameters);

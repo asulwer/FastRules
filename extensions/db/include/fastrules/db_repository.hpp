@@ -5,6 +5,7 @@
 #include <soci/soci.h>
 #include <memory>
 #include <string>
+#include <shared_mutex>
 
 namespace fastrules {
 namespace ext {
@@ -53,6 +54,7 @@ public:
 
 private:
     std::shared_ptr<soci::session> session_;
+    mutable std::shared_mutex mutex_;  // Read-write lock for thread safety
     
     Rule rowToRule(soci::row& row);
     void insertRule(const Rule& rule);
@@ -82,6 +84,7 @@ public:
 
 private:
     std::shared_ptr<soci::session> session_;
+    mutable std::shared_mutex mutex_;
 };
 
 /**
@@ -102,6 +105,7 @@ public:
 
 private:
     std::shared_ptr<soci::session> session_;
+    mutable std::shared_mutex mutex_;
 };
 
 /**
