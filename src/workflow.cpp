@@ -11,6 +11,7 @@
 #include <unordered_set>
 #include <future>
 #include <thread>
+#include <chrono>
 
 // Platform-specific intrinsics for spin-wait
 #if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
@@ -367,12 +368,53 @@ std::future<std::vector<RuleResult>> Workflow::executeAsync(LuaEngine& engine, c
 }
 
 std::vector<RuleResult> Workflow::executeAdaptive(LuaEngine& engine, const std::vector<RuleParameter>& parameters) {
-    // Threshold: 4 rules or fewer = sequential, more than 4 = parallel
-    // This avoids thread overhead for small workflows while maximizing performance for large ones
-    if (rules.size() <= 4) {
-        return execute(engine, parameters);  // Sequential - faster for small workflows
+    if (!compiled_) {
+        compile(engine);
+    }
+    
+    // Auto-detection mode: occasionally test both strategies and update threshold
+    if (autoDetectThreshold_ && rules.size() > 2) {
+        // Every 100 executions, test if threshold should change
+        static thread_local size_t checkCounter = 0;
+        if (++checkCounter % 100 == 0) {
+            // Test sequential execution time
+            auto start = std::chrono::high_resolution_clock::now();
+            auto seqResults = execute(engine, parameters);
+            auto seqEnd = std::chrono::high_resolution_clock::now();
+            double seqTime = std::chrono::duration_cast<std::chrono::microseconds>(seqEnd - start).count();
+            
+            // Update rolling average for sequential
+            sequentialAvgTime_ = (sequentialAvgTime_ * sequentialRuns_ + seqTime) / (sequentialRuns_ + 1);
+            sequentialRuns_++;
+            
+            // Test parallel execution time
+            start = std::chrono::high_resolution_clock::now();
+            auto parResults = executeParallel(engine, parameters);
+            auto parEnd = std::chrono::high_resolution_clock::now();
+            double parTime = std::chrono::duration_cast<std::chrono::microseconds>(parEnd - start).count();
+            
+            // Update rolling average for parallel
+            parallelAvgTime_ = (parallelAvgTime_ * parallelRuns_ + parTime) / (parallelRuns_ + 1);
+            parallelRuns_++;
+            
+            // Adjust threshold based on which is faster
+            if (sequentialAvgTime_ < parallelAvgTime_ * 0.8) {
+                // Sequential is significantly faster, increase threshold
+                adaptiveThreshold_ = std::min(adaptiveThreshold_ + 1, size_t(20));
+            } else if (parallelAvgTime_ < sequentialAvgTime_ * 0.8) {
+                // Parallel is significantly faster, decrease threshold
+                adaptiveThreshold_ = std::max(adaptiveThreshold_ - 1, size_t(2));
+            }
+            
+            return seqTime < parTime ? seqResults : parResults;
+        }
+    }
+    
+    // Normal execution based on current threshold
+    if (rules.size() <= adaptiveThreshold_) {
+        return execute(engine, parameters);        // Sequential - avoid thread overhead
     } else {
-        return executeParallel(engine, parameters);  // Parallel - faster for large workflows
+        return executeParallel(engine, parameters);  // Parallel - maximize concurrency
     }
 }
 
