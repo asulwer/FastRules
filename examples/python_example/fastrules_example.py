@@ -57,11 +57,11 @@ class FastRulesEngine:
     def _load_library(self) -> ctypes.CDLL:
         """Load the FastRules C API shared library."""
         if sys.platform == "win32":
-            lib_name = "fastrules_c_api.dll"
+            lib_name = "fastrules.dll"
         elif sys.platform == "linux":
-            lib_name = "libfastrules_c_api.so"
+            lib_name = "libfastrules.so"
         elif sys.platform == "darwin":
-            lib_name = "libfastrules_c_api.dylib"
+            lib_name = "libfastrules.dylib"
         else:
             raise RuntimeError(f"Unsupported platform: {sys.platform}")
         

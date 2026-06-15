@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <!-- Native library references - copy all dependencies -->
-    <Content Include="fastrules_c_api.dll">
+    <Content Include="fastrules.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="lua.dll">

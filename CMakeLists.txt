@@ -551,88 +551,78 @@ if(FASTRULES_BUILD_EXAMPLES)
     target_link_libraries(performance_test PRIVATE fastrules)
 
     # ============================================================================
-    # C API Wrapper for Python/C# FFI
+    # C API exports for FFI (Python/C#)
+    # The C API is part of the core library. When building shared library,
+    # export C API symbols for FFI use.
     # ============================================================================
-    # C API Shared Library (for FFI - Python/C#)
-    # The C API is now part of the core, but we also build a shared library
-    # wrapper for use by other languages via FFI.
-    # ============================================================================
-    if(FASTRULES_BUILD_SHARED OR FASTRULES_BUILD_C_API)
-        # The C API is already compiled into the fastrules library (src/c_api.cpp)
-        # But we also export it as a separate shared library for convenience
-        add_library(fastrules_c_api SHARED
-            src/c_api.cpp
-        )
-        set_property(TARGET fastrules_c_api PROPERTY FOLDER "C_API")
-        target_include_directories(fastrules_c_api PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/include
-            ${luabridge3_SOURCE_DIR}/Source
-        )
-        target_link_libraries(fastrules_c_api PRIVATE fastrules)
-        # FASTRULES_C_API_BUILDING is defined in the source file (src/c_api.cpp)
+    if(FASTRULES_BUILD_SHARED)
+        # Export C API symbols from the main fastrules library
+        target_compile_definitions(fastrules PRIVATE FASTRULES_C_API_BUILDING)
         
         if(WIN32)
-            set_target_properties(fastrules_c_api PROPERTIES
+            set_target_properties(fastrules PROPERTIES
                 WINDOWS_EXPORT_ALL_SYMBOLS TRUE
             )
         endif()
         
-        # Copy DLL and all vcpkg dependencies to example directories for convenience
-        add_custom_command(TARGET fastrules_c_api POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "$<TARGET_FILE:fastrules_c_api>"
-                "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/"
-            COMMENT "Copying fastrules_c_api.dll to csharp_example"
-        )
-        add_custom_command(TARGET fastrules_c_api POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "$<TARGET_FILE:fastrules_c_api>"
-                "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/"
-            COMMENT "Copying fastrules_c_api.dll to python_example"
-        )
-        
-        # Copy vcpkg dependencies (lua, spdlog, fmt) to example directories
-        if(WIN32 AND VCPKG_INSTALLED_DIR)
-            add_custom_command(TARGET fastrules_c_api POST_BUILD
+        # Copy DLL and dependencies to example directories
+        if(WIN32)
+            add_custom_command(TARGET fastrules POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/lua.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/lua.dll>"
+                    "$<TARGET_FILE:fastrules>"
                     "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/"
-                COMMENT "Copying lua.dll to csharp_example"
+                COMMENT "Copying fastrules.dll to csharp_example"
             )
-            add_custom_command(TARGET fastrules_c_api POST_BUILD
+            add_custom_command(TARGET fastrules POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/spdlogd.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/spdlog.dll>"
-                    "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/"
-                COMMENT "Copying spdlog dll to csharp_example"
-            )
-            add_custom_command(TARGET fastrules_c_api POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/fmtd.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/fmt.dll>"
-                    "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/"
-                COMMENT "Copying fmt dll to csharp_example"
+                    "$<TARGET_FILE:fastrules>"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/"
+                COMMENT "Copying fastrules.dll to python_example"
             )
             
-            add_custom_command(TARGET fastrules_c_api POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/lua.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/lua.dll>"
-                    "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/"
-                COMMENT "Copying lua.dll to python_example"
-            )
-            add_custom_command(TARGET fastrules_c_api POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/spdlogd.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/spdlog.dll>"
-                    "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/"
-                COMMENT "Copying spdlog dll to python_example"
-            )
-            add_custom_command(TARGET fastrules_c_api POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/fmtd.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/fmt.dll>"
-                    "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/"
-                COMMENT "Copying fmt dll to python_example"
-            )
+            # Copy vcpkg dependencies (lua, spdlog, fmt) to example directories
+            if(VCPKG_INSTALLED_DIR)
+                add_custom_command(TARGET fastrules POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/lua.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/lua.dll>"
+                        "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/"
+                    COMMENT "Copying lua.dll to csharp_example"
+                )
+                add_custom_command(TARGET fastrules POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/spdlogd.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/spdlog.dll>"
+                        "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/"
+                    COMMENT "Copying spdlog dll to csharp_example"
+                )
+                add_custom_command(TARGET fastrules POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/fmtd.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/fmt.dll>"
+                        "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/"
+                    COMMENT "Copying fmt dll to csharp_example"
+                )
+                
+                add_custom_command(TARGET fastrules POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/lua.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/lua.dll>"
+                        "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/"
+                    COMMENT "Copying lua.dll to python_example"
+                )
+                add_custom_command(TARGET fastrules POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/spdlogd.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/spdlog.dll>"
+                        "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/"
+                    COMMENT "Copying spdlog dll to python_example"
+                )
+                add_custom_command(TARGET fastrules POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/fmtd.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/fmt.dll>"
+                        "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/"
+                    COMMENT "Copying fmt dll to python_example"
+                )
+            endif()
         endif()
         
-        message(STATUS "Building C API wrapper for FFI (Python/C#)")
+        message(STATUS "Building FastRules with C API exports for FFI (Python/C#)")
         
         # Add custom targets for C# and Python examples (for VS solution organization)
         if(WIN32)
