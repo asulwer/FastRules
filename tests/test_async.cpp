@@ -402,5 +402,47 @@ TEST_CASE("Workflow executeAdaptive", "[async][workflow][adaptive]") {
         workflow.setAdaptiveThreshold(4);
         REQUIRE(workflow.getAdaptiveThreshold() == 4);
     }
+    
+    SECTION("Dynamic auto-detection") {
+        Workflow workflow;
+        workflow.description = "Auto-detection test";
+        
+        // Add 10 rules (enough for auto-detection to work)
+        for (int i = 0; i < 10; ++i) {
+            auto rule = std::make_shared<Rule>();
+            rule->id = 100 + i;
+            rule->expression = "true";
+            workflow.rules.push_back(rule);
+        }
+        
+        workflow.compile(engine);
+        
+        // Initially auto-detection is disabled
+        REQUIRE_FALSE(workflow.isAutoDetectionEnabled());
+        
+        // Enable auto-detection
+        workflow.enableAutoDetection(true);
+        REQUIRE(workflow.isAutoDetectionEnabled());
+        
+        // Execute multiple times to trigger learning
+        std::vector<RuleParameter> params;
+        for (int i = 0; i < 110; ++i) {  // > 100 to trigger sampling
+            auto results = workflow.executeAdaptive(engine, params);
+            REQUIRE(results.size() == 10);
+        }
+        
+        // Check that performance stats were collected
+        INFO("Sequential avg: " << workflow.getSequentialAvgTime() << " µs");
+        INFO("Parallel avg: " << workflow.getParallelAvgTime() << " µs");
+        
+        // Threshold may have been adjusted based on performance
+        auto currentThreshold = workflow.getAdaptiveThreshold();
+        REQUIRE(currentThreshold >= 2);
+        REQUIRE(currentThreshold <= 20);
+        
+        // Disable auto-detection
+        workflow.enableAutoDetection(false);
+        REQUIRE_FALSE(workflow.isAutoDetectionEnabled());
+    }
 }
 
