@@ -1,0 +1,44 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^\.git/
+      - id: end-of-file-fixer
+        exclude: ^\.git/
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+      - id: check-executables-have-shebangs
+
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v17.0.6
+    hooks:
+      - id: clang-format
+        types_or: [c++, c]
+        exclude: ^(build/|third_party/)
+
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: v0.6.13
+    hooks:
+      - id: cmake-format
+        additional_dependencies: [cmakelang]
+      - id: cmake-lint
+        additional_dependencies: [cmakelang]
+
+  - repo: local
+    hooks:
+      - id: cppcheck
+        name: cppcheck
+        entry: cppcheck
+        language: system
+        types: [c++]
+        args:
+          - --error-exitcode=1
+          - --enable=all
+          - --std=c++20
+          - --suppress=missingIncludeSystem
+          - --suppress=unusedFunction
+        exclude: ^(build/|third_party/)

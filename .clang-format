@@ -1,0 +1,32 @@
+---
+BasedOnStyle: LLVM
+IndentWidth: 4
+ColumnLimit: 120
+AllowShortFunctionsOnASingleLine: Empty
+SortIncludes: true
+BreakBeforeBraces: Attach
+PointerAlignment: Left
+ReferenceAlignment: Left
+IndentCaseLabels: false
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1
+NamespaceIndentation: None
+FixNamespaceComments: true
+BreakBeforeBinaryOperators: NonAssignment
+AlignOperands: true
+AlignConsecutiveDeclarations: false
+AlignConsecutiveAssignments: false
+AllowShortBlocksOnASingleLine: Empty
+AllowShortLoopsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: Never
+AlwaysBreakTemplateDeclarations: Yes
+SpaceAfterTemplateKeyword: false
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpacesInAngles: false
+SpacesInCStyleCastParentheses: false
+SpacesInContainerLiteratures: false
+Standard: c++20
+TabWidth: 4
+UseTab: Never
+---

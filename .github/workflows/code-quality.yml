@@ -1,0 +1,114 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - 'extensions/**'
+      - 'tests/**'
+      - '.clang-format'
+      - '.github/workflows/code-quality.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - 'extensions/**'
+      - 'tests/**'
+      - '.clang-format'
+      - '.github/workflows/code-quality.yml'
+
+jobs:
+  formatting:
+    name: Check Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: |
+          sudo apt update
+          sudo apt install -y clang-format
+
+      - name: Check formatting
+        run: |
+          find src include extensions tests \
+            \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) \
+            -not -path '*/build/*' \
+            -exec clang-format --dry-run --Werror {} + 2>&1 | \
+            tee formatting-output.log || true
+
+      - name: Report formatting issues
+        run: |
+          if [ -s formatting-output.log ]; then
+            echo "::error::Code formatting issues found"
+            echo "Run 'clang-format -i' on the following files:"
+            grep -E '^(src|include|extensions|tests)' formatting-output.log | head -20
+            exit 1
+          fi
+          echo "✅ Code formatting OK"
+
+  cppcheck:
+    name: Cppcheck Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cppcheck
+        run: |
+          sudo apt update
+          sudo apt install -y cppcheck
+
+      - name: Run cppcheck
+        run: |
+          cppcheck \
+            --enable=all \
+            --std=c++20 \
+            --suppress=missingIncludeSystem \
+            --suppress=unusedFunction \
+            --suppress=checkersReport \
+            --error-exitcode=1 \
+            --inline-suppr \
+            --template='{file}:{line}:{column}: {severity}: {message} ({id})' \
+            -I include \
+            -I include/fastrules \
+            src include extensions 2>&1 | \
+            tee cppcheck-output.log || true
+
+      - name: Check cppcheck results
+        run: |
+          if grep -E '(error|warning):' cppcheck-output.log | grep -v 'Suppressions used'; then
+            echo "::error::Cppcheck found issues"
+            exit 1
+          fi
+          echo "✅ Cppcheck passed"
+
+      - name: Upload results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cppcheck-report
+          path: cppcheck-output.log
+
+  include-guards:
+    name: Check Header Guards
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check header guards
+        run: |
+          errors=0
+          for file in $(find include extensions -name '*.hpp' -not -path '*/build/*'); do
+            guard=$(echo "$file" | sed 's|.*/||; s|\.hpp$||; s|\.h$||; s|-|_|g; s|/|_|g' | tr '[:lower:]' '[:upper:]')
+            if ! grep -q "#pragma once" "$file" && ! grep -q "#ifndef.*$guard" "$file"; then
+              echo "Missing header guard in $file"
+              errors=$((errors + 1))
+            fi
+          done
+          if [ $errors -gt 0 ]; then
+            exit 1
+          fi
+          echo "✅ All headers have guards"
