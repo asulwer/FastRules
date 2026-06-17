@@ -480,7 +480,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
     } catch (const RuleTimeoutException& ex) {
         log->error("Timeout in rule {}: {}", id, ex.what());
         result.success = false;
-        result.exception = ex;
+        result.exception = RuleException(ex.what());
         context.setLastError(name, "Timeout: " + std::string(ex.what()));
         PerformanceCounters::instance().recordExecution(false, false, false, true, false);
     } catch (const RuleException& ex) {
@@ -617,7 +617,7 @@ Rule Rule::contains(const std::string& parameterName, const std::string& substri
 // Builder factory
 // ============================================================================
 
-Rule::Builder Rule::create(const Id& id, const std::string& expression, bool active) {
+Rule::Builder Rule::create(Id id, const std::string& expression, bool active) {
     return Builder(id)
         .withExpression(expression)
         .active(active);
