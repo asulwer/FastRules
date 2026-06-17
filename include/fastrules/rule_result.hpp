@@ -41,6 +41,10 @@
 #include <string>
 #include <vector>
 
+#ifdef __cpp_lib_coroutine
+#include <coroutine>
+#endif
+
 namespace fastrules {
 
 /**

@@ -81,6 +81,7 @@
 #include <unordered_map>
 #include <mutex>
 #include <stdexcept>
+#include <typeindex>
 
 namespace fastrules {
 
