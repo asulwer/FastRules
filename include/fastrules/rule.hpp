@@ -289,6 +289,9 @@ public:
      */
     std::vector<std::shared_ptr<Rule>> childRules;
 
+    /// @brief Weak pointer to parent rule (null if top-level)
+    std::weak_ptr<Rule> parentRule;
+
     // ========================================================================
     // Dependencies
     // ========================================================================
