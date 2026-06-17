@@ -10,6 +10,16 @@
 
 namespace fastrules {
 
+/**
+ * @brief Exception thrown when rate limit is exceeded
+ * 
+ * Thrown when a rule exceeds its configured execution rate limit.
+ */
+class RateLimitException : public std::runtime_error {
+public:
+    explicit RateLimitException(const std::string& msg) : std::runtime_error(msg) {}
+};
+
 // Token bucket rate limiter per rule
 class RateLimiter {
 public:
