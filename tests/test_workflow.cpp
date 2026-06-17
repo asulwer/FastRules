@@ -1,3 +1,20 @@
+/**
+ * @file test_workflow.cpp
+ * @brief Unit tests for the Workflow class
+ * 
+ * Tests cover:
+ * - Workflow creation and properties
+ * - Rule execution order (by priority)
+ * - Dependency resolution and validation
+ * - Rule compilation
+ * - Sequential execution
+ * - Circular dependency detection
+ * - Parallel execution modes
+ * - Error handling during execution
+ * 
+ * Test Framework: doctest
+ */
+
 #include <doctest/doctest.h>
 #include <fastrules.hpp>
 

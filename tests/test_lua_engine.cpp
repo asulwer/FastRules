@@ -1,3 +1,22 @@
+/**
+ * @file test_lua_engine.cpp
+ * @brief Unit tests for the LuaEngine class
+ * 
+ * Tests cover:
+ * - Engine creation and destruction
+ * - Expression compilation (various types)
+ * - Action compilation
+ * - Expression evaluation with parameters
+ * - Action execution
+ * - Type marshaling (int, double, string, bool)
+ * - Global variable access
+ * - Action callback registration
+ * - Timeout handling
+ * - Compilation errors
+ * 
+ * Test Framework: doctest
+ */
+
 #include <doctest/doctest.h>
 #include <fastrules.hpp>
 

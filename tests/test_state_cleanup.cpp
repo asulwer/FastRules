@@ -1,3 +1,19 @@
+/**
+ * @file test_state_cleanup.cpp
+ * @brief State cleanup and reset tests
+ * 
+ * Tests cover:
+ * - LuaEngine state reset
+ * - Compiled reference invalidation
+ * - Type and callback preservation
+ * - Cleanup of Lua state
+ * 
+ * These tests verify the engine correctly handles
+ * state resets without memory leaks or dangling references.
+ * 
+ * Test Framework: doctest
+ */
+
 #include <doctest/doctest.h>
 #include <fastrules.hpp>
 

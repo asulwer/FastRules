@@ -1,3 +1,41 @@
+/**
+ * @file rule.cpp
+ * @brief Rule implementation - core execution logic
+ * 
+ * This file implements the Rule class execution logic, including:
+ * - Expression and action compilation
+ * - Rule validation (circular dependencies, duplicates)
+ * - Rule execution with caching and error handling
+ * - Child rule execution (hierarchical rules)
+ * - Result caching with TTL invalidation
+ * 
+ * Execution Flow:
+ * 1. Check cache for existing result
+ * 2. Check if rule is active
+ * 3. Check rate limiting
+ * 4. Validate parameters
+ * 5. Execute child rules (bottom-up)
+ * 6. Evaluate expression
+ * 7. Execute action
+ * 8. Store result in cache and context
+ * 
+ * Thread Safety:
+ * - Compilation: NOT thread-safe (compile once)
+ * - Execution: Thread-safe if each thread uses its own LuaEngine
+ * - Caching: Thread-safe (uses mutex internally)
+ * 
+ * Error Handling:
+ * - RuleCompilationException: Syntax or validation errors
+ * - RuleValidationException: Circular dependencies, duplicates
+ * - RuleTimeoutException: Execution exceeded timeout
+ * - RuleExecutionException: Runtime Lua errors
+ * 
+ * Performance Considerations:
+ * - Cache key building serializes parameters (can be expensive)
+ * - Child rules execute sequentially (not parallel)
+ * - Each engine has its own compiled reference cache
+ */
+
 #include "fastrules/rule.hpp"
 #include "fastrules/lua_engine.hpp"
 #include "fastrules/rule_context.hpp"

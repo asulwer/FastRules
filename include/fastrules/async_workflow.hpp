@@ -1,203 +1,245 @@
+/**
+ * @file async_workflow.hpp
+ * @brief Async workflow execution with thread pool
+ * 
+ * AsyncWorkflow provides advanced execution capabilities:
+ * - Thread pool for parallel rule execution
+ * - Async/await support for coroutines
+ * - Promise-based async results
+ * - Engine pool management
+ * 
+ * Relationship to Workflow:
+ * - Workflow is the basic orchestrator
+ * - AsyncWorkflow adds thread pool and async capabilities
+ * - AsyncWorkflow wraps a Workflow and adds execution infrastructure
+ * 
+ * Thread Pool:
+ * Uses a fixed-size thread pool (configurable at construction).
+ * Tasks are enqueued and executed by worker threads.
+ * Thread pool is automatically shut down on destruction.
+ * 
+ * Engine Pool:
+ * Maintains a pool of cloned LuaEngines for parallel execution.
+ * Engines are acquired before execution and released after.
+ * 
+ * Execution Model:
+ * - Build dependency levels (rules that can execute in parallel)
+ * - For each level, enqueue tasks to thread pool
+ * - Wait for all tasks in level to complete
+ * - Move to next level
+ * 
+ * Example:
+ * @code
+ * // Create async workflow
+ * AsyncWorkflow async(std::move(workflow), 4); // 4 threads
+ * 
+ * // Compile
+ * async.compile(engine);
+ * 
+ * // Execute in parallel
+ * auto results = async.executeParallelAsync(engine, params);
+ * 
+ * // Wait for all pending tasks
+ * async.waitForCompletion();
+ * @endcode
+ */
+
 #pragma once
 
-#include <coroutine>
+#include "fastrules/workflow.hpp"
+#include "fastrules/engine_pool.hpp"
+
 #include <future>
 #include <memory>
-#include <optional>
 #include <vector>
-#include <string>
-#include <thread>
-#include <queue>
-#include <functional>
-#include <mutex>
-#include <condition_variable>
-#include <atomic>
-
-#include "rule.hpp"
-#include "rule_result.hpp"
-#include "workflow.hpp"
-#include "engine_pool.hpp"
 
 namespace fastrules {
 
 // Forward declarations
 class LuaEngine;
 class RuleContext;
+struct AsyncRuleResult;
 
-// ============================================================================
-// Async Rule Execution Types
-// ============================================================================
-
-struct AsyncRuleResult {
-    RuleResult result;
-    std::exception_ptr exception;
-    
-    [[nodiscard]] bool isSuccess() const noexcept {
-        return result.isSuccess() && !exception;
-    }
-};
-
-struct AsyncRulePromise {
-    struct promise_type {
-        AsyncRuleResult result;
-        
-        auto get_return_object() {
-            return AsyncRulePromise{std::coroutine_handle<promise_type>::from_promise(*this)};
-        }
-        
-        std::suspend_never initial_suspend() { return {}; }
-        std::suspend_never final_suspend() noexcept { return {}; }
-        
-        void return_value(AsyncRuleResult value) {
-            result = std::move(value);
-        }
-        
-        void unhandled_exception() {
-            result.exception = std::current_exception();
-        }
-    };
-    
-    using handle_type = std::coroutine_handle<promise_type>;
-    
-    AsyncRulePromise() = default;
-    explicit AsyncRulePromise(handle_type h) : handle_(h) {}
-    ~AsyncRulePromise() { if (handle_) handle_.destroy(); }
-    
-    AsyncRulePromise(const AsyncRulePromise&) = delete;
-    AsyncRulePromise& operator=(const AsyncRulePromise&) = delete;
-    AsyncRulePromise(AsyncRulePromise&& other) noexcept : handle_(other.handle_) {
-        other.handle_ = nullptr;
-    }
-    AsyncRulePromise& operator=(AsyncRulePromise&& other) noexcept {
-        if (this != &other) {
-            if (handle_) handle_.destroy();
-            handle_ = other.handle_;
-            other.handle_ = nullptr;
-        }
-        return *this;
-    }
-    
-    [[nodiscard]] AsyncRuleResult get() {
-        if (handle_.done()) return handle_.promise().result;
-        handle_.resume();
-        return handle_.promise().result;
-    }
-    
-private:
-    handle_type handle_;
-};
-
-class AsyncWorkflowTask {
-public:
-    struct promise_type {
-        std::vector<RuleResult> results;
-        std::exception_ptr exception;
-        
-        auto get_return_object() {
-            return AsyncWorkflowTask{std::coroutine_handle<promise_type>::from_promise(*this)};
-        }
-        
-        std::suspend_never initial_suspend() { return {}; }
-        std::suspend_never final_suspend() noexcept { return {}; }
-        
-        void return_value(std::vector<RuleResult> value) {
-            results = std::move(value);
-        }
-        
-        void unhandled_exception() {
-            exception = std::current_exception();
-        }
-    };
-    
-    using handle_type = std::coroutine_handle<promise_type>;
-    
-    AsyncWorkflowTask() = default;
-    explicit AsyncWorkflowTask(handle_type h) : handle_(h) {}
-    ~AsyncWorkflowTask() { if (handle_) handle_.destroy(); }
-    
-    AsyncWorkflowTask(const AsyncWorkflowTask&) = delete;
-    AsyncWorkflowTask& operator=(const AsyncWorkflowTask&) = delete;
-    AsyncWorkflowTask(AsyncWorkflowTask&& other) noexcept : handle_(other.handle_) {
-        other.handle_ = nullptr;
-    }
-    AsyncWorkflowTask& operator=(AsyncWorkflowTask&& other) noexcept {
-        if (this != &other) {
-            if (handle_) handle_.destroy();
-            handle_ = other.handle_;
-            other.handle_ = nullptr;
-        }
-        return *this;
-    }
-    
-    [[nodiscard]] bool await_ready() const noexcept { return handle_.done(); }
-    void await_suspend(std::coroutine_handle<>) {}
-    
-    [[nodiscard]] std::vector<RuleResult> await_resume() {
-        if (handle_.promise().exception) {
-            std::rethrow_exception(handle_.promise().exception);
-        }
-        return std::move(handle_.promise().results);
-    }
-    
-private:
-    handle_type handle_ = nullptr;
-};
-
-// ============================================================================
-// AsyncWorkflow Class
-// ============================================================================
-
+/**
+ * @brief Async-capable workflow wrapper
+ * 
+ * Extends Workflow with:
+ * - Thread pool for parallel execution
+ * - Async/await support
+ * - Engine pool for thread-safe Lua execution
+ * 
+ * Thread Safety:
+ * - Construction: NOT thread-safe
+ * - Compilation: NOT thread-safe
+ * - Execution: Thread-safe (uses internal synchronization)
+ */
 class AsyncWorkflow {
 public:
-    explicit AsyncWorkflow(size_t threadCount = std::thread::hardware_concurrency());
-    explicit AsyncWorkflow(Workflow&& workflow, size_t threadCount = std::thread::hardware_concurrency());
-    ~AsyncWorkflow();
+    // ========================================================================
+    // Construction / Destruction
+    // ========================================================================
     
-    AsyncWorkflow(const AsyncWorkflow&) = delete;
-    AsyncWorkflow& operator=(const AsyncWorkflow&) = delete;
+    /**
+     * @brief Construct with thread count
+     * 
+     * Creates an empty async workflow with the specified thread pool size.
+     * 
+     * @param threadCount Number of threads in the pool (default: hardware concurrency)
+     */
+    explicit AsyncWorkflow(size_t threadCount = std::thread::hardware_concurrency());
+
+    /**
+     * @brief Construct from existing workflow
+     * 
+     * Takes ownership of the workflow and adds async capabilities.
+     * 
+     * @param workflow The workflow to wrap
+     * @param threadCount Number of threads in the pool
+     */
+    AsyncWorkflow(Workflow&& workflow, size_t threadCount = std::thread::hardware_concurrency());
+
+    /// @brief Destructor - shuts down thread pool
+    ~AsyncWorkflow();
+
+    /// @brief Move constructor
     AsyncWorkflow(AsyncWorkflow&&) noexcept;
+    
+    /// @brief Move assignment
     AsyncWorkflow& operator=(AsyncWorkflow&&) noexcept;
     
-    Workflow& workflow() noexcept { return workflow_; }
+    /// @brief Disable copy
+    AsyncWorkflow(const AsyncWorkflow&) = delete;
+    
+    /// @brief Disable copy assignment
+    AsyncWorkflow& operator=(const AsyncWorkflow&) = delete;
+
+    // ========================================================================
+    // Accessors
+    // ========================================================================
+    
+    /// @brief Get the wrapped workflow
+    [[nodiscard]] Workflow& workflow() noexcept { return workflow_; }
+    
+    /// @brief Get the wrapped workflow (const)
     [[nodiscard]] const Workflow& workflow() const noexcept { return workflow_; }
-    
-    void compile(LuaEngine& engine);
+
+    /// @brief Check if compiled
     [[nodiscard]] bool isCompiled() const noexcept { return compiled_; }
+
+    // ========================================================================
+    // Compilation
+    // ========================================================================
     
-    [[nodiscard]] std::vector<AsyncRuleResult> executeParallelAsync(
+    /**
+     * @brief Compile the workflow for async execution
+     * 
+     * Compiles all rules and creates the engine pool.
+     * 
+     * @param engine The master LuaEngine
+     */
+    void compile(LuaEngine& engine);
+
+    // ========================================================================
+    // Execution - Async
+    // ========================================================================
+    
+    /**
+     * @brief Execute rules in parallel asynchronously
+     * 
+     * Builds dependency levels and executes each level in parallel
+     * using the thread pool.
+     * 
+     * @param engine The master LuaEngine
+     * @param parameters Parameters to pass to rules
+     * @return Vector of async results (may contain exceptions)
+     * 
+     * Thread Safety: Thread-safe. Can be called from any thread.
+     */
+    std::vector<AsyncRuleResult> executeParallelAsync(
         LuaEngine& engine,
         const std::vector<RuleParameter>& parameters);
-    
+
+    /**
+     * @brief Wait for all pending tasks to complete
+     * 
+     * Blocks until all async tasks finish.
+     */
     void waitForCompletion();
-    
+
 private:
-    Workflow workflow_;
-    bool compiled_ = false;
-    std::vector<std::future<void>> pendingTasks_;
+    // ========================================================================
+    // State
+    // ========================================================================
     
-    std::vector<std::unique_ptr<LuaEngine>> enginePoolStorage_;
-    std::unique_ptr<EnginePool> enginePool_;
-    bool useEnginePool_ = false;
+    Workflow workflow_;                      ///< The wrapped workflow
+    size_t threadCount_;                     ///< Number of threads
+    bool compiled_ = false;                  ///< Whether compiled
+
+    // ========================================================================
+    // Thread Pool (PIMPL)
+    // ========================================================================
     
-    size_t threadCount_;
-    
-    // Thread pool - using unique_ptr to avoid header bloat
     struct ThreadPoolImpl;
-    std::unique_ptr<ThreadPoolImpl> threadPool_;
+    std::unique_ptr<ThreadPoolImpl> threadPool_;  ///< Thread pool
+
+    // ========================================================================
+    // Engine Pool
+    // ========================================================================
     
+    bool useEnginePool_ = false;                                    ///< Whether using pool
+    std::unique_ptr<EnginePool> enginePool_;                      ///< Engine pool
+    std::vector<std::unique_ptr<LuaEngine>> enginePoolStorage_;    ///< Engine storage
+    std::vector<std::future<void>> pendingTasks_;                  ///< Pending tasks
+
+    // ========================================================================
+    // Internal Methods
+    // ========================================================================
+    
+    /**
+     * @brief Acquire an engine from the pool
+     * 
+     * @return Pointer to engine, or nullptr on timeout
+     */
     LuaEngine* acquireEngine();
+
+    /**
+     * @brief Return an engine to the pool
+     * 
+     * @param engine The engine to return
+     */
     void releaseEngine(LuaEngine* engine);
 };
 
-// Standalone functions
-[[nodiscard]] AsyncRulePromise coExecuteRule(std::shared_ptr<Rule> rule,
-                                             LuaEngine& engine,
-                                             RuleContext& context,
-                                             const std::vector<RuleParameter>& parameters);
+/**
+ * @brief Coroutine-based rule execution
+ * 
+ * Executes a rule as a coroutine, capturing any exceptions.
+ * 
+ * @param rule The rule to execute
+ * @param engine The LuaEngine
+ * @param context The execution context
+ * @param parameters The parameters
+ * @return Async result
+ */
+AsyncRulePromise coExecuteRule(std::shared_ptr<Rule> rule,
+                               LuaEngine& engine,
+                               RuleContext& context,
+                               const std::vector<RuleParameter>& parameters);
 
-[[nodiscard]] AsyncWorkflowTask coExecuteWorkflow(Workflow& workflow,
-                                                     LuaEngine& engine,
-                                                     const std::vector<RuleParameter>& parameters,
-                                                     size_t threadCount = std::thread::hardware_concurrency());
+/**
+ * @brief Coroutine-based workflow execution
+ * 
+ * Executes an entire workflow asynchronously.
+ * 
+ * @param workflow The workflow to execute
+ * @param engine The LuaEngine
+ * @param parameters The parameters
+ * @param threadCount Number of threads
+ * @return Async task yielding results
+ */
+AsyncWorkflowTask coExecuteWorkflow(Workflow& workflow,
+                                     LuaEngine& engine,
+                                     const std::vector<RuleParameter>& parameters,
+                                     size_t threadCount);
 
 } // namespace fastrules

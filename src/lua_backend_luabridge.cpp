@@ -1,3 +1,44 @@
+/**
+ * @file lua_backend_luabridge.cpp
+ * @brief LuaBridge3 backend implementation for Lua script execution
+ * 
+ * This file implements the LuaBridge3Backend class using sol2/LuaBridge3
+ * for C++/Lua binding. It provides:
+ * 
+ * - Lua state management (create, clone, destroy)
+ * - Script compilation and execution
+ * - Type marshaling between C++ and Lua
+ * - Global variable binding
+ * - Action callback registration
+ * - Expression evaluation with timeout support
+ * 
+ * Architecture:
+ * - LuaBridge3Backend: Main backend implementation
+ * - LuaBridgeValue: Wraps Lua registry references
+ * - Uses Lua C API + LuaBridge3 for high-level bindings
+ * 
+ * Type System:
+ * - Automatic conversion between C++ std::any and Lua values
+ * - Support for: nil, bool, int, double, string, table
+ * - Custom types via TypeRegistry
+ * - Arrays as Lua tables
+ * 
+ * Security:
+ * - Sandboxed environment (limited globals)
+ * - Timeout via lua_sethook
+ * - Dangerous function filtering
+ * 
+ * Thread Safety:
+ * - Each backend instance has its own Lua state
+ * - Safe to use different backends in different threads
+ * - Same backend must not be used concurrently
+ * 
+ * Error Handling:
+ * - Lua errors translated to RuleException
+ * - Stack cleanup on exceptions
+ * - Graceful handling of compilation failures
+ */
+
 #include "fastrules/lua_backend_luabridge.hpp"
 #include "fastrules/lua_backend.hpp"
 #include "fastrules/type_registry.hpp"

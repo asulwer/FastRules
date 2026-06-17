@@ -1,3 +1,40 @@
+/**
+ * @file lua_engine.cpp
+ * @brief LuaEngine implementation - high-level Lua script execution
+ *
+ * This file implements the LuaEngine class which provides:
+ * - Expression compilation and caching
+ * - Expression evaluation with parameters
+ * - Action execution
+ * - Timeout handling via Lua hooks
+ * - Type marshaling and binding
+ * - Global variable management
+ * - Action callback discovery and registration
+ *
+ * Timeout Implementation:
+ * - Uses thread_local deadline pointer
+ * - Lua hook checks deadline every N instructions
+ * - Throws RuleTimeoutException if exceeded
+ * - Thread-local ensures parallel safety
+ *
+ * Parameter Extraction:
+ * - Parses expressions to find parameter names
+ * - Hand-rolled parser for performance (regex is 50-100x slower)
+ * - Filters out Lua keywords and builtins
+ *
+ * Caching:
+ * - Compiled expressions cached by string hash
+ * - Avoids recompilation of same expressions
+ * - Ref counting for proper cleanup
+ *
+ * Thread Safety:
+ * - Uses thread_local for current context
+ * - Separate Lua state per engine
+ * - Safe for parallel execution with different engines
+ *
+ * @see lua_backend_luabridge.cpp for backend implementation
+ */
+
 #include "fastrules/lua_engine.hpp"
 #include "fastrules/rule.hpp"
 #include "fastrules/rule_context.hpp"
@@ -18,7 +55,13 @@ extern "C" {
 // but including both lua.h and lauxlib.h is the correct approach.
 
 namespace {
-    // Thread-local deadline for timeout preemption
+    /**
+     * Thread-local deadline for timeout preemption.
+     * 
+     * This pointer is set before Lua execution and checked by the Lua hook.
+     * Using a pointer allows null-checking (no timeout if null).
+     * Thread-local ensures parallel execution doesn't interfere.
+     */
     thread_local std::chrono::steady_clock::time_point* g_deadline = nullptr;
 }
 

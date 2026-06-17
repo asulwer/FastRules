@@ -1,3 +1,21 @@
+/**
+ * @file test_rule.cpp
+ * @brief Unit tests for the Rule class
+ * 
+ * Tests cover:
+ * - Rule creation and properties
+ * - Predicate factory methods
+ * - Compilation and execution
+ * - Active/inactive rules
+ * - Child rules and dependencies
+ * - Rate limiting
+ * - Caching
+ * - Validation (circular dependencies, duplicates)
+ * - Error handling
+ * 
+ * Test Framework: doctest
+ */
+
 #include <doctest/doctest.h>
 #include <fastrules.hpp>
 #include <thread>

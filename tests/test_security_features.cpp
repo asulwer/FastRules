@@ -1,3 +1,18 @@
+/**
+ * @file test_security_features.cpp
+ * @brief Security feature tests
+ * 
+ * Tests cover:
+ * - Expression/action length limits
+ * - Enum registration
+ * - Logging support
+ * 
+ * These tests verify security-related features of the LuaEngine
+ * such as preventing DoS via overly long expressions.
+ * 
+ * Test Framework: doctest
+ */
+
 #include <doctest/doctest.h>
 #include <fastrules.hpp>
 #include <spdlog/sinks/ostream_sink.h>

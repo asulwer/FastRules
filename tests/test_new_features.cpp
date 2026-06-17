@@ -1,3 +1,18 @@
+/**
+ * @file test_new_features.cpp
+ * @brief New feature tests
+ * 
+ * Tests cover:
+ * - Streaming execution (generator-based results)
+ * - Result streaming with coroutines
+ * - New API features
+ * 
+ * These tests verify newer features of the library
+ * that may not be in the core test suite yet.
+ * 
+ * Test Framework: doctest
+ */
+
 #include <doctest/doctest.h>
 #include <fastrules.hpp>
 

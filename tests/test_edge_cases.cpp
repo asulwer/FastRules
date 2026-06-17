@@ -1,5 +1,22 @@
-// test_edge_cases.cpp
-// Tests for edge cases and boundary conditions
+/**
+ * @file test_edge_cases.cpp
+ * @brief Edge case and boundary condition tests
+ * 
+ * Tests cover:
+ * - Invalid Lua expression syntax
+ * - Undefined variables
+ * - Empty workflows and rules
+ * - Deeply nested expressions
+ * - Large data structures
+ * - Boundary values (min/max int, empty strings)
+ * - Unicode and special characters
+ * - Race conditions
+ * 
+ * These tests verify the engine handles edge cases
+ * gracefully without crashing or undefined behavior.
+ * 
+ * Test Framework: doctest
+ */
 
 #include <doctest/doctest.h>
 #include <fastrules.hpp>

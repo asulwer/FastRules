@@ -1,6 +1,21 @@
-// test_auto_detection.cpp
-// Tests for adaptive execution with auto-detection feature.
-// This tests the automatic threshold detection based on runtime performance.
+/**
+ * @file test_auto_detection.cpp
+ * @brief Adaptive execution auto-detection tests
+ * 
+ * Tests cover:
+ * - Auto-detection enable/disable
+ * - Threshold configuration
+ * - Rule count based mode selection
+ * - Performance-based mode selection
+ * - Slow rule detection
+ * - Adaptive mode transitions
+ * 
+ * These tests verify the workflow correctly chooses
+ * between sequential and parallel execution based on
+ * runtime performance metrics.
+ * 
+ * Test Framework: doctest
+ */
 
 #include <doctest/doctest.h>
 #include <fastrules.hpp>

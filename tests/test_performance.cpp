@@ -1,5 +1,18 @@
-// test_performance.cpp
-// Tests for performance counters and metrics
+/**
+ * @file test_performance.cpp
+ * @brief Performance counters and metrics tests
+ * 
+ * Tests cover:
+ * - Execution counting (success, fail, skip, cache, timeout, rate limit)
+ * - Counter reset functionality
+ * - Execution time tracking
+ * - JSON export of metrics
+ * 
+ * These tests verify the PerformanceCounters singleton
+ * correctly tracks rule execution statistics.
+ * 
+ * Test Framework: doctest
+ */
 
 #include <doctest/doctest.h>
 #include <fastrules/performance_counters.hpp>

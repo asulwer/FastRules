@@ -1,5 +1,19 @@
-// test_caching.cpp
-// Tests for rule caching functionality
+/**
+ * @file test_caching.cpp
+ * @brief Rule caching tests
+ * 
+ * Tests cover:
+ * - Cache hits on repeated executions
+ * - Cache expiration after TTL
+ * - Cache invalidation
+ * - Cache with different parameter values
+ * - Cache miss scenarios
+ * 
+ * These tests verify the Rule cache mechanism correctly
+ * stores and retrieves results based on parameters and TTL.
+ * 
+ * Test Framework: doctest
+ */
 
 #include <doctest/doctest.h>
 #include <fastrules.hpp>

@@ -1,5 +1,17 @@
-// test_rate_limiter.cpp
-// Tests for rate limiting functionality
+/**
+ * @file test_rate_limiter.cpp
+ * @brief Rate limiter tests
+ * 
+ * Tests cover:
+ * - Basic throttling (sliding window)
+ * - Window reset after time period
+ * - Multiple rule configurations
+ * 
+ * These tests verify the sliding window rate limiter
+ * correctly tracks and limits rule execution.
+ * 
+ * Test Framework: doctest
+ */
 
 #include <doctest/doctest.h>
 #include <fastrules/rate_limiter.hpp>

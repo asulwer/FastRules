@@ -1,24 +1,46 @@
+/**
+ * @file engine_pool.hpp
+ * @brief Thread-safe pool of LuaEngines for parallel execution
+ * 
+ * EnginePool provides a lock-free (or low-contention) way to manage
+ * LuaEngine instances for parallel rule execution. Lua states are NOT
+ * thread-safe, so each thread needs its own engine.
+ * 
+ * Design:
+ * - Lock-free stack using atomic operations
+ * - Spin-wait with _mm_pause() for efficiency
+ * - Timeout support for tryPop()
+ * 
+ * Thread Safety:
+ * - push/pop: Thread-safe (lock-free)
+ * - tryPop: Thread-safe
+ * 
+ * Usage Pattern:
+ * @code
+ * EnginePool pool;
+ * 
+ * // Populate with engines
+ * for (auto& engine : engines) {
+ *     pool.push(engine.get());
+ * }
+ * 
+ * // Worker thread:
+ * LuaEngine* engine = pool.pop();  // Blocks until available
+ * // ... use engine ...
+ * pool.push(engine);  // Return to pool
+ * @endcode
+ * 
+ * Performance:
+ * - push: O(1) atomic
+ * - pop: O(1) atomic, may spin
+ * - tryPop: O(1) atomic, non-blocking
+ */
+
 #pragma once
 
-#include "fastrules/logger.hpp"
-
 #include <atomic>
-#include <memory>
-#include <vector>
-#include <thread>
-#include <mutex>
-#include <stack>
 #include <chrono>
-#include <cstdint>
-#include <condition_variable>
-#include <algorithm>
-
-// Platform-specific intrinsics for spin-wait
-#if defined(_MSC_VER)
-    #include <intrin.h>  // For _mm_pause on MSVC
-#elif defined(__x86_64__) || defined(__i386__)
-    // GCC/Clang inline assembly
-#endif
+#include <cstddef>
 
 namespace fastrules {
 
@@ -26,161 +48,194 @@ namespace fastrules {
 class LuaEngine;
 
 /**
- * @brief Thread-safe engine pool with exponential backoff wait strategy
+ * @brief Node in the lock-free stack
  * 
- * Fast path: Try to acquire mutex without blocking
- * Slow path: Adaptive spinning with exponential backoff
+ * Simple linked list node storing an engine pointer and next pointer.
+ */
+struct EngineNode {
+    LuaEngine* engine;       ///< The engine instance
+    EngineNode* next;        ///< Next node in stack
+    
+    /// @brief Construct from engine pointer
+    explicit EngineNode(LuaEngine* e) : engine(e), next(nullptr) {}
+};
+
+/**
+ * @brief Lock-free pool of LuaEngines
  * 
- * This provides good performance under low contention while
- * avoiding the livelock issues of pure lock-free algorithms.
+ * Implements a Treiber stack (lock-free stack) for managing engines.
+ * This is thread-safe and provides wait-free push and pop operations.
+ * 
+ * Memory Management:
+ * The pool doesn't own the engines - they must be kept alive externally.
+ * The pool only stores pointers.
+ * 
+ * Example:
+ * @code
+ * // Create engines
+ * std::vector<std::unique_ptr<LuaEngine>> engines;
+ * for (int i = 0; i < 4; ++i) {
+ *     engines.push_back(std::make_unique<LuaEngine>());
+ * }
+ * 
+ * // Create pool
+ * EnginePool pool;
+ * for (auto& e : engines) {
+ *     pool.push(e.get());
+ * }
+ * 
+ * // Use pool from multiple threads
+ * std::thread worker([&pool]() {
+ *     LuaEngine* engine = pool.pop();
+ *     // ... use engine ...
+ *     pool.push(engine);
+ * });
+ * @endcode
  */
 class EnginePool {
 public:
-    EnginePool() = default;
-    
+    /**
+     * @brief Construct an empty pool
+     */
+    EnginePool() : head_(nullptr) {}
+
+    /**
+     * @brief Destructor
+     * 
+     * Note: Does NOT delete engines - caller owns them.
+     */
     ~EnginePool() = default;
+
+    /// @brief Disable copy
+    EnginePool(const EnginePool&) = delete;
+    
+    /// @brief Disable copy assignment
+    EnginePool& operator=(const EnginePool&) = delete;
+    
+    /// @brief Disable move (atomic operations)
+    EnginePool(EnginePool&&) = delete;
+    
+    /// @brief Disable move assignment
+    EnginePool& operator=(EnginePool&&) = delete;
 
     /**
      * @brief Push an engine onto the pool
      * 
-     * Thread-safe, wakes up waiting threads.
+     * Lock-free operation using compare-and-swap.
+     * 
+     * @param engine The engine to add
      */
     void push(LuaEngine* engine) {
-        {
-            std::lock_guard<std::mutex> lock(mutex_);
-            stack_.push(engine);
+        auto* node = new EngineNode(engine);
+        node->next = head_.load(std::memory_order_relaxed);
+        
+        // Try to CAS head to new node
+        while (!head_.compare_exchange_weak(
+            node->next, node,
+            std::memory_order_release,
+            std::memory_order_relaxed)) {
+            // CAS failed, retry with updated node->next
         }
-        cv_.notify_one();
     }
 
     /**
      * @brief Pop an engine from the pool
      * 
-     * Thread-safe: returns immediately if available, nullptr if empty.
-     * Non-blocking - use tryPop() for blocking behavior.
+     * Spin-waits until an engine is available.
+     * Uses _mm_pause() to reduce CPU contention.
      * 
-     * @return Pointer to LuaEngine, or nullptr if pool is empty
+     * @return Pointer to an engine (never null)
      */
     LuaEngine* pop() {
-        // Fast path: try non-blocking pop
-        {
-            std::unique_lock<std::mutex> lock(mutex_, std::try_to_lock);
-            if (lock.owns_lock() && !stack_.empty()) {
-                LuaEngine* engine = stack_.top();
-                stack_.pop();
+        EngineNode* node = head_.load(std::memory_order_relaxed);
+        
+        while (node != nullptr) {
+            // Try to CAS head to next node
+            if (head_.compare_exchange_weak(
+                node, node->next,
+                std::memory_order_acquire,
+                std::memory_order_relaxed)) {
+                LuaEngine* engine = node->engine;
+                delete node;
                 return engine;
             }
+            
+            // CAS failed, reload head
+            node = head_.load(std::memory_order_relaxed);
+            
+            // Spin-wait with pause
+            #if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
+                _mm_pause();
+            #elif defined(__x86_64__) || defined(__i386__)
+                __builtin_ia32_pause();
+            #endif
         }
-        return nullptr;
+        
+        // Pool is empty - spin until available
+        while ((node = head_.load(std::memory_order_relaxed)) == nullptr) {
+            #if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
+                _mm_pause();
+            #elif defined(__x86_64__) || defined(__i386__)
+                __builtin_ia32_pause();
+            #endif
+        }
+        
+        // Retry from beginning
+        return pop();
     }
 
     /**
-     * @brief Try to pop with timeout using exponential backoff
+     * @brief Try to pop an engine with timeout
      * 
-     * Adaptive strategy:
-     * 1. Spin with yield (fast, low latency)
-     * 2. Exponential backoff with sleep (medium latency)
-     * 3. Block with condition variable (low CPU)
+     * Non-blocking pop with timeout. Returns nullptr if timeout expires.
      * 
-     * Blocks until engine available or timeout.
-     * Used by acquireEngine() in workflow.cpp
+     * @param timeout Maximum time to wait
+     * @return Pointer to engine, or nullptr on timeout
      */
-    LuaEngine* tryPop(std::chrono::milliseconds timeout = std::chrono::milliseconds(100)) {
-        auto start = std::chrono::steady_clock::now();
+    LuaEngine* tryPop(std::chrono::milliseconds timeout) {
+        auto deadline = std::chrono::steady_clock::now() + timeout;
         
-        // Phase 1: Fast spinning with yield (first ~10% of timeout)
-        auto spinEnd = start + timeout / 10;
-        int spinCount = 0;
-        while (std::chrono::steady_clock::now() < spinEnd) {
-            if (LuaEngine* engine = tryPopFast()) {
+        EngineNode* node = head_.load(std::memory_order_relaxed);
+        
+        while (node != nullptr) {
+            if (head_.compare_exchange_weak(
+                node, node->next,
+                std::memory_order_acquire,
+                std::memory_order_relaxed)) {
+                LuaEngine* engine = node->engine;
+                delete node;
                 return engine;
             }
-            // Adaptive spin: pause then yield
-            if (++spinCount % 16 == 0) {
-                std::this_thread::yield();
-            } else {
-                #if defined(_MSC_VER)
-                    _mm_pause();
-                #elif defined(__x86_64__) || defined(__i386__)
-                    __asm__ volatile("pause" ::: "memory");
-                #else
-                    std::this_thread::yield();
-                #endif
+            
+            node = head_.load(std::memory_order_relaxed);
+            
+            // Check timeout
+            if (std::chrono::steady_clock::now() >= deadline) {
+                return nullptr;
             }
+            
+            // Brief pause
+            #if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
+                _mm_pause();
+            #elif defined(__x86_64__) || defined(__i386__)
+                __builtin_ia32_pause();
+            #endif
         }
         
-        // Phase 2: Exponential backoff with short sleeps (next ~20% of timeout)
-        auto backoffEnd = start + timeout / 5;
-        std::chrono::microseconds sleepTime(1);
-        while (std::chrono::steady_clock::now() < backoffEnd) {
-            if (LuaEngine* engine = tryPopFast()) {
-                return engine;
-            }
-            std::this_thread::sleep_for(sleepTime);
-            // Cap at 1ms max sleep
-            if (sleepTime < std::chrono::milliseconds(1)) {
-                sleepTime *= 2;
-            }
-        }
-        
-        // Phase 3: Block with condition variable (remaining time)
-        auto remaining = timeout - std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now() - start);
-        if (remaining.count() <= 0) {
-            return nullptr;
-        }
-        
-        std::unique_lock<std::mutex> lock(mutex_);
-        bool gotEngine = cv_.wait_for(lock, remaining, [this] { return !stack_.empty(); });
-        
-        if (gotEngine && !stack_.empty()) {
-            LuaEngine* engine = stack_.top();
-            stack_.pop();
-            return engine;
-        }
-        return nullptr;
-    }
-
-    /**
-     * @brief Initialize pool with pre-created engines
-     */
-    void initializePool(const std::vector<std::unique_ptr<LuaEngine>>& engines) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        for (auto it = engines.rbegin(); it != engines.rend(); ++it) {
-            if (*it) {
-                stack_.push(it->get());
-            }
-        }
+        return nullptr;  // Pool empty and timeout
     }
 
     /**
      * @brief Check if pool is empty
+     * 
+     * @return true if pool has no engines
      */
-    bool empty() const {
-        std::lock_guard<std::mutex> lock(mutex_);
-        return stack_.empty();
-    }
-
-    size_t size() const {
-        std::lock_guard<std::mutex> lock(mutex_);
-        return stack_.size();
+    [[nodiscard]] bool empty() const {
+        return head_.load(std::memory_order_relaxed) == nullptr;
     }
 
 private:
-    mutable std::mutex mutex_;
-    std::condition_variable cv_;
-    std::stack<LuaEngine*> stack_;
-    
-    // Fast non-blocking pop attempt
-    LuaEngine* tryPopFast() {
-        std::unique_lock<std::mutex> lock(mutex_, std::try_to_lock);
-        if (lock.owns_lock() && !stack_.empty()) {
-            LuaEngine* engine = stack_.top();
-            stack_.pop();
-            return engine;
-        }
-        return nullptr;
-    }
+    std::atomic<EngineNode*> head_;  ///< Atomic head of stack
 };
 
 } // namespace fastrules

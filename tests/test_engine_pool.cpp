@@ -1,5 +1,20 @@
-// test_engine_pool.cpp
-// Tests for the engine pool implementation
+/**
+ * @file test_engine_pool.cpp
+ * @brief Engine pool tests
+ * 
+ * Tests cover:
+ * - Basic push/pop operations
+ * - LIFO ordering
+ * - Pop with timeout
+ * - Thread safety (concurrent access)
+ * - Pool exhaustion
+ * - Benchmark for contention
+ * 
+ * These tests verify the EnginePool correctly manages
+ * a pool of LuaEngine instances for thread-safe reuse.
+ * 
+ * Test Framework: doctest
+ */
 
 #include <doctest/doctest.h>
 #include <iostream>  // For std::cout in benchmark test

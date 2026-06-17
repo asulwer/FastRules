@@ -1,3 +1,21 @@
+/**
+ * @file test_execution_tracing.cpp
+ * @brief Execution tracing tests
+ * 
+ * Tests cover:
+ * - ExecutionTracer basic usage
+ * - Step recording
+ * - Trace querying (by rule, by stage)
+ * - Slowest step identification
+ * - Total time calculation
+ * - Tracer lifecycle (start/finish)
+ * 
+ * These tests verify the ExecutionTracer correctly
+ * captures and reports execution timing data.
+ * 
+ * Test Framework: doctest
+ */
+
 #include <doctest/doctest.h>
 #include <fastrules.hpp>
 

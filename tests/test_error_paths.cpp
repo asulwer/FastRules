@@ -1,5 +1,23 @@
-// test_error_paths.cpp
-// Tests for error handling, edge cases, and failure modes.
+/**
+ * @file test_error_paths.cpp
+ * @brief Error handling and failure mode tests
+ * 
+ * Tests cover:
+ * - Timeout handling for long-running expressions
+ * - Rate limit exceeded scenarios
+ * - Expression validation failures
+ * - Action execution failures
+ * - Circular dependency detection
+ * - Duplicate rule ID detection
+ * - Dependency on non-existent rules
+ * - Parameter type mismatches
+ * - Exception handling
+ * 
+ * These tests verify the engine properly handles
+ * error conditions and provides meaningful exceptions.
+ * 
+ * Test Framework: doctest
+ */
 
 #include <doctest/doctest.h>
 #include <fastrules.hpp>

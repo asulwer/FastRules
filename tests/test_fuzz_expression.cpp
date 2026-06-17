@@ -1,7 +1,20 @@
-// test_fuzz_expression.cpp
-// Fuzz-style tests for expression validation and parsing.
-// These aren't true fuzz targets (no libFuzzer) but cover edge cases
-// that a fuzzer would typically find.
+/**
+ * @file test_fuzz_expression.cpp
+ * @brief Fuzz-style expression validation tests
+ * 
+ * Tests cover:
+ * - Dangerous pattern detection (os.execute, io.open, etc.)
+ * - Syntax validation edge cases
+ * - Bracket matching
+ * - String literal closure
+ * - Obfuscated patterns
+ * - Known limitations
+ * 
+ * These tests simulate what a fuzzer would find
+ * to ensure the validator catches security issues.
+ * 
+ * Test Framework: doctest
+ */
 
 #include <doctest/doctest.h>
 #include <fastrules.hpp>

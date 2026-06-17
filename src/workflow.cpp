@@ -1,3 +1,36 @@
+/**
+ * @file workflow.cpp
+ * @brief Workflow orchestration - rule execution with dependency resolution
+ *
+ * This file implements the Workflow class for managing rule collections:
+ * - Dependency resolution using topological sort (Kahn's algorithm)
+ * - Sequential and parallel execution modes
+ * - Engine pool management for thread-safe parallel execution
+ * - Adaptive execution that chooses sequential vs parallel based on rule count
+ *
+ * Execution Modes:
+ * 1. Sequential (execute): Rules execute one at a time in dependency order
+ * 2. Parallel (executeParallel): Independent rules execute concurrently
+ * 3. Adaptive (executeAdaptive): Automatically chooses based on threshold
+ * 4. Streaming (executeStreaming): Generator-style result streaming
+ *
+ * Dependency Resolution:
+ * - Rules declare dependencies via dependsOnRuleName
+ * - Kahn's algorithm produces topological order
+ * - Rules at same dependency level can execute in parallel
+ *
+ * Thread Safety:
+ * - Construction: NOT thread-safe
+ * - Compilation: NOT thread-safe (compile once)
+ * - Sequential execution: Thread-safe with external synchronization
+ * - Parallel execution: Thread-safe (uses engine pool)
+ *
+ * Engine Pool:
+ * - Pre-created pool of LuaEngine clones
+ * - Each thread acquires an engine, uses it, returns it
+ * - Eliminates contention on Lua state during parallel execution
+ */
+
 #include "fastrules/workflow.hpp"
 #include "fastrules/lua_engine.hpp"
 #include "fastrules/rule_context.hpp"
