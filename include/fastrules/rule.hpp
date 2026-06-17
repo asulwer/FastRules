@@ -607,6 +607,70 @@ public:
         std::shared_ptr<Rule> rule_;  ///< The rule being constructed
     };
 
+    // Inline implementations for Builder
+    inline Builder::Builder(Id id) : rule_(std::make_shared<Rule>()) {
+        rule_->id_ = id;
+    }
+
+    inline Builder& Builder::withName(std::string name) {
+        rule_->name_ = std::move(name);
+        return *this;
+    }
+
+    inline Builder& Builder::withDescription(std::string desc) {
+        rule_->description_ = std::move(desc);
+        return *this;
+    }
+
+    inline Builder& Builder::withExpression(std::string expr) {
+        rule_->expression_ = std::move(expr);
+        return *this;
+    }
+
+    inline Builder& Builder::withAction(std::string act) {
+        rule_->action_ = std::move(act);
+        return *this;
+    }
+
+    inline Builder& Builder::withPriority(int prio) {
+        rule_->priority_ = prio;
+        return *this;
+    }
+
+    inline Builder& Builder::active(bool active) {
+        rule_->active_ = active;
+        return *this;
+    }
+
+    inline Builder& Builder::withCache(std::chrono::milliseconds duration) {
+        rule_->cacheDuration_ = duration;
+        return *this;
+    }
+
+    inline Builder& Builder::withTimeout(std::chrono::milliseconds to) {
+        rule_->timeout_ = to;
+        return *this;
+    }
+
+    inline Builder& Builder::dependsOn(std::string ruleName) {
+        rule_->dependsOn_ = std::move(ruleName);
+        return *this;
+    }
+
+    inline Builder& Builder::withChild(std::shared_ptr<Rule> child) {
+        rule_->children_.push_back(std::move(child));
+        return *this;
+    }
+
+    inline Builder& Builder::withRateLimiter(std::shared_ptr<RateLimiter> limiter) {
+        rule_->rateLimiter_ = std::move(limiter);
+        return *this;
+    }
+
+    inline std::shared_ptr<Rule> Builder::build() {
+        return std::move(rule_);
+    }
+
     /**
      * @brief Create a Builder starting with ID and expression
      * 

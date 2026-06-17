@@ -128,7 +128,21 @@ public:
      * 
      * @param name The callback name
      */
-    void registerStub(const std::string& name);
+    void registerStub(const std::string& name) {
+        handlers_[name] = [](const std::any&, const std::vector<std::any>&) {
+            // No-op stub handler
+        };
+    }
+
+    /**
+     * @brief Check if a handler is registered
+     * 
+     * @param name The callback name
+     * @return true if registered, false otherwise
+     */
+    [[nodiscard]] bool hasHandler(const std::string& name) const {
+        return handlers_.find(name) != handlers_.end();
+    }
 
     /**
      * @brief Iterate over all handlers
