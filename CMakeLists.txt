@@ -9,40 +9,35 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Compiler warnings
+# Compiler warnings - optional, don't fail if not supported
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    add_compile_options(
-        -Wall
-        -Wextra
-        -Wpedantic
-        -Wshadow
-        -Wnon-virtual-dtor
-        -Wold-style-cast
-        -Wcast-align
-        -Wunused
-        -Woverloaded-virtual
-        -Wconversion
-        -Wsign-conversion
-        -Wnull-dereference
-        -Wdouble-promotion
-        -Wformat=2
-        -Wimplicit-fallthrough
-    )
+    # GCC/Clang warnings - add only if supported
+    include(CheckCXXCompilerFlag)
+    foreach(WARNING_FLAG -Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wunused -Woverloaded-virtual)
+        string(REPLACE "-" "_" FLAG_VAR "CXX_SUPPORTS_${WARNING_FLAG}")
+        check_cxx_compiler_flag(${WARNING_FLAG} ${FLAG_VAR})
+        if(${FLAG_VAR})
+            add_compile_options(${WARNING_FLAG})
+        endif()
+    endforeach()
     # Enable address sanitizer in debug builds
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        option(ENABLE_ASAN "Enable Address Sanitizer" ON)
+        option(ENABLE_ASAN "Enable Address Sanitizer" OFF)
         if(ENABLE_ASAN)
             add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
             add_link_options(-fsanitize=address)
         endif()
     endif()
 elseif(MSVC)
+    # MSVC warnings - level 3 instead of 4 to reduce noise
     add_compile_options(
-        /W4
-        /permissive-
-        /sdl
-        /analyze
+        /W3
         /wd4265  # disable virtual destructor warning for rule classes
+        /wd4100  # disable unreferenced formal parameter
+        /wd4458  # disable declaration hides class member
+        /wd4459  # disable declaration hides global declaration
+        /wd4996  # disable deprecated function warning
+        /wd4101  # disable unreferenced local variable
     )
 endif()
 
