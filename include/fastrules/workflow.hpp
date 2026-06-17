@@ -54,6 +54,7 @@
 #include "fastrules/engine_pool.hpp"
 #include "fastrules/execution_tracer.hpp"
 #include "fastrules/streaming_result.hpp"
+#include "fastrules/lua_engine.hpp"
 
 #include <memory>
 #include <vector>

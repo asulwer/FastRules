@@ -718,7 +718,7 @@ bool LuaEngine::evaluateExpression(int ref, const std::vector<RuleParameter>& pa
 
     // Clear object globals
     for (const auto& param : parameters) {
-        if (typeRegistry_.isRegistered(param.type)) {
+        if (param.type.has_value() && typeRegistry_.isRegistered(param.type.value())) {
             backend_->clearRegisteredTypeGlobal(param.name);
         }
     }

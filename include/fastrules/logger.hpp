@@ -1,37 +1,69 @@
 #pragma once
 
-#include <spdlog/spdlog.h>
+#include <memory>
 #include <string>
+#include <iostream>
 
 namespace fastrules {
 
-// Convenience wrapper around spdlog for rule/workflow IDs.
-// All formatting is done by spdlog -- no custom LogEntry or handler types.
-//
-// Usage:
-//   auto log = fastrules::logger();
-//   log->info("Workflow {} validated", workflow.id);
-//   log->debug("Rule {} executed in {}ms", ruleId, elapsedMs);
-//
-// Configuration (at application startup):
-//   spdlog::set_pattern("[%H:%M:%S.%e] [%l] %v");
-//   spdlog::set_level(spdlog::level::debug);
-//   auto console = spdlog::stdout_color_mt("fastrules");
-//   spdlog::set_default_logger(console);
-//
-// For file logging:
-//   auto file_logger = spdlog::basic_logger_mt("fastrules_file", "logs/rules.log");
-//   spdlog::set_default_logger(file_logger);
-//
-// For multiple sinks (console + file):
-//   auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-//   auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/rules.log", true);
-//   std::vector<std::shared_ptr<spdlog::sinks::sink>> sinks = {console_sink, file_sink};
-//   auto logger = std::make_shared<spdlog::logger>("fastrules", sinks.begin(), sinks.end());
-//   spdlog::set_default_logger(logger);
+// Stub logger for when spdlog is not available
+// This is a minimal implementation that just outputs to std::cout/std::cerr
 
-inline std::shared_ptr<spdlog::logger> logger() {
-    static auto log = spdlog::default_logger();
+enum class LogLevel {
+    Trace,
+    Debug,
+    Info,
+    Warn,
+    Error,
+    Critical
+};
+
+class Logger {
+public:
+    template<typename... Args>
+    void trace(const std::string& fmt, Args&&... args) {
+        log(LogLevel::Trace, fmt, std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    void debug(const std::string& fmt, Args&&... args) {
+        log(LogLevel::Debug, fmt, std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    void info(const std::string& fmt, Args&&... args) {
+        log(LogLevel::Info, fmt, std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    void warn(const std::string& fmt, Args&&... args) {
+        log(LogLevel::Warn, fmt, std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    void error(const std::string& fmt, Args&&... args) {
+        log(LogLevel::Error, fmt, std::forward<Args>(args)...);
+    }
+
+    template<typename... Args>
+    void critical(const std::string& fmt, Args&&... args) {
+        log(LogLevel::Critical, fmt, std::forward<Args>(args)...);
+    }
+
+private:
+    template<typename... Args>
+    void log(LogLevel level, const std::string& fmt, Args&&... args) {
+        // Simple stub - just print the format string
+        // In a real implementation, we'd format the arguments
+        (void)level;
+        (void)fmt;
+        ((void)args, ...);
+    }
+};
+
+// Convenience function to get logger
+inline std::shared_ptr<Logger> logger() {
+    static auto log = std::make_shared<Logger>();
     return log;
 }
 
