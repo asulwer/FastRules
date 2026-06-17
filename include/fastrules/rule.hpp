@@ -733,61 +733,61 @@ private:
 
 // Inline implementations for Rule::Builder
 inline Rule::Builder::Builder(Id id) : rule_(std::make_shared<Rule>()) {
-    rule_->id_ = id;
+    rule_->id = id;
 }
 
 inline Rule::Builder& Rule::Builder::withName(std::string name) {
-    rule_->name_ = std::move(name);
+    rule_->name = std::move(name);
     return *this;
 }
 
 inline Rule::Builder& Rule::Builder::withDescription(std::string desc) {
-    rule_->description_ = std::move(desc);
+    rule_->description = std::move(desc);
     return *this;
 }
 
 inline Rule::Builder& Rule::Builder::withExpression(std::string expr) {
-    rule_->expression_ = std::move(expr);
+    rule_->expression = std::move(expr);
     return *this;
 }
 
 inline Rule::Builder& Rule::Builder::withAction(std::string act) {
-    rule_->action_ = std::move(act);
+    rule_->action = std::move(act);
     return *this;
 }
 
 inline Rule::Builder& Rule::Builder::withPriority(int prio) {
-    rule_->priority_ = prio;
+    rule_->priority = prio;
     return *this;
 }
 
 inline Rule::Builder& Rule::Builder::active(bool active) {
-    rule_->active_ = active;
+    rule_->isActive = active;
     return *this;
 }
 
 inline Rule::Builder& Rule::Builder::withCache(std::chrono::milliseconds duration) {
-    rule_->cacheDuration_ = duration;
+    rule_->cacheDuration = duration;
     return *this;
 }
 
 inline Rule::Builder& Rule::Builder::withTimeout(std::chrono::milliseconds to) {
-    rule_->timeout_ = to;
+    rule_->timeout = to;
     return *this;
 }
 
 inline Rule::Builder& Rule::Builder::dependsOn(std::string ruleName) {
-    rule_->dependsOn_ = std::move(ruleName);
+    rule_->dependsOnRuleName = std::move(ruleName);
     return *this;
 }
 
 inline Rule::Builder& Rule::Builder::withChild(std::shared_ptr<Rule> child) {
-    rule_->children_.push_back(std::move(child));
+    rule_->childRules.push_back(std::move(child));
     return *this;
 }
 
 inline Rule::Builder& Rule::Builder::withRateLimiter(std::shared_ptr<RateLimiter> limiter) {
-    rule_->rateLimiter_ = std::move(limiter);
+    rule_->rateLimiter = std::move(limiter);
     return *this;
 }
 
