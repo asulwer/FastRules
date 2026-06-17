@@ -104,14 +104,6 @@ public:
     void registerHandler(const std::string& name, Handler handler);
 
     /**
-     * @brief Check if a handler is registered
-     * 
-     * @param name The callback name
-     * @return true if registered, false otherwise
-     */
-    [[nodiscard]] bool hasHandler(const std::string& name) const;
-
-    /**
      * @brief Get a registered handler
      * 
      * @param name The callback name
