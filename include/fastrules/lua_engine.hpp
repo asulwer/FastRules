@@ -588,28 +588,4 @@ private:
     [[nodiscard]] std::string wrapCoroutine(const std::string& expression);
 };
 
-/**
- * @brief Exception thrown when Lua compilation fails
- */
-class RuleCompilationException : public std::runtime_error {
-public:
-    explicit RuleCompilationException(const std::string& msg) : std::runtime_error(msg) {}
-};
-
-/**
- * @brief Exception thrown when Lua execution fails
- */
-class RuleExecutionException : public std::runtime_error {
-public:
-    explicit RuleExecutionException(const std::string& msg) : std::runtime_error(msg) {}
-};
-
-/**
- * @brief Exception thrown when execution times out
- */
-class RuleTimeoutException : public std::runtime_error {
-public:
-    explicit RuleTimeoutException(const std::string& msg) : std::runtime_error(msg) {}
-};
-
 } // namespace fastrules
