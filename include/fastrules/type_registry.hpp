@@ -290,14 +290,14 @@ inline std::optional<TypeDescriptor> TypeRegistry::getDescriptor(
 // Template implementation for registerType
 template<typename T, typename Registrar>
 void TypeRegistry::registerType(const std::string& name, Registrar registrar) {
+    TypeRegistrar<T> tr(nullptr);  // Create registrar (lua_State not needed for setup)
+    registrar(tr);  // Call user's registration lambda
+    
     TypeDescriptor descriptor;
     descriptor.name = name;
-    descriptor.typeIndex = std::type_index(typeid(T));
-    descriptor.size = sizeof(T);
-    descriptor.registrar = [registrar = std::move(registrar)](lua_State* L) {
-        registrar(TypeRegistrar<T>(L));
-    };
-    types_[descriptor.typeIndex] = std::move(descriptor);
+    // Fields and methods were populated by the registrar
+    // Store in map using typeid
+    types_[std::type_index(typeid(T))] = std::move(descriptor);
 }
 
 } // namespace fastrules
