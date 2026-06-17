@@ -528,97 +528,20 @@ void LuaBridge3Backend::clearGlobals() {
 void LuaBridge3Backend::registerFunction(const std::string& name, LuaNativeFunc func) {
     pImpl_->nativeFuncs_[name] = std::move(func);
 
-    // Store function pointer in registry (light userdata approach)
-    // Use a C closure with the function name as upvalue
-    lua_pushstring(pImpl_->L, name.c_str());
-    lua_pushcclosure(pImpl_->L, [](lua_State* L) -> int {
-        // Get the function name from upvalue
-        const char* funcName = lua_tostring(L, lua_upvalueindex(1));
-        if (!funcName) return 0;
-
-        // We can't easily access the backend here without global state,
-        // so we store the native funcs in a Lua table and retrieve them
-        lua_getglobal(L, "__fastrules_native_funcs");
-        if (lua_istable(L, -1)) {
-            lua_getfield(L, -1, funcName);
-            if (lua_islightuserdata(L, -1)) {
-                auto* funcPtr = reinterpret_cast<LuaNativeFunc*>(lua_touserdata(L, -1));
-                lua_pop(L, 2); // pop userdata and table
-
-                // Collect arguments
-                int nargs = lua_gettop(L);
-                std::vector<std::unique_ptr<LuaValue>> args;
-                for (int i = 1; i <= nargs; ++i) {
-                    args.push_back(std::make_unique<LuaBridgeValue>(L, i));
-                }
-
-                auto results = (*funcPtr)(L, args);
-                if (!results.empty()) {
-                    if (auto* lbVal = dynamic_cast<LuaBridgeValue*>(results[0].get())) {
-                        lbVal->push();
-                        return 1;
-                    }
-                }
-                return 0;
-            }
-            lua_pop(L, 2);
-        } else {
-            lua_pop(L, 1);
-        }
-        return 0;
-    }, 1);
-    lua_setglobal(pImpl_->L, name.c_str());
-
-    // Also store in our internal table for lookup
-    lua_getglobal(pImpl_->L, "__fastrules_native_funcs");
-    if (lua_isnil(pImpl_->L, -1)) {
-        lua_pop(pImpl_->L, 1);
-        lua_newtable(pImpl_->L);
-        lua_setglobal(pImpl_->L, "__fastrules_native_funcs");
-        lua_getglobal(pImpl_->L, "__fastrules_native_funcs");
-    }
+    // Store function pointer in registry
     lua_pushstring(pImpl_->L, name.c_str());
     lua_pushlightuserdata(pImpl_->L, &pImpl_->nativeFuncs_[name]);
-    lua_settable(pImpl_->L, -3);
-    lua_pop(pImpl_->L, 1);
+    lua_settable(pImpl_->L, LUA_REGISTRYINDEX);
 }
+
 
 void LuaBridge3Backend::registerPredicate(const std::string& name, LuaPredicateFunc func) {
     pImpl_->predicates_[name] = std::move(func);
 
+    // Store predicate in registry
     lua_pushstring(pImpl_->L, name.c_str());
-    lua_pushcclosure(pImpl_->L, [](lua_State* L) -> int {
-        const char* predName = lua_tostring(L, lua_upvalueindex(1));
-        if (!predName) {
-            lua_pushboolean(L, false);
-            return 1;
-        }
-
-        lua_getglobal(L, "__fastrules_predicates");
-        if (lua_istable(L, -1)) {
-            lua_getfield(L, -1, predName);
-            if (lua_islightuserdata(L, -1)) {
-                auto* predPtr = reinterpret_cast<LuaPredicateFunc*>(lua_touserdata(L, -1));
-                lua_pop(L, 2); // pop userdata and table
-
-                int nargs = lua_gettop(L);
-                std::vector<std::unique_ptr<LuaValue>> args;
-                for (int i = 1; i <= nargs; ++i) {
-                    args.push_back(std::make_unique<LuaBridgeValue>(L, i));
-                }
-
-                bool result = (*predPtr)(L, args);
-                lua_pushboolean(L, result);
-                return 1;
-            }
-            lua_pop(L, 2);
-        } else {
-            lua_pop(L, 1);
-        }
-        lua_pushboolean(L, false);
-        return 1;
-    }, 1);
-    lua_setglobal(pImpl_->L, name.c_str());
+    lua_pushlightuserdata(pImpl_->L, &pImpl_->predicates_[name]);
+    lua_settable(pImpl_->L, LUA_REGISTRYINDEX);
 
     // Store in lookup table
     lua_getglobal(pImpl_->L, "__fastrules_predicates");

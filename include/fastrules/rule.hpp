@@ -89,6 +89,58 @@ namespace fastrules {
 class LuaEngine;
 class RuleContext;
 
+// ============================================================================
+// Exception Classes
+// ============================================================================
+
+/**
+ * @brief Exception thrown when rule compilation fails
+ * 
+ * Contains details about why Lua compilation failed, including:
+ * - Syntax errors in expressions/actions
+ * - Reference to the offending rule
+ * - The expression/action that failed
+ */
+class RuleCompilationException : public std::runtime_error {
+public:
+    explicit RuleCompilationException(const std::string& msg) : std::runtime_error(msg) {}
+};
+
+/**
+ * @brief Exception thrown when rule validation fails
+ * 
+ * Contains details about validation failures:
+ * - Circular dependencies
+ * - Duplicate rule IDs
+ * - Missing dependencies
+ */
+class RuleValidationException : public std::runtime_error {
+public:
+    explicit RuleValidationException(const std::string& msg) : std::runtime_error(msg) {}
+};
+
+/**
+ * @brief Exception thrown when rule execution times out
+ * 
+ * Thrown when a rule exceeds its configured timeout.
+ * The timeout mechanism uses Lua debug hooks.
+ */
+class RuleTimeoutException : public std::runtime_error {
+public:
+    explicit RuleTimeoutException(const std::string& msg) : std::runtime_error(msg) {}
+};
+
+/**
+ * @brief Exception thrown when rule execution fails
+ * 
+ * Generic execution failure - could be Lua runtime error,
+ * memory exhaustion, or other runtime issues.
+ */
+class RuleExecutionException : public std::runtime_error {
+public:
+    explicit RuleExecutionException(const std::string& msg) : std::runtime_error(msg) {}
+};
+
 /**
  * @brief Parameter passed to rule execution
  * 
@@ -677,54 +729,6 @@ private:
      */
     static void setFailure(RuleResult& result, const std::string& message, 
                            bool wasCached = false) noexcept;
-};
-
-/**
- * @brief Exception thrown when rule compilation fails
- * 
- * Contains details about why Lua compilation failed, including:
- * - Syntax errors in expressions/actions
- * - Reference to the offending rule
- * - The expression/action that failed
- */
-class RuleCompilationException : public std::runtime_error {
-public:
-    explicit RuleCompilationException(const std::string& msg) : std::runtime_error(msg) {}
-};
-
-/**
- * @brief Exception thrown when rule validation fails
- * 
- * Contains details about validation failures:
- * - Circular dependencies
- * - Duplicate rule IDs
- * - Missing dependencies
- */
-class RuleValidationException : public std::runtime_error {
-public:
-    explicit RuleValidationException(const std::string& msg) : std::runtime_error(msg) {}
-};
-
-/**
- * @brief Exception thrown when rule execution times out
- * 
- * Thrown when a rule exceeds its configured timeout.
- * The timeout mechanism uses Lua debug hooks.
- */
-class RuleTimeoutException : public std::runtime_error {
-public:
-    explicit RuleTimeoutException(const std::string& msg) : std::runtime_error(msg) {}
-};
-
-/**
- * @brief Exception thrown when rule execution fails
- * 
- * Generic execution failure - could be Lua runtime error,
- * memory exhaustion, or other runtime issues.
- */
-class RuleExecutionException : public std::runtime_error {
-public:
-    explicit RuleExecutionException(const std::string& msg) : std::runtime_error(msg) {}
 };
 
 } // namespace fastrules
