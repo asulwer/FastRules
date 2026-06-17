@@ -1,0 +1,1302 @@
+MSBuild version 17.14.40+3e7442088 for .NET Framework
+
+  Scanning sources for module dependencies...
+  async_workflow.cpp
+  lua_backend_luabridge.cpp
+  lua_engine.cpp
+  rule.cpp
+  aot_compiler.cpp
+  parameter_validator.cpp
+  workflow.cpp
+  expression_validator.cpp
+  action_callback.cpp
+  c_api.cpp
+  rule_versioning.cpp
+  Compiling...
+  action_callback.cpp
+  async_workflow.cpp
+  parameter_validator.cpp
+  c_api.cpp
+  aot_compiler.cpp
+  lua_backend_luabridge.cpp
+  rule_versioning.cpp
+  expression_validator.cpp
+  workflow.cpp
+  lua_engine.cpp
+  rule.cpp
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp(143,24): error C2535: 'bool fastrules::ActionCallbacks::hasHandler(const std::string &) const': member function already defined or declared [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp(143,24): error C2535: 'bool fastrules::ActionCallbacks::hasHandler(const std::string &) const': member function already defined or declared [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/action_callback.cpp')
+      C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp(112,24):
+      see declaration of 'fastrules::ActionCallbacks::hasHandler'
+  
+  (compiling source file '../src/expression_validator.cpp')
+      C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp(112,24):
+      see declaration of 'fastrules::ActionCallbacks::hasHandler'
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp(143,24): error C2535: 'bool fastrules::ActionCallbacks::hasHandler(const std::string &) const': member function already defined or declared [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_backend_luabridge.cpp')
+      C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp(112,24):
+      see declaration of 'fastrules::ActionCallbacks::hasHandler'
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp(143,24): error C2535: 'bool fastrules::ActionCallbacks::hasHandler(const std::string &) const': member function already defined or declared [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+      C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp(112,24):
+      see declaration of 'fastrules::ActionCallbacks::hasHandler'
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp(143,24): error C2535: 'bool fastrules::ActionCallbacks::hasHandler(const std::string &) const': member function already defined or declared [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+      C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp(112,24):
+      see declaration of 'fastrules::ActionCallbacks::hasHandler'
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,21): error C3254: 'fastrules::Rule': class contains explicit override '{ctor}' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,21): error C2838: '{ctor}': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(615,30): error C3254: 'fastrules::Rule': class contains explicit override 'withName' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(615,30): error C2838: 'withName': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(620,30): error C3254: 'fastrules::Rule': class contains explicit override 'withDescription' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(620,30): error C2838: 'withDescription': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(625,30): error C3254: 'fastrules::Rule': class contains explicit override 'withExpression' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(625,30): error C2838: 'withExpression': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(630,30): error C3254: 'fastrules::Rule': class contains explicit override 'withAction' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(630,30): error C2838: 'withAction': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(635,30): error C3254: 'fastrules::Rule': class contains explicit override 'withPriority' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(635,30): error C2838: 'withPriority': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(640,30): error C3254: 'fastrules::Rule': class contains explicit override 'active' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(640,30): error C2838: 'active': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(645,30): error C3254: 'fastrules::Rule': class contains explicit override 'withCache' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(645,30): error C2838: 'withCache': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(650,30): error C3254: 'fastrules::Rule': class contains explicit override 'withTimeout' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(650,30): error C2838: 'withTimeout': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(655,30): error C3254: 'fastrules::Rule': class contains explicit override 'dependsOn' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(655,30): error C2838: 'dependsOn': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(660,30): error C3254: 'fastrules::Rule': class contains explicit override 'withChild' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(660,30): error C2838: 'withChild': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(665,30): error C3254: 'fastrules::Rule': class contains explicit override 'withRateLimiter' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(665,30): error C2838: 'withRateLimiter': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(670,43): error C3254: 'fastrules::Rule': class contains explicit override 'build' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(670,43): error C2838: 'build': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,21): error C3254: 'fastrules::Rule': class contains explicit override '{ctor}' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,21): error C2838: '{ctor}': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(615,30): error C3254: 'fastrules::Rule': class contains explicit override 'withName' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(615,30): error C2838: 'withName': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(620,30): error C3254: 'fastrules::Rule': class contains explicit override 'withDescription' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(620,30): error C2838: 'withDescription': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(625,30): error C3254: 'fastrules::Rule': class contains explicit override 'withExpression' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(625,30): error C2838: 'withExpression': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(630,30): error C3254: 'fastrules::Rule': class contains explicit override 'withAction' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(630,30): error C2838: 'withAction': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(635,30): error C3254: 'fastrules::Rule': class contains explicit override 'withPriority' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(635,30): error C2838: 'withPriority': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(640,30): error C3254: 'fastrules::Rule': class contains explicit override 'active' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(640,30): error C2838: 'active': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(645,30): error C3254: 'fastrules::Rule': class contains explicit override 'withCache' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(645,30): error C2838: 'withCache': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(650,30): error C3254: 'fastrules::Rule': class contains explicit override 'withTimeout' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(650,30): error C2838: 'withTimeout': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(655,30): error C3254: 'fastrules::Rule': class contains explicit override 'dependsOn' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(655,30): error C2838: 'dependsOn': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(660,30): error C3254: 'fastrules::Rule': class contains explicit override 'withChild' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(660,30): error C2838: 'withChild': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(665,30): error C3254: 'fastrules::Rule': class contains explicit override 'withRateLimiter' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(665,30): error C2838: 'withRateLimiter': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(670,43): error C3254: 'fastrules::Rule': class contains explicit override 'build' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(670,43): error C2838: 'build': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,38): error C2614: 'fastrules::Rule': illegal member initialization: 'rule_' is not a base or member [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(612,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(616,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(617,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(621,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(622,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(626,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(627,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(631,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(632,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(636,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(637,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(641,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(642,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(646,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(647,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(651,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(652,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(656,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(657,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(661,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(662,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(666,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(667,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(671,26): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,38): error C2614: 'fastrules::Rule': illegal member initialization: 'rule_' is not a base or member [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(612,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(616,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(617,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(621,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(622,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(626,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(627,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(631,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(632,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(636,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(637,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(641,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(642,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(646,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(647,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(651,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(652,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(656,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(657,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(661,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(662,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(666,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(667,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(671,26): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,21): error C3254: 'fastrules::Rule': class contains explicit override '{ctor}' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,21): error C2838: '{ctor}': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(615,30): error C3254: 'fastrules::Rule': class contains explicit override 'withName' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(615,30): error C2838: 'withName': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(620,30): error C3254: 'fastrules::Rule': class contains explicit override 'withDescription' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(620,30): error C2838: 'withDescription': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(625,30): error C3254: 'fastrules::Rule': class contains explicit override 'withExpression' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(625,30): error C2838: 'withExpression': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(630,30): error C3254: 'fastrules::Rule': class contains explicit override 'withAction' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(630,30): error C2838: 'withAction': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(635,30): error C3254: 'fastrules::Rule': class contains explicit override 'withPriority' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(635,30): error C2838: 'withPriority': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(640,30): error C3254: 'fastrules::Rule': class contains explicit override 'active' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(640,30): error C2838: 'active': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(645,30): error C3254: 'fastrules::Rule': class contains explicit override 'withCache' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(645,30): error C2838: 'withCache': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(650,30): error C3254: 'fastrules::Rule': class contains explicit override 'withTimeout' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(650,30): error C2838: 'withTimeout': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(655,30): error C3254: 'fastrules::Rule': class contains explicit override 'dependsOn' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(655,30): error C2838: 'dependsOn': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(660,30): error C3254: 'fastrules::Rule': class contains explicit override 'withChild' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(660,30): error C2838: 'withChild': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(665,30): error C3254: 'fastrules::Rule': class contains explicit override 'withRateLimiter' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(665,30): error C2838: 'withRateLimiter': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(670,43): error C3254: 'fastrules::Rule': class contains explicit override 'build' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(670,43): error C2838: 'build': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp(143,24): error C2535: 'bool fastrules::ActionCallbacks::hasHandler(const std::string &) const': member function already defined or declared [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule_versioning.cpp')
+      C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp(112,24):
+      see declaration of 'fastrules::ActionCallbacks::hasHandler'
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp(143,24): error C2535: 'bool fastrules::ActionCallbacks::hasHandler(const std::string &) const': member function already defined or declared [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/async_workflow.cpp')
+      C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp(112,24):
+      see declaration of 'fastrules::ActionCallbacks::hasHandler'
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,38): error C2614: 'fastrules::Rule': illegal member initialization: 'rule_' is not a base or member [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(612,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(616,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(617,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(621,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(622,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(626,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(627,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(631,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(632,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(636,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(637,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(641,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(642,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(646,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(647,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(651,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(652,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(656,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(657,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(661,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(662,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(666,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(667,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(671,26): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,21): error C3254: 'fastrules::Rule': class contains explicit override '{ctor}' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,21): error C2838: '{ctor}': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(615,30): error C3254: 'fastrules::Rule': class contains explicit override 'withName' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(615,30): error C2838: 'withName': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(620,30): error C3254: 'fastrules::Rule': class contains explicit override 'withDescription' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(620,30): error C2838: 'withDescription': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(625,30): error C3254: 'fastrules::Rule': class contains explicit override 'withExpression' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(625,30): error C2838: 'withExpression': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,21): error C3254: 'fastrules::Rule': class contains explicit override '{ctor}' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(630,30): error C3254: 'fastrules::Rule': class contains explicit override 'withAction' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,21): error C2838: '{ctor}': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(615,30): error C3254: 'fastrules::Rule': class contains explicit override 'withName' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(630,30): error C2838: 'withAction': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(615,30): error C2838: 'withName': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(620,30): error C3254: 'fastrules::Rule': class contains explicit override 'withDescription' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(635,30): error C3254: 'fastrules::Rule': class contains explicit override 'withPriority' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(635,30): error C2838: 'withPriority': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(620,30): error C2838: 'withDescription': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(640,30): error C3254: 'fastrules::Rule': class contains explicit override 'active' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(625,30): error C3254: 'fastrules::Rule': class contains explicit override 'withExpression' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(625,30): error C2838: 'withExpression': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(630,30): error C3254: 'fastrules::Rule': class contains explicit override 'withAction' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(630,30): error C2838: 'withAction': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(640,30): error C2838: 'active': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(635,30): error C3254: 'fastrules::Rule': class contains explicit override 'withPriority' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(635,30): error C2838: 'withPriority': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(640,30): error C3254: 'fastrules::Rule': class contains explicit override 'active' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(640,30): error C2838: 'active': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(645,30): error C3254: 'fastrules::Rule': class contains explicit override 'withCache' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,21): error C3254: 'fastrules::Rule': class contains explicit override '{ctor}' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(645,30): error C2838: 'withCache': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(650,30): error C3254: 'fastrules::Rule': class contains explicit override 'withTimeout' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(645,30): error C3254: 'fastrules::Rule': class contains explicit override 'withCache' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(645,30): error C2838: 'withCache': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(650,30): error C2838: 'withTimeout': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(655,30): error C3254: 'fastrules::Rule': class contains explicit override 'dependsOn' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(655,30): error C2838: 'dependsOn': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(660,30): error C3254: 'fastrules::Rule': class contains explicit override 'withChild' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(660,30): error C2838: 'withChild': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(665,30): error C3254: 'fastrules::Rule': class contains explicit override 'withRateLimiter' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(665,30): error C2838: 'withRateLimiter': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(670,43): error C3254: 'fastrules::Rule': class contains explicit override 'build' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(670,43): error C2838: 'build': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(650,30): error C3254: 'fastrules::Rule': class contains explicit override 'withTimeout' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(650,30): error C2838: 'withTimeout': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(655,30): error C3254: 'fastrules::Rule': class contains explicit override 'dependsOn' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(655,30): error C2838: 'dependsOn': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(660,30): error C3254: 'fastrules::Rule': class contains explicit override 'withChild' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(660,30): error C2838: 'withChild': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(665,30): error C3254: 'fastrules::Rule': class contains explicit override 'withRateLimiter' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(665,30): error C2838: 'withRateLimiter': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(670,43): error C3254: 'fastrules::Rule': class contains explicit override 'build' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(670,43): error C2838: 'build': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,21): error C2838: '{ctor}': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(615,30): error C3254: 'fastrules::Rule': class contains explicit override 'withName' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(615,30): error C2838: 'withName': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(620,30): error C3254: 'fastrules::Rule': class contains explicit override 'withDescription' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(620,30): error C2838: 'withDescription': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(625,30): error C3254: 'fastrules::Rule': class contains explicit override 'withExpression' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(625,30): error C2838: 'withExpression': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(630,30): error C3254: 'fastrules::Rule': class contains explicit override 'withAction' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(630,30): error C2838: 'withAction': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(635,30): error C3254: 'fastrules::Rule': class contains explicit override 'withPriority' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(635,30): error C2838: 'withPriority': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(640,30): error C3254: 'fastrules::Rule': class contains explicit override 'active' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(640,30): error C2838: 'active': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(645,30): error C3254: 'fastrules::Rule': class contains explicit override 'withCache' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(645,30): error C2838: 'withCache': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(650,30): error C3254: 'fastrules::Rule': class contains explicit override 'withTimeout' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(650,30): error C2838: 'withTimeout': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(655,30): error C3254: 'fastrules::Rule': class contains explicit override 'dependsOn' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(655,30): error C2838: 'dependsOn': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(660,30): error C3254: 'fastrules::Rule': class contains explicit override 'withChild' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(660,30): error C2838: 'withChild': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(665,30): error C3254: 'fastrules::Rule': class contains explicit override 'withRateLimiter' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(665,30): error C2838: 'withRateLimiter': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(670,43): error C3254: 'fastrules::Rule': class contains explicit override 'build' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(670,43): error C2838: 'build': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,38): error C2614: 'fastrules::Rule': illegal member initialization: 'rule_' is not a base or member [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(612,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(616,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(617,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(621,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(622,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(626,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(627,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(631,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(632,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(636,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(637,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(641,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(642,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(646,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(647,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(651,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(652,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(656,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(657,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(661,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(662,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(666,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(667,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(671,26): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,38): error C2614: 'fastrules::Rule': illegal member initialization: 'rule_' is not a base or member [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(612,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(616,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(617,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(621,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(622,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(626,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(627,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(631,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(632,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(636,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(637,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(641,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(642,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(646,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(647,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(651,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(652,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(656,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(657,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(661,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(662,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(666,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(667,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(671,26): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/parameter_validator.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,38): error C2614: 'fastrules::Rule': illegal member initialization: 'rule_' is not a base or member [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(612,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(616,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(617,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(621,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(622,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(626,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(627,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(631,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(632,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(636,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(637,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(641,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(642,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(646,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(647,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(651,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(652,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(656,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(657,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(661,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(662,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(666,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(667,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(671,26): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp(143,24): error C2535: 'bool fastrules::ActionCallbacks::hasHandler(const std::string &) const': member function already defined or declared [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/rule.cpp')
+      C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp(112,24):
+      see declaration of 'fastrules::ActionCallbacks::hasHandler'
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp(143,24): error C2535: 'bool fastrules::ActionCallbacks::hasHandler(const std::string &) const': member function already defined or declared [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/c_api.cpp')
+      C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp(112,24):
+      see declaration of 'fastrules::ActionCallbacks::hasHandler'
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp(143,24): error C2535: 'bool fastrules::ActionCallbacks::hasHandler(const std::string &) const': member function already defined or declared [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/workflow.cpp')
+      C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\action_callback.hpp(112,24):
+      see declaration of 'fastrules::ActionCallbacks::hasHandler'
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,21): error C3254: 'fastrules::Rule': class contains explicit override '{ctor}' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,21): error C2838: '{ctor}': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(615,30): error C3254: 'fastrules::Rule': class contains explicit override 'withName' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(615,30): error C2838: 'withName': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(620,30): error C3254: 'fastrules::Rule': class contains explicit override 'withDescription' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(620,30): error C2838: 'withDescription': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(625,30): error C3254: 'fastrules::Rule': class contains explicit override 'withExpression' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(625,30): error C2838: 'withExpression': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(630,30): error C3254: 'fastrules::Rule': class contains explicit override 'withAction' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(630,30): error C2838: 'withAction': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(635,30): error C3254: 'fastrules::Rule': class contains explicit override 'withPriority' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(635,30): error C2838: 'withPriority': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(640,30): error C3254: 'fastrules::Rule': class contains explicit override 'active' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(640,30): error C2838: 'active': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(645,30): error C3254: 'fastrules::Rule': class contains explicit override 'withCache' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(645,30): error C2838: 'withCache': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(650,30): error C3254: 'fastrules::Rule': class contains explicit override 'withTimeout' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(650,30): error C2838: 'withTimeout': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(655,30): error C3254: 'fastrules::Rule': class contains explicit override 'dependsOn' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(655,30): error C2838: 'dependsOn': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(660,30): error C3254: 'fastrules::Rule': class contains explicit override 'withChild' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(660,30): error C2838: 'withChild': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(665,30): error C3254: 'fastrules::Rule': class contains explicit override 'withRateLimiter' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(665,30): error C2838: 'withRateLimiter': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(670,43): error C3254: 'fastrules::Rule': class contains explicit override 'build' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(670,43): error C2838: 'build': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,38): error C2614: 'fastrules::Rule': illegal member initialization: 'rule_' is not a base or member [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(612,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(616,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(617,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(621,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(622,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(626,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(627,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(631,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(632,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(636,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(637,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(641,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(642,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(646,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(647,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(651,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(652,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(656,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(657,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(661,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(662,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(666,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(667,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(671,26): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/aot_compiler.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,21): error C3254: 'fastrules::Rule': class contains explicit override '{ctor}' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,21): error C2838: '{ctor}': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(615,30): error C3254: 'fastrules::Rule': class contains explicit override 'withName' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(615,30): error C2838: 'withName': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(620,30): error C3254: 'fastrules::Rule': class contains explicit override 'withDescription' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(620,30): error C2838: 'withDescription': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(625,30): error C3254: 'fastrules::Rule': class contains explicit override 'withExpression' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(625,30): error C2838: 'withExpression': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(630,30): error C3254: 'fastrules::Rule': class contains explicit override 'withAction' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(630,30): error C2838: 'withAction': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(635,30): error C3254: 'fastrules::Rule': class contains explicit override 'withPriority' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(635,30): error C2838: 'withPriority': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(640,30): error C3254: 'fastrules::Rule': class contains explicit override 'active' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(640,30): error C2838: 'active': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(645,30): error C3254: 'fastrules::Rule': class contains explicit override 'withCache' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(645,30): error C2838: 'withCache': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(650,30): error C3254: 'fastrules::Rule': class contains explicit override 'withTimeout' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(650,30): error C2838: 'withTimeout': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(655,30): error C3254: 'fastrules::Rule': class contains explicit override 'dependsOn' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(655,30): error C2838: 'dependsOn': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(660,30): error C3254: 'fastrules::Rule': class contains explicit override 'withChild' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(660,30): error C2838: 'withChild': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(665,30): error C3254: 'fastrules::Rule': class contains explicit override 'withRateLimiter' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(665,30): error C2838: 'withRateLimiter': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(670,43): error C3254: 'fastrules::Rule': class contains explicit override 'build' but does not derive from an interface that contains the function declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(670,43): error C2838: 'build': illegal qualified name in member declaration [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(611,38): error C2614: 'fastrules::Rule': illegal member initialization: 'rule_' is not a base or member [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(612,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(616,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(617,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(621,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(622,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(626,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(627,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(631,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(632,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(636,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(637,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(641,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(642,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(646,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(647,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(651,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(652,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(656,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(657,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(661,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(662,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(666,9): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(667,16): error C2440: 'return': cannot convert from 'fastrules::Rule' to 'fastrules::Rule::Builder &' [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+C:\Users\asulw\.openclaw\workspace\main\fastrules\include\fastrules\rule.hpp(671,26): error C2065: 'rule_': undeclared identifier [C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\fastrules.vcxproj]
+  (compiling source file '../src/lua_engine.cpp')
+  
+  Scanning sources for module dependencies...
+  pugixml-static.vcxproj -> C:\Users\asulw\.openclaw\workspace\main\fastrules\build_vs\_deps\pugixml-build\Debug\pugixml.lib
