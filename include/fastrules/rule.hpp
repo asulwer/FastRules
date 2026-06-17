@@ -80,6 +80,7 @@
 #include <any>
 #include <unordered_map>
 #include <mutex>
+#include <stdexcept>
 
 namespace fastrules {
 
