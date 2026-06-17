@@ -124,7 +124,7 @@ public:
      * 
      * @param name The callback name
      */
-    inline void registerStub(const std::string& name) {
+    void registerStub(const std::string& name) {
         handlers_[name] = [](const std::any&, const std::vector<std::any>&) {
             // No-op stub handler
         };
@@ -136,7 +136,7 @@ public:
      * @param name The callback name
      * @return true if registered, false otherwise
      */
-    [[nodiscard]] inline bool hasHandler(const std::string& name) const {
+    [[nodiscard]] bool hasHandler(const std::string& name) const {
         return handlers_.find(name) != handlers_.end();
     }
 
