@@ -64,6 +64,7 @@
 #include "fastrules/lua_backend.hpp"
 #include "fastrules/type_registry.hpp"
 #include "fastrules/action_callback.hpp"
+#include "fastrules/logger.hpp"
 
 #include <memory>
 #include <string>
@@ -468,10 +469,10 @@ public:
      * 
      * @param logger Shared pointer to spdlog logger
      */
-    void setLogger(std::shared_ptr<void> logger) { logger_ = logger; }
+    void setLogger(std::shared_ptr<spdlog::logger> logger) { logger_ = logger; }
     
     /// @brief Get the configured logger
-    [[nodiscard]] std::shared_ptr<void> getLogger() const noexcept { return logger_; }
+    [[nodiscard]] std::shared_ptr<spdlog::logger> getLogger() const noexcept { return logger_; }
     
     /// @brief Check if a logger is configured
     [[nodiscard]] bool hasLogger() const noexcept { return logger_ != nullptr; }
@@ -512,7 +513,7 @@ private:
     size_t autoResetThresholdKB_ = 0;        ///< Auto-reset threshold (0 = disabled)
     std::atomic<int> compileCount_{0};       ///< Number of successful compilations
     std::atomic<int> generation_{0};         ///< State generation (increments on reset)
-    std::shared_ptr<void> logger_;           ///< spdlog logger (as void* to avoid header)
+    std::shared_ptr<spdlog::logger> logger_;           ///< spdlog logger
 
     // ========================================================================
     // Thread Safety
