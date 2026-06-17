@@ -273,4 +273,18 @@ private:
     std::unordered_map<std::type_index, TypeDescriptor> types_;
 };
 
+// Inline implementations
+inline bool TypeRegistry::isRegistered(const std::type_index& type) const {
+    return types_.find(type) != types_.end();
+}
+
+inline std::optional<TypeDescriptor> TypeRegistry::getDescriptor(
+    const std::type_index& type) const {
+    auto it = types_.find(type);
+    if (it != types_.end()) {
+        return it->second;
+    }
+    return std::nullopt;
+}
+
 } // namespace fastrules
