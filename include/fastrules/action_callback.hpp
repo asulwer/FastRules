@@ -41,6 +41,8 @@
 
 #pragma once
 
+#include "fastrules/fastrules_export.hpp"
+
 #include <string>
 #include <any>
 #include <functional>
@@ -62,7 +64,7 @@ namespace fastrules {
  * The target is currently unused but reserved for future object-oriented
  * callbacks. The args vector contains converted Lua arguments.
  */
-class ActionCallbacks {
+class FASTRULES_API ActionCallbacks {
 public:
     /// @brief Handler function type
     using Handler = std::function<void(const std::any& target,
