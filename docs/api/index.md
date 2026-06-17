@@ -10,6 +10,27 @@ permalink: /api/
 
 Quick reference for core classes. See child pages for full details.
 
+## C API
+
+The C API provides FFI bindings for Python, C#, and other languages. Built into the shared library when `FASTRULES_BUILD_SHARED` and `FASTRULES_BUILD_C_API` are enabled.
+
+```c
+// C example
+fastrules_engine_t engine = fastrules_engine_create();
+fastrules_workflow_t workflow = fastrules_workflow_create(engine, 1, "validation");
+fastrules_workflow_add_rule(engine, workflow, 1, "check-age", "age >= 18", NULL, NULL, true);
+fastrules_workflow_compile(engine, workflow);
+
+char* results;
+fastrules_workflow_execute(engine, workflow, "age=25", &results);
+fastrules_free(results);
+
+fastrules_workflow_destroy(workflow);
+fastrules_engine_destroy(engine);
+```
+
+See [C API documentation](c_api.html) for full details.
+
 ## LuaEngine
 
 Compiles and executes Lua expressions. Backend-agnostic (sol2 or LuaBridge3).
