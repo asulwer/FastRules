@@ -10,6 +10,27 @@
 #include <soci\mysql.h>
 #endif
 
+// Windows-specific: Ensure DLLs are found by setting the DLL search path
+#ifdef _WIN32
+#include <windows.h>
+#include <string>
+#include <filesystem>
+
+namespace {
+    struct WindowsDllPathSetup {
+        WindowsDllPathSetup() {
+            // Get the executable's directory
+            wchar_t exePath[MAX_PATH];
+            if (GetModuleFileNameW(NULL, exePath, MAX_PATH) != 0) {
+                std::filesystem::path exeDir = std::filesystem::path(exePath).parent_path();
+                // Add the executable directory to the DLL search path
+                SetDllDirectoryW(exeDir.wstring().c_str());
+            }
+        }
+    } windowsDllSetup;
+}
+#endif
+
 namespace fastrules {
 namespace ext {
 
