@@ -1,11 +1,11 @@
 /**
  * @file rule.hpp
  * @brief Rule definition and execution - the core building block of FastRules
- * 
+ *
  * A Rule represents a single condition-action pair in the rules engine.
  * Rules can be simple (just an expression) or complex (with child rules,
  * dependencies, caching, and custom actions).
- * 
+ *
  * Rule Execution Flow:
  * 1. Check if rule is active (skip if inactive)
  * 2. Check rate limiting
@@ -15,30 +15,30 @@
  * 6. Execute action (if expression evaluates to true)
  * 7. Cache result (if caching is enabled)
  * 8. Store result in context
- * 
+ *
  * Hierarchical Rules:
  * Rules support a parent-child hierarchy where child rules execute before
  * their parent. If any child fails, the parent aborts without evaluating
  * its expression. This enables complex logic composition.
- * 
+ *
  * Dependencies:
  * Rules can depend on other rules by name. The dependency rule must
  * succeed before the dependent rule executes. Dependencies are checked
  * at execution time, not compile time.
- * 
+ *
  * Caching:
  * Rules support memoization via the cacheDuration field. Results are cached
  * based on parameter values and invalidated when:
  * - The cache TTL expires
  * - invalidateCache() is called
  * - The rule's cacheGeneration changes
- * 
+ *
  * Thread Safety:
  * - Rule construction: NOT thread-safe
  * - Rule compilation: NOT thread-safe (compile once)
  * - Rule execution: Thread-safe if each thread uses its own LuaEngine
  * - Cache operations: Thread-safe (uses mutex internally)
- * 
+ *
  * Example:
  * @code
  * // Simple rule
@@ -46,7 +46,7 @@
  * rule.id = 1;
  * rule.expression = "age >= 18";
  * rule.action = "status = 'adult'";
- * 
+ *
  * // Using the Builder pattern
  * auto rule = fastrules::Rule::Builder(1)
  *     .withName("check_age")
@@ -56,11 +56,11 @@
  *     .withCache(std::chrono::seconds(30))
  *     .active(true)
  *     .build();
- * 
+ *
  * // Compile and execute
  * fastrules::LuaEngine engine;
  * rule->compile(engine);
- * 
+ *
  * fastrules::RuleContext ctx;
  * auto result = rule->execute(engine, ctx, {{"age", 25}});
  * @endcode
@@ -96,7 +96,7 @@ class RuleContext;
 
 /**
  * @brief Exception thrown when rule compilation fails
- * 
+ *
  * Contains details about why Lua compilation failed, including:
  * - Syntax errors in expressions/actions
  * - Reference to the offending rule
@@ -109,7 +109,7 @@ public:
 
 /**
  * @brief Exception thrown when rule validation fails
- * 
+ *
  * Contains details about validation failures:
  * - Circular dependencies
  * - Duplicate rule IDs
@@ -122,7 +122,7 @@ public:
 
 /**
  * @brief Exception thrown when rule execution times out
- * 
+ *
  * Thrown when a rule exceeds its configured timeout.
  * The timeout mechanism uses Lua debug hooks.
  */
@@ -133,7 +133,7 @@ public:
 
 /**
  * @brief Exception thrown when rule execution fails
- * 
+ *
  * Generic execution failure - could be Lua runtime error,
  * memory exhaustion, or other runtime issues.
  */
@@ -144,16 +144,16 @@ public:
 
 /**
  * @brief Parameter passed to rule execution
- * 
+ *
  * RuleParameters bind C++ values to Lua variable names.
  * The name field becomes a global variable in the Lua expression.
  * The type field is optional and used for runtime type validation.
- * 
+ *
  * Example:
  * @code
  * // Creates a Lua global 'age' with value 25
  * RuleParameter param("age", 25);
- * 
+ *
  * // With explicit type declaration
  * RuleParameter param("customer", customerObj, typeid(Customer));
  * @endcode
@@ -165,18 +165,18 @@ struct RuleParameter {
 
     /// @brief Construct a parameter with name and value
     template<typename T>
-    RuleParameter(std::string n, T v) 
+    RuleParameter(std::string n, T v)
         : name(std::move(n)), value(std::move(v)) {}
 
     /// @brief Construct with explicit type declaration
     template<typename T>
-    RuleParameter(std::string n, T v, std::type_index t) 
+    RuleParameter(std::string n, T v, std::type_index t)
         : name(std::move(n)), value(std::move(v)), type(t) {}
 };
 
 /**
  * @brief A single rule in the rules engine
- * 
+ *
  * Rules are the fundamental building blocks of FastRules workflows.
  * Each rule has:
  * - A unique ID
@@ -185,10 +185,10 @@ struct RuleParameter {
  * - An optional Lua action to execute on success
  * - Optional child rules (executed before parent)
  * - Optional dependencies on other rules
- * 
+ *
  * The Rule class uses the Builder pattern for convenient construction
  * and supports method chaining for configuration.
- * 
+ *
  * Memory Management:
  * - Rules are typically managed via std::shared_ptr<Rule>
  * - The Rule class is designed to be stored in containers
@@ -201,7 +201,7 @@ public:
     // ========================================================================
     // Rule Identity
     // ========================================================================
-    
+
     Id id = 0;                          ///< Unique rule identifier (required)
     std::string name;                   ///< Human-readable name (optional, used for dependencies)
     std::string description;            ///< Description for documentation/debugging
@@ -209,13 +209,13 @@ public:
     // ========================================================================
     // Rule Logic
     // ========================================================================
-    
+
     /**
      * @brief Lua expression that evaluates to boolean
-     * 
+     *
      * The expression is compiled into Lua bytecode and evaluated at runtime.
      * Parameter values are bound to Lua globals before evaluation.
-     * 
+     *
      * Example expressions:
      * - "age >= 18" - simple comparison
      * - "isNotNull(customer) and customer.age >= 18" - null check with field access
@@ -226,11 +226,11 @@ public:
 
     /**
      * @brief Lua action to execute when expression evaluates to true
-     * 
+     *
      * Actions are optional. If present, they execute after the expression
      * passes. Actions can modify state, call registered callbacks, or
      * perform side effects.
-     * 
+     *
      * Example actions:
      * - "log('Rule passed')" - logging
      * - "callbacks.sendEmail(customer.email)" - calling registered callback
@@ -241,19 +241,19 @@ public:
     // ========================================================================
     // Execution Control
     // ========================================================================
-    
+
     /**
      * @brief Execution priority (lower = earlier)
-     * 
+     *
      * Within a dependency level, rules are sorted by priority.
      * Rules with the same priority execute in undefined order.
      * Default priority is 0.
      */
     int priority = 0;
-    
+
     /**
      * @brief Whether this rule is active
-     * 
+     *
      * Inactive rules are skipped during execution (no evaluation, no result).
      * This enables dynamic rule sets where rules can be enabled/disabled
      * at runtime without removing them from the workflow.
@@ -262,11 +262,11 @@ public:
 
     /**
      * @brief Maximum execution time before timeout
-     * 
+     *
      * Uses Lua debug hooks for preemption. The timeout is enforced
      * cooperatively - very tight loops may exceed the timeout slightly.
      * Default is no timeout.
-     * 
+     *
      * Note: Timeout requires the Lua state to execute hook checks,
      * which occur every 1000 Lua instructions.
      */
@@ -275,15 +275,15 @@ public:
     // ========================================================================
     // Hierarchical Rules
     // ========================================================================
-    
+
     /**
      * @brief Child rules executed before this rule
-     * 
+     *
      * Child rules execute in a bottom-up (bubble-up) pattern:
      * 1. All children execute first
      * 2. If any child fails, parent aborts
      * 3. Only if all children succeed does the parent evaluate
-     * 
+     *
      * This enables complex logic composition where a rule's validity
      * depends on multiple sub-conditions.
      */
@@ -292,29 +292,32 @@ public:
     // ========================================================================
     // Dependencies
     // ========================================================================
-    
+
     /**
      * @brief Name of rule that must succeed before this rule executes
-     * 
+     *
      * Dependencies create execution order constraints. If the dependency
      * rule fails or doesn't exist, this rule is skipped.
-     * 
+     *
      * Dependencies are resolved by name at execution time, allowing
      * dynamic rule relationships.
      */
     std::optional<std::string> dependsOnRuleName;
 
+    /// @brief Rules that depend on this rule
+    std::vector<std::shared_ptr<Rule>> dependentRules;
+
     // ========================================================================
     // Caching
     // ========================================================================
-    
+
     /**
      * @brief Cache duration for rule results
-     * 
+     *
      * When set, rule results are memoized based on parameter values.
      * Subsequent executions with the same parameters return the cached
      * result until the TTL expires or the cache is invalidated.
-     * 
+     *
      * Cache key includes:
      * - Rule ID
      * - Parameter names and values
@@ -325,10 +328,10 @@ public:
     // ========================================================================
     // Rate Limiting
     // ========================================================================
-    
+
     /**
      * @brief Optional custom rate limiter for this rule
-     * 
+     *
      * If not set, uses the global RateLimiter::global() instance.
      * Rate limiting is checked before rule execution and throws
      * RateLimitException if exceeded.
@@ -338,18 +341,18 @@ public:
     // ========================================================================
     // Compilation State (Internal)
     // ========================================================================
-    
+
     /**
      * @brief Whether the rule has been compiled
-     * 
+     *
      * Set by compile() after successful Lua compilation.
      * Checked by execute() - will auto-compile if false.
      */
     bool isCompiled = false;
-    
+
     /**
      * @brief Whether the rule has been validated
-     * 
+     *
      * Set by validate() after successful validation passes.
      * Validation includes circular dependency detection and
      * duplicate ID checking.
@@ -359,50 +362,66 @@ public:
     // ========================================================================
     // Construction
     // ========================================================================
-    
+
     /// @brief Default constructor
     Rule() = default;
-    
+
     /// @brief Virtual destructor for inheritance support
     virtual ~Rule() = default;
-    
+
     /// @brief Move constructor
     Rule(Rule&&) = default;
-    
+
     /// @brief Move assignment
     Rule& operator=(Rule&&) = default;
-    
+
     /// @brief Copy constructor (copies child rules deeply)
     Rule(const Rule& other);
-    
+
     /// @brief Copy assignment (copies child rules deeply)
     Rule& operator=(const Rule& other);
+
+    // ====================================================================
+    // State Accessors
+    // ====================================================================
+
+    /// @brief Get whether the rule has been compiled
+    [[nodiscard]] bool getIsCompiled() const noexcept { return isCompiled; }
+
+    /// @brief Set whether the rule has been compiled
+    void setIsCompiled(bool compiled) noexcept { isCompiled = compiled; }
+
+    /// @brief Get execution timeout
+    [[nodiscard]] std::optional<std::chrono::milliseconds> getTimeout() const noexcept { return timeout; }
+
+    /// @brief Set execution timeout
+    void setTimeout(std::chrono::milliseconds to) { timeout = to; }
 
     // ========================================================================
     // Lifecycle Methods
     // ========================================================================
-    
+
     /**
      * @brief Compile the rule's expression and action into Lua bytecode
-     * 
+     *
      * Must be called before execute(). Compiles the expression and action
      * into Lua bytecode and stores references for execution.
-     * 
+     *
      * @param engine The LuaEngine to compile against
      * @throws RuleCompilationException if compilation fails
-     * 
+     *
      * Thread Safety: NOT thread-safe. Call once from a single thread.
      */
     void compile(LuaEngine& engine);
 
     /**
      * @brief Validate the rule and its relationships
-     * 
+     *
      * Performs static validation:
      * - Circular dependency detection (DFS)
      * - Duplicate ID checking
      * - Dependency existence verification
-     * 
+     *
      * @param allRules All rules in the workflow (for dependency checking)
      * @throws RuleValidationException if validation fails
      */
@@ -410,7 +429,7 @@ public:
 
     /**
      * @brief Execute the rule with given parameters
-     * 
+     *
      * Executes the full rule lifecycle:
      * 1. Check cache
      * 2. Check rate limiting
@@ -419,29 +438,29 @@ public:
      * 5. Evaluate expression
      * 6. Execute action
      * 7. Cache result
-     * 
+     *
      * @param engine The LuaEngine to execute with
      * @param context The execution context for results/variables
      * @param parameters Parameter values to bind to Lua globals
      * @return RuleResult containing success/failure and metadata
-     * 
+     *
      * Thread Safety: Thread-safe if each thread uses its own LuaEngine.
      * The Rule itself is not modified during execution.
      */
-    RuleResult execute(LuaEngine& engine, RuleContext& context, 
+    RuleResult execute(LuaEngine& engine, RuleContext& context,
                        const std::vector<RuleParameter>& parameters);
 
     // ========================================================================
     // Cache Management
     // ========================================================================
-    
+
     /**
      * @brief Invalidate all cached results for this rule
-     * 
+     *
      * Increments the cache generation counter, effectively invalidating
      * all existing cache entries. Does not clear the cache immediately -
      * entries are lazily removed on next access.
-     * 
+     *
      * @return The new cache generation number
      */
     int invalidateCache();
@@ -449,13 +468,13 @@ public:
     // ========================================================================
     // Dependency Analysis
     // ========================================================================
-    
+
     /**
      * @brief Check if this rule has a circular dependency
-     * 
+     *
      * Walks the dependency chain starting from this rule's dependsOnRuleName
      * and checks if it eventually leads back to this rule.
-     * 
+     *
      * @param allRules All rules in the workflow for name-to-ID lookup
      * @return true if a cycle exists, false otherwise
      */
@@ -464,10 +483,10 @@ public:
 
     /**
      * @brief Get the chain of dependencies for this rule
-     * 
+     *
      * Returns a list of rule IDs representing the dependency chain,
      * starting with this rule and following dependsOnRuleName links.
-     * 
+     *
      * @param allRules All rules in the workflow
      * @return Vector of rule IDs in dependency order
      */
@@ -477,7 +496,7 @@ public:
     // ========================================================================
     // Predicate Factories
     // ========================================================================
-    
+
     /**
      * @brief Create a rule that checks if a parameter is not null
      * @param parameterName The parameter to check
@@ -514,7 +533,7 @@ public:
      * @param description Optional description
      * @return A Rule checking parameterName == "value"
      */
-    [[nodiscard]] static Rule equals(const std::string& parameterName, 
+    [[nodiscard]] static Rule equals(const std::string& parameterName,
                                       const std::string& value,
                                       const std::string& description = "");
 
@@ -543,13 +562,13 @@ public:
     // ========================================================================
     // Builder Pattern
     // ========================================================================
-    
+
     /**
      * @brief Builder class for fluent Rule construction
-     * 
+     *
      * Provides a fluent API for constructing rules with many optional
      * parameters. All methods return *this for chaining.
-     * 
+     *
      * Example:
      * @code
      * auto rule = Rule::Builder(1)
@@ -570,34 +589,37 @@ public:
 
         /// @brief Set the rule name
         Builder& withName(std::string name);
-        
+
         /// @brief Set the rule description
         Builder& withDescription(std::string desc);
-        
+
         /// @brief Set the Lua expression
         Builder& withExpression(std::string expr);
-        
+
         /// @brief Set the Lua action
         Builder& withAction(std::string act);
-        
+
         /// @brief Set the execution priority
         Builder& withPriority(int prio);
-        
+
         /// @brief Set the active state
         Builder& active(bool active);
-        
+
         /// @brief Set the cache duration
         Builder& withCache(std::chrono::milliseconds duration);
-        
+
         /// @brief Set the timeout duration
         Builder& withTimeout(std::chrono::milliseconds to);
-        
+
         /// @brief Set the dependency rule name
         Builder& dependsOn(std::string ruleName);
-        
+
+        /// @brief Set the dependency rule name and dependent rules
+        Builder& dependsOn(std::string ruleName, std::vector<std::shared_ptr<Rule>> dependentRules);
+
         /// @brief Add a child rule
         Builder& withChild(std::shared_ptr<Rule> child);
-        
+
         /// @brief Set a custom rate limiter
         Builder& withRateLimiter(std::shared_ptr<RateLimiter> limiter);
 
@@ -610,10 +632,10 @@ public:
 
     /**
      * @brief Create a Builder starting with ID and expression
-     * 
+     *
      * Convenience factory method equivalent to:
      * Builder(id).withExpression(expression).active(active)
-     * 
+     *
      * @param id The rule ID
      * @param expression The Lua expression
      * @param active Whether the rule is active
@@ -625,7 +647,7 @@ private:
     // ========================================================================
     // Internal Cache Implementation
     // ========================================================================
-    
+
     /**
      * @brief Cache entry containing result and metadata
      */
@@ -641,11 +663,11 @@ private:
 
     /**
      * @brief Build a cache key from parameters
-     * 
+     *
      * Creates a unique string key based on:
      * - Rule ID
      * - Parameter names and values (type-specific serialization)
-     * 
+     *
      * @param parameters The parameters to hash
      * @return A unique cache key
      */
@@ -656,16 +678,16 @@ private:
      * @param parameters The parameters used (for cache key)
      * @param result The result to cache
      */
-    void storeInCache(const std::vector<RuleParameter>& parameters, 
+    void storeInCache(const std::vector<RuleParameter>& parameters,
                       const RuleResult& result) const;
 
     // ========================================================================
     // Compiled References (Per-Engine)
     // ========================================================================
-    
+
     /**
      * @brief Map of LuaEngine* to compiled expression reference
-     * 
+     *
      * Each engine has its own Lua state, so compiled references
      * are tracked per-engine. The default ref is used when no
      * engine-specific ref exists.
@@ -681,7 +703,7 @@ private:
      * @return The reference ID, or -1 if not compiled
      */
     int getExpressionRef(LuaEngine& engine);
-    
+
     /**
      * @brief Get the compiled action reference for an engine
      * @param engine The LuaEngine
@@ -692,7 +714,7 @@ private:
     // ========================================================================
     // Execution Helpers
     // ========================================================================
-    
+
     /**
      * @brief Execute all child rules
      * @param engine The LuaEngine
@@ -728,7 +750,7 @@ private:
      * @param message The error message
      * @param wasCached Whether this was a cached result
      */
-    static void setFailure(RuleResult& result, const std::string& message, 
+    static void setFailure(RuleResult& result, const std::string& message,
                            bool wasCached = false) noexcept;
 };
 
@@ -779,6 +801,14 @@ inline Rule::Builder& Rule::Builder::withTimeout(std::chrono::milliseconds to) {
 
 inline Rule::Builder& Rule::Builder::dependsOn(std::string ruleName) {
     rule_->dependsOnRuleName = std::move(ruleName);
+    return *this;
+}
+
+inline Rule::Builder& Rule::Builder::dependsOn(std::string ruleName, std::vector<std::shared_ptr<Rule>> dependentRules) {
+    rule_->dependsOnRuleName = std::move(ruleName);
+    for (auto& dep : dependentRules) {
+        rule_->dependentRules.push_back(std::move(dep));
+    }
     return *this;
 }
 

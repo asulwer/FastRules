@@ -224,17 +224,17 @@ TEST_CASE("LuaEngine handles numeric edge cases") {
     rule->compile(engine);
     
     // NaN != NaN, so x == x returns false for NaN
-    params = {{"x", "double", std::numeric_limits<double>::quiet_NaN()}};
+    params = {RuleParameter("x", std::numeric_limits<double>::quiet_NaN())};
     auto result = rule->execute(engine, ctx, params);
     REQUIRE(result.success == false);
     
     // Infinity
-    params = {{"x", "double", std::numeric_limits<double>::infinity()}};
+    params = {RuleParameter("x", std::numeric_limits<double>::infinity())};
     result = rule->execute(engine, ctx, params);
     REQUIRE(result.success);
     
     // Negative zero
-    params = {{"x", "double", -0.0}};
+    params = {RuleParameter("x", -0.0)};
     result = rule->execute(engine, ctx, params);
     REQUIRE(result.success);
 }
@@ -250,17 +250,17 @@ TEST_CASE("LuaEngine handles string edge cases") {
     rule->compile(engine);
     
     // Empty string
-    params = {{"name", "string", std::string("")}};
+    params = {RuleParameter("name", std::string(""))};
     auto result = rule->execute(engine, ctx, params);
     REQUIRE(result.success == false);
     
     // Very long string (1MB)
-    params = {{"name", "string", std::string(1024 * 1024, 'A')}};
+    params = {RuleParameter("name", std::string(1024 * 1024, 'A'))};
     result = rule->execute(engine, ctx, params);
     REQUIRE(result.success);
     
     // String with null bytes
-    params = {{"name", "string", std::string("hello\x00world", 11)}};
+    params = {RuleParameter("name", std::string("hello\x00world", 11))};
     result = rule->execute(engine, ctx, params);
     // Lua strings can contain null bytes -- length should be 11
     REQUIRE(result.success);

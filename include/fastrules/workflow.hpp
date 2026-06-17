@@ -355,6 +355,18 @@ public:
     /// @brief Check if auto-detection is enabled
     [[nodiscard]] bool isAutoDetectionEnabled() const noexcept { return autoDetectThreshold_; }
 
+    /// @brief Get average sequential execution time
+    [[nodiscard]] double getSequentialAvgTime() const noexcept { return sequentialAvgTime_; }
+
+    /// @brief Get average parallel execution time
+    [[nodiscard]] double getParallelAvgTime() const noexcept { return parallelAvgTime_; }
+
+    /// @brief Get number of sequential runs sampled
+    [[nodiscard]] size_t getSequentialRuns() const noexcept { return sequentialRuns_; }
+
+    /// @brief Get number of parallel runs sampled
+    [[nodiscard]] size_t getParallelRuns() const noexcept { return parallelRuns_; }
+
     // ========================================================================
     // Execution - Streaming
     // ========================================================================
