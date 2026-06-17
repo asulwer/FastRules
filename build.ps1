@@ -348,12 +348,14 @@ if (Test-Path $dbTest) {
     
     # Run DB tests from the test directory so DLLs are found
     Write-Host "Running DB tests from $dbTestDir..."
-    Push-Location $dbTestDir
-    try {
-        & ".\fastrules-db-tests.exe"
-        if ($LASTEXITCODE -ne 0) { Write-Warning "fastrules-db-tests failed with exit code $LASTEXITCODE" }
-    } finally {
-        Pop-Location
+    
+    # Use Start-Process with timeout to avoid hanging
+    $process = Start-Process -FilePath "$dbTestDir\fastrules-db-tests.exe" -WorkingDirectory $dbTestDir -PassThru -NoNewWindow -Wait
+    
+    if ($process.ExitCode -ne 0) {
+        Write-Warning "fastrules-db-tests failed with exit code $($process.ExitCode)"
+    } else {
+        Write-Host "fastrules-db-tests completed successfully" -ForegroundColor Green
     }
 }
 

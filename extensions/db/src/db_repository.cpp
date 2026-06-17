@@ -40,13 +40,7 @@ namespace {
 // This forces the backends to be registered at startup
 struct BackendRegistrar {
     BackendRegistrar() {
-        register_factory_sqlite3();
-#if __has_include(<soci\postgresql.h>)
-        register_factory_postgresql();
-#endif
-#if __has_include(<soci\mysql.h>)
-        register_factory_mysql();
-#endif
+        // Registration moved to create() function where DLLs are guaranteed loaded
     }
 } g_backendRegistrar;
 
@@ -428,6 +422,19 @@ void DbVersionRepository::removeAllVersionsForRule(int ruleId) {
 std::shared_ptr<soci::session> DbConnectionFactory::create(
     const std::string& backend,
     const std::string& connectionString) {
+    // Ensure backends are registered (DLLs should be loaded by now)
+    static bool backendsRegistered = false;
+    if (!backendsRegistered) {
+        register_factory_sqlite3();
+#if __has_include(<soci\postgresql.h>)
+        register_factory_postgresql();
+#endif
+#if __has_include(<soci\mysql.h>)
+        register_factory_mysql();
+#endif
+        backendsRegistered = true;
+    }
+    
     // Use backend factory directly instead of dynamic loading by name
     // This avoids "Failed to find shared library for backend" errors on Windows
     if (backend == "sqlite3") {
