@@ -39,6 +39,7 @@
 #include "fastrules/rule.hpp"
 #include "fastrules/rule_context.hpp"
 #include "fastrules/rule_result.hpp"
+#include "fastrules/logger.hpp"
 
 #include <chrono>
 #include <stdexcept>

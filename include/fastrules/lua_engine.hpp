@@ -470,6 +470,9 @@ public:
      */
     void setLogger(std::shared_ptr<void> logger) { logger_ = logger; }
     
+    /// @brief Get the configured logger
+    [[nodiscard]] std::shared_ptr<void> getLogger() const noexcept { return logger_; }
+    
     /// @brief Check if a logger is configured
     [[nodiscard]] bool hasLogger() const noexcept { return logger_ != nullptr; }
 

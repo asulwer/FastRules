@@ -61,6 +61,60 @@ namespace fastrules {
 class LuaEngine;
 class RuleContext;
 
+// AsyncWorkflowTask - coroutine return type for workflow execution
+class AsyncWorkflowTask {
+public:
+    struct promise_type {
+        std::vector<RuleResult> results;
+        std::exception_ptr exception;
+        
+        auto get_return_object() {
+            return AsyncWorkflowTask{std::coroutine_handle<promise_type>::from_promise(*this)};
+        }
+        
+        std::suspend_never initial_suspend() { return {}; }
+        std::suspend_never final_suspend() noexcept { return {}; }
+        
+        void return_value(std::vector<RuleResult> value) {
+            results = std::move(value);
+        }
+        
+        void unhandled_exception() {
+            exception = std::current_exception();
+        }
+    };
+    
+    using handle_type = std::coroutine_handle<promise_type>;
+    
+    AsyncWorkflowTask() = default;
+    explicit AsyncWorkflowTask(handle_type h) : handle_(h) {}
+    ~AsyncWorkflowTask() { if (handle_) handle_.destroy(); }
+    
+    AsyncWorkflowTask(const AsyncWorkflowTask&) = delete;
+    AsyncWorkflowTask& operator=(const AsyncWorkflowTask&) = delete;
+    AsyncWorkflowTask(AsyncWorkflowTask&& other) noexcept : handle_(other.handle_) {
+        other.handle_ = nullptr;
+    }
+    AsyncWorkflowTask& operator=(AsyncWorkflowTask&& other) noexcept {
+        if (this != &other) {
+            if (handle_) handle_.destroy();
+            handle_ = other.handle_;
+            other.handle_ = nullptr;
+        }
+        return *this;
+    }
+    
+    [[nodiscard]] std::vector<RuleResult> get() {
+        if (handle_.done()) return handle_.promise().results;
+        handle_.resume();
+        if (handle_.promise().exception) std::rethrow_exception(handle_.promise().exception);
+        return handle_.promise().results;
+    }
+
+private:
+    handle_type handle_;
+};
+
 /**
  * @brief Async-capable workflow wrapper
  * 
