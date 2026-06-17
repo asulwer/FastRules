@@ -29,6 +29,7 @@
 #include <string>
 #include <any>
 #include <functional>
+#include <typeindex>
 
 // Forward declaration
 struct lua_State;
