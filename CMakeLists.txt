@@ -257,7 +257,7 @@ if(FASTRULES_USE_LUAJIT)
 else()
     # Only use FetchContent when NOT in vcpkg manifest mode
     if(NOT VCPKG_MANIFEST_MODE)
-        FetchContent_MakeAvailable(lua json luabridge3 spdlog doctest)
+        FetchContent_MakeAvailable(lua json luabridge3 doctest)
 
         # Organize external targets in VS solution
         if(TARGET nlohmann_json)
@@ -417,8 +417,12 @@ target_include_directories(fastrules
 target_link_libraries(fastrules
     PUBLIC
         lua_static
-        spdlog::spdlog
 )
+
+# Link spdlog only if found
+if(spdlog_FOUND)
+    target_link_libraries(fastrules PUBLIC spdlog::spdlog)
+endif()
 
 target_include_directories(fastrules PRIVATE ${luabridge3_SOURCE_DIR}/Source)
 
