@@ -36,13 +36,8 @@ namespace {
 }
 #endif
 
-// Static backend registration to avoid dynamic loading issues on Windows
-// This forces the backends to be registered at startup
-struct BackendRegistrar {
-    BackendRegistrar() {
-        // Registration moved to create() function where DLLs are guaranteed loaded
-    }
-} g_backendRegistrar;
+// Static backend registration removed - using SOCI's built-in dynamic loading
+// which works correctly when DLLs are in the same directory as the executable
 
 namespace fastrules {
 namespace ext {
@@ -422,40 +417,7 @@ void DbVersionRepository::removeAllVersionsForRule(int ruleId) {
 std::shared_ptr<soci::session> DbConnectionFactory::create(
     const std::string& backend,
     const std::string& connectionString) {
-    // Ensure backends are registered (DLLs should be loaded by now)
-    static bool backendsRegistered = false;
-    if (!backendsRegistered) {
-        register_factory_sqlite3();
-#if __has_include(<soci\postgresql.h>)
-        register_factory_postgresql();
-#endif
-#if __has_include(<soci\mysql.h>)
-        register_factory_mysql();
-#endif
-        backendsRegistered = true;
-    }
-    
-    // Use backend factory directly instead of dynamic loading by name
-    // This avoids "Failed to find shared library for backend" errors on Windows
-    if (backend == "sqlite3") {
-        soci::connection_parameters params(soci::sqlite3, connectionString);
-        return std::make_shared<soci::session>(params);
-    }
-#if __has_include(<soci\postgresql.h>)
-    else if (backend == "postgresql") {
-        soci::connection_parameters params(soci::postgresql, connectionString);
-        return std::make_shared<soci::session>(params);
-    }
-#endif
-#if __has_include(<soci\mysql.h>)
-    else if (backend == "mysql") {
-        soci::connection_parameters params(soci::mysql, connectionString);
-        return std::make_shared<soci::session>(params);
-    }
-#endif
-    else {
-        throw std::runtime_error("Unsupported backend: " + backend);
-    }
+    return std::make_shared<soci::session>(backend, connectionString);
 }
 
 void DbConnectionFactory::initializeSchema(const std::shared_ptr<soci::session>& session) {

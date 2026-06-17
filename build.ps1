@@ -169,9 +169,6 @@ $vcpkgFeatures = @('tests', 'json', 'xml', 'db')
 $featureList = $vcpkgFeatures -join ';'
 $cmakeArgs += "-DVCPKG_MANIFEST_FEATURES=$featureList"
 
-# Disable default features for dependencies to avoid pulling in test dependencies like Catch2
-$cmakeArgs += "-DVCPKG_MANIFEST_NO_DEFAULT_FEATURES=ON"
-
 if ($UseLuaJIT) {
     $cmakeArgs += '-DFASTRULES_USE_LUAJIT=ON'
 }
