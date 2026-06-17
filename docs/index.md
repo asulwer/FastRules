@@ -3,6 +3,7 @@ layout: default
 title: Home
 nav_order: 0
 permalink: /
+has_children: false
 ---
 
 # FastRules

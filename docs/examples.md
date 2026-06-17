@@ -1,15 +1,15 @@
 ---
 layout: default
 title: Examples
-nav_order: 5
+nav_order: 4
 has_children: false
 ---
 
 # Examples
 
-One example showcasing FastRules core features: rules, workflows, child rules, type registration, and multiple parameters.
+Complete examples showcasing FastRules core features: rules, workflows, child rules, type registration, JSON loading, and multiple parameters.
 
-## Complete Example
+## Quick Complete Example
 
 ```cpp
 #include <fastrules.hpp>
@@ -87,36 +87,75 @@ int main() {
 | **Config values** | `minBalance` and `minIncome` as regular parameters |
 | **Actions** | `"approved = true"` runs on Lua side |
 
-## Detailed Examples by Feature
+---
 
-The `examples/` folder in the repo has standalone programs for each feature:
+## Core Library Examples
 
-| File | Feature |
+The `examples/` folder contains standalone programs demonstrating each feature:
+
+### Basic Usage
+
+| File | Description |
 |---|---|
-| `simple_example.cpp` | Basic rules with primitive parameters |
-| `core_only_example.cpp` | Core library only, no extensions |
-| `typed_example.cpp` | C++ struct binding and method calls |
-| `custom_methods_example.cpp` | Type registration + action callbacks |
-| `parent_child_example.cpp` | Child rules and bubble-up execution |
-| `workflow_bubble_up.cpp` | Parent/child with dependency chain |
-| `multi_object_example.cpp` | Multiple registered types in one workflow |
-| `no_globals_example.cpp` | Explicit parameter passing (no Lua globals) |
-| `loop_example.cpp` | Batch processing with shared Lua state |
-| `console_logging_example.cpp` | Custom logger integration |
-| `luabridge3_basic_example.cpp` | LuaBridge3 backend (minimal) |
-| `comprehensive_example.cpp` | All features combined |
+| [`simple_example.cpp`](https://github.com/asulwer/FastRules/blob/master/examples/simple_example.cpp) | Basic rules with primitive parameters |
+| [`core_only_example.cpp`](https://github.com/asulwer/FastRules/blob/master/examples/core_only_example.cpp) | Core library only, no extensions |
+| [`typed_example.cpp`](https://github.com/asulwer/FastRules/blob/master/examples/typed_example.cpp) | C++ struct binding and method calls |
 
-## JSON/Extension Examples
+### Advanced Features
 
-| File | Extension |
+| File | Description |
 |---|---|
-| `extensions/json/examples/json_example.cpp` | Load workflow from JSON |
-| `extensions/xml/examples/xml_example.cpp` | Load workflow from XML |
-| `extensions/db/examples/db_example.cpp` | Load/save workflow from database |
+| [`custom_methods_example.cpp`](https://github.com/asulwer/FastRules/blob/master/examples/custom_methods_example.cpp) | Type registration + action callbacks |
+| [`parent_child_example.cpp`](https://github.com/asulwer/FastRules/blob/master/examples/parent_child_example.cpp) | Child rules and bubble-up execution |
+| [`workflow_bubble_up.cpp`](https://github.com/asulwer/FastRules/blob/master/examples/workflow_bubble_up.cpp) | Parent/child with dependency chain |
+| [`multi_object_example.cpp`](https://github.com/asulwer/FastRules/blob/master/examples/multi_object_example.cpp) | Multiple registered types in one workflow |
+| [`no_globals_example.cpp`](https://github.com/asulwer/FastRules/blob/master/examples/no_globals_example.cpp) | Explicit parameter passing (no Lua globals) |
+| [`loop_example.cpp`](https://github.com/asulwer/FastRules/blob/master/examples/loop_example.cpp) | Batch processing with shared Lua state |
+| [`macro_example.cpp`](https://github.com/asulwer/FastRules/blob/master/examples/macro_example.cpp) | Type registration using macros |
 
-## REPL
+### Debugging & Performance
 
-Interactive Lua expression testing:
+| File | Description |
+|---|---|
+| [`console_logging_example.cpp`](https://github.com/asulwer/FastRules/blob/master/examples/console_logging_example.cpp) | Custom logger integration |
+| [`debug_context.cpp`](https://github.com/asulwer/FastRules/blob/master/examples/debug_context.cpp) | Debug output and context inspection |
+| [`performance_test.cpp`](https://github.com/asulwer/FastRules/blob/master/examples/performance_test.cpp) | Benchmark and performance metrics |
+
+### Backend & Tools
+
+| File | Description |
+|---|---|
+| [`luabridge3_basic_example.cpp`](https://github.com/asulwer/FastRules/blob/master/examples/luabridge3_basic_example.cpp) | LuaBridge3 backend minimal example |
+| [`repl_example.cpp`](https://github.com/asulwer/FastRules/blob/master/examples/repl_example.cpp) | Interactive Lua expression testing |
+
+---
+
+## JSON Extension Examples
+
+Located in `extensions/json/examples/`:
+
+| File | Description |
+|---|---|
+| [`example_customer_rules.cpp`](https://github.com/asulwer/FastRules/blob/master/extensions/json/examples/example_customer_rules.cpp) | Load customer validation rules from JSON |
+| [`example_customer_validation.cpp`](https://github.com/asulwer/FastRules/blob/master/extensions/json/examples/example_customer_validation.cpp) | Full customer validation workflow |
+| [`example_customer_validation_simple.cpp`](https://github.com/asulwer/FastRules/blob/master/extensions/json/examples/example_customer_validation_simple.cpp) | Simplified validation example |
+| [`example_dependency_rules.cpp`](https://github.com/asulwer/FastRules/blob/master/extensions/json/examples/example_dependency_rules.cpp) | Rule dependencies in JSON |
+| [`example_hierarchical_rules.cpp`](https://github.com/asulwer/FastRules/blob/master/extensions/json/examples/example_hierarchical_rules.cpp) | Parent-child rule hierarchies |
+
+---
+
+## Multi-Language Examples
+
+| Language | Location |
+|---|---|
+| C# | `examples/csharp_example/` - .NET integration via P/Invoke |
+| Python | `examples/python_example/` - Python bindings (ctypes) |
+
+---
+
+## REPL Interactive Testing
+
+Build and run the interactive Lua expression tester:
 
 ```bash
 ./build/examples/repl
@@ -125,7 +164,11 @@ Interactive Lua expression testing:
 true
 > math.sqrt(3^2 + 4^2)
 5.0
+> string.len("hello")
+5
 ```
+
+---
 
 ## Multi-Parameter Usage
 

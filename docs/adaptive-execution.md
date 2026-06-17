@@ -1,3 +1,9 @@
+---
+layout: default
+title: Adaptive Execution
+nav_order: 7
+---
+
 # Adaptive Execution
 
 FastRules provides intelligent execution mode selection through the `executeAdaptive()` method.

@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Code Coverage Setup
-nav_order: 10
+nav_order: 12
 ---
 
 # Code Coverage Setup

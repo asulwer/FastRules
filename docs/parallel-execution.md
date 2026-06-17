@@ -1,3 +1,9 @@
+---
+layout: default
+title: Parallel Execution
+nav_order: 8
+---
+
 # Parallel Execution Architecture
 
 FastRules provides two distinct APIs for parallel rule execution. Understanding when to use each is important for correct and efficient code.

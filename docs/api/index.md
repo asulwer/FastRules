@@ -1,8 +1,8 @@
 ---
 layout: default
 title: API Reference
-nav_order: 4
-has_children: true
+nav_order: 100
+has_children: false
 permalink: /api/
 ---
 
