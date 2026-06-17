@@ -421,6 +421,11 @@ target_link_libraries(fastrules
         lua_static
 )
 
+# Suppress LNK4197 (vtable exported multiple times) - harmless warning
+if(MSVC)
+    target_link_options(fastrules PRIVATE /IGNORE:4197)
+endif()
+
 # Link spdlog only if found
 if(spdlog_FOUND)
     target_link_libraries(fastrules PUBLIC spdlog::spdlog)

@@ -73,6 +73,7 @@
 // when exporting a class with virtual functions. The linker uses the first.
 #ifdef _MSC_VER
 #pragma warning(disable: 4197)
+#endif
 
 #include "fastrules/fastrules_export.hpp"
 #include "fastrules/rule_result.hpp"
