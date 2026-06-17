@@ -28,6 +28,7 @@
 #include <vector>
 #include <string>
 #include <any>
+#include <functional>
 
 // Forward declaration
 struct lua_State;
