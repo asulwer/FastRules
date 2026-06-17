@@ -68,6 +68,12 @@
 
 #pragma once
 
+// Suppress LNK4197: export '??_7Rule@fastrules@@6B@' specified multiple times
+// This is a harmless warning caused by MSVC generating vtables in multiple TUs
+// when exporting a class with virtual functions. The linker uses the first.
+#ifdef _MSC_VER
+#pragma warning(disable: 4197)
+
 #include "fastrules/fastrules_export.hpp"
 #include "fastrules/rule_result.hpp"
 #include "fastrules/rate_limiter.hpp"
@@ -367,7 +373,7 @@ public:
     // ========================================================================
 
     /// @brief Default constructor
-    Rule() = default;
+    Rule();
 
     /// @brief Virtual destructor for inheritance support
     virtual ~Rule();
@@ -661,7 +667,7 @@ private:
     };
 
     mutable std::unordered_map<std::string, CacheEntry> cache_;  ///< Cache storage
-    mutable std::unique_ptr<std::mutex> cacheMutex_ = std::make_unique<std::mutex>();
+    mutable std::unique_ptr<std::mutex> cacheMutex_;
     mutable int cacheGeneration_ = 0;                             ///< Current cache generation
 
     /**

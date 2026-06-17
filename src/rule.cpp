@@ -18,6 +18,9 @@
 
 namespace fastrules {
 
+// Rule default constructor
+Rule::Rule() : cacheMutex_(std::make_unique<std::mutex>()) {}
+
 // Rule destructor (out-of-line to ensure single vtable)
 Rule::~Rule() = default;
 
