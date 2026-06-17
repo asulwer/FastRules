@@ -340,6 +340,26 @@ public:
      */
     void bindActionsToState();
 
+    /**
+     * @brief Register an action callback
+     * 
+     * Registers a C++ function that can be called from Lua action code.
+     * The action receives parameters as std::any values.
+     * 
+     * @param name The action name
+     * @param handler The callback function
+     * 
+     * Example:
+     * @code
+     * engine.registerAction("sendEmail", [](const std::any& target, 
+     *                                       const std::vector<std::any>& args) {
+     *     // Handle the action
+     * });
+     * @endcode
+     */
+    void registerAction(const std::string& name, 
+                       std::function<void(const std::any&, const std::vector<std::any>&)> handler);
+
     // ========================================================================
     // Callback Discovery
     // ========================================================================

@@ -451,6 +451,11 @@ void LuaEngine::bindActionsToState() {
     backend_->bindActions(&actionCallbacks_);
 }
 
+void LuaEngine::registerAction(const std::string& name,
+                               std::function<void(const std::any&, const std::vector<std::any>&)> handler) {
+    actionCallbacks_.registerHandler(name, std::move(handler));
+}
+
 // ============================================================================
 // No-globals implementation
 // Parameters are extracted from expressions and passed as globals via backend

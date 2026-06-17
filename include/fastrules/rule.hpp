@@ -68,6 +68,7 @@
 
 #pragma once
 
+#include "fastrules/fastrules_export.hpp"
 #include "fastrules/rule_result.hpp"
 #include "fastrules/rate_limiter.hpp"
 #include "fastrules/streaming_result.hpp"
@@ -193,7 +194,7 @@ struct RuleParameter {
  * - The Rule class is designed to be stored in containers
  * - Child rules are stored as shared_ptr to enable sharing
  */
-class Rule {
+class FASTRULES_API Rule {
 public:
     using Id = int;  ///< Rule identifier type
 
