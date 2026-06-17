@@ -45,6 +45,8 @@
 #include <future>
 #include <thread>
 #include <chrono>
+#include <atomic>
+#include <mutex>
 
 // Platform-specific intrinsics for spin-wait
 #if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
@@ -155,6 +157,221 @@ void Workflow::compile(LuaEngine& engine) {
 
     log->info("Workflow {} compiled successfully ({} engine clones ready, pool initialized)", id, poolSize);
     compiled_ = true;
+}
+
+void Workflow::compileParallel(LuaEngine& engine, size_t numThreads) {
+    auto log = fastrules::logger();
+    if (compiled_) {
+        return;
+    }
+
+    if (!validated_) {
+        validate();
+    }
+
+    // Determine number of threads
+    if (numThreads == 0) {
+        numThreads = std::thread::hardware_concurrency();
+        if (numThreads == 0) numThreads = 4;  // Fallback
+    }
+
+    // Don't parallelize for small workflows
+    if (rules.size() < 10 || numThreads == 1) {
+        log->debug("Workflow {} has {} rules, using sequential compilation", id, rules.size());
+        compile(engine);
+        return;
+    }
+
+    log->debug("Compiling workflow {} in parallel with {} threads", id, numThreads);
+
+    // Ensure the engine has types and actions bound before compiling
+    engine.bindTypesToState();
+    engine.bindActionsToState();
+
+    // Auto-discover callbacks from actions before compiling
+    auto actions = getAllActions();
+    if (!actions.empty()) {
+        engine.discoverCallbacks(actions);
+    }
+
+    // Build dependency levels for parallel compilation
+    // Rules at the same level can be compiled concurrently
+    auto levels = buildCompilationLevels();
+    
+    log->debug("Workflow {} has {} compilation levels", id, levels.size());
+
+    // Create thread pool for compilation
+    std::vector<std::thread> threads;
+    std::atomic<size_t> currentLevel{0};
+    std::atomic<bool> hasError{false};
+    std::exception_ptr compileException;
+    std::mutex exceptionMutex;
+
+    // Worker function
+    auto worker = [&](size_t workerId) {
+        // Each worker gets its own engine clone
+        std::unique_ptr<LuaEngine> localEngine;
+        try {
+            localEngine = engine.clone();
+        } catch (...) {
+            hasError = true;
+            return;
+        }
+
+        while (!hasError.load(std::memory_order_acquire)) {
+            size_t levelIdx = currentLevel.load(std::memory_order_acquire);
+            if (levelIdx >= levels.size()) {
+                break;  // All levels done
+            }
+
+            // Get rules for this level
+            const auto& level = levels[levelIdx];
+            
+            // Find next uncompiled rule in this level
+            Rule* ruleToCompile = nullptr;
+            for (auto* rule : level) {
+                // Check if rule needs compilation
+                bool needsCompile = false;
+                {
+                    std::lock_guard<std::mutex> lock(exceptionMutex);
+                    if (!rule->isCompiled) {
+                        needsCompile = true;
+                    }
+                }
+                if (needsCompile) {
+                    ruleToCompile = rule;
+                    break;
+                }
+            }
+
+            if (ruleToCompile) {
+                try {
+                    ruleToCompile->compile(*localEngine);
+                } catch (...) {
+                    std::lock_guard<std::mutex> lock(exceptionMutex);
+                    if (!compileException) {
+                        compileException = std::current_exception();
+                    }
+                    hasError = true;
+                    return;
+                }
+            } else {
+                // All rules in this level compiled, move to next level
+                size_t expected = levelIdx;
+                if (currentLevel.compare_exchange_strong(expected, levelIdx + 1,
+                                                          std::memory_order_acq_rel,
+                                                          std::memory_order_acquire)) {
+                    log->debug("Level {} completed by worker {}", levelIdx, workerId);
+                }
+                
+                // If this was the last level, we're done
+                if (levelIdx + 1 >= levels.size()) {
+                    break;
+                }
+            }
+        }
+    };
+
+    // Launch worker threads
+    threads.reserve(numThreads);
+    for (size_t i = 0; i < numThreads; ++i) {
+        threads.emplace_back(worker, i);
+    }
+
+    // Wait for all threads to complete
+    for (auto& t : threads) {
+        if (t.joinable()) {
+            t.join();
+        }
+    }
+
+    // Check for errors
+    if (compileException) {
+        std::rethrow_exception(compileException);
+    }
+
+    // Verify all rules were compiled
+    for (const auto& rule : rules) {
+        if (!rule->isCompiled) {
+            throw RuleCompilationException("Not all rules were compiled in parallel compilation");
+        }
+    }
+
+    // Create engine pool for execution (same as sequential compile)
+    size_t poolSize = std::thread::hardware_concurrency();
+    if (poolSize < 2) poolSize = 2;
+    
+    enginePoolStorage_.clear();
+    enginePoolStorage_.reserve(poolSize);
+    
+    for (size_t i = 0; i < poolSize; ++i) {
+        auto clone = engine.clone();
+        for (auto& rule : rules) {
+            rule->compile(*clone);
+        }
+        enginePoolStorage_.push_back(std::move(clone));
+    }
+    
+    enginePool_ = std::make_unique<EnginePool>();
+    for (const auto& enginePtr : enginePoolStorage_) {
+        enginePool_->push(enginePtr.get());
+    }
+    
+    useEnginePool_ = true;
+    compiled_ = true;
+
+    log->info("Workflow {} compiled in parallel successfully", id);
+}
+
+std::vector<std::vector<Rule*>> Workflow::buildCompilationLevels() {
+    std::vector<std::vector<Rule*>> levels;
+    std::unordered_map<int, Rule*> ruleMap;
+    std::unordered_map<int, int> inDegree;
+
+    // Build rule map
+    for (auto& rule : rules) {
+        ruleMap[rule->id] = rule.get();
+        inDegree[rule->id] = 0;
+    }
+
+    // Calculate in-degrees based on child rule dependencies
+    for (auto& rule : rules) {
+        // Each child rule must compile before its parent
+        for (const auto& child : rule->childRules) {
+            if (child && child->id != 0) {
+                inDegree[rule->id]++;
+            }
+        }
+    }
+
+    // Kahn's algorithm for topological sort by levels
+    std::vector<Rule*> currentLevel;
+    for (auto& rule : rules) {
+        if (inDegree[rule->id] == 0) {
+            currentLevel.push_back(rule.get());
+        }
+    }
+
+    while (!currentLevel.empty()) {
+        levels.push_back(std::move(currentLevel));
+        currentLevel.clear();
+
+        for (auto* rule : levels.back()) {
+            // Find parents (rules that have this rule as child)
+            for (auto& potentialParent : rules) {
+                for (const auto& child : potentialParent->childRules) {
+                    if (child.get() == rule) {
+                        inDegree[potentialParent->id]--;
+                        if (inDegree[potentialParent->id] == 0) {
+                            currentLevel.push_back(potentialParent.get());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return levels;
 }
 
 bool Workflow::isCompiled() const noexcept {

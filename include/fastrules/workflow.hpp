@@ -184,6 +184,33 @@ public:
     /// @brief Check if the workflow has been compiled
     [[nodiscard]] bool isCompiled() const noexcept;
 
+    /**
+     * @brief Compile all rules in parallel using multiple threads
+     * 
+     * Analyzes the rule dependency graph and compiles independent rules
+     * concurrently. This is beneficial when compiling workflows with 10+
+     * rules that have no interdependencies.
+     * 
+     * Thread Safety:
+     * - NOT thread-safe - compile once from a single thread
+     * - Each compilation thread gets its own LuaEngine clone
+     * 
+     * Performance:
+     * - Best for workflows with 10+ independent rules
+     * - Compilation time reduced by up to Nx on N-core systems
+     * - Slight overhead from thread management for small workflows
+     * 
+     * Example:
+     * @code
+     * // Compile 20 independent rules in parallel
+     * workflow.compileParallel(engine, 4);  // Use 4 threads
+     * @endcode
+     * 
+     * @param engine The primary LuaEngine (used for binding types/actions)
+     * @param numThreads Number of compilation threads (default: hardware concurrency)
+     */
+    void compileParallel(LuaEngine& engine, size_t numThreads = 0);
+
     // ========================================================================
     // Execution - Sequential
     // ========================================================================
@@ -494,6 +521,17 @@ private:
     // Internal Methods
     // ========================================================================
     
+    /**
+     * @brief Build compilation levels for parallel compilation
+     * 
+     * Groups rules by their dependencies such that rules in the same
+     * level can be compiled concurrently. Uses Kahn's algorithm
+     * on the child rule dependency graph.
+     * 
+     * @return Vector of rule levels, each level is a vector of rules
+     */
+    [[nodiscard]] std::vector<std::vector<Rule*>> buildCompilationLevels();
+
     /**
      * @brief Check for circular dependencies
      * 
