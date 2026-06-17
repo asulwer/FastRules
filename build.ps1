@@ -289,22 +289,19 @@ if (Test-Path $xmlTest) {
 
 $dbTest = "$buildDir\extensions\db\tests\$testConfig\fastrules-db-tests.exe"
 if (Test-Path $dbTest) {
-    Write-Host ""
-    Write-Host "WARNING: Skipping fastrules-db-tests due to SOCI backend DLL loading issue on Windows." -ForegroundColor Yellow
-    Write-Host "         The DB extension builds successfully, but runtime DLL loading is pending investigation." -ForegroundColor Yellow
-    Write-Host "         Run tests manually from Visual Studio or with adjusted PATH/DLL deployment." -ForegroundColor Yellow
-    Write-Host ""
-    <#
-    # Original DB test code - disabled pending SOCI DLL fix
     Write-Host "Running fastrules-db-tests..." -ForegroundColor Cyan
+    
     # Copy all required DLLs to test directory
     $dbTestDir = "$buildDir\extensions\db\tests\$testConfig"
+    
     # Use debug DLLs for Debug builds, release for others
     if ($testConfig -eq "Debug") {
-        $vcpkgBinDir = "$buildDir\vcpkg_installed\x64-windows\debug\bin"
+        $vcpkgConfigBinDir = "$buildDir\vcpkg_installed\x64-windows\debug\bin"
     } else {
-        $vcpkgBinDir = "$buildDir\vcpkg_installed\x64-windows\bin"
+        $vcpkgConfigBinDir = "$buildDir\vcpkg_installed\x64-windows\bin"
     }
+    
+    Write-Host "  Copying DLLs from $vcpkgConfigBinDir to $dbTestDir..." -ForegroundColor Gray
     
     # Kill any running test processes that might lock DLLs
     Get-Process fastrules-db-tests -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
@@ -314,8 +311,12 @@ if (Test-Path $dbTest) {
     $maxRetries = 3
     for ($i = 0; $i -lt $maxRetries; $i++) {
         try {
-            Copy-Item "$vcpkgBinDir\*.dll" $dbTestDir -Force -ErrorAction Stop
-            Copy-Item "$buildDir\$testConfig\fastrules.dll" $dbTestDir -Force -ErrorAction Stop
+            if (Test-Path "$vcpkgConfigBinDir\*.dll") {
+                Copy-Item "$vcpkgConfigBinDir\*.dll" $dbTestDir -Force -ErrorAction Stop
+            }
+            if (Test-Path "$buildDir\$testConfig\fastrules.dll") {
+                Copy-Item "$buildDir\$testConfig\fastrules.dll" $dbTestDir -Force -ErrorAction Stop
+            }
             break
         } catch {
             if ($i -eq $maxRetries - 1) { Write-Warning "Failed to copy DLLs after $maxRetries attempts: $_" }
@@ -324,18 +325,22 @@ if (Test-Path $dbTest) {
     }
     
     # Create copies of SOCI backends with names SOCI expects (without version suffix)
-    if (Test-Path "$vcpkgBinDir\soci_core_4_0.dll") {
-        Copy-Item "$vcpkgBinDir\soci_core_4_0.dll" "$dbTestDir\soci_core.dll" -Force -ErrorAction SilentlyContinue
+    if (Test-Path "$vcpkgConfigBinDir\soci_core_4_0.dll") {
+        Copy-Item "$vcpkgConfigBinDir\soci_core_4_0.dll" "$dbTestDir\soci_core.dll" -Force -ErrorAction SilentlyContinue
     }
-    if (Test-Path "$vcpkgBinDir\soci_sqlite3_4_0.dll") {
-        Copy-Item "$vcpkgBinDir\soci_sqlite3_4_0.dll" "$dbTestDir\soci_sqlite3.dll" -Force -ErrorAction SilentlyContinue
+    if (Test-Path "$vcpkgConfigBinDir\soci_sqlite3_4_0.dll") {
+        Copy-Item "$vcpkgConfigBinDir\soci_sqlite3_4_0.dll" "$dbTestDir\soci_sqlite3.dll" -Force -ErrorAction SilentlyContinue
     }
+    
+    # List what DLLs are in the test directory for debugging
+    Write-Host "  DLLs in test directory:" -ForegroundColor Gray
+    Get-ChildItem "$dbTestDir\*.dll" | ForEach-Object { Write-Host "    $($_.Name)" -ForegroundColor Gray }
     
     # Set PATH and SOCI_BACKENDS_PATH for SOCI to find backends
-    $env:PATH = "$dbTestDir;$vcpkgBinDir;$env:PATH"
+    $env:PATH = "$dbTestDir;$vcpkgConfigBinDir;$env:PATH"
     $env:SOCI_BACKENDS_PATH = $dbTestDir
     
-    # Verify DLLs are present
+    # Verify required DLLs are present
     $coreDll = "$dbTestDir\soci_core_4_0.dll"
     $sqliteDll = "$dbTestDir\soci_sqlite3_4_0.dll"
     if (-not (Test-Path $coreDll)) { Write-Warning "Missing: soci_core_4_0.dll" }
@@ -345,12 +350,11 @@ if (Test-Path $dbTest) {
     Write-Host "Running DB tests from $dbTestDir..."
     Push-Location $dbTestDir
     try {
-        & "fastrules-db-tests.exe"
+        & ".\fastrules-db-tests.exe"
         if ($LASTEXITCODE -ne 0) { Write-Warning "fastrules-db-tests failed with exit code $LASTEXITCODE" }
     } finally {
         Pop-Location
     }
-    #>
 }
 
 # ============================================================================

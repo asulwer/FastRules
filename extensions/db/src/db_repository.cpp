@@ -2,12 +2,17 @@
 #include <fastrules\db_bool.hpp>
 #include <soci\sqlite3\soci-sqlite3.h>
 
+// Declare SOCI's factory registration function (defined in SOCI library)
+extern "C" void register_factory_sqlite3();
+
 // Optional backends — only include if available
 #if __has_include(<soci\postgresql.h>)
 #include <soci\postgresql.h>
+extern "C" void register_factory_postgresql();
 #endif
 #if __has_include(<soci\mysql.h>)
 #include <soci\mysql.h>
+extern "C" void register_factory_mysql();
 #endif
 
 // Windows-specific: Ensure DLLs are found by setting the DLL search path
@@ -30,6 +35,20 @@ namespace {
     } windowsDllSetup;
 }
 #endif
+
+// Static backend registration to avoid dynamic loading issues on Windows
+// This forces the backends to be registered at startup
+struct BackendRegistrar {
+    BackendRegistrar() {
+        register_factory_sqlite3();
+#if __has_include(<soci\postgresql.h>)
+        register_factory_postgresql();
+#endif
+#if __has_include(<soci\mysql.h>)
+        register_factory_mysql();
+#endif
+    }
+} g_backendRegistrar;
 
 namespace fastrules {
 namespace ext {
@@ -409,7 +428,27 @@ void DbVersionRepository::removeAllVersionsForRule(int ruleId) {
 std::shared_ptr<soci::session> DbConnectionFactory::create(
     const std::string& backend,
     const std::string& connectionString) {
-    return std::make_shared<soci::session>(backend, connectionString);
+    // Use backend factory directly instead of dynamic loading by name
+    // This avoids "Failed to find shared library for backend" errors on Windows
+    if (backend == "sqlite3") {
+        soci::connection_parameters params(soci::sqlite3, connectionString);
+        return std::make_shared<soci::session>(params);
+    }
+#if __has_include(<soci\postgresql.h>)
+    else if (backend == "postgresql") {
+        soci::connection_parameters params(soci::postgresql, connectionString);
+        return std::make_shared<soci::session>(params);
+    }
+#endif
+#if __has_include(<soci\mysql.h>)
+    else if (backend == "mysql") {
+        soci::connection_parameters params(soci::mysql, connectionString);
+        return std::make_shared<soci::session>(params);
+    }
+#endif
+    else {
+        throw std::runtime_error("Unsupported backend: " + backend);
+    }
 }
 
 void DbConnectionFactory::initializeSchema(const std::shared_ptr<soci::session>& session) {
