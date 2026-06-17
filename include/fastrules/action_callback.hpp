@@ -137,8 +137,7 @@ public:
      * 
      * @param func Callback receiving (name, handler) pairs
      */
-    void forEachHandler(const std::function<void(const std::string&, 
-                                                  const Handler&)>>& func) const;
+    void forEachHandler(const std::function<void(const std::string&, const Handler&)>& func) const;
 
 private:
     /// @brief Map of registered handlers
