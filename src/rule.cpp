@@ -38,6 +38,10 @@ Rule::Rule(const Rule& other) {
     isCompiled = other.isCompiled;
     isValidated = other.isValidated;
     
+    // Initialize cache members (don't copy cache contents)
+    cacheGeneration_ = 0;
+    cacheMutex_ = std::make_unique<std::mutex>();
+    
     // Note: compiled Lua refs are per-engine, don't copy them
     // They'll be recompiled when compile() is called
     compiledExpressionRef = std::nullopt;
@@ -77,6 +81,11 @@ Rule& Rule::operator=(const Rule& other) {
         rateLimiter = other.rateLimiter;
         isCompiled = other.isCompiled;
         isValidated = other.isValidated;
+        
+        // Reset cache (don't copy cache contents)
+        cache_.clear();
+        cacheGeneration_ = 0;
+        // mutex stays valid
         
         // Reset compiled refs (per-engine)
         compiledExpressionRef = std::nullopt;

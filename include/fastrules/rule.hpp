@@ -661,7 +661,7 @@ private:
     };
 
     mutable std::unordered_map<std::string, CacheEntry> cache_;  ///< Cache storage
-    mutable std::unique_ptr<std::mutex> cacheMutex_;            ///< Cache mutex
+    mutable std::unique_ptr<std::mutex> cacheMutex_ = std::make_unique<std::mutex>();
     mutable int cacheGeneration_ = 0;                             ///< Current cache generation
 
     /**
