@@ -52,6 +52,7 @@
 #include <future>
 #include <memory>
 #include <vector>
+#include <coroutine>
 
 namespace fastrules {
 

@@ -48,6 +48,7 @@
 #include <stdexcept>
 #include <queue>
 #include <atomic>
+#include <coroutine>
 #include <optional>
 
 namespace fastrules {
