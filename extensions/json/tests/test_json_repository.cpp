@@ -1,4 +1,4 @@
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <fastrules/json_repository.hpp>
 #include <filesystem>
 #include <fstream>
@@ -6,13 +6,13 @@
 using namespace fastrules;
 using namespace fastrules::ext;
 
-TEST_CASE("JsonRuleRepository basic CRUD", "[json]") {
+TEST_CASE("JsonRuleRepository basic CRUD") {
     auto tempFile = std::filesystem::temp_directory_path() / "test_rules.json";
     
     // Clean up before test
     std::filesystem::remove(tempFile);
     
-    SECTION("Create and read rule") {
+    SUBCASE("Create and read rule") {
         JsonRuleRepository repo(tempFile);
         
         Rule rule;
@@ -33,7 +33,7 @@ TEST_CASE("JsonRuleRepository basic CRUD", "[json]") {
         REQUIRE(found->priority == 10);
     }
     
-    SECTION("Update existing rule") {
+    SUBCASE("Update existing rule") {
         JsonRuleRepository repo(tempFile);
         
         Rule rule;
@@ -56,7 +56,7 @@ TEST_CASE("JsonRuleRepository basic CRUD", "[json]") {
         REQUIRE(found->priority == 20);
     }
     
-    SECTION("Delete rule") {
+    SUBCASE("Delete rule") {
         JsonRuleRepository repo(tempFile);
         
         Rule rule;
@@ -73,7 +73,7 @@ TEST_CASE("JsonRuleRepository basic CRUD", "[json]") {
         REQUIRE(repo.count() == 0);
     }
     
-    SECTION("Find all rules") {
+    SUBCASE("Find all rules") {
         JsonRuleRepository repo(tempFile);
         
         Rule r1;

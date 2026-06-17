@@ -1,11 +1,11 @@
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <fastrules.hpp>
 #include <fastrules/json_loader.hpp>
 #include <fastrules/xml_loader.hpp>
 
 using namespace fastrules;
 
-TEST_CASE("JSON to XML roundtrip", "[json][xml][integration]") {
+TEST_CASE("JSON to XML roundtrip") {
     std::string json = R"({
         "id": 42,
         "description": "Test roundtrip",

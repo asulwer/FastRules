@@ -262,10 +262,10 @@ void LuaEngine::setupEnvironment() {
     lua_sethook(L, [](lua_State* L2, lua_Debug* ar) {
         (void)ar;
         (void)L2;
-        // DEBUG: disable timeout hook to test if it's causing crashes
-        // if (g_deadline != nullptr && std::chrono::steady_clock::now() > *g_deadline) {
-        //     luaL_error(L2, "execution timed out");
-        // }
+        // Check if deadline has been exceeded
+        if (g_deadline != nullptr && std::chrono::steady_clock::now() > *g_deadline) {
+            luaL_error(L2, "execution timed out");
+        }
     }, LUA_MASKCOUNT, 1000);
 }
 

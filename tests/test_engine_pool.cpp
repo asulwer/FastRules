@@ -1,8 +1,7 @@
 // test_engine_pool.cpp
 // Tests for the engine pool implementation
 
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/catch_approx.hpp>
+#include <doctest/doctest.h>
 #include <iostream>  // For std::cout in benchmark test
 #include "fastrules/engine_pool.hpp"
 #include "fastrules/lua_engine.hpp"
@@ -13,7 +12,7 @@
 
 using namespace fastrules;
 
-TEST_CASE("EnginePool basic push/pop", "[pool]") {
+TEST_CASE("EnginePool basic push/pop") {
     EnginePool pool;
     
     // Create some dummy engines
@@ -21,13 +20,13 @@ TEST_CASE("EnginePool basic push/pop", "[pool]") {
     LuaEngine* engine2 = reinterpret_cast<LuaEngine*>(0x2);
     LuaEngine* engine3 = reinterpret_cast<LuaEngine*>(0x3);
     
-    SECTION("Push and pop single engine") {
+    SUBCASE("Push and pop single engine") {
         pool.push(engine1);
         auto* popped = pool.pop();
         REQUIRE(popped == engine1);
     }
     
-    SECTION("Push and pop multiple engines (LIFO order)") {
+    SUBCASE("Push and pop multiple engines (LIFO order)") {
         pool.push(engine1);
         pool.push(engine2);
         pool.push(engine3);
@@ -39,7 +38,7 @@ TEST_CASE("EnginePool basic push/pop", "[pool]") {
         REQUIRE(pool.pop() == nullptr); // Empty
     }
     
-    SECTION("Pop from empty pool returns nullptr") {
+    SUBCASE("Pop from empty pool returns nullptr") {
         REQUIRE(pool.pop() == nullptr);
     }
 }
@@ -47,7 +46,7 @@ TEST_CASE("EnginePool basic push/pop", "[pool]") {
 // Concurrent test temporarily disabled - test has logic issues causing hangs
 // TODO: Fix test logic (popper threads compete for limited items)
 
-TEST_CASE("EnginePool tagged pointer ABA protection", "[pool][aba]") {
+TEST_CASE("EnginePool tagged pointer ABA protection") {
     EnginePool pool;
     
     // Simulate ABA scenario
@@ -77,7 +76,7 @@ TEST_CASE("EnginePool tagged pointer ABA protection", "[pool][aba]") {
     REQUIRE(pool.pop() == nullptr);
 }
 
-TEST_CASE("EnginePool memory ordering", "[pool][memory]") {
+TEST_CASE("EnginePool memory ordering") {
     EnginePool pool;
     constexpr int NUM_ITERATIONS = 10000;
     
@@ -117,7 +116,7 @@ TEST_CASE("EnginePool memory ordering", "[pool][memory]") {
     REQUIRE(sumPop > 0);
 }
 
-TEST_CASE("EnginePool performance benchmark", "[pool][benchmark]") {
+TEST_CASE("EnginePool performance benchmark") {
     EnginePool pool;
     constexpr int NUM_OPERATIONS = 100000;
     constexpr int NUM_THREADS = 4;

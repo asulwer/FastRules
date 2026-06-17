@@ -52,18 +52,20 @@ target_link_libraries(fastrules-db PUBLIC
     SOCI::soci_core
 )
 
-# Try to find backend library
-find_library(SOCI_SQLITE3_LIB
-    NAMES soci_sqlite3_4_0 soci_sqlite3
-    PATHS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib"
-          "${CMAKE_PREFIX_PATH}/lib"
-          "C:/tools/vcpkg/installed/x64-windows/lib"
-)
-
-if(SOCI_SQLITE3_LIB)
-    target_link_libraries(fastrules-db PUBLIC ${SOCI_SQLITE3_LIB})
-elseif(TARGET SOCI::soci_sqlite3)
+# Link sqlite3 backend directly to ensure it's available
+if(TARGET SOCI::soci_sqlite3)
     target_link_libraries(fastrules-db PUBLIC SOCI::soci_sqlite3)
+else()
+    # Try to find backend library
+    find_library(SOCI_SQLITE3_LIB
+        NAMES soci_sqlite3_4_0 soci_sqlite3
+        PATHS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/$<$<CONFIG:Debug>:debug/>lib"
+              "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib"
+              "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib"
+    )
+    if(SOCI_SQLITE3_LIB)
+        target_link_libraries(fastrules-db PUBLIC ${SOCI_SQLITE3_LIB})
+    endif()
 endif()
 
 # Examples

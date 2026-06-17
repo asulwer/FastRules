@@ -1,58 +1,58 @@
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <fastrules.hpp>
 
 using namespace fastrules;
 
-TEST_CASE("LuaEngine creation", "[lua]") {
+TEST_CASE("LuaEngine creation") {
     REQUIRE_NOTHROW(LuaEngine());
 }
 
-TEST_CASE("LuaEngine expression compilation", "[lua]") {
+TEST_CASE("LuaEngine expression compilation") {
     LuaEngine engine;
 
-    SECTION("Simple boolean") {
+    SUBCASE("Simple boolean") {
         auto ref = engine.compileExpression("true");
         REQUIRE(ref.has_value());
         engine.releaseRef(ref.value());
     }
 
-    SECTION("Comparison") {
+    SUBCASE("Comparison") {
         auto ref = engine.compileExpression("value > 10");
         REQUIRE(ref.has_value());
         engine.releaseRef(ref.value());
     }
 
-    SECTION("String operation") {
+    SUBCASE("String operation") {
         auto ref = engine.compileExpression("string.len(name) > 0");
         REQUIRE(ref.has_value());
         engine.releaseRef(ref.value());
     }
 
-    SECTION("Invalid syntax throws") {
-        REQUIRE_THROWS(engine.compileExpression("if then"));
+    SUBCASE("Invalid syntax throws") {
+        REQUIRE_THROWS([&](){ (void)engine.compileExpression("if then"); }());
     }
 }
 
-TEST_CASE("LuaEngine action compilation", "[lua]") {
+TEST_CASE("LuaEngine action compilation") {
     LuaEngine engine;
 
-    SECTION("Simple assignment") {
+    SUBCASE("Simple assignment") {
         auto ref = engine.compileAction("x = 5");
         REQUIRE(ref.has_value());
         engine.releaseRef(ref.value());
     }
 
-    SECTION("Empty action returns nullopt") {
+    SUBCASE("Empty action returns nullopt") {
         auto ref = engine.compileAction("");
         REQUIRE_FALSE(ref.has_value());
     }
 }
 
-TEST_CASE("LuaEngine expression evaluation", "[lua]") {
+TEST_CASE("LuaEngine expression evaluation") {
     LuaEngine engine;
     RuleContext ctx;
 
-    SECTION("True literal") {
+    SUBCASE("True literal") {
         auto ref = engine.compileExpression("true");
         std::vector<RuleParameter> params;
         bool result = engine.evaluateExpression(ref.value(), params, ctx);
@@ -60,7 +60,7 @@ TEST_CASE("LuaEngine expression evaluation", "[lua]") {
         engine.releaseRef(ref.value());
     }
 
-    SECTION("False literal") {
+    SUBCASE("False literal") {
         auto ref = engine.compileExpression("false");
         std::vector<RuleParameter> params;
         bool result = engine.evaluateExpression(ref.value(), params, ctx);
@@ -68,7 +68,7 @@ TEST_CASE("LuaEngine expression evaluation", "[lua]") {
         engine.releaseRef(ref.value());
     }
 
-    SECTION("Comparison with parameter") {
+    SUBCASE("Comparison with parameter") {
         auto ref = engine.compileExpression("value >= 18");
         std::vector<RuleParameter> params;
         params.emplace_back("value", 25.0);
@@ -78,11 +78,11 @@ TEST_CASE("LuaEngine expression evaluation", "[lua]") {
     }
 }
 
-TEST_CASE("LuaEngine predicate functions", "[lua]") {
+TEST_CASE("LuaEngine predicate functions") {
     LuaEngine engine;
     RuleContext ctx;
 
-    SECTION("isNotNull with nil") {
+    SUBCASE("isNotNull with nil") {
         auto ref = engine.compileExpression("isNotNull(value)");
         std::vector<RuleParameter> params;
         // Don't set value - it will be nil
@@ -91,7 +91,7 @@ TEST_CASE("LuaEngine predicate functions", "[lua]") {
         engine.releaseRef(ref.value());
     }
 
-    SECTION("isEmpty string") {
+    SUBCASE("isEmpty string") {
         auto ref = engine.compileExpression("isEmpty(str)");
         std::vector<RuleParameter> params;
         params.emplace_back("str", std::string(""));
@@ -100,7 +100,7 @@ TEST_CASE("LuaEngine predicate functions", "[lua]") {
         engine.releaseRef(ref.value());
     }
 
-    SECTION("startsWith") {
+    SUBCASE("startsWith") {
         auto ref = engine.compileExpression("startsWith(str, \"Hello\")");
         std::vector<RuleParameter> params;
         params.emplace_back("str", std::string("Hello World"));
@@ -109,7 +109,7 @@ TEST_CASE("LuaEngine predicate functions", "[lua]") {
         engine.releaseRef(ref.value());
     }
 
-    SECTION("inRange") {
+    SUBCASE("inRange") {
         auto ref = engine.compileExpression("inRange(val, 0, 100)");
         std::vector<RuleParameter> params;
         params.emplace_back("val", 50.0);
@@ -119,18 +119,18 @@ TEST_CASE("LuaEngine predicate functions", "[lua]") {
     }
 }
 
-TEST_CASE("LuaEngine coroutine support", "[lua][coroutine]") {
+TEST_CASE("LuaEngine coroutine support") {
     LuaEngine engine;
     RuleContext ctx;
 
-    SECTION("Compile coroutine") {
+    SUBCASE("Compile coroutine") {
         auto ref = engine.compileCoroutine("true");
         REQUIRE(ref.has_value());
         REQUIRE(engine.isCoroutine(ref.value()));
         engine.releaseRef(ref.value());
     }
 
-    SECTION("Coroutine is not regular expression") {
+    SUBCASE("Coroutine is not regular expression") {
         auto coroRef = engine.compileCoroutine("true");
         auto exprRef = engine.compileExpression("true");
         
@@ -141,14 +141,14 @@ TEST_CASE("LuaEngine coroutine support", "[lua][coroutine]") {
         engine.releaseRef(exprRef.value());
     }
 
-    SECTION("Resume coroutine") {
+    SUBCASE("Resume coroutine") {
         auto ref = engine.compileCoroutine("true");
         auto status = engine.resumeCoroutine(ref.value(), {}, ctx);
         REQUIRE(status == true);
         engine.releaseRef(ref.value());
     }
 
-    SECTION("Resume coroutine with parameters") {
+    SUBCASE("Resume coroutine with parameters") {
         auto ref = engine.compileCoroutine("x > 10");
         std::vector<RuleParameter> params;
         params.emplace_back("x", 15);
@@ -158,7 +158,7 @@ TEST_CASE("LuaEngine coroutine support", "[lua][coroutine]") {
         engine.releaseRef(ref.value());
     }
 
-    SECTION("Clone engine for thread safety") {
+    SUBCASE("Clone engine for thread safety") {
         auto ref = engine.compileExpression("true");
         auto cloned = engine.clone();
         
@@ -175,7 +175,3 @@ TEST_CASE("LuaEngine coroutine support", "[lua][coroutine]") {
         cloned->releaseRef(clonedRef.value());
     }
 }
-
-
-
-

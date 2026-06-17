@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.28)
 
-if(NOT TARGET Catch2::Catch2WithMain)
-    find_package(Catch2 3 REQUIRED)
+# doctest is already available from parent if building in-tree
+if(NOT TARGET doctest::doctest)
+    find_package(doctest REQUIRED)
 endif()
 
 # SQLite backend for testing
@@ -10,17 +11,16 @@ if(NOT TARGET SOCI::soci_sqlite3)
 endif()
 
 add_executable(fastrules-db-tests
+    test_main.cpp
     test_db_repository.cpp
 )
+set_property(TARGET fastrules-db-tests PROPERTY FOLDER "Extensions/DB/Tests")
 
 target_link_libraries(fastrules-db-tests PRIVATE
     fastrules-db
-    Catch2::Catch2WithMain
-    ${SOCI_SQLITE3_LIB}
+    doctest::doctest
+    SOCI::soci_sqlite3
 )
 
-include(Catch)
-# Skip automatic test discovery on Windows (causes MSB3073 when DLLs not in PATH)
-if(NOT WIN32)
-    catch_discover_tests(fastrules-db-tests)
-endif()
+# Tests are registered directly with add_test
+add_test(NAME fastrules-db-tests COMMAND fastrules-db-tests)

@@ -40,7 +40,7 @@ FastWorks uses FetchContent to manage dependencies. CMake fetches Lua 5.4 direct
 ```json
 // vcpkg.json
 {
-  "dependencies": ["lua", "catch2", "nlohmann-json"]
+  "dependencies": ["lua", "doctest", "nlohmann-json"]
 }
 ```
 

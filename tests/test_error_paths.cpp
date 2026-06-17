@@ -1,7 +1,7 @@
 // test_error_paths.cpp
 // Tests for error handling, edge cases, and failure modes.
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <fastrules.hpp>
 #include <fastrules/rate_limiter.hpp>
 #ifdef FASTRULES_USE_SOL2
@@ -16,7 +16,7 @@ using namespace fastrules;
 // Timeout handling
 // ============================================================================
 
-TEST_CASE("Rule timeout fires on long-running expression", "[rule][timeout][!mayfail]") {
+TEST_CASE("Rule timeout fires on long-running expression") {
     LuaEngine engine;
 
     Rule rule;
@@ -36,7 +36,7 @@ TEST_CASE("Rule timeout fires on long-running expression", "[rule][timeout][!may
     REQUIRE(result.ruleName == "rule1");
 }
 
-TEST_CASE("Rule timeout does not fire on fast expression", "[rule][timeout]") {
+TEST_CASE("Rule timeout does not fire on fast expression") {
     LuaEngine engine;
 
     Rule rule;
@@ -58,7 +58,7 @@ TEST_CASE("Rule timeout does not fire on fast expression", "[rule][timeout]") {
 // Cache expiration
 // ============================================================================
 
-TEST_CASE("Cache entry expires after TTL", "[rule][cache]") {
+TEST_CASE("Cache entry expires after TTL") {
     LuaEngine engine;
 
     Rule rule;
@@ -82,7 +82,7 @@ TEST_CASE("Cache entry expires after TTL", "[rule][cache]") {
     REQUIRE(r3.isSuccess());
 }
 
-TEST_CASE("Cache disabled when cacheDuration not set", "[rule][cache]") {
+TEST_CASE("Cache disabled when cacheDuration not set") {
     LuaEngine engine;
 
     Rule rule;
@@ -104,7 +104,7 @@ TEST_CASE("Cache disabled when cacheDuration not set", "[rule][cache]") {
 // Lua syntax errors and runtime errors
 // ============================================================================
 
-TEST_CASE("Rule compilation fails on invalid Lua syntax", "[rule][errors]") {
+TEST_CASE("Rule compilation fails on invalid Lua syntax") {
     LuaEngine engine;
 
     Rule rule;
@@ -120,7 +120,7 @@ TEST_CASE("Rule compilation fails on invalid Lua syntax", "[rule][errors]") {
     REQUIRE_FALSE(rule.getIsCompiled());
 }
 
-TEST_CASE("Rule execution handles runtime error gracefully", "[rule][errors]") {
+TEST_CASE("Rule execution handles runtime error gracefully") {
     LuaEngine engine;
 
     Rule rule;
@@ -137,7 +137,7 @@ TEST_CASE("Rule execution handles runtime error gracefully", "[rule][errors]") {
     REQUIRE(result.metrics.failureCount > 0);
 }
 
-TEST_CASE("Rule execution handles missing parameter", "[rule][errors]") {
+TEST_CASE("Rule execution handles missing parameter") {
     LuaEngine engine;
 
     Rule rule;
@@ -157,7 +157,7 @@ TEST_CASE("Rule execution handles missing parameter", "[rule][errors]") {
 // Validation - dependency existence
 // ============================================================================
 
-TEST_CASE("Validation detects missing dependency", "[rule][validation][errors]") {
+TEST_CASE("Validation detects missing dependency") {
     Rule rule1;
     rule1.id = 1;
     rule1.expression = "true";
@@ -169,7 +169,7 @@ TEST_CASE("Validation detects missing dependency", "[rule][validation][errors]")
     REQUIRE_THROWS(rule1.validate(allRules));
 }
 
-TEST_CASE("Validation allows self-dependency (known limitation)", "[rule][validation][errors]") {
+TEST_CASE("Validation allows self-dependency (known limitation)") {
     Rule rule;
     rule.id = 1;
     rule.expression = "true";
@@ -186,7 +186,7 @@ TEST_CASE("Validation allows self-dependency (known limitation)", "[rule][valida
 // Circular dependency detection
 // ============================================================================
 
-TEST_CASE("Circular dependency A -> B -> A detected", "[rule][validation][circular]") {
+TEST_CASE("Circular dependency A -> B -> A detected") {
     Rule a;
     a.id = 1;
     a.dependsOnRuleName = "rule3";
@@ -200,7 +200,7 @@ TEST_CASE("Circular dependency A -> B -> A detected", "[rule][validation][circul
     REQUIRE_THROWS_AS(a.validate(all), RuleValidationException);
 }
 
-TEST_CASE("Circular dependency A -> B -> C -> A detected", "[rule][validation][circular]") {
+TEST_CASE("Circular dependency A -> B -> C -> A detected") {
     Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule3";
     Rule b; b.id = 1; b.name = "rule1"; b.dependsOnRuleName = "rule5";
     Rule c; c.id = 1; c.name = "rule1"; c.dependsOnRuleName = "rule4";
@@ -210,7 +210,7 @@ TEST_CASE("Circular dependency A -> B -> C -> A detected", "[rule][validation][c
     REQUIRE_THROWS_AS(a.validate(all), RuleValidationException);
 }
 
-TEST_CASE("Self-dependency detected", "[rule][validation][circular]") {
+TEST_CASE("Self-dependency detected") {
     Rule a;
     a.id = 1;
     a.dependsOnRuleName = "rule4";
@@ -220,7 +220,7 @@ TEST_CASE("Self-dependency detected", "[rule][validation][circular]") {
     REQUIRE_THROWS_AS(a.validate(all), RuleValidationException);
 }
 
-TEST_CASE("No circular dependency passes validation", "[rule][validation][circular]") {
+TEST_CASE("No circular dependency passes validation") {
     Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule2";
     Rule b; b.id = 2; b.name = "rule2"; // No dependency
 
@@ -230,7 +230,7 @@ TEST_CASE("No circular dependency passes validation", "[rule][validation][circul
     REQUIRE_NOTHROW(b.validate(all));
 }
 
-TEST_CASE("Circular dependency via child rules detected", "[rule][validation][circular]") {
+TEST_CASE("Circular dependency via child rules detected") {
     Rule parent; parent.id = 1; parent.name = "rule1";
     
     auto child = std::make_shared<Rule>();
@@ -245,7 +245,7 @@ TEST_CASE("Circular dependency via child rules detected", "[rule][validation][ci
     REQUIRE_THROWS_AS(parent.validate(all), RuleValidationException);
 }
 
-TEST_CASE("Diamond dependency passes validation", "[rule][validation][circular]") {
+TEST_CASE("Diamond dependency passes validation") {
     Rule top;    top.id = 1; top.name = "rule1";
     Rule left;   left.id = 2; left.name = "rule2"; left.dependsOnRuleName = "rule1";
     Rule right;  right.id = 3; right.name = "rule3"; right.dependsOnRuleName = "rule1";
@@ -256,7 +256,7 @@ TEST_CASE("Diamond dependency passes validation", "[rule][validation][circular]"
     REQUIRE_NOTHROW(bottom.validate(all));
 }
 
-TEST_CASE("Validation detects empty rule ID", "[rule][validation][errors]") {
+TEST_CASE("Validation detects empty rule ID") {
     Rule a; a.id = 0;
     Rule b; b.id = 1;
 
@@ -265,7 +265,7 @@ TEST_CASE("Validation detects empty rule ID", "[rule][validation][errors]") {
     REQUIRE_THROWS_AS(a.validate(all), RuleValidationException);
 }
 
-TEST_CASE("Validation detects duplicate rule IDs", "[rule][validation][errors]") {
+TEST_CASE("Validation detects duplicate rule IDs") {
     Rule a; a.id = 1;
     Rule b; b.id = 1;
 
@@ -278,7 +278,7 @@ TEST_CASE("Validation detects duplicate rule IDs", "[rule][validation][errors]")
 // Invalid rule configuration
 // ============================================================================
 
-TEST_CASE("Validation fails on zero timeout", "[rule][validation][errors]") {
+TEST_CASE("Validation fails on zero timeout") {
     Rule rule;
     rule.id = 1;
     rule.expression = "true";
@@ -290,7 +290,7 @@ TEST_CASE("Validation fails on zero timeout", "[rule][validation][errors]") {
 // Rate limiting
 // ============================================================================
 
-TEST_CASE("Rate limiter blocks excessive calls", "[rule][rate-limit]") {
+TEST_CASE("Rate limiter blocks excessive calls") {
     LuaEngine engine;
     auto limiter = std::make_shared<RateLimiter>();
 
@@ -323,7 +323,7 @@ TEST_CASE("Rate limiter blocks excessive calls", "[rule][rate-limit]") {
 // Child rule execution
 // ============================================================================
 
-TEST_CASE("Parent rule executes child rules", "[rule][children]") {
+TEST_CASE("Parent rule executes child rules") {
     LuaEngine engine;
 
     auto child = std::make_shared<Rule>();
@@ -349,7 +349,7 @@ TEST_CASE("Parent rule executes child rules", "[rule][children]") {
     }
 }
 
-TEST_CASE("Parent fails when child fails", "[rule][children]") {
+TEST_CASE("Parent fails when child fails") {
     LuaEngine engine;
 
     auto child = std::make_shared<Rule>();
@@ -378,7 +378,7 @@ TEST_CASE("Parent fails when child fails", "[rule][children]") {
 // Workflow edge cases
 // ============================================================================
 
-TEST_CASE("Workflow with no rules is valid", "[workflow][edge]") {
+TEST_CASE("Workflow with no rules is valid") {
     LuaEngine engine;
     Workflow workflow;
     workflow.id = 1;
@@ -391,7 +391,7 @@ TEST_CASE("Workflow with no rules is valid", "[workflow][edge]") {
     REQUIRE(results.empty());
 }
 
-TEST_CASE("Workflow execution with all inactive rules", "[workflow][edge]") {
+TEST_CASE("Workflow execution with all inactive rules") {
     LuaEngine engine;
     Workflow workflow;
     workflow.id = 1;
@@ -410,7 +410,7 @@ TEST_CASE("Workflow execution with all inactive rules", "[workflow][edge]") {
     REQUIRE(results.empty());
 }
 
-TEST_CASE("Workflow detects missing dependency", "[workflow][errors]") {
+TEST_CASE("Workflow detects missing dependency") {
     LuaEngine engine;
     Workflow workflow;
     workflow.id = 1;
@@ -429,7 +429,7 @@ TEST_CASE("Workflow detects missing dependency", "[workflow][errors]") {
 // Parameter type mismatches
 // ============================================================================
 
-TEST_CASE("Wrong parameter type causes execution failure", "[rule][errors][types]") {
+TEST_CASE("Wrong parameter type causes execution failure") {
     LuaEngine engine;
 
     Rule rule;
@@ -451,7 +451,7 @@ TEST_CASE("Wrong parameter type causes execution failure", "[rule][errors][types
 // LuaEngine edge cases
 // ============================================================================
 
-TEST_CASE("LuaEngine handles empty parameter list", "[lua][edge]") {
+TEST_CASE("LuaEngine handles empty parameter list") {
     LuaEngine engine;
 
     Rule rule;
@@ -466,7 +466,7 @@ TEST_CASE("LuaEngine handles empty parameter list", "[lua][edge]") {
     REQUIRE(result.isSuccess());
 }
 
-TEST_CASE("LuaEngine handles nil return from action", "[lua][edge]") {
+TEST_CASE("LuaEngine handles nil return from action") {
     LuaEngine engine;
     RuleContext ctx;
 
@@ -483,7 +483,7 @@ TEST_CASE("LuaEngine handles nil return from action", "[lua][edge]") {
     REQUIRE(result.metrics.evaluationCount >= 0);
 }
 
-TEST_CASE("LuaEngine handles boolean string conversion", "[lua][edge]") {
+TEST_CASE("LuaEngine handles boolean string conversion") {
     LuaEngine engine;
 
     Rule rule;
@@ -505,7 +505,7 @@ TEST_CASE("LuaEngine handles boolean string conversion", "[lua][edge]") {
 // Circular dependency helper methods
 // ============================================================================
 
-TEST_CASE("hasCircularDependency detects self-dependency", "[rule][circular-dependency]") {
+TEST_CASE("hasCircularDependency detects self-dependency") {
     Rule a;
     a.id = 1;
     a.name = "rule1";
@@ -516,7 +516,7 @@ TEST_CASE("hasCircularDependency detects self-dependency", "[rule][circular-depe
     REQUIRE(a.hasCircularDependency(all) == true);
 }
 
-TEST_CASE("hasCircularDependency detects A -> B -> A", "[rule][circular-dependency]") {
+TEST_CASE("hasCircularDependency detects A -> B -> A") {
     Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule2";
     Rule b; b.id = 2; b.name = "rule2"; b.dependsOnRuleName = "rule1";
 
@@ -526,7 +526,7 @@ TEST_CASE("hasCircularDependency detects A -> B -> A", "[rule][circular-dependen
     REQUIRE(b.hasCircularDependency(all) == true);
 }
 
-TEST_CASE("hasCircularDependency detects A -> B -> C -> A", "[rule][circular-dependency]") {
+TEST_CASE("hasCircularDependency detects A -> B -> C -> A") {
     Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule2";
     Rule b; b.id = 2; b.name = "rule2"; b.dependsOnRuleName = "rule3";
     Rule c; c.id = 3; c.name = "rule3"; c.dependsOnRuleName = "rule1";
@@ -538,7 +538,7 @@ TEST_CASE("hasCircularDependency detects A -> B -> C -> A", "[rule][circular-dep
     REQUIRE(c.hasCircularDependency(all) == true);
 }
 
-TEST_CASE("hasCircularDependency returns false for long chain without cycle", "[rule][circular-dependency]") {
+TEST_CASE("hasCircularDependency returns false for long chain without cycle") {
     Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule2";
     Rule b; b.id = 2; b.name = "rule2"; b.dependsOnRuleName = "rule3";
     Rule c; c.id = 3; c.name = "rule3"; c.dependsOnRuleName = "rule4";
@@ -552,7 +552,7 @@ TEST_CASE("hasCircularDependency returns false for long chain without cycle", "[
     REQUIRE(d.hasCircularDependency(all) == false);
 }
 
-TEST_CASE("hasCircularDependency returns false for no dependency", "[rule][circular-dependency]") {
+TEST_CASE("hasCircularDependency returns false for no dependency") {
     Rule a; a.id = 1; a.name = "rule1"; // No dependency
 
     std::vector<std::reference_wrapper<const Rule>> all = {a};
@@ -560,7 +560,7 @@ TEST_CASE("hasCircularDependency returns false for no dependency", "[rule][circu
     REQUIRE(a.hasCircularDependency(all) == false);
 }
 
-TEST_CASE("hasCircularDependency handles missing dependency", "[rule][circular-dependency]") {
+TEST_CASE("hasCircularDependency handles missing dependency") {
     Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule3"; // B not in allRules
 
     std::vector<std::reference_wrapper<const Rule>> all = {a};
@@ -573,7 +573,7 @@ TEST_CASE("hasCircularDependency handles missing dependency", "[rule][circular-d
 // getDependencyChain tests
 // ============================================================================
 
-TEST_CASE("getDependencyChain returns just ID for no dependency", "[rule][circular-dependency]") {
+TEST_CASE("getDependencyChain returns just ID for no dependency") {
     Rule a; a.id = 1;
 
     std::vector<std::reference_wrapper<const Rule>> all = {a};
@@ -585,7 +585,7 @@ TEST_CASE("getDependencyChain returns just ID for no dependency", "[rule][circul
     }
 }
 
-TEST_CASE("getDependencyChain returns chain for single dependency", "[rule][circular-dependency]") {
+TEST_CASE("getDependencyChain returns chain for single dependency") {
     Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule2";
     Rule b; b.id = 2; b.name = "rule2"; // No dependency
 
@@ -599,7 +599,7 @@ TEST_CASE("getDependencyChain returns chain for single dependency", "[rule][circ
     }
 }
 
-TEST_CASE("getDependencyChain returns full chain for long chain", "[rule][circular-dependency]") {
+TEST_CASE("getDependencyChain returns full chain for long chain") {
     Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule2";
     Rule b; b.id = 2; b.name = "rule2"; b.dependsOnRuleName = "rule3";
     Rule c; c.id = 3; c.name = "rule3"; c.dependsOnRuleName = "rule4";
@@ -617,7 +617,7 @@ TEST_CASE("getDependencyChain returns full chain for long chain", "[rule][circul
     }
 }
 
-TEST_CASE("getDependencyChain handles self-dependency cycle", "[rule][circular-dependency]") {
+TEST_CASE("getDependencyChain handles self-dependency cycle") {
     Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule1";
 
     std::vector<std::reference_wrapper<const Rule>> all = {a};
@@ -632,7 +632,7 @@ TEST_CASE("getDependencyChain handles self-dependency cycle", "[rule][circular-d
     }
 }
 
-TEST_CASE("getDependencyChain handles A -> B -> A cycle", "[rule][circular-dependency]") {
+TEST_CASE("getDependencyChain handles A -> B -> A cycle") {
     Rule a; a.id = 1; a.name = "rule1"; a.dependsOnRuleName = "rule2";
     Rule b; b.id = 2; b.name = "rule2"; b.dependsOnRuleName = "rule1";
 
@@ -653,7 +653,7 @@ TEST_CASE("getDependencyChain handles A -> B -> A cycle", "[rule][circular-depen
 // Builder dependsOn with validation tests
 // ============================================================================
 
-TEST_CASE("Builder dependsOn without validation allows cycle", "[rule][builder][circular-dependency]") {
+TEST_CASE("Builder dependsOn without validation allows cycle") {
     // This should NOT throw because we're using the simple dependsOn
     auto ruleA = Rule::Builder(4).dependsOn("rule2").build();
     auto ruleB = Rule::Builder(3).dependsOn("rule1").build();
@@ -663,7 +663,7 @@ TEST_CASE("Builder dependsOn without validation allows cycle", "[rule][builder][
     REQUIRE(ruleB->dependsOnRuleName == "rule1");
 }
 
-TEST_CASE("Builder dependsOn with validation throws on self-dependency", "[rule][builder][circular-dependency]") {
+TEST_CASE("Builder dependsOn with validation throws on self-dependency") {
     Rule a; a.id = 1; a.name = "rule1";
     std::vector<std::reference_wrapper<const Rule>> all = {a};
 
@@ -674,7 +674,7 @@ TEST_CASE("Builder dependsOn with validation throws on self-dependency", "[rule]
     );
 }
 
-TEST_CASE("Builder dependsOn with validation throws on A -> B -> A", "[rule][builder][circular-dependency]") {
+TEST_CASE("Builder dependsOn with validation throws on A -> B -> A") {
     Rule b; b.id = 1; b.name = "rule1"; b.dependsOnRuleName = "rule4";
     Rule a; a.id = 4; a.name = "rule4"; // The rule we're building
     std::vector<std::reference_wrapper<const Rule>> all = {b, a};
@@ -686,7 +686,7 @@ TEST_CASE("Builder dependsOn with validation throws on A -> B -> A", "[rule][bui
     );
 }
 
-TEST_CASE("Builder dependsOn with validation passes for valid chain", "[rule][builder][circular-dependency]") {
+TEST_CASE("Builder dependsOn with validation passes for valid chain") {
     Rule b; b.id = 1; b.name = "rule1"; b.dependsOnRuleName = "rule5";
     Rule c; c.id = 2; c.name = "rule2"; // No dependency
     std::vector<std::reference_wrapper<const Rule>> all = {b, c};
@@ -696,7 +696,7 @@ TEST_CASE("Builder dependsOn with validation passes for valid chain", "[rule][bu
     REQUIRE(ruleA->dependsOnRuleName == "rule2");
 }
 
-TEST_CASE("Builder dependsOn with validation passes for long chain", "[rule][builder][circular-dependency]") {
+TEST_CASE("Builder dependsOn with validation passes for long chain") {
     Rule b; b.id = 1; b.name = "rule1"; b.dependsOnRuleName = "rule5";
     Rule c; c.id = 2; c.name = "rule2"; b.dependsOnRuleName = "rule10";
     Rule d; d.id = 3; d.name = "rule3"; b.dependsOnRuleName = "rule11";
@@ -707,4 +707,3 @@ TEST_CASE("Builder dependsOn with validation passes for long chain", "[rule][bui
     auto ruleA = Rule::Builder(6).dependsOn("rule1", all).build();
     REQUIRE(ruleA->dependsOnRuleName == "rule1");
 }
-

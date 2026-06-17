@@ -79,7 +79,7 @@ target_link_libraries(your_app PRIVATE fastrules)
 
 | Option | Default | Description |
 |---|---|---|
-| `FASTRULES_BUILD_TESTS` | `ON` | Catch2 test suite |
+| `FASTRULES_BUILD_TESTS` | `ON` | doctest test suite |
 | `FASTRULES_BUILD_EXAMPLES` | `ON` | Example programs |
 | `FASTRULES_BUILD_EXTENSIONS` | `OFF` | JSON, XML, DB extensions |
 | `FASTRULES_BUILD_DB` | `OFF` | Database extension (requires SOCI) |

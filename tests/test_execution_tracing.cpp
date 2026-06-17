@@ -1,9 +1,9 @@
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <fastrules.hpp>
 
 using namespace fastrules;
 
-TEST_CASE("ExecutionTracer basic", "[execution_tracing]") {
+TEST_CASE("ExecutionTracer basic") {
     ExecutionTracer tracer(1);
 
     tracer.start();
@@ -21,7 +21,7 @@ TEST_CASE("ExecutionTracer basic", "[execution_tracing]") {
     REQUIRE(trace.overallSuccess);
 }
 
-TEST_CASE("ExecutionTrace query methods", "[execution_tracing]") {
+TEST_CASE("ExecutionTrace query methods") {
     ExecutionTracer tracer(2);
     tracer.start();
 
@@ -67,7 +67,7 @@ TEST_CASE("ExecutionTrace query methods", "[execution_tracing]") {
     REQUIRE(slowest->ruleName == "rule2");
 }
 
-TEST_CASE("ExecutionTrace JSON serialization", "[execution_tracing]") {
+TEST_CASE("ExecutionTrace JSON serialization") {
     ExecutionTracer tracer(3);
     tracer.start();
 
@@ -78,7 +78,7 @@ TEST_CASE("ExecutionTrace JSON serialization", "[execution_tracing]") {
     REQUIRE(true);
 }
 
-TEST_CASE("Workflow executeWithTrace", "[execution_tracing]") {
+TEST_CASE("Workflow executeWithTrace") {
     LuaEngine engine;
     Workflow workflow;
     workflow.id = 1;

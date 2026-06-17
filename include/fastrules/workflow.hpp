@@ -36,7 +36,7 @@ public:
 
     Workflow() = default;
     ~Workflow();  // Defined in .cpp where LuaEngine is complete
-    
+
     // Non-copyable (due to std::mutex), but movable
     Workflow(const Workflow&) = delete;
     Workflow& operator=(const Workflow&) = delete;
@@ -57,7 +57,7 @@ public:
     // Execution modes
     // Synchronous sequential execution - rules execute one at a time
     [[nodiscard]] std::vector<RuleResult> execute(LuaEngine& engine, const std::vector<RuleParameter>& parameters);
-    
+
     // Parallel execution - rules in each dependency level execute concurrently
     // NOTE: Creates thread pool per execution. For repeated execution, use AsyncWorkflow.
     // See docs/parallel-execution.md for executeParallel vs AsyncWorkflow guidance.
@@ -77,6 +77,21 @@ public:
     // Set to SIZE_MAX to always use parallel
     void setAdaptiveThreshold(size_t threshold) { adaptiveThreshold_ = threshold; }
     [[nodiscard]] size_t getAdaptiveThreshold() const { return adaptiveThreshold_; }
+
+    // Enable/disable auto-detection of optimal threshold
+    // When enabled, the system periodically tests both sequential and parallel execution
+    // and adjusts the threshold based on measured performance
+    void enableAutoDetection(bool enable) { autoDetectThreshold_ = enable; }
+    [[nodiscard]] bool isAutoDetectionEnabled() const { return autoDetectThreshold_; }
+
+    // Get performance statistics from auto-detection
+    // Returns average execution time in microseconds
+    [[nodiscard]] double getSequentialAvgTime() const { return sequentialAvgTime_; }
+    [[nodiscard]] double getParallelAvgTime() const { return parallelAvgTime_; }
+
+    // Get number of profiling runs for each mode
+    [[nodiscard]] size_t getSequentialRuns() const { return sequentialRuns_; }
+    [[nodiscard]] size_t getParallelRuns() const { return parallelRuns_; }
 
     // Streaming execution -- yields results as they complete
     [[nodiscard]] StreamingResult executeStreaming(LuaEngine& engine, const std::vector<RuleParameter>& parameters);
@@ -130,17 +145,18 @@ private:
 
     // Helper: recursively collect actions from rules and child rules
     void collectActions(const std::vector<std::shared_ptr<Rule>>& ruleList, std::vector<std::string>& out) const;
-    
+
     // Adaptive execution threshold
     // Rules <= threshold use sequential, > threshold use parallel
     // Can be configured at runtime, or use auto-detection
     size_t adaptiveThreshold_ = 4;  // Default based on benchmarks
-    
-    // Performance tracking for auto-detection
+    bool autoDetectThreshold_ = false;  // Disabled by default
+
+    // Performance tracking for auto-detection (rolling averages in microseconds)
     mutable double sequentialAvgTime_ = 0.0;
     mutable double parallelAvgTime_ = 0.0;
-    mutable size_t executionCount_ = 0;
-    static constexpr size_t PROFILING_INTERVAL = 100;  // Check every N executions
+    mutable size_t sequentialRuns_ = 0;
+    mutable size_t parallelRuns_ = 0;
 
     // Helper: get next available engine from the pool (exclusive checkout)
     LuaEngine* acquireEngine();

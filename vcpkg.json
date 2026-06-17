@@ -11,30 +11,42 @@
     },
     {
       "name": "spdlog",
-      "version>=": "1.14.0"
+      "version>=": "1.14.0",
+      "default-features": false
     }
   ],
   "features": {
     "json": {
       "description": "JSON persistence and serialization support",
-      "dependencies": ["nlohmann-json"]
+      "dependencies": [
+        {
+          "name": "nlohmann-json",
+          "default-features": false
+        }
+      ]
     },
     "xml": {
       "description": "XML persistence support",
-      "dependencies": ["pugixml"]
+      "dependencies": [
+        {
+          "name": "pugixml",
+          "default-features": false
+        }
+      ]
     },
     "db": {
       "description": "Database persistence via SOCI with SQLite3 support",
       "dependencies": [
         {
           "name": "soci",
-          "features": ["sqlite3"]
+          "features": ["sqlite3"],
+          "default-features": false
         }
       ]
     },
     "tests": {
       "description": "Build test suite",
-      "dependencies": ["catch2"]
+      "dependencies": ["doctest"]
     }
   }
 }

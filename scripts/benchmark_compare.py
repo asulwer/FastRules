@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
 Benchmark result parser and comparator for FastRules.
-Parses Catch2 console output (BENCHMARK macro results).
+NOTE: Benchmarks were removed when switching from Catch2 to doctest.
+Doctest does not have built-in benchmarking support.
 
 Usage:
-    ./build/tests/fastrules_tests "[benchmark]" --reporter=console > benchmark.txt
-    python scripts/benchmark_compare.py benchmark.txt
-    python scripts/benchmark_compare.py benchmark.txt --baseline baseline.txt
+    Not currently available - benchmarks need to be reimplemented.
 """
 
 import re

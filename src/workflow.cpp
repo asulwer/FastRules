@@ -362,7 +362,8 @@ void Workflow::releaseEngine(LuaEngine* engine) {
 
 std::future<std::vector<RuleResult>> Workflow::executeAsync(LuaEngine& engine, const std::vector<RuleParameter>& parameters) {
     // Return future that will execute asynchronously
-    return std::async(std::launch::async, [this, &engine, &parameters]() {
+    // Capture parameters by VALUE to avoid dangling reference when async runs later
+    return std::async(std::launch::async, [this, &engine, parameters]() {
         return this->execute(engine, parameters);
     });
 }
@@ -381,7 +382,7 @@ std::vector<RuleResult> Workflow::executeAdaptive(LuaEngine& engine, const std::
             auto start = std::chrono::high_resolution_clock::now();
             auto seqResults = execute(engine, parameters);
             auto seqEnd = std::chrono::high_resolution_clock::now();
-            double seqTime = std::chrono::duration_cast<std::chrono::microseconds>(seqEnd - start).count();
+            double seqTime = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(seqEnd - start).count());
             
             // Update rolling average for sequential
             sequentialAvgTime_ = (sequentialAvgTime_ * sequentialRuns_ + seqTime) / (sequentialRuns_ + 1);
@@ -391,7 +392,7 @@ std::vector<RuleResult> Workflow::executeAdaptive(LuaEngine& engine, const std::
             start = std::chrono::high_resolution_clock::now();
             auto parResults = executeParallel(engine, parameters);
             auto parEnd = std::chrono::high_resolution_clock::now();
-            double parTime = std::chrono::duration_cast<std::chrono::microseconds>(parEnd - start).count();
+            double parTime = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(parEnd - start).count());
             
             // Update rolling average for parallel
             parallelAvgTime_ = (parallelAvgTime_ * parallelRuns_ + parTime) / (parallelRuns_ + 1);

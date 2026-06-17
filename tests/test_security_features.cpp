@@ -1,4 +1,4 @@
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <fastrules.hpp>
 #include <spdlog/sinks/ostream_sink.h>
 #include <iostream>
@@ -6,35 +6,29 @@
 
 using namespace fastrules;
 
-TEST_CASE("LuaEngine expression length limit", "[lua_engine][security]") {
+TEST_CASE("LuaEngine expression length limit") {
     LuaEngine engine;
     engine.setMaxExpressionLength(50);  // Very small limit for testing
 
     // Short expression should compile fine
-    REQUIRE_NOTHROW(engine.compileExpression("true"));
+    REQUIRE_NOTHROW([&](){ (void)engine.compileExpression("true"); }());
 
     // Long expression should fail
-    REQUIRE_THROWS_AS(
-        engine.compileExpression("this_is_a_very_long_expression_that_exceeds_the_limit_by_a_lot"),
-        RuleCompilationException
-    );
+    REQUIRE_THROWS_AS([&](){ (void)engine.compileExpression("this_is_a_very_long_expression_that_exceeds_the_limit_by_a_lot"); }(), RuleCompilationException);
 }
 
-TEST_CASE("LuaEngine action length limit", "[lua_engine][security]") {
+TEST_CASE("LuaEngine action length limit") {
     LuaEngine engine;
     engine.setMaxExpressionLength(50);
 
     // Short action should compile
-    REQUIRE_NOTHROW(engine.compileAction("x = 1"));
+    REQUIRE_NOTHROW([&](){ (void)engine.compileAction("x = 1"); }());
 
     // Long action should fail
-    REQUIRE_THROWS_AS(
-        engine.compileAction("this_is_a_very_long_action_that_exceeds_the_limit_by_a_lot"),
-        RuleCompilationException
-    );
+    REQUIRE_THROWS_AS([&](){ (void)engine.compileAction("this_is_a_very_long_action_that_exceeds_the_limit_by_a_lot"); }(), RuleCompilationException);
 }
 
-TEST_CASE("LuaEngine enum registration", "[lua_engine]") {
+TEST_CASE("LuaEngine enum registration") {
     LuaEngine engine;
 
     enum class Status { Active = 1, Inactive = 2, Pending = 3 };
@@ -52,7 +46,7 @@ TEST_CASE("LuaEngine enum registration", "[lua_engine]") {
     REQUIRE(true);  // placeholder
 }
 
-TEST_CASE("LuaEngine logging support", "[lua_engine]") {
+TEST_CASE("LuaEngine logging support") {
     LuaEngine engine;
 
     auto sink = std::make_shared<spdlog::sinks::ostream_sink_mt>(std::cout, true);
@@ -62,7 +56,7 @@ TEST_CASE("LuaEngine logging support", "[lua_engine]") {
     engine.setLogger(logger);
     REQUIRE(engine.hasLogger());
 
-    logger->info("Test message from rule {}", 42);
+    // INFO: Test message from rule
 
     REQUIRE(logger->level() == spdlog::level::info);
 }

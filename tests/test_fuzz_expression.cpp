@@ -3,20 +3,20 @@
 // These aren't true fuzz targets (no libFuzzer) but cover edge cases
 // that a fuzzer would typically find.
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <fastrules.hpp>
 #include <fastrules/expression_validator.hpp>
 #include <limits>
 
 using namespace fastrules;
 
-TEST_CASE("ExpressionValidator rejects empty input", "[security][fuzz]") {
+TEST_CASE("ExpressionValidator rejects empty input") {
     auto result = ExpressionValidator::validate("");
     // Empty is technically valid (no dangerous patterns)
     REQUIRE(result.valid);
 }
 
-TEST_CASE("ExpressionValidator rejects os.execute patterns", "[security][fuzz]") {
+TEST_CASE("ExpressionValidator rejects os.execute patterns") {
     // Note: ExpressionValidator checks for specific dangerous patterns.
     // Some obfuscated variants may slip through -- this documents known limitations.
     std::vector<std::string> dangerous = {
@@ -38,11 +38,11 @@ TEST_CASE("ExpressionValidator rejects os.execute patterns", "[security][fuzz]")
     for (const auto& expr : obfuscated) {
         auto result = ExpressionValidator::validate(expr);
         // Document actual behavior -- don't enforce since validator may not catch all
-        INFO("Expression '" << expr << "' validation result: valid=" << result.valid);
+        // INFO: "Expression '" << expr << "' validation result: valid=" << result.valid
     }
 }
 
-TEST_CASE("ExpressionValidator rejects io patterns", "[security][fuzz]") {
+TEST_CASE("ExpressionValidator rejects io patterns") {
     std::vector<std::string> definitelyDangerous = {
         "io.open('file.txt')",
         "io.popen('ls')",
@@ -61,13 +61,13 @@ TEST_CASE("ExpressionValidator rejects io patterns", "[security][fuzz]") {
     
     for (const auto& expr : maybeDangerous) {
         auto result = ExpressionValidator::validate(expr);
-        INFO("Expression '" << expr << "' validation: valid=" << result.valid);
+        // INFO: "Expression '" << expr << "' validation: valid=" << result.valid
         // Don't REQUIRE -- documents current behavior
         (void)result;
     }
 }
 
-TEST_CASE("ExpressionValidator rejects load/dofile patterns", "[security][fuzz]") {
+TEST_CASE("ExpressionValidator rejects load/dofile patterns") {
     std::vector<std::string> dangerous = {
         "load('evil.lua')()",
         "dofile('evil.lua')",
@@ -81,7 +81,7 @@ TEST_CASE("ExpressionValidator rejects load/dofile patterns", "[security][fuzz]"
     }
 }
 
-TEST_CASE("ExpressionValidator handles deeply nested expressions", "[security][fuzz]") {
+TEST_CASE("ExpressionValidator handles deeply nested expressions") {
     std::string expr = "true";
     for (int i = 0; i < 100; ++i) {
         expr = "(" + expr + " and true)";
@@ -91,7 +91,7 @@ TEST_CASE("ExpressionValidator handles deeply nested expressions", "[security][f
     REQUIRE(result.valid);
 }
 
-TEST_CASE("ExpressionValidator handles very long expressions", "[security][fuzz]") {
+TEST_CASE("ExpressionValidator handles very long expressions") {
     std::string expr = "x == 0";
     for (int i = 0; i < 1000; ++i) {
         expr += " or x == " + std::to_string(i);
@@ -101,10 +101,10 @@ TEST_CASE("ExpressionValidator handles very long expressions", "[security][fuzz]
     REQUIRE(result.valid);
 }
 
-TEST_CASE("ExpressionValidator handles unicode in strings", "[security][fuzz]") {
+TEST_CASE("ExpressionValidator handles unicode in strings") {
     std::vector<std::string> expressions = {
-        "name == 'Unicode: \xE4\xB8\xAD\xE6\x96\x87'",
-        "name == 'Emoji: \xF0\x9F\x98\x80'",
+        "name == 'Unicode: 中文'",
+        "name == 'Emoji: 😀'",
         "name == '\\u0041\\u0042\\u0043'",
     };
     
@@ -114,12 +114,12 @@ TEST_CASE("ExpressionValidator handles unicode in strings", "[security][fuzz]") 
     }
 }
 
-TEST_CASE("ExpressionValidator handles boundary characters", "[security][fuzz]") {
+TEST_CASE("ExpressionValidator handles boundary characters") {
     std::vector<std::string> expressions = {
-        "x \u003e 0\x00",  // Null byte
-        "x \u003e 0\xff",  // High byte
-        "x \u003e 0\r\n", // CRLF
-        "x \u003e 0\t",   // Tab
+        "x > 0\x00",  // Null byte
+        "x > 0\xff",  // High byte
+        "x > 0\r\n", // CRLF
+        "x > 0\t",   // Tab
     };
     
     for (const auto& expr : expressions) {
@@ -130,7 +130,7 @@ TEST_CASE("ExpressionValidator handles boundary characters", "[security][fuzz]")
     }
 }
 
-TEST_CASE("Lua compilation handles malformed but safe expressions", "[security][fuzz]") {
+TEST_CASE("Lua compilation handles malformed but safe expressions") {
     LuaEngine engine;
     
     std::vector<std::string> expressions = {
@@ -150,7 +150,7 @@ TEST_CASE("Lua compilation handles malformed but safe expressions", "[security][
     }
 }
 
-TEST_CASE("ExpressionValidator rejects rawget/rawset", "[security][fuzz]") {
+TEST_CASE("ExpressionValidator rejects rawget/rawset") {
     std::vector<std::string> definitelyDangerous = {
         "rawget(_G, 'os')",
         "rawset(_G, 'x', 1)",
@@ -158,7 +158,7 @@ TEST_CASE("ExpressionValidator rejects rawget/rawset", "[security][fuzz]") {
     
     for (const auto& expr : definitelyDangerous) {
         auto result = ExpressionValidator::validate(expr);
-        INFO("Expression '" << expr << "' validation: valid=" << result.valid);
+        // INFO: "Expression '" << expr << "' validation: valid=" << result.valid
         REQUIRE_FALSE(result.valid);
     }
     
@@ -172,12 +172,12 @@ TEST_CASE("ExpressionValidator rejects rawget/rawset", "[security][fuzz]") {
     
     for (const auto& expr : maybeDangerous) {
         auto result = ExpressionValidator::validate(expr);
-        INFO("Expression '" << expr << "' validation: valid=" << result.valid);
+        // INFO: "Expression '" << expr << "' validation: valid=" << result.valid
         (void)result;
     }
 }
 
-TEST_CASE("ExpressionValidator rejects coroutine abuse", "[security][fuzz]") {
+TEST_CASE("ExpressionValidator rejects coroutine abuse") {
     std::vector<std::string> definitelyDangerous = {
         "coroutine.create(function() os.execute('rm -rf /') end)",
     };
@@ -194,13 +194,13 @@ TEST_CASE("ExpressionValidator rejects coroutine abuse", "[security][fuzz]") {
     
     for (const auto& expr : sandboxed) {
         auto result = ExpressionValidator::validate(expr);
-        INFO("Expression '" << expr << "' validation: valid=" << result.valid);
+        // INFO: "Expression '" << expr << "' validation: valid=" << result.valid
         // Validator may not catch these -- sandbox removes os/io/debug
         (void)result;
     }
 }
 
-TEST_CASE("LuaEngine handles numeric edge cases", "[security][fuzz]") {
+TEST_CASE("LuaEngine handles numeric edge cases") {
     LuaEngine engine;
     RuleContext ctx;
     std::vector<RuleParameter> params;
@@ -226,7 +226,7 @@ TEST_CASE("LuaEngine handles numeric edge cases", "[security][fuzz]") {
     REQUIRE(result.success);
 }
 
-TEST_CASE("LuaEngine handles string edge cases", "[security][fuzz]") {
+TEST_CASE("LuaEngine handles string edge cases") {
     LuaEngine engine;
     RuleContext ctx;
     std::vector<RuleParameter> params;
@@ -253,7 +253,7 @@ TEST_CASE("LuaEngine handles string edge cases", "[security][fuzz]") {
     REQUIRE(result.success);
 }
 
-TEST_CASE("LuaEngine handles stack overflow via deep nesting", "[security][fuzz]") {
+TEST_CASE("LuaEngine handles stack overflow via deep nesting") {
     LuaEngine engine;
     RuleContext ctx;
     std::vector<RuleParameter> params;
@@ -275,11 +275,11 @@ TEST_CASE("LuaEngine handles stack overflow via deep nesting", "[security][fuzz]
         (void)result;
     } catch (const std::exception&) {
         // Expected for very deep nesting
-        SUCCEED("Deep nesting handled gracefully");
+        // Deep nesting handled gracefully - test passed
     }
 }
 
-TEST_CASE("Workflow handles large rule sets", "[security][fuzz]") {
+TEST_CASE("Workflow handles large rule sets") {
     LuaEngine engine;
     Workflow workflow;
     workflow.id = 1;
@@ -301,7 +301,7 @@ TEST_CASE("Workflow handles large rule sets", "[security][fuzz]") {
     REQUIRE(results.size() == 1000);
 }
 
-TEST_CASE("Workflow handles circular dependencies gracefully", "[security][fuzz]") {
+TEST_CASE("Workflow handles circular dependencies gracefully") {
     auto rule1 = Rule::Builder(5)
         .withExpression("true")
         .dependsOn("rule2")

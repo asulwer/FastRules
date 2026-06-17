@@ -81,7 +81,11 @@ void DbRuleRepository::save(const Rule& rule) {
     
     soci::transaction tr(*session_);
     
-    if (exists(rule.id)) {
+    // Check existence without calling exists() to avoid deadlock
+    int count = 0;
+    *session_ << "SELECT COUNT(*) FROM rules WHERE id = :id", soci::into(count), soci::use(rule.id);
+    
+    if (count > 0) {
         updateRule(rule);
     } else {
         insertRule(rule);

@@ -1,5 +1,4 @@
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/catch_approx.hpp>
+#include <doctest/doctest.h>
 
 #include "test_helpers.hpp"
 #include "fastrules/async_workflow.hpp"
@@ -22,12 +21,12 @@ static int lua_sleep(lua_State* L) {
     return 0;
 }
 
-TEST_CASE("AsyncWorkflow basic construction", "[async]") {
+TEST_CASE("AsyncWorkflow basic construction") {
     AsyncWorkflow async;
     REQUIRE_FALSE(async.isCompiled());
 }
 
-TEST_CASE("AsyncWorkflow with workflow", "[async]") {
+TEST_CASE("AsyncWorkflow with workflow") {
     Workflow workflow;
     workflow.description = "Test workflow";
     
@@ -40,10 +39,10 @@ TEST_CASE("AsyncWorkflow with workflow", "[async]") {
     REQUIRE(async.workflow().rules.size() == 1);
 }
 
-TEST_CASE("Lua coroutine compilation", "[async][coroutine]") {
+TEST_CASE("Lua coroutine compilation") {
     auto engine = makeTestEngine();
     
-    SECTION("Compile simple coroutine") {
+    SUBCASE("Compile simple coroutine") {
         auto ref = engine.compileCoroutine("true");
         REQUIRE(ref.has_value());
         REQUIRE(engine.isCoroutine(ref.value()));
@@ -55,7 +54,7 @@ TEST_CASE("Lua coroutine compilation", "[async][coroutine]") {
         engine.releaseRef(ref.value());
     }
     
-    SECTION("Compile coroutine with parameters") {
+    SUBCASE("Compile coroutine with parameters") {
         auto ref = engine.compileCoroutine("x > 5");
         REQUIRE(ref.has_value());
         
@@ -69,7 +68,7 @@ TEST_CASE("Lua coroutine compilation", "[async][coroutine]") {
         engine.releaseRef(ref.value());
     }
     
-    SECTION("Coroutine vs regular function") {
+    SUBCASE("Coroutine vs regular function") {
         auto coroRef = engine.compileCoroutine("true");
         auto funcRef = engine.compileExpression("true");
         
@@ -81,7 +80,7 @@ TEST_CASE("Lua coroutine compilation", "[async][coroutine]") {
     }
 }
 
-TEST_CASE("Parallel workflow execution", "[async][parallel]") {
+TEST_CASE("Parallel workflow execution") {
     auto engine = makeTestEngine();
     
     Workflow workflow;
@@ -109,7 +108,7 @@ TEST_CASE("Parallel workflow execution", "[async][parallel]") {
     rule3->dependsOnRuleName = "rule1";
     workflow.rules.push_back(rule3);
     
-    SECTION("Sequential execution") {
+    SUBCASE("Sequential execution") {
         auto results = workflow.execute(engine, {});
         REQUIRE(results.size() == 3);
         REQUIRE(results[0].isSuccess());
@@ -117,7 +116,7 @@ TEST_CASE("Parallel workflow execution", "[async][parallel]") {
         REQUIRE(results[2].isSuccess());
     }
     
-    SECTION("Parallel execution") {
+    SUBCASE("Parallel execution") {
         auto results = workflow.executeParallel(engine, {});
         REQUIRE(results.size() == 3);
         
@@ -134,7 +133,7 @@ TEST_CASE("Parallel workflow execution", "[async][parallel]") {
     }
 }
 
-TEST_CASE("Parallel execution with dependencies", "[async][parallel]") {
+TEST_CASE("Parallel execution with dependencies") {
     auto engine = makeTestEngine();
     
     Workflow workflow;
@@ -167,7 +166,7 @@ TEST_CASE("Parallel execution with dependencies", "[async][parallel]") {
     ruleD->expression = "true";
     workflow.rules.push_back(ruleD);
     
-    SECTION("Dependency chain resolves correctly") {
+    SUBCASE("Dependency chain resolves correctly") {
         auto results = workflow.executeParallel(engine, {});
         REQUIRE(results.size() == 4);
         
@@ -178,7 +177,7 @@ TEST_CASE("Parallel execution with dependencies", "[async][parallel]") {
     }
 }
 
-TEST_CASE("Thread-safe LuaEngine cloning", "[async][thread-safety]") {
+TEST_CASE("Thread-safe LuaEngine cloning") {
     auto engine = makeTestEngine();
     
     // Compile something in the original engine
@@ -192,7 +191,7 @@ TEST_CASE("Thread-safe LuaEngine cloning", "[async][thread-safety]") {
     // Clone should have its own state
     REQUIRE(cloned->luaState() != engine.luaState());
     
-    SECTION("Clone can compile independently") {
+    SUBCASE("Clone can compile independently") {
         auto clonedRef = cloned->compileExpression("false");
         REQUIRE(clonedRef.has_value());
         
@@ -202,7 +201,7 @@ TEST_CASE("Thread-safe LuaEngine cloning", "[async][thread-safety]") {
     }
 }
 
-TEST_CASE("AsyncWorkflow parallel async execution", "[async][parallel][asyncworkflow]") {
+TEST_CASE("AsyncWorkflow parallel async execution") {
     auto engine = makeTestEngine();
     
     Workflow workflow;
@@ -221,7 +220,7 @@ TEST_CASE("AsyncWorkflow parallel async execution", "[async][parallel][asyncwork
     AsyncWorkflow async(std::move(workflow));
     async.compile(engine);
     
-    SECTION("Execute parallel async") {
+    SUBCASE("Execute parallel async") {
         auto results = async.executeParallelAsync(engine, {});
         REQUIRE(results.size() == 2);
         
@@ -231,7 +230,7 @@ TEST_CASE("AsyncWorkflow parallel async execution", "[async][parallel][asyncwork
     }
 }
 
-TEST_CASE("Performance: parallel vs sequential", "[async][performance]") {
+TEST_CASE("Performance: parallel vs sequential") {
     // This test is more of a sanity check - parallel should be at least as fast
     // for independent rules
     
@@ -248,7 +247,7 @@ TEST_CASE("Performance: parallel vs sequential", "[async][performance]") {
         workflow.rules.push_back(rule);
     }
     
-    SECTION("Compare execution times") {
+    SUBCASE("Compare execution times") {
         auto start = std::chrono::steady_clock::now();
         auto seqResults = workflow.execute(engine, {});
         auto seqEnd = std::chrono::steady_clock::now();
@@ -263,11 +262,11 @@ TEST_CASE("Performance: parallel vs sequential", "[async][performance]") {
         
         // Parallel should not be significantly slower for independent rules
         // (This is a loose check since thread overhead varies)
-        INFO("Sequential: " << seqDuration << "ms, Parallel: " << parDuration << "ms");
+        // INFO: "Sequential: " << seqDuration << "ms, Parallel: " << parDuration << "ms"
     }
 }
 
-TEST_CASE("Workflow executeAsync", "[async][workflow]") {
+TEST_CASE("Workflow executeAsync") {
     auto engine = makeTestEngine();
     
     Workflow workflow;
@@ -282,7 +281,7 @@ TEST_CASE("Workflow executeAsync", "[async][workflow]") {
     
     workflow.compile(engine);
     
-    SECTION("Execute asynchronously returns future") {
+    SUBCASE("Execute asynchronously returns future") {
         std::vector<RuleParameter> params;
         params.emplace_back("x", 42);
         
@@ -300,7 +299,7 @@ TEST_CASE("Workflow executeAsync", "[async][workflow]") {
         REQUIRE(results[0].isSuccess());
     }
     
-    SECTION("Multiple async executions") {
+    SUBCASE("Multiple async executions") {
         std::vector<std::future<std::vector<RuleResult>>> futures;
         
         // Launch multiple async executions
@@ -319,10 +318,10 @@ TEST_CASE("Workflow executeAsync", "[async][workflow]") {
     }
 }
 
-TEST_CASE("Workflow executeAdaptive", "[async][workflow][adaptive]") {
+TEST_CASE("Workflow executeAdaptive") {
     auto engine = makeTestEngine();
     
-    SECTION("Adaptive execution with few rules (sequential)") {
+    SUBCASE("Adaptive execution with few rules (sequential)") {
         Workflow workflow;
         workflow.description = "Small adaptive workflow";
         
@@ -344,7 +343,7 @@ TEST_CASE("Workflow executeAdaptive", "[async][workflow][adaptive]") {
         }
     }
     
-    SECTION("Adaptive execution with many rules (parallel)") {
+    SUBCASE("Adaptive execution with many rules (parallel)") {
         Workflow largeWorkflow;
         largeWorkflow.description = "Large adaptive workflow";
         
@@ -366,7 +365,7 @@ TEST_CASE("Workflow executeAdaptive", "[async][workflow][adaptive]") {
         }
     }
     
-    SECTION("Configurable adaptive threshold") {
+    SUBCASE("Configurable adaptive threshold") {
         Workflow workflow;
         workflow.description = "Configurable threshold test";
         
@@ -403,7 +402,7 @@ TEST_CASE("Workflow executeAdaptive", "[async][workflow][adaptive]") {
         REQUIRE(workflow.getAdaptiveThreshold() == 4);
     }
     
-    SECTION("Dynamic auto-detection") {
+    SUBCASE("Dynamic auto-detection") {
         Workflow workflow;
         workflow.description = "Auto-detection test";
         
@@ -432,8 +431,8 @@ TEST_CASE("Workflow executeAdaptive", "[async][workflow][adaptive]") {
         }
         
         // Check that performance stats were collected
-        INFO("Sequential avg: " << workflow.getSequentialAvgTime() << " µs");
-        INFO("Parallel avg: " << workflow.getParallelAvgTime() << " µs");
+        // INFO("Sequential avg: " << workflow.getSequentialAvgTime() << " us");
+        // INFO("Parallel avg: " << workflow.getParallelAvgTime() << " us");
         
         // Threshold may have been adjusted based on performance
         auto currentThreshold = workflow.getAdaptiveThreshold();
@@ -445,4 +444,3 @@ TEST_CASE("Workflow executeAdaptive", "[async][workflow][adaptive]") {
         REQUIRE_FALSE(workflow.isAutoDetectionEnabled());
     }
 }
-

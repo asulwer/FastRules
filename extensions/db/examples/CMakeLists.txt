@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.28)
 
 add_executable(fastrules_db_example db_example.cpp)
+set_property(TARGET fastrules_db_example PROPERTY FOLDER "Extensions/DB/Examples")
 target_link_libraries(fastrules_db_example PRIVATE fastrules-db)
 
-# Copy SOCI SQLite3 backend DLL to output directory (needed at runtime on Windows)
+# Copy SOCI and dependency DLLs to output directory (needed at runtime on Windows)
 if(WIN32)
     # Determine vcpkg installed directory
     if(DEFINED VCPKG_INSTALLED_DIR)
@@ -12,24 +13,30 @@ if(WIN32)
         set(VCPKG_ROOT "${CMAKE_BINARY_DIR}/vcpkg_installed")
     endif()
     
-    # Debug DLL
-    set(SOCI_SQLITE3_DLL_DEBUG "${VCPKG_ROOT}/${VCPKG_TARGET_TRIPLET}/debug/bin/soci_sqlite3_4_0.dll")
-    # Release DLL
-    set(SOCI_SQLITE3_DLL_RELEASE "${VCPKG_ROOT}/${VCPKG_TARGET_TRIPLET}/bin/soci_sqlite3_4_0.dll")
+    # Get configuration-specific paths - ONLY copy DLLs matching current build config
+    set(VCPKG_BIN_DIR "${VCPKG_ROOT}/${VCPKG_TARGET_TRIPLET}/bin")
+    set(VCPKG_BIN_DIR_DEBUG "${VCPKG_ROOT}/${VCPKG_TARGET_TRIPLET}/debug/bin")
+    set(OUTPUT_DIR "$<TARGET_FILE_DIR:fastrules_db_example>")
+    set(FASTRULES_DLL "$<TARGET_FILE_DIR:fastrules>/fastrules.dll")
     
-    # Use conditional copy based on actual configuration
-    # For Debug builds
+    # Only copy DLLs matching the current build configuration to avoid runtime conflicts
+    # Debug builds get debug DLLs, Release builds get release DLLs
     add_custom_command(TARGET fastrules_db_example POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${SOCI_SQLITE3_DLL_DEBUG}"
-            $<TARGET_FILE_DIR:fastrules_db_example>/
-        COMMENT "Copying SOCI SQLite3 Debug DLL"
+            "$<IF:$<CONFIG:Debug>,${VCPKG_BIN_DIR_DEBUG}/soci_core_4_0.dll,${VCPKG_BIN_DIR}/soci_core_4_0.dll>"
+            "$<IF:$<CONFIG:Debug>,${VCPKG_BIN_DIR_DEBUG}/soci_sqlite3_4_0.dll,${VCPKG_BIN_DIR}/soci_sqlite3_4_0.dll>"
+            "$<IF:$<CONFIG:Debug>,${VCPKG_BIN_DIR_DEBUG}/sqlite3.dll,${VCPKG_BIN_DIR}/sqlite3.dll>"
+            "$<IF:$<CONFIG:Debug>,${VCPKG_BIN_DIR_DEBUG}/lua.dll,${VCPKG_BIN_DIR}/lua.dll>"
+            "$<IF:$<CONFIG:Debug>,${VCPKG_BIN_DIR_DEBUG}/spdlogd.dll,${VCPKG_BIN_DIR}/spdlog.dll>"
+            "${OUTPUT_DIR}/"
+        COMMENT "Copying dependency DLLs ($<CONFIG>)"
     )
-    # For Release builds
+    
+    # Copy fastrules.dll
     add_custom_command(TARGET fastrules_db_example POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${SOCI_SQLITE3_DLL_RELEASE}"
-            $<TARGET_FILE_DIR:fastrules_db_example>/
-        COMMENT "Copying SOCI SQLite3 Release DLL"
+            "${FASTRULES_DLL}"
+            "${OUTPUT_DIR}/"
+        COMMENT "Copying fastrules.dll"
     )
 endif()

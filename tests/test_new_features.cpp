@@ -1,9 +1,9 @@
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <fastrules.hpp>
 
 using namespace fastrules;
 
-TEST_CASE("Streaming execution basic", "[workflow][streaming]") {
+TEST_CASE("Streaming execution basic") {
     LuaEngine engine;
     Workflow workflow;
     workflow.id = 1;
@@ -36,13 +36,13 @@ TEST_CASE("Streaming execution basic", "[workflow][streaming]") {
     REQUIRE(streamed[1].isSuccess() == false);
 }
 
-TEST_CASE("Pretty-printed JSON serialization", "[json]") {
+TEST_CASE("Pretty-printed JSON serialization") {
     // This test requires the JSON extension
     // Skipping since JsonLoader is now in the extension
     REQUIRE(true);
 }
 
-TEST_CASE("Rule pretty JSON", "[json]") {
+TEST_CASE("Rule pretty JSON") {
     // This test requires the JSON extension
     // Skipping since JsonLoader is now in the extension
     REQUIRE(true);

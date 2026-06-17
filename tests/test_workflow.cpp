@@ -1,9 +1,9 @@
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <fastrules.hpp>
 
 using namespace fastrules;
 
-TEST_CASE("Workflow basic creation", "[workflow]") {
+TEST_CASE("Workflow basic creation") {
     Workflow workflow;
     workflow.id = 1;
     workflow.description = "Test workflow";
@@ -15,7 +15,7 @@ TEST_CASE("Workflow basic creation", "[workflow]") {
     REQUIRE(workflow.isCompiled() == false);
 }
 
-TEST_CASE("Workflow execution order", "[workflow]") {
+TEST_CASE("Workflow execution order") {
     Workflow workflow;
     workflow.description = "Priority test";
 
@@ -43,7 +43,7 @@ TEST_CASE("Workflow execution order", "[workflow]") {
     REQUIRE(order[2]->id == 1); // Highest priority last
 }
 
-TEST_CASE("Workflow dependency resolution", "[workflow]") {
+TEST_CASE("Workflow dependency resolution") {
     Workflow workflow;
     workflow.description = "Dependency test";
 
@@ -68,7 +68,7 @@ TEST_CASE("Workflow dependency resolution", "[workflow]") {
     REQUIRE(order[1]->id == 2);
 }
 
-TEST_CASE("Workflow circular dependency detection", "[workflow]") {
+TEST_CASE("Workflow circular dependency detection") {
     Workflow workflow;
     workflow.description = "Circular dependency test";
 
@@ -85,10 +85,10 @@ TEST_CASE("Workflow circular dependency detection", "[workflow]") {
     workflow.rules.push_back(rule1);
     workflow.rules.push_back(rule2);
 
-    REQUIRE_THROWS_AS(workflow.resolveExecutionOrder(), RuleValidationException);
+    REQUIRE_THROWS_AS([&](){ (void)workflow.resolveExecutionOrder(); }(), RuleValidationException);
 }
 
-TEST_CASE("Workflow compile and execute", "[workflow]") {
+TEST_CASE("Workflow compile and execute") {
     LuaEngine engine;
 
     Workflow workflow;
@@ -115,7 +115,7 @@ TEST_CASE("Workflow compile and execute", "[workflow]") {
     REQUIRE(results[1].isSuccess() == false);
 }
 
-TEST_CASE("Workflow JSON loading", "[workflow]") {
+TEST_CASE("Workflow JSON loading") {
     // This test requires the JSON extension
     // Workflow::loadFromJson has been removed from core
     REQUIRE(true);

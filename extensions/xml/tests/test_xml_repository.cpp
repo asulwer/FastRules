@@ -1,15 +1,15 @@
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <fastrules/xml_repository.hpp>
 #include <filesystem>
 
 using namespace fastrules;
 using namespace fastrules::ext;
 
-TEST_CASE("XmlRuleRepository basic CRUD", "[xml]") {
+TEST_CASE("XmlRuleRepository basic CRUD") {
     auto tempFile = std::filesystem::temp_directory_path() / "test_rules.xml";
     std::filesystem::remove(tempFile);
     
-    SECTION("Create and read rule") {
+    SUBCASE("Create and read rule") {
         XmlRuleRepository repo(tempFile);
         
         Rule rule;
@@ -28,7 +28,7 @@ TEST_CASE("XmlRuleRepository basic CRUD", "[xml]") {
         REQUIRE(found->expression == "age >= 18");
     }
     
-    SECTION("Update existing rule") {
+    SUBCASE("Update existing rule") {
         XmlRuleRepository repo(tempFile);
         
         Rule rule;
@@ -51,7 +51,7 @@ TEST_CASE("XmlRuleRepository basic CRUD", "[xml]") {
         REQUIRE(found->priority == 20);
     }
     
-    SECTION("Delete rule") {
+    SUBCASE("Delete rule") {
         XmlRuleRepository repo(tempFile);
         
         Rule rule;

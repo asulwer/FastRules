@@ -1,9 +1,9 @@
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <fastrules.hpp>
 
 using namespace fastrules;
 
-TEST_CASE("LuaEngine state reset clears compiled refs", "[lua_engine][cleanup]") {
+TEST_CASE("LuaEngine state reset clears compiled refs") {
     LuaEngine engine;
 
     auto ref = engine.compileExpression("true");
@@ -17,7 +17,7 @@ TEST_CASE("LuaEngine state reset clears compiled refs", "[lua_engine][cleanup]")
     REQUIRE_THROWS_AS(engine.evaluateExpression(ref.value(), params, ctx), RuleExecutionException);
 }
 
-TEST_CASE("LuaEngine state reset preserves types and callbacks", "[lua_engine][cleanup]") {
+TEST_CASE("LuaEngine state reset preserves types and callbacks") {
     LuaEngine engine;
 
     // Register a type
@@ -40,7 +40,7 @@ TEST_CASE("LuaEngine state reset preserves types and callbacks", "[lua_engine][c
     REQUIRE(true);  // placeholder
 }
 
-TEST_CASE("LuaEngine compile count tracking", "[lua_engine][cleanup]") {
+TEST_CASE("LuaEngine compile count tracking") {
     LuaEngine engine;
 
     REQUIRE(engine.getCompileCount() == 0);
@@ -54,4 +54,3 @@ TEST_CASE("LuaEngine compile count tracking", "[lua_engine][cleanup]") {
     engine.resetState();
     REQUIRE(engine.getCompileCount() == 0);
 }
-

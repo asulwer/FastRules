@@ -1,10 +1,10 @@
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <fastrules.hpp>
 #include <fastrules/json_loader.hpp>
 
 using namespace fastrules;
 
-TEST_CASE("JsonLoader workflow parsing", "[json]") {
+TEST_CASE("JsonLoader workflow parsing") {
     std::string json = R"({
         "id": 1,
         "description": "Test workflow",
@@ -36,7 +36,7 @@ TEST_CASE("JsonLoader workflow parsing", "[json]") {
     REQUIRE(workflow.rules[0]->action == "x = 1");
 }
 
-TEST_CASE("JsonLoader rule parsing", "[json]") {
+TEST_CASE("JsonLoader rule parsing") {
     std::string json = R"({
         "id": 1,
         "description": "Test",
@@ -60,7 +60,7 @@ TEST_CASE("JsonLoader rule parsing", "[json]") {
     REQUIRE(rule->cacheDuration->count() == 5000);
 }
 
-TEST_CASE("JsonLoader child rules", "[json]") {
+TEST_CASE("JsonLoader child rules") {
     std::string json = R"({
         "id": 1,
         "expression": "true",
@@ -83,7 +83,7 @@ TEST_CASE("JsonLoader child rules", "[json]") {
     REQUIRE(rule->childRules[1]->id == 3);
 }
 
-TEST_CASE("JsonLoader auto-generated IDs", "[json]") {
+TEST_CASE("JsonLoader auto-generated IDs") {
     std::string json = R"({
         "description": "No ID test",
         "rules": [
@@ -99,7 +99,7 @@ TEST_CASE("JsonLoader auto-generated IDs", "[json]") {
     REQUIRE(workflow.rules[0]->id != 0);
 }
 
-TEST_CASE("JsonLoader workflow serialization", "[json]") {
+TEST_CASE("JsonLoader workflow serialization") {
     Workflow workflow;
     workflow.id = 99;
     workflow.description = "Serialization test";

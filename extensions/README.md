@@ -113,7 +113,7 @@ To create a new persistence extension (e.g., YAML, Protobuf, etc.):
    add_subdirectory(myext)
    ```
 
-4. **Write tests** using Catch2
+4. **Write tests** using doctest
 
 ## Extension Guidelines
 

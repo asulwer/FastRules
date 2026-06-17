@@ -60,7 +60,7 @@ class FastRulesConan(ConanFile):
         if self.options.with_db:
             self.requires("soci/4.0.3")
         if self.options.with_tests:
-            self.requires("catch2/3.5.2")
+            self.requires("doctest/2.4.11")
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.28]")

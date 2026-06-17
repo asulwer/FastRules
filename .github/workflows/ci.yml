@@ -51,7 +51,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y liblua5.4-dev catch2 nlohmann-json3-dev libpugixml-dev libsqlite3-dev libpq-dev
+          sudo apt install -y liblua5.4-dev doctest-dev nlohmann-json3-dev libpugixml-dev libsqlite3-dev libpq-dev
           # SOCI is not in standard Ubuntu repos; skip DB extension on Ubuntu CI
 
       - name: Configure

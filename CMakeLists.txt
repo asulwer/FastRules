@@ -92,9 +92,9 @@ FetchContent_Declare(
 )
 
 FetchContent_Declare(
-    catch2
-    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG v3.5.2
+    doctest
+    GIT_REPOSITORY https://github.com/doctest/doctest.git
+    GIT_TAG v2.4.11
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE
 )
@@ -207,7 +207,7 @@ if(FASTRULES_USE_LUAJIT)
     endif()
     
     # Fetch dependencies
-    FetchContent_MakeAvailable(json luabridge3 catch2)
+    FetchContent_MakeAvailable(json luabridge3 doctest)
 
     # Organize external targets in VS solution
     if(TARGET nlohmann_json)
@@ -216,11 +216,8 @@ if(FASTRULES_USE_LUAJIT)
     if(TARGET spdlog)
         set_target_properties(spdlog PROPERTIES FOLDER "ThirdParty")
     endif()
-    if(TARGET Catch2)
-        set_target_properties(Catch2 PROPERTIES FOLDER "ThirdParty")
-    endif()
-    if(TARGET Catch2WithMain)
-        set_target_properties(Catch2WithMain PROPERTIES FOLDER "ThirdParty")
+    if(TARGET doctest)
+        set_target_properties(doctest PROPERTIES FOLDER "ThirdParty")
     endif()
     if(TARGET luabridge3)
         set_target_properties(luabridge3 PROPERTIES FOLDER "ThirdParty")
@@ -228,7 +225,7 @@ if(FASTRULES_USE_LUAJIT)
 else()
     # Only use FetchContent when NOT in vcpkg manifest mode
     if(NOT VCPKG_MANIFEST_MODE)
-        FetchContent_MakeAvailable(lua json luabridge3 spdlog catch2)
+        FetchContent_MakeAvailable(lua json luabridge3 spdlog doctest)
 
         # Organize external targets in VS solution
         if(TARGET nlohmann_json)
@@ -237,11 +234,8 @@ else()
         if(TARGET spdlog)
             set_target_properties(spdlog PROPERTIES FOLDER "ThirdParty")
         endif()
-        if(TARGET Catch2)
-            set_target_properties(Catch2 PROPERTIES FOLDER "ThirdParty")
-        endif()
-        if(TARGET Catch2WithMain)
-            set_target_properties(Catch2WithMain PROPERTIES FOLDER "ThirdParty")
+        if(TARGET doctest)
+            set_target_properties(doctest PROPERTIES FOLDER "ThirdParty")
         endif()
         if(TARGET luabridge3)
             set_target_properties(luabridge3 PROPERTIES FOLDER "ThirdParty")
@@ -263,7 +257,7 @@ else()
         # Find vcpkg packages
         find_package(spdlog CONFIG REQUIRED)
         if(FASTRULES_BUILD_TESTS)
-            find_package(Catch2 3 CONFIG REQUIRED)
+            find_package(doctest CONFIG REQUIRED)
         endif()
     endif()
 endif()
@@ -416,21 +410,21 @@ if(FASTRULES_BUILD_TESTS)
         set(FASTRULES_IN_TREE_TESTS TRUE CACHE BOOL "" FORCE)
     endif()
 
-    # Try to find Catch2 via find_package (e.g., from vcpkg) first
-    find_package(Catch2 3 CONFIG QUIET)
-    if(NOT Catch2_FOUND)
+    # Try to find doctest via find_package first
+    find_package(doctest CONFIG QUIET)
+    if(NOT doctest_FOUND)
         FetchContent_Declare(
-            Catch2
-            GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-            GIT_TAG v3.5.2
+            doctest
+            GIT_REPOSITORY https://github.com/doctest/doctest.git
+            GIT_TAG v2.4.11
             GIT_SHALLOW TRUE
         )
-        FetchContent_MakeAvailable(Catch2)
+        FetchContent_MakeAvailable(doctest)
     endif()
     
-    # Ensure Catch.cmake module is available (from vcpkg or FetchContent)
-    if(NOT DEFINED Catch2_DIR)
-        set(Catch2_DIR "${Catch2_SOURCE_DIR}")
+    # Ensure doctest is available
+    if(NOT DEFINED doctest_SOURCE_DIR)
+        set(doctest_SOURCE_DIR "${doctest_SOURCE_DIR}")
     endif()
 
     add_executable(fastrules_tests
@@ -442,28 +436,19 @@ if(FASTRULES_BUILD_TESTS)
         tests/test_security_features.cpp
         tests/test_new_features.cpp
         tests/test_execution_tracing.cpp
-        tests/test_coverage_gaps.cpp
-        tests/test_benchmarks.cpp
+        tests/test_rate_limiter.cpp
+        tests/test_caching.cpp
+        tests/test_edge_cases.cpp
+        tests/test_performance.cpp
         tests/test_error_paths.cpp
         tests/test_fuzz_expression.cpp
         tests/test_engine_pool.cpp
+        tests/test_auto_detection.cpp
     )
 
     set_property(TARGET fastrules_tests PROPERTY FOLDER "Tests")
 
-    target_link_libraries(fastrules_tests PRIVATE fastrules Catch2::Catch2WithMain)
-
-        # Copy vcpkg DLLs to output directory on Windows so tests can find them
-    # Use generator expression to select correct DLLs for each configuration
-    if(WIN32 AND VCPKG_INSTALLED_DIR)
-        # $<IF:condition,true_value,false_value> selects based on build type
-        add_custom_command(TARGET fastrules_tests POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin>"
-                "$<TARGET_FILE_DIR:fastrules_tests>"
-            COMMENT "Copying vcpkg DLLs ($<CONFIG>) to output directory"
-        )
-    endif()
+    target_link_libraries(fastrules_tests PRIVATE fastrules doctest::doctest)
 
     # Coverage instrumentation for test target
     if(FASTRULES_BUILD_COVERAGE AND MSVC)
@@ -474,15 +459,8 @@ if(FASTRULES_BUILD_TESTS)
     # Suppress CTest dashboard targets from VS solution
     set_property(GLOBAL PROPERTY CTEST_USE_LAUNCHERS OFF)
 
-    # Include the Catch module from Catch2 (path varies between vcpkg and FetchContent)
-    # When using vcpkg, Catch.cmake is in <vcpkg>/share/catch2/
-    find_file(CATCH_CMAKE_FILE "Catch.cmake" 
-        PATHS "${Catch2_DIR}" "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/share/catch2"
-        NO_DEFAULT_PATH)
-    if(CATCH_CMAKE_FILE)
-        include("${CATCH_CMAKE_FILE}")
-    endif()
-    # Always use simple add_test - catch_discover_tests causes MSB3073 on Windows
+    # doctest doesn't require a CMake module like Catch2
+    # Tests are registered directly
     add_test(NAME fastrules_tests COMMAND fastrules_tests)
 endif()
 
@@ -567,6 +545,10 @@ if(FASTRULES_BUILD_EXAMPLES)
         
         # Copy DLL and dependencies to example directories
         if(WIN32)
+            # Ensure destination directories exist
+            file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example")
+            file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example")
+            
             add_custom_command(TARGET fastrules POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
                     "$<TARGET_FILE:fastrules>"
@@ -579,47 +561,6 @@ if(FASTRULES_BUILD_EXAMPLES)
                     "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/"
                 COMMENT "Copying fastrules.dll to python_example"
             )
-            
-            # Copy vcpkg dependencies (lua, spdlog, fmt) to example directories
-            if(VCPKG_INSTALLED_DIR)
-                add_custom_command(TARGET fastrules POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                        "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/lua.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/lua.dll>"
-                        "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/"
-                    COMMENT "Copying lua.dll to csharp_example"
-                )
-                add_custom_command(TARGET fastrules POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                        "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/spdlogd.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/spdlog.dll>"
-                        "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/"
-                    COMMENT "Copying spdlog dll to csharp_example"
-                )
-                add_custom_command(TARGET fastrules POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                        "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/fmtd.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/fmt.dll>"
-                        "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/"
-                    COMMENT "Copying fmt dll to csharp_example"
-                )
-                
-                add_custom_command(TARGET fastrules POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                        "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/lua.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/lua.dll>"
-                        "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/"
-                    COMMENT "Copying lua.dll to python_example"
-                )
-                add_custom_command(TARGET fastrules POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                        "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/spdlogd.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/spdlog.dll>"
-                        "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/"
-                    COMMENT "Copying spdlog dll to python_example"
-                )
-                add_custom_command(TARGET fastrules POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                        "$<IF:$<CONFIG:Debug>,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/fmtd.dll,${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/fmt.dll>"
-                        "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/"
-                    COMMENT "Copying fmt dll to python_example"
-                )
-            endif()
         endif()
         
         message(STATUS "Building FastRules with C API exports for FFI (Python/C#)")
