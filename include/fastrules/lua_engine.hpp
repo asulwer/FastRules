@@ -612,4 +612,10 @@ private:
     [[nodiscard]] std::string wrapCoroutine(const std::string& expression);
 };
 
+// Template implementation for registerType
+template<typename T, typename Registrar>
+void LuaEngine::registerType(const std::string& name, Registrar registrar) {
+    typeRegistry_.registerType<T>(name, std::move(registrar));
+}
+
 } // namespace fastrules
