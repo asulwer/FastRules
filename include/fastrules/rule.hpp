@@ -370,7 +370,7 @@ public:
     Rule() = default;
 
     /// @brief Virtual destructor for inheritance support
-    virtual ~Rule() = default;
+    virtual ~Rule();
 
     /// @brief Move constructor
     Rule(Rule&&) = default;

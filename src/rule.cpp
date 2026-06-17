@@ -18,6 +18,9 @@
 
 namespace fastrules {
 
+// Rule destructor (out-of-line to ensure single vtable)
+Rule::~Rule() = default;
+
 // Rule copy constructor
 Rule::Rule(const Rule& other) {
     // Copy simple members
@@ -32,6 +35,15 @@ Rule::Rule(const Rule& other) {
     timeout = other.timeout;
     dependsOnRuleName = other.dependsOnRuleName;
     rateLimiter = other.rateLimiter;
+    isCompiled = other.isCompiled;
+    isValidated = other.isValidated;
+    
+    // Note: compiled Lua refs are per-engine, don't copy them
+    // They'll be recompiled when compile() is called
+    compiledExpressionRef = std::nullopt;
+    compiledActionRef = std::nullopt;
+    engineExpressionRefs_.clear();
+    engineActionRefs_.clear();
     
     // Deep copy child rules
     for (const auto& child : other.childRules) {
@@ -63,6 +75,14 @@ Rule& Rule::operator=(const Rule& other) {
         timeout = other.timeout;
         dependsOnRuleName = other.dependsOnRuleName;
         rateLimiter = other.rateLimiter;
+        isCompiled = other.isCompiled;
+        isValidated = other.isValidated;
+        
+        // Reset compiled refs (per-engine)
+        compiledExpressionRef = std::nullopt;
+        compiledActionRef = std::nullopt;
+        engineExpressionRefs_.clear();
+        engineActionRefs_.clear();
         
         // Deep copy child rules
         childRules.clear();

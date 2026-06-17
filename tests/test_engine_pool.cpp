@@ -109,11 +109,11 @@ TEST_CASE("EnginePool memory ordering") {
                 auto* engine = reinterpret_cast<LuaEngine*>(val);
                 
                 pool.push(engine);
-                sumPush.fetch_add(val, std::memory_order_relaxed);
+                sumPush.fetch_add(static_cast<int>(val), std::memory_order_relaxed);
                 
                 auto* popped = pool.pop();
                 if (popped) {
-                    sumPop.fetch_add(reinterpret_cast<uintptr_t>(popped), 
+                    sumPop.fetch_add(static_cast<int>(reinterpret_cast<uintptr_t>(popped)), 
                                    std::memory_order_relaxed);
                 }
             }
