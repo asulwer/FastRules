@@ -1,6 +1,6 @@
 /**
  * @file rate_limiter.cpp
- * @brief Token bucket rate limiter implementation
+ * @brief Sliding window rate limiter implementation
  * 
  * The RateLimiter provides per-rule execution rate limiting using a
  * sliding window algorithm. It supports both per-second and per-minute
