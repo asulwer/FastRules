@@ -218,7 +218,7 @@ TEST_CASE("Rule cache invalidation on property change") {
 
     auto rule = Rule::Builder(1)
         .withExpression("true")
-        .withCacheDuration(std::chrono::milliseconds(1000))
+        .withCache(std::chrono::milliseconds(1000))
         .build();
 
     rule->compile(engine);
@@ -246,7 +246,7 @@ TEST_CASE("Rule cache expires after TTL") {
 
     auto rule = Rule::Builder(1)
         .withExpression("true")
-        .withCacheDuration(std::chrono::milliseconds(50))
+        .withCache(std::chrono::milliseconds(50))
         .build();
 
     rule->compile(engine);
