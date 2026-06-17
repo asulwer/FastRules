@@ -103,7 +103,9 @@ public:
      * });
      * @endcode
      */
-    void registerHandler(const std::string& name, Handler handler);
+    void registerHandler(const std::string& name, Handler handler) {
+        handlers_[name] = std::move(handler);
+    }
 
     /**
      * @brief Get a registered handler
