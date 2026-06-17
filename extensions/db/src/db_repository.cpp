@@ -231,6 +231,8 @@ void DbWorkflowRepository::createSchema() {
 }
 
 void DbWorkflowRepository::save(const Workflow& workflow) {
+    std::unique_lock<std::shared_mutex> lock(mutex_);  // Exclusive lock for writing
+    
     soci::transaction tr(*session_);
 
     if (exists(workflow.id)) {
@@ -262,6 +264,8 @@ void DbWorkflowRepository::save(const Workflow& workflow) {
 }
 
 std::optional<Workflow> DbWorkflowRepository::findById(int id) {
+    std::shared_lock<std::shared_mutex> lock(mutex_);  // Shared lock for reading
+    
     soci::rowset<soci::row> rs = ((*session_).prepare <<
         "SELECT id, description, is_active FROM workflows WHERE id = :id", soci::use(id));
 
@@ -293,6 +297,8 @@ std::optional<Workflow> DbWorkflowRepository::findById(int id) {
 }
 
 std::vector<Workflow> DbWorkflowRepository::findAll() {
+    std::shared_lock<std::shared_mutex> lock(mutex_);  // Shared lock for reading
+    
     std::vector<Workflow> workflows;
     soci::rowset<soci::row> rs = ((*session_).prepare <<
         "SELECT id FROM workflows");
@@ -308,23 +314,31 @@ std::vector<Workflow> DbWorkflowRepository::findAll() {
 }
 
 void DbWorkflowRepository::remove(int id) {
+    std::unique_lock<std::shared_mutex> lock(mutex_);  // Exclusive lock for writing
+    
     *session_ << "DELETE FROM workflow_rules WHERE workflow_id = :id", soci::use(id);
     *session_ << "DELETE FROM workflows WHERE id = :id", soci::use(id);
 }
 
 bool DbWorkflowRepository::exists(int id) {
+    std::shared_lock<std::shared_mutex> lock(mutex_);  // Shared lock for reading
+    
     int count = 0;
     *session_ << "SELECT COUNT(*) FROM workflows WHERE id = :id", soci::into(count), soci::use(id);
     return count > 0;
 }
 
 size_t DbWorkflowRepository::count() {
+    std::shared_lock<std::shared_mutex> lock(mutex_);  // Shared lock for reading
+    
     size_t count = 0;
     *session_ << "SELECT COUNT(*) FROM workflows", soci::into(count);
     return count;
 }
 
 void DbWorkflowRepository::clear() {
+    std::unique_lock<std::shared_mutex> lock(mutex_);  // Exclusive lock for writing
+    
     *session_ << "DELETE FROM workflow_rules";
     *session_ << "DELETE FROM workflows";
 }
@@ -356,6 +370,8 @@ void DbVersionRepository::createSchema() {
 }
 
 void DbVersionRepository::saveVersion(const RuleVersion& version, int ruleId) {
+    std::unique_lock<std::shared_mutex> lock(mutex_);  // Exclusive lock for writing
+    
     DbBool isActive = version.isActive;
     *session_ <<
         "INSERT INTO rule_versions (version_id, rule_id, expression, action, priority, is_active, author, change_summary, parent_version_id) "
@@ -366,6 +382,8 @@ void DbVersionRepository::saveVersion(const RuleVersion& version, int ruleId) {
 }
 
 std::vector<RuleVersion> DbVersionRepository::findVersionsForRule(int ruleId) {
+    std::shared_lock<std::shared_mutex> lock(mutex_);  // Shared lock for reading
+    
     std::vector<RuleVersion> versions;
     soci::rowset<soci::row> rs = ((*session_).prepare <<
         "SELECT version_id, expression, action, priority, is_active, created_at, author, change_summary, parent_version_id "
@@ -389,6 +407,8 @@ std::vector<RuleVersion> DbVersionRepository::findVersionsForRule(int ruleId) {
 }
 
 std::optional<RuleVersion> DbVersionRepository::findVersion(int ruleId, const std::string& versionId) {
+    std::shared_lock<std::shared_mutex> lock(mutex_);  // Shared lock for reading
+    
     soci::rowset<soci::row> rs = ((*session_).prepare <<
         "SELECT version_id, expression, action, priority, is_active, created_at, author, change_summary, parent_version_id "
         "FROM rule_versions WHERE rule_id = :rid AND version_id = :vid",
@@ -411,6 +431,8 @@ std::optional<RuleVersion> DbVersionRepository::findVersion(int ruleId, const st
 }
 
 void DbVersionRepository::removeAllVersionsForRule(int ruleId) {
+    std::unique_lock<std::shared_mutex> lock(mutex_);  // Exclusive lock for writing
+    
     *session_ << "DELETE FROM rule_versions WHERE rule_id = :rid", soci::use(ruleId);
 }
 
