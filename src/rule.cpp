@@ -18,6 +18,71 @@
 
 namespace fastrules {
 
+// Rule copy constructor
+Rule::Rule(const Rule& other) {
+    // Copy simple members
+    id = other.id;
+    name = other.name;
+    description = other.description;
+    expression = other.expression;
+    action = other.action;
+    priority = other.priority;
+    isActive = other.isActive;
+    cacheDuration = other.cacheDuration;
+    timeout = other.timeout;
+    dependsOnRuleName = other.dependsOnRuleName;
+    rateLimiter = other.rateLimiter;
+    
+    // Deep copy child rules
+    for (const auto& child : other.childRules) {
+        if (child) {
+            childRules.push_back(std::make_shared<Rule>(*child));
+        }
+    }
+    
+    // Deep copy dependent rules
+    for (const auto& dep : other.dependentRules) {
+        if (dep) {
+            dependentRules.push_back(std::make_shared<Rule>(*dep));
+        }
+    }
+}
+
+// Rule copy assignment
+Rule& Rule::operator=(const Rule& other) {
+    if (this != &other) {
+        // Copy simple members
+        id = other.id;
+        name = other.name;
+        description = other.description;
+        expression = other.expression;
+        action = other.action;
+        priority = other.priority;
+        isActive = other.isActive;
+        cacheDuration = other.cacheDuration;
+        timeout = other.timeout;
+        dependsOnRuleName = other.dependsOnRuleName;
+        rateLimiter = other.rateLimiter;
+        
+        // Deep copy child rules
+        childRules.clear();
+        for (const auto& child : other.childRules) {
+            if (child) {
+                childRules.push_back(std::make_shared<Rule>(*child));
+            }
+        }
+        
+        // Deep copy dependent rules
+        dependentRules.clear();
+        for (const auto& dep : other.dependentRules) {
+            if (dep) {
+                dependentRules.push_back(std::make_shared<Rule>(*dep));
+            }
+        }
+    }
+    return *this;
+}
+
 // RuleResult implementation
 bool RuleResult::isFullySuccessful() const noexcept {
     if (!success || exception.has_value() || skipped) return false;
