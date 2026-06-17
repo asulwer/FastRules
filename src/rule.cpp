@@ -131,18 +131,25 @@ void Rule::validate(const std::vector<std::reference_wrapper<const Rule>>& allRu
 
     // === Circular dependency detection ===
     // Build a graph of all rules and detect cycles using DFS.
-    // Edges: dependsOnRuleId (horizontal) + parentRule (vertical from childRules)
+    // Edges: dependsOnRuleName (horizontal) + parentRule (vertical from childRules)
     
     std::unordered_map<Id, std::vector<Id>> adjacency;
     std::unordered_map<Id, const Rule*> ruleById;
+    std::unordered_map<std::string, Id> ruleByName;
     
     for (const auto& r : allRules) {
         const Rule& rule = r.get();
         ruleById[rule.id] = &rule;
+        if (!rule.name.empty()) {
+            ruleByName[rule.name] = rule.id;
+        }
         
-        // Add horizontal dependency edge
-        if (rule.dependsOnRuleId.has_value()) {
-            adjacency[rule.id].push_back(rule.dependsOnRuleId.value());
+        // Add horizontal dependency edge (by name lookup)
+        if (rule.dependsOnRuleName.has_value()) {
+            auto it = ruleByName.find(rule.dependsOnRuleName.value());
+            if (it != ruleByName.end()) {
+                adjacency[rule.id].push_back(it->second);
+            }
         }
         
         // Add vertical edges: child -> parent (childRules creates parent -> child
@@ -182,10 +189,10 @@ void Rule::validate(const std::vector<std::reference_wrapper<const Rule>>& allRu
                 std::ostringstream oss;
                 oss << "Circular dependency detected: ";
                 for (auto it2 = cycleStart; it2 != stack.end(); ++it2) {
-                    if (it2 != cycleStart) oss << " → ";
+                    if (it2 != cycleStart) oss << " -> ";
                     oss << *it2;
                 }
-                oss << " → " << neighbor;
+                oss << " -> " << neighbor;
                 throw RuleValidationException(oss.str());
             }
             
@@ -223,16 +230,16 @@ void Rule::validate(const std::vector<std::reference_wrapper<const Rule>>& allRu
     }
 
     // === Dependency existence check ===
-    if (dependsOnRuleId.has_value()) {
+    if (dependsOnRuleName.has_value()) {
         bool found = false;
         for (const auto& r : allRules) {
-            if (r.get().id == dependsOnRuleId.value()) {
+            if (r.get().name == dependsOnRuleName.value()) {
                 found = true;
                 break;
             }
         }
         if (!found) {
-            throw RuleValidationException("Rule depends on non-existent rule: " + dependsOnRuleId.value());
+            throw RuleValidationException("Rule depends on non-existent rule: " + dependsOnRuleName.value());
         }
     }
 
@@ -240,19 +247,27 @@ void Rule::validate(const std::vector<std::reference_wrapper<const Rule>>& allRu
 }
 
 bool Rule::hasCircularDependency(const std::vector<std::reference_wrapper<const Rule>>& allRules) const {
-    if (!dependsOnRuleId.has_value()) {
+    if (!dependsOnRuleName.has_value()) {
         return false;
     }
 
-    // Build lookup map from allRules
+    // Build lookup maps from allRules
     std::unordered_map<int, const Rule*> ruleMap;
+    std::unordered_map<std::string, int> nameToId;
     for (const auto& ref : allRules) {
         ruleMap[ref.get().id] = &ref.get();
+        if (!ref.get().name.empty()) {
+            nameToId[ref.get().name] = ref.get().id;
+        }
     }
 
     // Follow the dependency chain
     std::unordered_set<int> visited;
-    int current = dependsOnRuleId.value();
+    auto it = nameToId.find(dependsOnRuleName.value());
+    if (it == nameToId.end()) {
+        return false; // Dependency not found
+    }
+    int current = it->second;
 
     while (current != 0) {
         // Check if we've returned to the starting rule
@@ -267,11 +282,15 @@ bool Rule::hasCircularDependency(const std::vector<std::reference_wrapper<const 
         visited.insert(current);
 
         // Move to next dependency
-        auto it = ruleMap.find(current);
-        if (it == ruleMap.end() || !it->second->dependsOnRuleId.has_value()) {
+        auto depIt = ruleMap.find(current);
+        if (depIt == ruleMap.end() || !depIt->second->dependsOnRuleName.has_value()) {
             break;
         }
-        current = it->second->dependsOnRuleId.value();
+        auto nameIt = nameToId.find(depIt->second->dependsOnRuleName.value());
+        if (nameIt == nameToId.end()) {
+            break;
+        }
+        current = nameIt->second;
     }
 
     return false;
@@ -281,19 +300,27 @@ std::vector<Rule::Id> Rule::getDependencyChain(const std::vector<std::reference_
     std::vector<Rule::Id> chain;
     chain.push_back(id);
 
-    if (!dependsOnRuleId.has_value()) {
+    if (!dependsOnRuleName.has_value()) {
         return chain;
     }
 
     // Build lookup map from allRules
     std::unordered_map<int, const Rule*> ruleMap;
+    std::unordered_map<std::string, int> nameToId;
     for (const auto& ref : allRules) {
         ruleMap[ref.get().id] = &ref.get();
+        if (!ref.get().name.empty()) {
+            nameToId[ref.get().name] = ref.get().id;
+        }
     }
 
     // Follow the dependency chain
     std::unordered_set<int> visited;
-    int current = dependsOnRuleId.value();
+    auto nameIt = nameToId.find(dependsOnRuleName.value());
+    if (nameIt == nameToId.end()) {
+        return chain;
+    }
+    int current = nameIt->second;
 
     while (current != 0) {
         chain.push_back(current);
@@ -306,11 +333,15 @@ std::vector<Rule::Id> Rule::getDependencyChain(const std::vector<std::reference_
         visited.insert(current);
 
         // Move to next dependency
-        auto it = ruleMap.find(current);
-        if (it == ruleMap.end() || !it->second->dependsOnRuleId.has_value()) {
+        auto ruleIt = ruleMap.find(current);
+        if (ruleIt == ruleMap.end() || !ruleIt->second->dependsOnRuleName.has_value()) {
             break;
         }
-        current = it->second->dependsOnRuleId.value();
+        auto nextNameIt = nameToId.find(ruleIt->second->dependsOnRuleName.value());
+        if (nextNameIt == nameToId.end()) {
+            break;
+        }
+        current = nextNameIt->second;
     }
 
     return chain;
@@ -318,8 +349,13 @@ std::vector<Rule::Id> Rule::getDependencyChain(const std::vector<std::reference_
 
 void Rule::storeInCache(const std::vector<RuleParameter>& parameters, const RuleResult& result) const {
     if (cacheDuration.has_value() && cacheDuration->count() > 0) {
+        std::lock_guard<std::mutex> lock(*cacheMutex_);
         auto cacheKey = buildCacheKey(parameters);
-        cache_[cacheKey] = {std::make_shared<RuleResult>(result), std::chrono::steady_clock::now() + cacheDuration.value()};
+        cache_[cacheKey] = {
+            std::make_shared<RuleResult>(result), 
+            std::chrono::steady_clock::now() + cacheDuration.value(),
+            cacheGeneration_
+        };
     }
 }
 
@@ -339,28 +375,32 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
 
     // Check cache first if cacheDuration is set
     if (cacheDuration.has_value() && cacheDuration->count() > 0) {
+        std::lock_guard<std::mutex> lock(*cacheMutex_);
         auto cacheKey = buildCacheKey(parameters);
         auto it = cache_.find(cacheKey);
         if (it != cache_.end()) {
-            if (std::chrono::steady_clock::now() < it->second.expiresAt) {
+            // Check if cache entry is still valid (not expired and same generation)
+            if (std::chrono::steady_clock::now() < it->second.expiresAt && 
+                it->second.generation == cacheGeneration_) {
                 // Cache hit - return cached result
                 log->debug("Cache hit for rule {}", id);
                 PerformanceCounters::instance().recordExecution(it->second.result->isSuccess(), false, true, false, false);
                 return *it->second.result;
             }
-            // Cache expired - remove it
-            log->debug("Cache expired for rule {}", id);
+            // Cache expired or invalidated - remove it
+            log->debug("Cache expired or invalidated for rule {}", id);
             cache_.erase(it);
         }
     }
 
     RuleResult result;
-    result.ruleId = id;
+    result.ruleName = name;  // Use human-readable name instead of ID
+    result.ruleId = id;      // Set the rule ID
     result.executedAt = std::chrono::steady_clock::now();
 
     // Preference: inactive rules are completely skipped - no result, no evaluation
     if (!isActive) {
-        log->debug("Rule {} inactive — skipped", id);
+        log->debug("Rule {} inactive - skipped", id);
         result.success = false;
         result.skipped = true;
         return result;
@@ -392,16 +432,16 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
 
             // Store child results in context so parent expressions can access them
             for (const auto& childResult : result.childResults) {
-                context.setResult(childResult.ruleId, childResult);
+                context.setResult(childResult.ruleName, childResult);
             }
 
             // Preference: parent only evaluates if ALL children pass
             for (const auto& childResult : result.childResults) {
                 if (!childResult.isSuccess()) {
-                    log->info("Child rule {} failed — parent {} aborted", childResult.ruleId, id);
-                    setFailure(result, "Child rule " + std::to_string(childResult.ruleId) + " failed");
+                    log->info("Child rule {} failed - parent {} aborted", childResult.ruleName, id);
+                    setFailure(result, "Child rule " + childResult.ruleName + " failed");
                     storeInCache(parameters, result);
-                    context.setResult(id, result);
+                    context.setResult(name, result);
                     return result;
                 }
             }
@@ -415,7 +455,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
                 log->info("Rule {} expression evaluated to false", id);
                 setFailure(result, "Expression evaluated to false");
                 storeInCache(parameters, result);
-                context.setResult(id, result);
+                context.setResult(name, result);
                 return result;
             }
         }
@@ -435,26 +475,26 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
         log->error("Rate limit exception in rule {}: {}", id, ex.what());
         result.success = false;
         result.exception = RuleException(ex.what());
-        context.setLastError(id, "Rate limit exceeded: " + std::string(ex.what()));
+        context.setLastError(name, "Rate limit exceeded: " + std::string(ex.what()));
         PerformanceCounters::instance().recordExecution(false, false, false, false, true);
     } catch (const RuleTimeoutException& ex) {
         log->error("Timeout in rule {}: {}", id, ex.what());
         result.success = false;
         result.exception = ex;
-        context.setLastError(id, "Timeout: " + std::string(ex.what()));
+        context.setLastError(name, "Timeout: " + std::string(ex.what()));
         PerformanceCounters::instance().recordExecution(false, false, false, true, false);
     } catch (const RuleException& ex) {
         log->error("Rule {} exception: {}", id, ex.what());
         setFailure(result, ex.what());
-        context.setLastError(id, ex.what());
+        context.setLastError(name, ex.what());
     } catch (const std::exception& ex) {
         log->error("Standard exception in rule {}: {}", id, ex.what());
         setFailure(result, ex.what());
-        context.setLastError(id, ex.what());
+        context.setLastError(name, ex.what());
     } catch (...) {
         log->critical("Unknown exception during rule {} execution", id);
         setFailure(result, "Unknown exception during rule execution");
-        context.setLastError(id, "Unknown exception");
+        context.setLastError(name, "Unknown exception");
     }
 
     auto endTime = std::chrono::steady_clock::now();
@@ -471,7 +511,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
         std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime));
 
     // Store result in context for dependency access
-    context.setResult(id, result);
+    context.setResult(name, result);
 
     // Store in cache if applicable
     storeInCache(parameters, result);
@@ -581,6 +621,17 @@ Rule::Builder Rule::create(const Id& id, const std::string& expression, bool act
     return Builder(id)
         .withExpression(expression)
         .active(active);
+}
+
+// ============================================================================
+// Cache invalidation
+// ============================================================================
+
+int Rule::invalidateCache() {
+    std::lock_guard<std::mutex> lock(*cacheMutex_);
+    ++cacheGeneration_;
+    cache_.clear();  // Clear all cached entries
+    return cacheGeneration_;
 }
 
 } // namespace fastrules

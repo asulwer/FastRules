@@ -5,6 +5,7 @@
 #include <lua.hpp>
 #include <LuaBridge/LuaBridge.h>
 #include <any>
+#include <cstring>
 #include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
@@ -12,7 +13,7 @@
 namespace fastrules {
 
 // ============================================================================
-// LuaBridgeValue — wraps a Lua registry reference as LuaValue
+// LuaBridgeValue -- wraps a Lua registry reference as LuaValue
 // ============================================================================
 class LuaBridgeValue : public LuaValue {
 public:
@@ -690,7 +691,7 @@ std::unique_ptr<LuaValue> LuaBridge3Backend::createTable() {
 }
 
 // ============================================================================
-// Type / Action binding — stubs for now (full implementation later)
+// Type / Action binding -- stubs for now (full implementation later)
 // ============================================================================
 
 void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
@@ -718,19 +719,19 @@ void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
         }
         lua_settable(pImpl_->L, -3);
 
-        // __index closure
+        // __index closure - handles both fields and methods
         lua_pushstring(pImpl_->L, "__index");
         lua_pushcfunction(pImpl_->L, [](lua_State* L) -> int {
-            // arg1: userdata (pointer to object pointer — void**)
-            // arg2: field name
+            // arg1: userdata (pointer to object pointer -- void**)
+            // arg2: key (field or method name)
             void** ud = static_cast<void**>(lua_touserdata(L, 1));
             if (!ud || !*ud) {
                 lua_pushnil(L);
                 return 1;
             }
             void* obj = *ud;
-            const char* fieldName = lua_tostring(L, 2);
-            if (!fieldName) {
+            const char* key = lua_tostring(L, 2);
+            if (!key) {
                 lua_pushnil(L);
                 return 1;
             }
@@ -740,6 +741,18 @@ void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
                 lua_pushnil(L);
                 return 1;
             }
+
+            // First check if this is a method (stored directly in metatable)
+            lua_pushstring(L, key);
+            lua_rawget(L, -2); // look up key in metatable
+            if (!lua_isnil(L, -1)) {
+                // Found a method - leave it on stack and return
+                lua_remove(L, -2); // remove metatable, leave method
+                return 1;
+            }
+            lua_pop(L, 1); // pop nil
+
+            // Not a method, check fields
             lua_pushstring(L, "__fields");
             lua_rawget(L, -2); // get fields table
             if (!lua_istable(L, -1)) {
@@ -748,7 +761,7 @@ void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
                 return 1;
             }
 
-            lua_pushstring(L, fieldName);
+            lua_pushstring(L, key);
             lua_rawget(L, -2); // get field info table
             if (!lua_istable(L, -1)) {
                 lua_pop(L, 3);
@@ -769,16 +782,24 @@ void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
             // Pop field info + fields table + metatable
             lua_pop(L, 3);
 
-            // Read value at offset
+            // Read value at offset (use memcpy for safe type punning)
             char* ptr = static_cast<char*>(obj);
             if (typeStr == "int") {
-                lua_pushinteger(L, *reinterpret_cast<int*>(ptr + offset));
+                int val;
+                std::memcpy(&val, ptr + offset, sizeof(int));
+                lua_pushinteger(L, val);
             } else if (typeStr == "double") {
-                lua_pushnumber(L, *reinterpret_cast<double*>(ptr + offset));
+                double val;
+                std::memcpy(&val, ptr + offset, sizeof(double));
+                lua_pushnumber(L, val);
             } else if (typeStr == "bool") {
-                lua_pushboolean(L, *reinterpret_cast<bool*>(ptr + offset));
+                bool val;
+                std::memcpy(&val, ptr + offset, sizeof(bool));
+                lua_pushboolean(L, val);
             } else if (typeStr == "string") {
-                lua_pushstring(L, reinterpret_cast<std::string*>(ptr + offset)->c_str());
+                std::string val;
+                std::memcpy(&val, ptr + offset, sizeof(std::string));
+                lua_pushstring(L, val.c_str());
             } else {
                 lua_pushnil(L);
             }
@@ -824,13 +845,17 @@ void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
 
             char* ptr = static_cast<char*>(obj);
             if (typeStr == "int") {
-                *reinterpret_cast<int*>(ptr + offset) = static_cast<int>(lua_tointeger(L, 3));
+                int val = static_cast<int>(lua_tointeger(L, 3));
+                std::memcpy(ptr + offset, &val, sizeof(int));
             } else if (typeStr == "double") {
-                *reinterpret_cast<double*>(ptr + offset) = lua_tonumber(L, 3);
+                double val = lua_tonumber(L, 3);
+                std::memcpy(ptr + offset, &val, sizeof(double));
             } else if (typeStr == "bool") {
-                *reinterpret_cast<bool*>(ptr + offset) = lua_toboolean(L, 3);
+                bool val = lua_toboolean(L, 3);
+                std::memcpy(ptr + offset, &val, sizeof(bool));
             } else if (typeStr == "string") {
-                *reinterpret_cast<std::string*>(ptr + offset) = lua_tostring(L, 3) ? lua_tostring(L, 3) : "";
+                std::string val = lua_tostring(L, 3) ? lua_tostring(L, 3) : "";
+                std::memcpy(ptr + offset, &val, sizeof(std::string));
             }
             return 0;
         });
@@ -851,9 +876,10 @@ void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
                 TypeMethod* method = static_cast<TypeMethod*>(lua_touserdata(L, lua_upvalueindex(1)));
                 if (!method) return 0;
                 
-                // Get self (first arg)
-                void* obj = lua_touserdata(L, 1);
-                if (!obj) return 0;
+                // Get self (first arg) -- userdata stores void**, dereference it
+                void** ud = static_cast<void**>(lua_touserdata(L, 1));
+                if (!ud || !*ud) return 0;
+                void* obj = *ud;
                 
                 // Call the invoker
                 return method->invoker(obj, L);
@@ -891,25 +917,25 @@ void LuaBridge3Backend::bindActions(ActionCallbacks* callbacks) {
                 return 0;
             }
             
-            // Build parameter map from Lua arguments
-            std::unordered_map<std::string, std::any> params;
+            // Build parameter map from Lua arguments - check number before string
+            // because lua_isstring returns true for numbers too
             int nargs = lua_gettop(L);
+            std::vector<std::any> args;
+            args.reserve(nargs);
             for (int i = 1; i <= nargs; ++i) {
-                if (lua_isstring(L, i)) {
-                    params["arg" + std::to_string(i)] = std::string(lua_tostring(L, i));
-                } else if (lua_isnumber(L, i)) {
-                    params["arg" + std::to_string(i)] = lua_tonumber(L, i);
+                if (lua_isnumber(L, i)) {
+                    args.push_back(lua_tonumber(L, i));
+                } else if (lua_isstring(L, i)) {
+                    args.push_back(std::string(lua_tostring(L, i)));
                 } else if (lua_isboolean(L, i)) {
-                    params["arg" + std::to_string(i)] = lua_toboolean(L, i) != 0;
+                    args.push_back(lua_toboolean(L, i) != 0);
+                } else {
+                    args.push_back(std::any{});
                 }
             }
             
             try {
                 std::any target;
-                std::vector<std::any> args;
-                for (const auto& kv : params) {
-                    args.push_back(kv.second);
-                }
                 (*backend)->pImpl_->actionHandlers_[hId](target, args);
             } catch (const std::exception& e) {
                 luaL_error(L, "Action handler error: %s", e.what());
@@ -945,7 +971,7 @@ void LuaBridge3Backend::setRegisteredTypeGlobal(const std::string& name, const s
                 luaL_getmetatable(pImpl_->L, mtName.c_str());
                 if (lua_isnil(pImpl_->L, -1)) {
                     lua_pop(pImpl_->L, 1);
-                    // Metatable doesn't exist yet — bindTypes hasn't been called
+                    // Metatable doesn't exist yet -- bindTypes hasn't been called
                     // Create it now
                     luaL_newmetatable(pImpl_->L, mtName.c_str());
                     // Leave it on stack to be set as metatable
