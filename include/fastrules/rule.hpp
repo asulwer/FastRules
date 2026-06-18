@@ -201,6 +201,14 @@ struct RuleParameter {
  * - The Rule class is designed to be stored in containers
  * - Child rules are stored as shared_ptr to enable sharing
  */
+
+// Suppress LNK4197: vtable exported multiple times - this is expected for
+// exported classes with virtual functions; the linker uses the first export
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4197)
+#endif
+
 class FASTRULES_API Rule {
 public:
     using Id = int;  ///< Rule identifier type
@@ -763,6 +771,11 @@ private:
     static void setFailure(RuleResult& result, const std::string& message,
                            bool wasCached = false) noexcept;
 };
+
+// Restore warning state after Rule class
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 // Inline implementations for Rule::Builder
 inline Rule::Builder::Builder(Id id) : rule_(std::make_shared<Rule>()) {

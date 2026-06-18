@@ -421,13 +421,10 @@ target_link_libraries(fastrules
         lua_static
 )
 
-# Note: LNK4197 warning (vtable exported multiple times) is an inherent MSVC behavior
-# when exporting classes with virtual functions. The proper fix (out-of-line 
-# virtual destructor) is implemented, but MSVC still emits this informational warning.
-# Using /IGNORE to suppress it since it's harmless - the linker uses the first export.
-if(MSVC)
-    target_link_options(fastrules PRIVATE /IGNORE:4197)
-endif()
+# Note: LNK4197 warning (vtable exported multiple times) is suppressed via
+# pragma warning(disable: 4197) in rule.hpp around the Rule class definition.
+# This is cleaner than using linker flags and follows Microsoft's guidance
+# for handling this informational warning on exported classes with virtual functions.
 
 # Link spdlog only if found
 if(spdlog_FOUND)
