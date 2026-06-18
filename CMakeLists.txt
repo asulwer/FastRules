@@ -421,7 +421,10 @@ target_link_libraries(fastrules
         lua_static
 )
 
-# Suppress LNK4197 (vtable exported multiple times) - harmless warning
+# Note: LNK4197 warning (vtable exported multiple times) is an inherent MSVC behavior
+# when exporting classes with virtual functions. The proper fix (out-of-line 
+# virtual destructor) is implemented, but MSVC still emits this informational warning.
+# Using /IGNORE to suppress it since it's harmless - the linker uses the first export.
 if(MSVC)
     target_link_options(fastrules PRIVATE /IGNORE:4197)
 endif()
