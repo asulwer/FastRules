@@ -317,33 +317,7 @@ void LuaEngine::setupContextTable(RuleContext& context) {
     // Set the thread-local context for this execution
     currentContext_ = &context;
     
-    // Register context_getResult as a global function
-    backend_->registerFunction("context_getResult", [this](lua_State* /*L*/, const std::vector<std::unique_ptr<LuaValue>>& args) -> std::vector<std::unique_ptr<LuaValue>> {
-        std::vector<std::unique_ptr<LuaValue>> results;
-        if (args.empty() || currentContext_ == nullptr) {
-            return results;
-        }
-        std::string ruleName;
-        if (args[0]->isString()) {
-            std::string ruleIdStr = args[0]->toString();
-            ruleName = ruleIdStr;
-        } else {
-            ruleName = std::to_string(static_cast<int>(args[0]->toNumber()));
-        }
-        auto result = currentContext_->getResult(ruleName);
-        auto tbl = backend_->createTable();
-        if (result.has_value()) {
-            tbl->set("success", *backend_->makeBool(result->success));
-            tbl->set("ruleId", *backend_->makeString(result->ruleName));
-        } else {
-            tbl->set("success", *backend_->makeBool(false));
-            tbl->set("ruleId", *backend_->makeString(ruleName));
-        }
-        results.push_back(std::move(tbl));
-        return results;
-    });
-    
-    // Always set context.getResult (context table may have been recreated)
+    // Get the context table
     auto ctxTbl = backend_->getGlobal("context");
     
     // If context table doesn't exist or isn't a table, recreate it
@@ -352,9 +326,60 @@ void LuaEngine::setupContextTable(RuleContext& context) {
         backend_->setGlobal("context", *ctxTbl);
     }
     
-    auto getResultFunc = backend_->getGlobal("context_getResult");
-    if (ctxTbl && ctxTbl->isTable() && getResultFunc && !getResultFunc->isNil()) {
-        ctxTbl->set("getResult", *getResultFunc);
+    // Create getResult function directly using Lua C API
+    lua_State* L = backend_->state();
+    
+    if (L) {
+        // Get the context table onto the stack
+        lua_getglobal(L, "context");
+        if (lua_istable(L, -1)) {
+            // Push the key
+            lua_pushstring(L, "getResult");
+            
+            // Push the C closure with the engine pointer as upvalue
+            lua_pushlightuserdata(L, this);
+            lua_pushcclosure(L, [](lua_State* L) -> int {
+                // Get the engine pointer from upvalue
+                auto* engine = static_cast<LuaEngine*>(lua_touserdata(L, lua_upvalueindex(1)));
+                if (!engine || !engine->currentContext_) {
+                    lua_pushnil(L);
+                    return 1;
+                }
+                
+                // Get the rule name argument
+                std::string ruleName;
+                if (lua_isstring(L, 1)) {
+                    ruleName = lua_tostring(L, 1);
+                } else if (lua_isnumber(L, 1)) {
+                    ruleName = std::to_string(static_cast<int>(lua_tonumber(L, 1)));
+                } else {
+                    ruleName = "";
+                }
+                
+                // Get the result from context
+                auto result = engine->currentContext_->getResult(ruleName);
+                
+                // Create return table
+                lua_newtable(L);
+                if (result.has_value()) {
+                    lua_pushboolean(L, result->success);
+                    lua_setfield(L, -2, "success");
+                    lua_pushstring(L, result->ruleName.c_str());
+                    lua_setfield(L, -2, "ruleId");
+                } else {
+                    lua_pushboolean(L, false);
+                    lua_setfield(L, -2, "success");
+                    lua_pushstring(L, ruleName.c_str());
+                    lua_setfield(L, -2, "ruleId");
+                }
+                
+                return 1;  // Return the table
+            }, 1);
+            
+            // Set context.getResult = function
+            lua_settable(L, -3);
+        }
+        lua_pop(L, 1);  // Pop the context table
     }
 }
 
