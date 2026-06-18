@@ -141,10 +141,10 @@ public:
     /**
      * @brief Pop an engine from the pool
      * 
-     * Spin-waits until an engine is available.
-     * Uses _mm_pause() to reduce CPU contention.
+     * Returns an engine if available, or nullptr if pool is empty.
+     * Non-blocking - returns immediately.
      * 
-     * @return Pointer to an engine (never null)
+     * @return Pointer to an engine, or nullptr if pool is empty
      */
     LuaEngine* pop() {
         EngineNode* node = head_.load(std::memory_order_relaxed);
@@ -171,17 +171,8 @@ public:
             #endif
         }
         
-        // Pool is empty - spin until available
-        while ((node = head_.load(std::memory_order_relaxed)) == nullptr) {
-            #if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
-                _mm_pause();
-            #elif defined(__x86_64__) || defined(__i386__)
-                __builtin_ia32_pause();
-            #endif
-        }
-        
-        // Retry from beginning
-        return pop();
+        // Pool is empty - return nullptr
+        return nullptr;
     }
 
     /**
