@@ -297,6 +297,12 @@ void Workflow::compileParallel(LuaEngine& engine, size_t numThreads) {
         }
     }
 
+    // Also compile the original engine that was passed in
+    // This ensures workflow.execute(engine) works with the same engine
+    for (auto& rule : rules) {
+        rule->compile(engine);
+    }
+
     // Create engine pool for execution (same as sequential compile)
     size_t poolSize = std::thread::hardware_concurrency();
     if (poolSize < 2) poolSize = 2;
