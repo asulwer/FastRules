@@ -53,6 +53,9 @@ public:
     // ── Native function / predicate registry ────────────────────────────────
     void registerFunction(const std::string& name, LuaNativeFunc func) override;
     void registerPredicate(const std::string& name, LuaPredicateFunc func) override;
+    
+    // Helper for predicate lookup (used by C handler)
+    LuaPredicateFunc* getPredicate(const std::string& name);
 
     // ── State management ──────────────────────────────────────────────────
     void openLibraries() override;

@@ -68,12 +68,10 @@
 
 #pragma once
 
-// Suppress LNK4197: export '??_7Rule@fastrules@@6B@' specified multiple times
-// This is a harmless warning caused by MSVC generating vtables in multiple TUs
-// when exporting a class with virtual functions. The linker uses the first.
-#ifdef _MSC_VER
-#pragma warning(disable: 4197)
-#endif
+// Note on LNK4197: The vtable export warning is addressed by ensuring
+// the Rule class has a single out-of-line virtual function (destructor).
+// The destructor is defined in rule.cpp to ensure only one TU generates
+// the vtable. See Rule::~Rule() in rule.cpp.
 
 #include "fastrules/fastrules_export.hpp"
 #include "fastrules/rule_result.hpp"
@@ -87,6 +85,7 @@
 #include <chrono>
 #include <any>
 #include <unordered_map>
+#include <unordered_set>
 #include <mutex>
 #include <stdexcept>
 #include <typeindex>
@@ -201,13 +200,6 @@ struct RuleParameter {
  * - The Rule class is designed to be stored in containers
  * - Child rules are stored as shared_ptr to enable sharing
  */
-
-// Suppress LNK4197: vtable exported multiple times - this is expected for
-// exported classes with virtual functions; the linker uses the first export
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable: 4197)
-#endif
 
 class FASTRULES_API Rule {
 public:
@@ -412,8 +404,8 @@ public:
     /// @brief Get execution timeout
     [[nodiscard]] std::optional<std::chrono::milliseconds> getTimeout() const noexcept { return timeout; }
 
-    /// @brief Set execution timeout
-    void setTimeout(std::chrono::milliseconds to) { timeout = to; }
+    /// @brief Set execution timeout (throws if timeout is zero)
+    void setTimeout(std::chrono::milliseconds to);
 
     // ========================================================================
     // Lifecycle Methods
@@ -772,11 +764,6 @@ private:
                            bool wasCached = false) noexcept;
 };
 
-// Restore warning state after Rule class
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
 // Inline implementations for Rule::Builder
 inline Rule::Builder::Builder(Id id) : rule_(std::make_shared<Rule>()) {
     rule_->id = id;
@@ -829,8 +816,55 @@ inline Rule::Builder& Rule::Builder::dependsOn(std::string ruleName) {
 
 inline Rule::Builder& Rule::Builder::dependsOn(std::string ruleName, std::vector<std::reference_wrapper<const Rule>> dependentRules) {
     rule_->dependsOnRuleName = std::move(ruleName);
-    // Note: reference_wrapper can't be stored directly, this validates dependencies
-    // The actual dependent rules would need to be resolved by name
+    
+    // Validate for circular dependency
+    if (rule_->dependsOnRuleName.has_value()) {
+        // Build lookup maps from dependentRules
+        std::unordered_map<int, const Rule*> ruleMap;
+        std::unordered_map<std::string, int> nameToId;
+        for (const auto& ref : dependentRules) {
+            ruleMap[ref.get().id] = &ref.get();
+            if (!ref.get().name.empty()) {
+                nameToId[ref.get().name] = ref.get().id;
+            }
+        }
+        
+        // Check for self-dependency first
+        auto selfIt = nameToId.find(rule_->dependsOnRuleName.value());
+        if (selfIt != nameToId.end() && selfIt->second == rule_->id) {
+            throw RuleValidationException("Circular dependency detected: rule " + std::to_string(rule_->id) + " depends on itself");
+        }
+        
+        // Follow the dependency chain to check for cycles
+        std::unordered_set<int> visited;
+        auto depIt = nameToId.find(rule_->dependsOnRuleName.value());
+        if (depIt != nameToId.end()) {
+            int current = depIt->second;
+            while (current != 0) {
+                // Check if this rule depends back on the rule we're building
+                auto ruleIt = ruleMap.find(current);
+                if (ruleIt != ruleMap.end() && ruleIt->second->dependsOnRuleName.has_value()) {
+                    auto nextIt = nameToId.find(ruleIt->second->dependsOnRuleName.value());
+                    if (nextIt != nameToId.end()) {
+                        if (nextIt->second == rule_->id) {
+                            throw RuleValidationException("Circular dependency detected");
+                        }
+                        // Continue following the chain
+                        if (visited.count(nextIt->second)) {
+                            break; // Already visited, stop to avoid infinite loop
+                        }
+                        visited.insert(nextIt->second);
+                        current = nextIt->second;
+                    } else {
+                        break; // Dependency not in our rule set
+                    }
+                } else {
+                    break; // No further dependencies
+                }
+            }
+        }
+    }
+    
     return *this;
 }
 

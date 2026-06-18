@@ -12,6 +12,12 @@
 
 namespace fastrules {
 
+// Forward declaration of LuaBridge3Backend for predicate handler
+class LuaBridge3Backend;
+
+// Static helper to call predicates - defined after the class
+static int luaPredicateCallHandler(lua_State* L);
+
 // ============================================================================
 // LuaBridgeValue -- wraps a Lua registry reference as LuaValue
 // ============================================================================
@@ -535,26 +541,89 @@ void LuaBridge3Backend::registerFunction(const std::string& name, LuaNativeFunc 
 }
 
 
+// Forward declaration of predicate handler
+static int luaPredicateCallHandler(lua_State* L);
+
+// Store predicates in a registry that persists for the lifetime of the backend
+// We use a map from string name to function, stored in a way that's accessible
+// from the C handler
+
+// Global predicate registry - this is a bit of a hack but ensures stability
+// Each backend instance will have its own predicates stored in the Impl
+// and we pass the name through the closure upvalue
+
 void LuaBridge3Backend::registerPredicate(const std::string& name, LuaPredicateFunc func) {
-    pImpl_->predicates_[name] = std::move(func);
-
-    // Store predicate in registry
-    lua_pushstring(pImpl_->L, name.c_str());
-    lua_pushlightuserdata(pImpl_->L, &pImpl_->predicates_[name]);
-    lua_settable(pImpl_->L, LUA_REGISTRYINDEX);
-
-    // Store in lookup table
-    lua_getglobal(pImpl_->L, "__fastrules_predicates");
-    if (lua_isnil(pImpl_->L, -1)) {
-        lua_pop(pImpl_->L, 1);
-        lua_newtable(pImpl_->L);
-        lua_setglobal(pImpl_->L, "__fastrules_predicates");
-        lua_getglobal(pImpl_->L, "__fastrules_predicates");
+    // Store the predicate function in the predicates map
+    auto [it, inserted] = pImpl_->predicates_.emplace(name, std::move(func));
+    if (!inserted) {
+        it->second = std::move(func);
     }
+    
+    // Create a simple Lua C function that will be called
+    // We use a light userdata to store the backend instance pointer
+    // and look up the predicate by name at call time
     lua_pushstring(pImpl_->L, name.c_str());
-    lua_pushlightuserdata(pImpl_->L, &pImpl_->predicates_[name]);
-    lua_settable(pImpl_->L, -3);
+    lua_pushlightuserdata(pImpl_->L, this);
+    lua_pushcclosure(pImpl_->L, luaPredicateCallHandler, 2);
+    
+    // Verify we have a function on the stack
+    if (!lua_isfunction(pImpl_->L, -1)) {
+        lua_pop(pImpl_->L, 1);
+        throw std::runtime_error("Failed to create closure for predicate: " + name);
+    }
+    
+    lua_setglobal(pImpl_->L, name.c_str());
+    
+    // Verify the global was set
+    lua_getglobal(pImpl_->L, name.c_str());
+    if (!lua_isfunction(pImpl_->L, -1)) {
+        lua_pop(pImpl_->L, 1);
+        throw std::runtime_error("Failed to set predicate as global: " + name);
+    }
     lua_pop(pImpl_->L, 1);
+}
+
+// Static helper to call predicates
+static int luaPredicateCallHandler(lua_State* L) {
+    // Get the predicate name from upvalue index 1
+    const char* name = lua_tostring(L, lua_upvalueindex(1));
+    // Get the backend instance from upvalue index 2
+    auto* backend = static_cast<LuaBridge3Backend*>(lua_touserdata(L, lua_upvalueindex(2)));
+    
+    if (!name || !backend) {
+        return luaL_error(L, "Invalid predicate call - missing name or backend");
+    }
+    
+    // Look up the predicate function in the backend's map
+    // Access the private Impl through a helper - we need to access it via public method
+    auto* predFunc = backend->getPredicate(name);
+    if (!predFunc) {
+        return luaL_error(L, "Predicate '%s' not found or null in backend map", name);
+    }
+    
+    // Collect arguments
+    int nargs = lua_gettop(L);
+    std::vector<std::unique_ptr<LuaValue>> args;
+    args.reserve(nargs);
+    for (int i = 1; i <= nargs; ++i) {
+        args.push_back(std::make_unique<LuaBridgeValue>(L, i));
+    }
+    
+    // Call the predicate
+    bool result = (*predFunc)(L, args);
+    
+    // Push result
+    lua_pushboolean(L, result);
+    return 1;
+}
+
+// Helper to get a predicate by name (used by the static handler)
+LuaPredicateFunc* LuaBridge3Backend::getPredicate(const std::string& name) {
+    auto it = pImpl_->predicates_.find(name);
+    if (it != pImpl_->predicates_.end() && it->second) {
+        return &it->second;
+    }
+    return nullptr;
 }
 
 std::unique_ptr<LuaValue> LuaBridge3Backend::makeNil() {

@@ -380,6 +380,12 @@ if(FASTRULES_BUILD_SHARED)
     set_target_properties(fastrules PROPERTIES
         WINDOWS_EXPORT_ALL_SYMBOLS TRUE  # Export all symbols on Windows
     )
+    # Fix LNK4197: vtable export warnings are expected when using dllexport
+    # with classes that have virtual functions included in multiple TUs.
+    # The linker correctly uses the first export; we silence the noise.
+    if(MSVC)
+        target_link_options(fastrules PRIVATE /IGNORE:4197)
+    endif()
 else()
     add_library(fastrules STATIC ${FASTRULES_CORE_SOURCES})
 endif()

@@ -627,6 +627,13 @@ std::vector<RuleResult> Rule::executeChildRules(LuaEngine& engine, RuleContext& 
     return results;
 }
 
+void Rule::setTimeout(std::chrono::milliseconds to) {
+    if (to.count() <= 0) {
+        throw RuleValidationException("Timeout must be greater than zero");
+    }
+    timeout = to;
+}
+
 bool Rule::evaluateExpression(LuaEngine& engine, RuleContext& context, const std::vector<RuleParameter>& parameters) {
     auto ref = getExpressionRef(engine);
     if (ref == -1) {
