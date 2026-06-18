@@ -37,6 +37,7 @@ TEST_CASE("Invalid Lua expression syntax error") {
     rule->expression = "if then else end";
     
     Workflow workflow;
+    workflow.name = "Invalid Lua expression syntax error";
     workflow.rules.push_back(rule);
     
     REQUIRE_THROWS_AS(workflow.compile(engine), RuleCompilationException);
@@ -51,6 +52,7 @@ TEST_CASE("Invalid Lua expression undefined variable") {
     rule->timeout = std::chrono::milliseconds(1000);  // Add timeout to prevent hanging
     
     Workflow workflow;
+    workflow.name = "Invalid Lua expression undefined variable";
     workflow.rules.push_back(rule);
     workflow.compile(engine);
     
@@ -69,6 +71,7 @@ TEST_CASE("Invalid Lua expression malformed function call") {
     rule->expression = "math.(";
     
     Workflow workflow;
+    workflow.name = "Invalid Lua expression malformed function call";
     workflow.rules.push_back(rule);
     
     REQUIRE_THROWS_AS(workflow.compile(engine), RuleCompilationException);
@@ -88,6 +91,7 @@ TEST_CASE("Rule timeout with action") {
     rule->timeout = std::chrono::milliseconds(100);
     
     Workflow workflow;
+    workflow.name = "Rule timeout with action";
     workflow.rules.push_back(rule);
     workflow.compile(engine);
     
@@ -105,6 +109,7 @@ TEST_CASE("Rule timeout with action") {
 TEST_CASE("Circular dependency detection direct") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Circular dependency detection direct";
     
     auto rule1 = std::make_shared<Rule>();
     rule1->id = 1;
@@ -126,6 +131,7 @@ TEST_CASE("Circular dependency detection direct") {
 TEST_CASE("Circular dependency detection indirect") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Circular dependency detection indirect";
     
     auto ruleA = std::make_shared<Rule>();
     ruleA->id = 1;
@@ -154,6 +160,7 @@ TEST_CASE("Circular dependency detection indirect") {
 TEST_CASE("Circular dependency self-reference") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Circular dependency self-reference";
     
     auto rule = std::make_shared<Rule>();
     rule->id = 1;
@@ -172,6 +179,7 @@ TEST_CASE("Circular dependency self-reference") {
 TEST_CASE("Deeply nested rule dependencies") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Deeply nested rule dependencies";
     
     for (int i = 0; i < 50; ++i) {
         auto rule = std::make_shared<Rule>();
@@ -199,6 +207,7 @@ TEST_CASE("Deeply nested rule dependencies") {
 TEST_CASE("Concurrent workflow execution thread safety") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Concurrent workflow execution thread safety";
     workflow.id = 1;
     
     for (int i = 0; i < 10; ++i) {
@@ -235,6 +244,7 @@ TEST_CASE("Concurrent workflow execution thread safety") {
 TEST_CASE("Concurrent parallel execution thread safety") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Concurrent parallel execution thread safety";
     workflow.id = 1;
     
     for (int i = 0; i < 5; ++i) {
@@ -275,6 +285,7 @@ TEST_CASE("Concurrent parallel execution thread safety") {
 TEST_CASE("Duplicate rule IDs detection") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Duplicate rule IDs detection";
     
     auto rule1 = std::make_shared<Rule>();
     rule1->id = 1;
@@ -292,6 +303,7 @@ TEST_CASE("Duplicate rule IDs detection") {
 TEST_CASE("Missing dependency detection") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Missing dependency detection";
     
     auto rule = std::make_shared<Rule>();
     rule->id = 1;
@@ -306,6 +318,7 @@ TEST_CASE("Missing dependency detection") {
 TEST_CASE("Workflow with only inactive rules") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Workflow with only inactive rules";
     
     auto rule = std::make_shared<Rule>();
     rule->id = 1;
@@ -324,6 +337,7 @@ TEST_CASE("Workflow with only inactive rules") {
 TEST_CASE("Workflow with all failing rules") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Workflow with all failing rules";
     
     for (int i = 0; i < 5; ++i) {
         auto rule = std::make_shared<Rule>();
@@ -357,6 +371,7 @@ TEST_CASE("Very long expression handling") {
     rule->expression = longExpr;
     
     Workflow workflow;
+    workflow.name = "Very long expression handling";
     workflow.rules.push_back(rule);
     workflow.compile(engine);
     
@@ -369,6 +384,7 @@ TEST_CASE("Very long expression handling") {
 TEST_CASE("Unicode in rule names and descriptions") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Unicode in rule names and descriptions";
     
     auto rule = std::make_shared<Rule>();
     rule->id = 1;
@@ -389,6 +405,7 @@ TEST_CASE("Unicode in rule names and descriptions") {
 TEST_CASE("Empty workflow execution") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Empty workflow execution";
     
     workflow.compile(engine);
     
@@ -401,6 +418,7 @@ TEST_CASE("Empty workflow execution") {
 TEST_CASE("Single rule workflow") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Single rule workflow";
     
     auto rule = std::make_shared<Rule>();
     rule->id = 1;
@@ -425,6 +443,7 @@ TEST_CASE("Rule with empty expression") {
     rule->expression = "";
     
     Workflow workflow;
+    workflow.name = "Rule with empty expression";
     workflow.rules.push_back(rule);
     workflow.compile(engine);
     

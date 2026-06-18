@@ -63,7 +63,8 @@ void Workflow::validate() {
         return;
     }
 
-    log->debug("Validating workflow {}", id);
+    std::string workflowName = !name.empty() ? name : (!description.empty() ? description : std::to_string(id));
+    log->debug("Validating workflow {}", workflowName);
 
     // Check for duplicate rule IDs
     std::unordered_set<int> seenIds;
@@ -396,7 +397,8 @@ std::vector<RuleResult> Workflow::execute(LuaEngine& engine, const std::vector<R
     std::vector<RuleResult> results;
 
     auto executionOrder = resolveExecutionOrder();
-    log->info("Executing {} rules in workflow {}", executionOrder.size(), id);
+    std::string workflowName = !name.empty() ? name : (!description.empty() ? description : std::to_string(id));
+    log->info("Executing {} rules in workflow {}", executionOrder.size(), workflowName);
 
     for (auto& rule : executionOrder) {
         // Preference: skip inactive rules entirely - no evaluation, no result

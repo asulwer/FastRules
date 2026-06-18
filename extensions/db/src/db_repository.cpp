@@ -215,6 +215,7 @@ void DbWorkflowRepository::createSchema() {
     *session_ <<
         "CREATE TABLE IF NOT EXISTS workflows ("
         "  id INTEGER PRIMARY KEY,"
+        "  name TEXT,"
         "  description TEXT,"
         "  is_active BOOLEAN DEFAULT TRUE,"
         "  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
@@ -239,17 +240,17 @@ void DbWorkflowRepository::save(const Workflow& workflow) {
         DbBool isActive = workflow.isActive;
         *session_ <<
             "UPDATE workflows SET "
-            "  description = :desc, is_active = :active, updated_at = CURRENT_TIMESTAMP "
+            "  name = :name, description = :desc, is_active = :active, updated_at = CURRENT_TIMESTAMP "
             "WHERE id = :id",
-            soci::use(workflow.description), soci::use(isActive), soci::use(workflow.id);
+            soci::use(workflow.name), soci::use(workflow.description), soci::use(isActive), soci::use(workflow.id);
 
         *session_ << "DELETE FROM workflow_rules WHERE workflow_id = :id", soci::use(workflow.id);
     } else {
         DbBool isActive = workflow.isActive;
         *session_ <<
-            "INSERT INTO workflows (id, description, is_active) "
-            "VALUES (:id, :desc, :active)",
-            soci::use(workflow.id), soci::use(workflow.description), soci::use(isActive);
+            "INSERT INTO workflows (id, name, description, is_active) "
+            "VALUES (:id, :name, :desc, :active)",
+            soci::use(workflow.id), soci::use(workflow.name), soci::use(workflow.description), soci::use(isActive);
     }
 
     for (size_t i = 0; i < workflow.rules.size(); ++i) {
@@ -267,14 +268,15 @@ std::optional<Workflow> DbWorkflowRepository::findById(int id) {
     std::shared_lock<std::shared_mutex> lock(mutex_);  // Shared lock for reading
     
     soci::rowset<soci::row> rs = ((*session_).prepare <<
-        "SELECT id, description, is_active FROM workflows WHERE id = :id", soci::use(id));
+        "SELECT id, name, description, is_active FROM workflows WHERE id = :id", soci::use(id));
 
     for (auto& row : rs) {
         Workflow wf;
         wf.id = row.get<int>(0);
-        wf.description = row.get<std::string>(1);
+        wf.name = row.get<std::string>(1, "");
+        wf.description = row.get<std::string>(2, "");
         DbBool isActive;
-    isActive = row.get<int>(2) != 0;
+    isActive = row.get<int>(3) != 0;
     wf.isActive = isActive;
 
         soci::rowset<soci::row> ruleRs = ((*session_).prepare <<

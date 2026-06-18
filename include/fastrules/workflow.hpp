@@ -97,6 +97,7 @@ public:
     // ========================================================================
     
     int id = 0;                            ///< Workflow identifier
+    std::string name;                      ///< Human-readable name
     std::string description;               ///< Human-readable description
     bool isActive = true;                  ///< Whether this workflow is active
 

@@ -296,6 +296,7 @@ TEST_CASE("Workflow handles large rule sets") {
     LuaEngine engine;
     Workflow workflow;
     workflow.id = 1;
+    workflow.name = "Workflow handles large rule sets";
     
     for (int i = 0; i < 1000; ++i) {
         auto rule = Rule::Builder(400 + i)
@@ -329,6 +330,7 @@ TEST_CASE("Workflow handles circular dependencies gracefully") {
     
     Workflow workflow;
     workflow.id = 1;
+    workflow.name = "Workflow handles circular dependencies gracefully";
     workflow.rules.push_back(rule1);
     workflow.rules.push_back(rule2);
     

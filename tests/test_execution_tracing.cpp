@@ -99,6 +99,7 @@ TEST_CASE("ExecutionTrace JSON serialization") {
 TEST_CASE("Workflow executeWithTrace") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Workflow executeWithTrace";
     workflow.id = 1;
 
     auto rule1 = std::make_shared<Rule>();

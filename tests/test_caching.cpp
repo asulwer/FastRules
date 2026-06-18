@@ -31,6 +31,7 @@ TEST_CASE("Rule cache hit on second execution") {
     rule->cacheDuration = std::chrono::milliseconds(1000);
     
     Workflow workflow;
+    workflow.name = "Rule cache hit on second execution";
     workflow.rules.push_back(rule);
     workflow.compile(engine);
     
@@ -56,6 +57,7 @@ TEST_CASE("Rule cache expires after duration") {
     rule->cacheDuration = std::chrono::milliseconds(100);
     
     Workflow workflow;
+    workflow.name = "Rule cache expires after duration";
     workflow.rules.push_back(rule);
     workflow.compile(engine);
     
@@ -83,6 +85,7 @@ TEST_CASE("Uncached rule executes every time") {
     // No cacheDuration set
     
     Workflow workflow;
+    workflow.name = "Uncached rule executes every time";
     workflow.rules.push_back(rule);
     workflow.compile(engine);
     
@@ -105,6 +108,7 @@ TEST_CASE("Cache with parameters") {
     rule->cacheDuration = std::chrono::milliseconds(1000);
     
     Workflow workflow;
+    workflow.name = "Cache with parameters";
     workflow.rules.push_back(rule);
     workflow.compile(engine);
     

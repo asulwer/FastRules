@@ -161,6 +161,10 @@ Workflow JsonLoader::loadWorkflow(const std::string& jsonString) {
         workflow.description = j["description"];
     }
 
+    if (j.contains("name") && j["name"].is_string()) {
+        workflow.name = j["name"];
+    }
+
     if (j.contains("isActive") && j["isActive"].is_boolean()) {
         workflow.isActive = j["isActive"];
     }
@@ -193,6 +197,7 @@ std::shared_ptr<Rule> JsonLoader::loadRule(const std::string& jsonString) {
 std::string JsonLoader::saveWorkflow(const Workflow& workflow) {
     nlohmann::json j;
     j["id"] = workflow.id;
+    j["name"] = workflow.name;
     j["description"] = workflow.description;
     j["isActive"] = workflow.isActive;
     j["rules"] = nlohmann::json::array();
@@ -207,6 +212,7 @@ std::string JsonLoader::saveWorkflow(const Workflow& workflow) {
 std::string JsonLoader::saveWorkflowPretty(const Workflow& workflow) {
     nlohmann::json j;
     j["id"] = workflow.id;
+    j["name"] = workflow.name;
     j["description"] = workflow.description;
     j["isActive"] = workflow.isActive;
     j["rules"] = nlohmann::json::array();

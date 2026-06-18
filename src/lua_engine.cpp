@@ -222,27 +222,25 @@ std::unique_ptr<LuaValue> anyToLuaValue(LuaBackend& backend, const std::any& val
 
 } // anonymous namespace
 
-/**
- * RAII guard for g_deadline to ensure it's always reset, even on exception.
- * This prevents use-after-free and incorrect timeout checks on subsequent calls.
- */
+// Simple scope guard for g_deadline cleanup - no exceptions, no std::function
 struct DeadlineGuard {
-    std::chrono::steady_clock::time_point** g_deadline_ptr;
+    std::chrono::steady_clock::time_point** ptr;
+    bool dismissed;
     
-    explicit DeadlineGuard(std::chrono::steady_clock::time_point** ptr) 
-        : g_deadline_ptr(ptr) {}
+    explicit DeadlineGuard(std::chrono::steady_clock::time_point** p) 
+        : ptr(p), dismissed(false) {}
     
     ~DeadlineGuard() {
-        if (g_deadline_ptr && *g_deadline_ptr) {
-            *g_deadline_ptr = nullptr;
+        if (!dismissed && ptr && *ptr) {
+            *ptr = nullptr;
         }
     }
     
-    // Disable copy and move
+    void dismiss() { dismissed = true; }
+    
+    // No copy, no move - simple RAII
     DeadlineGuard(const DeadlineGuard&) = delete;
     DeadlineGuard& operator=(const DeadlineGuard&) = delete;
-    DeadlineGuard(DeadlineGuard&&) = delete;
-    DeadlineGuard& operator=(DeadlineGuard&&) = delete;
 };
 
 LuaEngine::LuaEngine() : backend_(LuaBackend::create()) {
@@ -763,11 +761,13 @@ bool LuaEngine::evaluateExpression(int ref, const std::vector<RuleParameter>& pa
     }
 
     std::chrono::steady_clock::time_point deadline;
-    std::optional<DeadlineGuard> deadlineGuard;
-    if (timeout.has_value() && timeout->count() > 0) {
+    bool hasTimeout = timeout.has_value() && timeout->count() > 0;
+    DeadlineGuard guard(&g_deadline);
+    if (hasTimeout) {
         deadline = std::chrono::steady_clock::now() + timeout.value();
         g_deadline = &deadline;
-        deadlineGuard.emplace(&g_deadline);  // RAII guard ensures reset on exit
+    } else {
+        guard.dismiss();  // No timeout set, don't reset g_deadline
     }
 
     auto result = backend_->evaluate(backendId, pairs);
@@ -779,8 +779,8 @@ bool LuaEngine::evaluateExpression(int ref, const std::vector<RuleParameter>& pa
         }
     }
 
-    // g_deadline is reset by DeadlineGuard destructor
-    if (timeout.has_value() && timeout->count() > 0) {
+    // g_deadline is reset by DeadlineGuard destructor if set
+    if (hasTimeout) {
         if (std::chrono::steady_clock::now() > deadline) {
             throw RuleTimeoutException("Rule execution timed out after " + std::to_string(timeout->count()) + "ms");
         }
@@ -817,11 +817,13 @@ void LuaEngine::executeAction(int ref, const std::vector<RuleParameter>& paramet
     }
 
     std::chrono::steady_clock::time_point deadline;
-    std::optional<DeadlineGuard> deadlineGuard;
-    if (timeout.has_value() && timeout->count() > 0) {
+    bool hasTimeout = timeout.has_value() && timeout->count() > 0;
+    DeadlineGuard guard(&g_deadline);
+    if (hasTimeout) {
         deadline = std::chrono::steady_clock::now() + timeout.value();
         g_deadline = &deadline;
-        deadlineGuard.emplace(&g_deadline);  // RAII guard ensures reset on exit
+    } else {
+        guard.dismiss();  // No timeout set, don't reset g_deadline
     }
 
     backend_->executeAction(backendId, pairs);
@@ -833,8 +835,8 @@ void LuaEngine::executeAction(int ref, const std::vector<RuleParameter>& paramet
         }
     }
 
-    // g_deadline is reset by DeadlineGuard destructor
-    if (timeout.has_value() && timeout->count() > 0) {
+    // g_deadline is reset by ScopeGuard destructor if set
+    if (hasTimeout) {
         if (std::chrono::steady_clock::now() > deadline) {
             throw RuleTimeoutException("Rule execution timed out after " + std::to_string(timeout->count()) + "ms");
         }

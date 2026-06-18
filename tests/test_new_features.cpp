@@ -21,6 +21,7 @@ using namespace fastrules;
 TEST_CASE("Streaming execution basic") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Streaming execution basic";
     workflow.id = 1;
     
     auto rule1 = std::make_shared<Rule>();

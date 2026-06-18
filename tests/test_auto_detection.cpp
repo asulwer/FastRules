@@ -32,11 +32,13 @@ using namespace fastrules;
 
 TEST_CASE("Auto-detection is disabled by default") {
     Workflow workflow;
+    workflow.name = "Auto-detection is disabled by default";
     REQUIRE_FALSE(workflow.isAutoDetectionEnabled());
 }
 
 TEST_CASE("Auto-detection can be enabled") {
     Workflow workflow;
+    workflow.name = "Auto-detection can be enabled";
     
     workflow.enableAutoDetection(true);
     REQUIRE(workflow.isAutoDetectionEnabled());
@@ -44,6 +46,7 @@ TEST_CASE("Auto-detection can be enabled") {
 
 TEST_CASE("Auto-detection can be disabled") {
     Workflow workflow;
+    workflow.name = "Auto-detection can be disabled";
     
     workflow.enableAutoDetection(true);
     REQUIRE(workflow.isAutoDetectionEnabled());
@@ -54,6 +57,7 @@ TEST_CASE("Auto-detection can be disabled") {
 
 TEST_CASE("Auto-detection survives workflow moves") {
     Workflow workflow1;
+    workflow1.name = "Auto-detection survives workflow moves";
     workflow1.enableAutoDetection(true);
     workflow1.setAdaptiveThreshold(8);
     
@@ -69,6 +73,7 @@ TEST_CASE("Auto-detection survives workflow moves") {
 TEST_CASE("Adaptive execution uses default threshold") {
     auto engine = makeTestEngine();
     Workflow workflow;
+    workflow.name = "Adaptive execution uses default threshold";
     workflow.id = 1;
     
     // Create 3 rules (below default threshold of 4)
@@ -93,6 +98,7 @@ TEST_CASE("Adaptive execution uses default threshold") {
 TEST_CASE("Adaptive execution respects custom threshold") {
     auto engine = makeTestEngine();
     Workflow workflow;
+    workflow.name = "Adaptive execution respects custom threshold";
     workflow.id = 1;
     
     // Create 5 rules
@@ -119,6 +125,7 @@ TEST_CASE("Adaptive execution respects custom threshold") {
 TEST_CASE("Adaptive execution with threshold of 0 always uses sequential") {
     auto engine = makeTestEngine();
     Workflow workflow;
+    workflow.name = "Adaptive execution with threshold of 0 always uses sequential";
     workflow.id = 1;
     
     // Create 10 rules
@@ -142,6 +149,7 @@ TEST_CASE("Adaptive execution with threshold of 0 always uses sequential") {
 TEST_CASE("Adaptive execution with large threshold respects value") {
     auto engine = makeTestEngine();
     Workflow workflow;
+    workflow.name = "Adaptive execution with large threshold respects value";
     workflow.id = 1;
     
     // Create 3 rules
@@ -168,6 +176,7 @@ TEST_CASE("Adaptive execution with large threshold respects value") {
 
 TEST_CASE("Auto-detection statistics start at zero") {
     Workflow workflow;
+    workflow.name = "Auto-detection statistics start at zero";
     
     REQUIRE(workflow.getSequentialAvgTime() == 0.0);
     REQUIRE(workflow.getParallelAvgTime() == 0.0);
@@ -178,6 +187,7 @@ TEST_CASE("Auto-detection statistics start at zero") {
 TEST_CASE("Auto-detection with less than 3 rules does not profile") {
     auto engine = makeTestEngine();
     Workflow workflow;
+    workflow.name = "Auto-detection with less than 3 rules does not profile";
     workflow.id = 1;
     workflow.enableAutoDetection(true);
     
@@ -211,6 +221,7 @@ TEST_CASE("Auto-detection with less than 3 rules does not profile") {
 TEST_CASE("Auto-detection triggers profiling every 100 executions") {
     auto engine = makeTestEngine();
     Workflow workflow;
+    workflow.name = "Auto-detection triggers profiling every 100 executions";
     workflow.id = 1;
     workflow.enableAutoDetection(true);
     
@@ -248,6 +259,7 @@ TEST_CASE("Auto-detection triggers profiling every 100 executions") {
 TEST_CASE("Auto-detection adjusts threshold based on performance") {
     auto engine = makeTestEngine();
     Workflow workflow;
+    workflow.name = "Auto-detection adjusts threshold based on performance";
     workflow.id = 1;
     workflow.enableAutoDetection(true);
     
@@ -283,6 +295,7 @@ TEST_CASE("Auto-detection adjusts threshold based on performance") {
 TEST_CASE("Auto-detection with concurrent execution") {
     auto engine = makeTestEngine();
     Workflow workflow;
+    workflow.name = "Auto-detection with concurrent execution";
     workflow.id = 1;
     workflow.enableAutoDetection(true);
     
@@ -326,6 +339,7 @@ TEST_CASE("Auto-detection with concurrent execution") {
 TEST_CASE("Adaptive execution with empty workflow") {
     auto engine = makeTestEngine();
     Workflow workflow;
+    workflow.name = "Adaptive execution with empty workflow";
     workflow.id = 1;
     
     workflow.compile(engine);
@@ -339,6 +353,7 @@ TEST_CASE("Adaptive execution with empty workflow") {
 TEST_CASE("Adaptive execution with single rule") {
     auto engine = makeTestEngine();
     Workflow workflow;
+    workflow.name = "Adaptive execution with single rule";
     workflow.id = 1;
     
     auto rule = std::make_shared<Rule>();
@@ -358,6 +373,7 @@ TEST_CASE("Adaptive execution with single rule") {
 TEST_CASE("Adaptive execution with dependencies") {
     auto engine = makeTestEngine();
     Workflow workflow;
+    workflow.name = "Adaptive execution with dependencies";
     workflow.id = 1;
     
     // Create rule with dependency
@@ -384,6 +400,7 @@ TEST_CASE("Adaptive execution with dependencies") {
 TEST_CASE("Auto-detection threshold bounds are respected") {
     auto engine = makeTestEngine();
     Workflow workflow;
+    workflow.name = "Auto-detection threshold bounds are respected";
     workflow.id = 1;
     workflow.enableAutoDetection(true);
     

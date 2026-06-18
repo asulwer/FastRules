@@ -22,6 +22,7 @@ using namespace fastrules;
 TEST_CASE("Workflow compileParallel basic functionality") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Workflow compileParallel basic functionality";
     workflow.id = 1;
 
     // Create 10 independent rules (no dependencies)
@@ -42,6 +43,7 @@ TEST_CASE("Workflow compileParallel basic functionality") {
 TEST_CASE("Workflow compileParallel with child rules") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Workflow compileParallel with child rules";
     workflow.id = 2;
 
     // Create parent rule
@@ -80,6 +82,7 @@ TEST_CASE("Workflow compileParallel with child rules") {
 TEST_CASE("Workflow compileParallel falls back to sequential for small workflows") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Workflow compileParallel falls back to sequential for small workflows";
     workflow.id = 3;
 
     // Create only 5 rules (below threshold)
@@ -99,6 +102,7 @@ TEST_CASE("Workflow compileParallel falls back to sequential for small workflows
 TEST_CASE("Workflow compileParallel execution works after parallel compilation") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Workflow compileParallel execution works after parallel compilation";
     workflow.id = 4;
 
     // Create rules
@@ -128,6 +132,7 @@ TEST_CASE("Workflow compileParallel execution works after parallel compilation")
 TEST_CASE("Workflow compileParallel error handling") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Workflow compileParallel error handling";
     workflow.id = 5;
 
     // Create rules with one invalid expression
@@ -149,6 +154,7 @@ TEST_CASE("Workflow compileParallel error handling") {
 TEST_CASE("Workflow compileParallel performance vs sequential") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Workflow compileParallel performance vs sequential";
     workflow.id = 6;
 
     // Create many rules to see performance benefit
@@ -162,6 +168,7 @@ TEST_CASE("Workflow compileParallel performance vs sequential") {
     // Time sequential compilation
     Workflow workflowSeq;
     workflowSeq.id = 7;
+    workflowSeq.name = "Sequential compilation";
     workflowSeq.rules = workflow.rules;
     
     auto start = std::chrono::steady_clock::now();
@@ -171,6 +178,7 @@ TEST_CASE("Workflow compileParallel performance vs sequential") {
     // Time parallel compilation
     Workflow workflowPar;
     workflowPar.id = 8;
+    workflowPar.name = "Parallel compilation";
     workflowPar.rules = workflow.rules;
     
     start = std::chrono::steady_clock::now();
@@ -193,6 +201,7 @@ TEST_CASE("Workflow compileParallel performance vs sequential") {
 TEST_CASE("Workflow compileParallel with expressions and actions") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Workflow compileParallel with expressions and actions";
     workflow.id = 9;
 
     // Create rules with actions
@@ -223,6 +232,7 @@ TEST_CASE("Workflow compileParallel with expressions and actions") {
 TEST_CASE("Workflow compileParallel single thread") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Workflow compileParallel single thread";
     workflow.id = 10;
 
     for (int i = 1; i <= 20; ++i) {
@@ -241,6 +251,7 @@ TEST_CASE("Workflow compileParallel single thread") {
 TEST_CASE("Workflow compileParallel default thread count") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Workflow compileParallel default thread count";
     workflow.id = 11;
 
     for (int i = 1; i <= 20; ++i) {
@@ -259,6 +270,7 @@ TEST_CASE("Workflow compileParallel default thread count") {
 TEST_CASE("Workflow compileParallel idempotent") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Workflow compileParallel idempotent";
     workflow.id = 12;
 
     auto rule = std::make_shared<Rule>();

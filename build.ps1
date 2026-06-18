@@ -81,8 +81,8 @@ if (-not $env:VCPKG_ROOT) {
 # Clean
 # ============================================================================
 if ($Clean) {
-    Write-Host 'Cleaning build directories...' -ForegroundColor Yellow
-    $dirs = @('build_vs', 'build', 'build_test', 'build_cov', 'build_coverage',
+    Write-Host 'Cleaning build directories (preserving vcpkg fetched code)...' -ForegroundColor Yellow
+    $dirs = @('build', 'build_test', 'build_cov', 'build_coverage',
               'build_luajit', 'build_luajit2', 'build_vstudio', 'Testing')
     foreach ($d in $dirs) {
         $p = Join-Path $root $d
@@ -91,6 +91,36 @@ if ($Clean) {
             Write-Host "  Removed: $d"
         }
     }
+    
+    # Clean build_vs but preserve vcpkg_installed
+    $buildVs = Join-Path $root 'build_vs'
+    if (Test-Path $buildVs) {
+        # Preserve vcpkg_installed folder
+        $vcpkgInstalled = Join-Path $buildVs 'vcpkg_installed'
+        $preserveVcpkg = $false
+        if (Test-Path $vcpkgInstalled) {
+            Write-Host "  Preserving: build_vs/vcpkg_installed (vcpkg fetched code)" -ForegroundColor Cyan
+            $tempVcpkg = Join-Path $root '_vcpkg_temp_backup'
+            if (Test-Path $tempVcpkg) {
+                Remove-Item $tempVcpkg -Recurse -Force
+            }
+            Move-Item $vcpkgInstalled $tempVcpkg
+            $preserveVcpkg = $true
+        }
+        
+        # Remove build_vs contents
+        Remove-Item $buildVs -Recurse -Force
+        Write-Host "  Removed: build_vs (except vcpkg_installed)"
+        
+        # Restore vcpkg_installed
+        if ($preserveVcpkg) {
+            New-Item -ItemType Directory -Path $buildVs | Out-Null
+            $tempVcpkg = Join-Path $root '_vcpkg_temp_backup'
+            Move-Item $tempVcpkg (Join-Path $buildVs 'vcpkg_installed')
+            Write-Host "  Restored: build_vs/vcpkg_installed" -ForegroundColor Green
+        }
+    }
+    
     Write-Host 'Done.' -ForegroundColor Green
     exit 0
 }

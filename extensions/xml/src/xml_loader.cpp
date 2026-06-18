@@ -108,6 +108,7 @@ Workflow XmlLoader::loadWorkflow(const std::string& xmlString) {
 
     Workflow workflow;
     workflow.id = root.attribute("id").as_int(0);
+    workflow.name = root.attribute("name").as_string("");
     workflow.description = root.attribute("description").as_string("");
     workflow.isActive = root.attribute("isActive").as_bool(true);
 
@@ -135,6 +136,7 @@ Workflow XmlLoader::loadWorkflowFromFile(const std::string& filePath) {
 
     Workflow workflow;
     workflow.id = root.attribute("id").as_int(0);
+    workflow.name = root.attribute("name").as_string("");
     workflow.description = root.attribute("description").as_string("");
     workflow.isActive = root.attribute("isActive").as_bool(true);
 
@@ -167,6 +169,7 @@ std::string XmlLoader::saveWorkflow(const Workflow& workflow) {
     pugi::xml_document doc;
     auto root = doc.append_child("workflow");
     root.append_attribute("id").set_value(std::to_string(workflow.id).c_str());
+    root.append_attribute("name").set_value(workflow.name.c_str());
     root.append_attribute("description").set_value(workflow.description.c_str());
     root.append_attribute("isActive").set_value(workflow.isActive);
 
@@ -184,6 +187,7 @@ std::string XmlLoader::saveWorkflowPretty(const Workflow& workflow) {
     pugi::xml_document doc;
     auto root = doc.append_child("workflow");
     root.append_attribute("id").set_value(std::to_string(workflow.id).c_str());
+    root.append_attribute("name").set_value(workflow.name.c_str());
     root.append_attribute("description").set_value(workflow.description.c_str());
     root.append_attribute("isActive").set_value(workflow.isActive);
 

@@ -23,9 +23,11 @@ using namespace fastrules;
 TEST_CASE("Workflow basic creation") {
     Workflow workflow;
     workflow.id = 1;
+    workflow.name = "Basic creation test";
     workflow.description = "Test workflow";
 
     REQUIRE(workflow.id == 1);
+    REQUIRE(workflow.name == "Basic creation test");
     REQUIRE(workflow.description == "Test workflow");
     REQUIRE(workflow.isActive == true);
     REQUIRE(workflow.rules.empty());
@@ -34,6 +36,7 @@ TEST_CASE("Workflow basic creation") {
 
 TEST_CASE("Workflow execution order") {
     Workflow workflow;
+    workflow.name = "Execution order test";
     workflow.description = "Priority test";
 
     auto rule1 = std::make_shared<Rule>();
@@ -62,6 +65,7 @@ TEST_CASE("Workflow execution order") {
 
 TEST_CASE("Workflow dependency resolution") {
     Workflow workflow;
+    workflow.name = "Workflow dependency resolution";
     workflow.description = "Dependency test";
 
     auto baseRule = std::make_shared<Rule>();
@@ -87,6 +91,7 @@ TEST_CASE("Workflow dependency resolution") {
 
 TEST_CASE("Workflow circular dependency detection") {
     Workflow workflow;
+    workflow.name = "Workflow circular dependency detection";
     workflow.description = "Circular dependency test";
 
     auto rule1 = std::make_shared<Rule>();
@@ -109,6 +114,7 @@ TEST_CASE("Workflow compile and execute") {
     LuaEngine engine;
 
     Workflow workflow;
+    workflow.name = "Compile and execute test";
     workflow.description = "Execution test";
 
     auto rule1 = std::make_shared<Rule>();

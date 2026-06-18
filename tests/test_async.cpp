@@ -45,6 +45,7 @@ TEST_CASE("AsyncWorkflow basic construction") {
 
 TEST_CASE("AsyncWorkflow with workflow") {
     Workflow workflow;
+    workflow.name = "AsyncWorkflow with workflow";
     workflow.description = "Test workflow";
     
     auto rule = std::make_shared<Rule>();
@@ -101,6 +102,7 @@ TEST_CASE("Parallel workflow execution") {
     auto engine = makeTestEngine();
     
     Workflow workflow;
+    workflow.name = "Parallel workflow execution";
     workflow.description = "Parallel test";
     
     // Rule 1: Independent
@@ -154,6 +156,7 @@ TEST_CASE("Parallel execution with dependencies") {
     auto engine = makeTestEngine();
     
     Workflow workflow;
+    workflow.name = "Parallel execution with dependencies";
     workflow.description = "Dependency chain test";
     
     // Create a chain: A -> B -> C, with D independent
@@ -222,6 +225,7 @@ TEST_CASE("AsyncWorkflow parallel async execution") {
     auto engine = makeTestEngine();
     
     Workflow workflow;
+    workflow.name = "AsyncWorkflow parallel async execution";
     workflow.description = "Async parallel test";
     
     auto rule1 = std::make_shared<Rule>();
@@ -254,6 +258,7 @@ TEST_CASE("Performance: parallel vs sequential") {
     LuaEngine engine;
     
     Workflow workflow;
+    workflow.name = "Performance: parallel vs sequential";
     workflow.description = "Performance test";
     
     // Create multiple independent rules that sleep
@@ -287,6 +292,7 @@ TEST_CASE("Workflow executeAsync") {
     auto engine = makeTestEngine();
     
     Workflow workflow;
+    workflow.name = "Workflow executeAsync";
     workflow.description = "Async test workflow";
     
     // Add a rule
@@ -340,6 +346,7 @@ TEST_CASE("Workflow executeAdaptive") {
     
     SUBCASE("Adaptive execution with few rules (sequential)") {
         Workflow workflow;
+        workflow.name = "Adaptive execution with few rules (sequential)";
         workflow.description = "Small adaptive workflow";
         
         // Add 2 rules (should use sequential)
@@ -362,6 +369,7 @@ TEST_CASE("Workflow executeAdaptive") {
     
     SUBCASE("Adaptive execution with many rules (parallel)") {
         Workflow largeWorkflow;
+        largeWorkflow.name = "Adaptive execution with many rules (parallel)";
         largeWorkflow.description = "Large adaptive workflow";
         
         // Add 6 rules (should use parallel)
@@ -384,6 +392,7 @@ TEST_CASE("Workflow executeAdaptive") {
     
     SUBCASE("Configurable adaptive threshold") {
         Workflow workflow;
+        workflow.name = "Configurable adaptive threshold";
         workflow.description = "Configurable threshold test";
         
         // Add 5 rules
@@ -421,6 +430,7 @@ TEST_CASE("Workflow executeAdaptive") {
     
     SUBCASE("Dynamic auto-detection") {
         Workflow workflow;
+        workflow.name = "Dynamic auto-detection";
         workflow.description = "Auto-detection test";
         
         // Add 10 rules (enough for auto-detection to work)

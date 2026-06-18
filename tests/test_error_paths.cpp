@@ -399,6 +399,7 @@ TEST_CASE("Parent fails when child fails") {
 TEST_CASE("Workflow with no rules is valid") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Workflow with no rules is valid";
     workflow.id = 1;
 
     REQUIRE_NOTHROW(workflow.compile(engine));
@@ -412,6 +413,7 @@ TEST_CASE("Workflow with no rules is valid") {
 TEST_CASE("Workflow execution with all inactive rules") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Workflow execution with all inactive rules";
     workflow.id = 1;
 
     auto rule = std::make_shared<Rule>();
@@ -431,6 +433,7 @@ TEST_CASE("Workflow execution with all inactive rules") {
 TEST_CASE("Workflow detects missing dependency") {
     LuaEngine engine;
     Workflow workflow;
+    workflow.name = "Workflow detects missing dependency";
     workflow.id = 1;
 
     auto rule = std::make_shared<Rule>();
