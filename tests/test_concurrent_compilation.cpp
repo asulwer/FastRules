@@ -29,6 +29,7 @@ TEST_CASE("Workflow compileParallel basic functionality") {
     for (int i = 1; i <= 10; ++i) {
         auto rule = std::make_shared<Rule>();
         rule->id = i;
+        rule->name = "independent-rule-" + std::to_string(i);
         rule->expression = "true";
         workflow.rules.push_back(rule);
     }
@@ -89,6 +90,7 @@ TEST_CASE("Workflow compileParallel falls back to sequential for small workflows
     for (int i = 1; i <= 5; ++i) {
         auto rule = std::make_shared<Rule>();
         rule->id = i;
+        rule->name = "small-workflow-rule-" + std::to_string(i);
         rule->expression = "true";
         workflow.rules.push_back(rule);
     }
@@ -139,6 +141,7 @@ TEST_CASE("Workflow compileParallel error handling") {
     for (int i = 1; i <= 5; ++i) {
         auto rule = std::make_shared<Rule>();
         rule->id = i;
+        rule->name = "error-handling-rule-" + std::to_string(i);
         if (i == 3) {
             rule->expression = "invalid lua syntax here @#$";
         } else {
@@ -208,6 +211,7 @@ TEST_CASE("Workflow compileParallel with expressions and actions") {
     for (int i = 1; i <= 10; ++i) {
         auto rule = std::make_shared<Rule>();
         rule->id = i;
+        rule->name = "expression-action-rule-" + std::to_string(i);
         rule->expression = "x == " + std::to_string(i);
         rule->action = "result = " + std::to_string(i);
         workflow.rules.push_back(rule);

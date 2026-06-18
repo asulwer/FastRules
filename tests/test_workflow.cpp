@@ -96,13 +96,13 @@ TEST_CASE("Workflow circular dependency detection") {
 
     auto rule1 = std::make_shared<Rule>();
     rule1->id = 1;
-    rule1->name = "rule1";
-    rule1->dependsOnRuleName = "rule2";
+    rule1->name = "first-in-circular-dependency";
+    rule1->dependsOnRuleName = "second-in-circular-dependency";
 
     auto rule2 = std::make_shared<Rule>();
     rule2->id = 2;
-    rule2->name = "rule2";
-    rule2->dependsOnRuleName = "rule1";
+    rule2->name = "second-in-circular-dependency";
+    rule2->dependsOnRuleName = "first-in-circular-dependency";
 
     workflow.rules.push_back(rule1);
     workflow.rules.push_back(rule2);

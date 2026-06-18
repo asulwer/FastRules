@@ -27,6 +27,7 @@ TEST_CASE("Rule cache hit on second execution") {
     
     auto rule = std::make_shared<Rule>();
     rule->id = 1;
+    rule->name = "always-true-cached-rule";
     rule->expression = "true";
     rule->cacheDuration = std::chrono::milliseconds(1000);
     
@@ -53,6 +54,7 @@ TEST_CASE("Rule cache expires after duration") {
     
     auto rule = std::make_shared<Rule>();
     rule->id = 1;
+    rule->name = "always-true-short-cache-rule";
     rule->expression = "true";
     rule->cacheDuration = std::chrono::milliseconds(100);
     
@@ -81,6 +83,7 @@ TEST_CASE("Uncached rule executes every time") {
     
     auto rule = std::make_shared<Rule>();
     rule->id = 1;
+    rule->name = "always-true-uncached-rule";
     rule->expression = "true";
     // No cacheDuration set
     
@@ -104,6 +107,7 @@ TEST_CASE("Cache with parameters") {
     
     auto rule = std::make_shared<Rule>();
     rule->id = 1;
+    rule->name = "parameter-dependent-cached-rule";
     rule->expression = "x > 0";
     rule->cacheDuration = std::chrono::milliseconds(1000);
     

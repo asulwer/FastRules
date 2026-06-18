@@ -34,6 +34,7 @@ TEST_CASE("Invalid Lua expression syntax error") {
     
     auto rule = std::make_shared<Rule>();
     rule->id = 1;
+    rule->name = "invalid-syntax-error-rule";
     rule->expression = "if then else end";
     
     Workflow workflow;
@@ -48,6 +49,7 @@ TEST_CASE("Invalid Lua expression undefined variable") {
     
     auto rule = std::make_shared<Rule>();
     rule->id = 1;
+    rule->name = "undefined-variable-error-rule";
     rule->expression = "undefined_variable > 0";
     rule->timeout = std::chrono::milliseconds(1000);  // Add timeout to prevent hanging
     
@@ -113,16 +115,16 @@ TEST_CASE("Circular dependency detection direct") {
     
     auto rule1 = std::make_shared<Rule>();
     rule1->id = 1;
-    rule1->name = "rule1";
+    rule1->name = "first-in-direct-circular-dependency";
     rule1->expression = "true";
-    rule1->dependsOnRuleName = "rule2";
+    rule1->dependsOnRuleName = "second-in-direct-circular-dependency";
     workflow.rules.push_back(rule1);
     
     auto rule2 = std::make_shared<Rule>();
     rule2->id = 2;
-    rule2->name = "rule2";
+    rule2->name = "second-in-direct-circular-dependency";
     rule2->expression = "true";
-    rule2->dependsOnRuleName = "rule1";
+    rule2->dependsOnRuleName = "first-in-direct-circular-dependency";
     workflow.rules.push_back(rule2);
     
     REQUIRE_THROWS_AS(workflow.validate(), RuleValidationException);
@@ -135,23 +137,23 @@ TEST_CASE("Circular dependency detection indirect") {
     
     auto ruleA = std::make_shared<Rule>();
     ruleA->id = 1;
-    ruleA->name = "ruleA";
+    ruleA->name = "first-in-indirect-circular-dependency";
     ruleA->expression = "true";
-    ruleA->dependsOnRuleName = "ruleB";
+    ruleA->dependsOnRuleName = "second-in-indirect-circular-dependency";
     workflow.rules.push_back(ruleA);
     
     auto ruleB = std::make_shared<Rule>();
     ruleB->id = 2;
-    ruleB->name = "ruleB";
+    ruleB->name = "second-in-indirect-circular-dependency";
     ruleB->expression = "true";
-    ruleB->dependsOnRuleName = "ruleC";
+    ruleB->dependsOnRuleName = "third-in-indirect-circular-dependency";
     workflow.rules.push_back(ruleB);
     
     auto ruleC = std::make_shared<Rule>();
     ruleC->id = 3;
-    ruleC->name = "ruleC";
+    ruleC->name = "third-in-indirect-circular-dependency";
     ruleC->expression = "true";
-    ruleC->dependsOnRuleName = "ruleA";
+    ruleC->dependsOnRuleName = "first-in-indirect-circular-dependency";
     workflow.rules.push_back(ruleC);
     
     REQUIRE_THROWS_AS(workflow.validate(), RuleValidationException);

@@ -50,6 +50,7 @@ TEST_CASE("AsyncWorkflow with workflow") {
     
     auto rule = std::make_shared<Rule>();
     rule->id = 1;
+    rule->name = "simple-true-rule";
     rule->expression = "true";
     workflow.rules.push_back(rule);
     
@@ -108,23 +109,23 @@ TEST_CASE("Parallel workflow execution") {
     // Rule 1: Independent
     auto rule1 = std::make_shared<Rule>();
     rule1->id = 1;
-    rule1->name = "rule1";
+    rule1->name = "independent-rule-1";
     rule1->expression = "true";
     workflow.rules.push_back(rule1);
     
     // Rule 2: Independent
     auto rule2 = std::make_shared<Rule>();
     rule2->id = 2;
-    rule2->name = "rule2";
+    rule2->name = "independent-rule-2";
     rule2->expression = "true";
     workflow.rules.push_back(rule2);
     
     // Rule 3: Depends on rule-1
     auto rule3 = std::make_shared<Rule>();
     rule3->id = 3;
-    rule3->name = "rule3";
-    rule3->expression = "context.getResult(\"rule1\").success";
-    rule3->dependsOnRuleName = "rule1";
+    rule3->name = "dependent-rule-requires-rule1";
+    rule3->expression = "context.getResult(\"independent-rule-1\").success";
+    rule3->dependsOnRuleName = "independent-rule-1";
     workflow.rules.push_back(rule3);
     
     SUBCASE("Sequential execution") {
@@ -142,9 +143,9 @@ TEST_CASE("Parallel workflow execution") {
         // Find results by rule ID
         bool foundRule1 = false, foundRule2 = false, foundRule3 = false;
         for (const auto& result : results) {
-            if (result.ruleName == "rule1") foundRule1 = result.isSuccess();
-            if (result.ruleName == "rule2") foundRule2 = result.isSuccess();
-            if (result.ruleName == "rule3") foundRule3 = result.isSuccess();
+            if (result.ruleName == "independent-rule-1") foundRule1 = result.isSuccess();
+            if (result.ruleName == "independent-rule-2") foundRule2 = result.isSuccess();
+            if (result.ruleName == "dependent-rule-requires-rule1") foundRule3 = result.isSuccess();
         }
         REQUIRE(foundRule1);
         REQUIRE(foundRule2);
@@ -162,27 +163,27 @@ TEST_CASE("Parallel execution with dependencies") {
     // Create a chain: A -> B -> C, with D independent
     auto ruleA = std::make_shared<Rule>();
     ruleA->id = 1;
-    ruleA->name = "ruleA";
+    ruleA->name = "first-in-dependency-chain";
     ruleA->expression = "true";
     workflow.rules.push_back(ruleA);
     
     auto ruleB = std::make_shared<Rule>();
     ruleB->id = 2;
-    ruleB->name = "ruleB";
-    ruleB->expression = "context.getResult(\"ruleA\").success";
-    ruleB->dependsOnRuleName = "ruleA";
+    ruleB->name = "second-in-dependency-chain";
+    ruleB->expression = "context.getResult(\"first-in-dependency-chain\").success";
+    ruleB->dependsOnRuleName = "first-in-dependency-chain";
     workflow.rules.push_back(ruleB);
     
     auto ruleC = std::make_shared<Rule>();
     ruleC->id = 3;
-    ruleC->name = "ruleC";
-    ruleC->expression = "context.getResult(\"ruleB\").success";
-    ruleC->dependsOnRuleName = "ruleB";
+    ruleC->name = "third-in-dependency-chain";
+    ruleC->expression = "context.getResult(\"second-in-dependency-chain\").success";
+    ruleC->dependsOnRuleName = "second-in-dependency-chain";
     workflow.rules.push_back(ruleC);
     
     auto ruleD = std::make_shared<Rule>();
     ruleD->id = 4;
-    ruleD->name = "ruleD";
+    ruleD->name = "independent-rule";
     ruleD->expression = "true";
     workflow.rules.push_back(ruleD);
     

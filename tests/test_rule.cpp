@@ -71,6 +71,7 @@ TEST_CASE("Rule compile and execute") {
 
     auto rule = std::make_shared<Rule>();
     rule->id = 1;
+    rule->name = "value-greater-than-ten-rule";
     rule->expression = "value > 10";
     rule->action = "result = true";
 
@@ -85,6 +86,7 @@ TEST_CASE("Rule inactive") {
 
     auto rule = std::make_shared<Rule>();
     rule->id = 1;
+    rule->name = "inactive-rule-always-skipped";
     rule->isActive = false;
     rule->expression = "false";
 
