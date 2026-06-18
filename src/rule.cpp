@@ -468,7 +468,8 @@ void Rule::setFailure(RuleResult& result, const std::string& message, bool wasCa
 
 RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vector<RuleParameter>& parameters) {
     auto log = fastrules::logger();
-    log->trace("Executing rule {}", id);
+    std::string ruleName = !name.empty() ? name : std::to_string(id);
+    log->trace("Executing rule {}", ruleName);
 
     // Check cache first if cacheDuration is set
     if (cacheDuration.has_value() && cacheDuration->count() > 0) {
@@ -480,12 +481,12 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
             if (std::chrono::steady_clock::now() < it->second.expiresAt && 
                 it->second.generation == cacheGeneration_) {
                 // Cache hit - return cached result
-                log->debug("Cache hit for rule {}", id);
+                log->debug("Cache hit for rule {}", ruleName);
                 PerformanceCounters::instance().recordExecution(it->second.result->isSuccess(), false, true, false, false);
                 return *it->second.result;
             }
             // Cache expired or invalidated - remove it
-            log->debug("Cache expired or invalidated for rule {}", id);
+            log->debug("Cache expired or invalidated for rule {}", ruleName);
             cache_.erase(it);
         }
     }
@@ -497,7 +498,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
 
     // Preference: inactive rules are completely skipped - no result, no evaluation
     if (!isActive) {
-        log->debug("Rule {} inactive - skipped", id);
+        log->debug("Rule {} inactive - skipped", ruleName);
         result.success = false;
         result.skipped = true;
         return result;
@@ -514,7 +515,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
             limiter = &RateLimiter::global();
         }
         if (!limiter->isAllowed(std::to_string(id))) {
-            log->warn("Rate limit exceeded for rule {}", id);
+            log->warn("Rate limit exceeded for rule {}", ruleName);
             throw RateLimitException("Rate limit exceeded for rule '" + std::to_string(id) + "'");
         }
 
@@ -524,7 +525,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
 
         // Step 1: Execute child rules (bottom-up / bubble-up)
         if (!childRules.empty()) {
-            log->debug("Executing {} child rules for rule {}", childRules.size(), id);
+            log->debug("Executing {} child rules for rule {}", childRules.size(), ruleName);
             result.childResults = executeChildRules(engine, context, parameters);
 
             // Store child results in context so parent expressions can access them
@@ -535,7 +536,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
             // Preference: parent only evaluates if ALL children pass
             for (const auto& childResult : result.childResults) {
                 if (!childResult.isSuccess()) {
-                    log->info("Child rule {} failed - parent {} aborted", childResult.ruleName, id);
+                    log->info("Child rule {} failed - parent {} aborted", childResult.ruleName, ruleName);
                     setFailure(result, "Child rule " + childResult.ruleName + " failed");
                     storeInCache(parameters, result);
                     context.setResult(name, result);
@@ -549,7 +550,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
             log->trace("Evaluating expression for rule {}: {}", id, expression);
             bool exprResult = evaluateExpression(engine, context, parameters);
             if (!exprResult) {
-                log->info("Rule {} expression evaluated to false", id);
+                log->info("Rule {} expression evaluated to false", ruleName);
                 setFailure(result, "Expression evaluated to false");
                 storeInCache(parameters, result);
                 context.setResult(name, result);
@@ -564,28 +565,28 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
         }
 
         result.success = true;
-        log->debug("Rule {} executed successfully", id);
+        log->debug("Rule {} executed successfully", ruleName);
         // Record successful execution
         PerformanceCounters::instance().recordExecution(true, false, false, false, false);
 
     } catch (const RateLimitException& ex) {
-        log->error("Rate limit exception in rule {}: {}", id, ex.what());
+        log->error("Rate limit exception in rule {}: {}", ruleName, ex.what());
         result.success = false;
         result.exception = RuleException(ex.what());
         context.setLastError(name, "Rate limit exceeded: " + std::string(ex.what()));
         PerformanceCounters::instance().recordExecution(false, false, false, false, true);
     } catch (const RuleTimeoutException& ex) {
-        log->error("Timeout in rule {}: {}", id, ex.what());
+        log->error("Timeout in rule {}: {}", ruleName, ex.what());
         result.success = false;
         result.exception = RuleException(ex.what());
         context.setLastError(name, "Timeout: " + std::string(ex.what()));
         PerformanceCounters::instance().recordExecution(false, false, false, true, false);
     } catch (const RuleException& ex) {
-        log->error("Rule {} exception: {}", id, ex.what());
+        log->error("Rule {} exception: {}", ruleName, ex.what());
         setFailure(result, ex.what());
         context.setLastError(name, ex.what());
     } catch (const std::exception& ex) {
-        log->error("Standard exception in rule {}: {}", id, ex.what());
+        log->error("Standard exception in rule {}: {}", ruleName, ex.what());
         setFailure(result, ex.what());
         context.setLastError(name, ex.what());
     } catch (...) {

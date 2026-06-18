@@ -163,6 +163,8 @@ void Workflow::compile(LuaEngine& engine) {
 
 void Workflow::compileParallel(LuaEngine& engine, size_t numThreads) {
     auto log = fastrules::logger();
+    std::string workflowName = !name.empty() ? name : (!description.empty() ? description : std::to_string(id));
+
     if (compiled_) {
         return;
     }
@@ -179,12 +181,12 @@ void Workflow::compileParallel(LuaEngine& engine, size_t numThreads) {
 
     // Don't parallelize for small workflows
     if (rules.size() < 10 || numThreads == 1) {
-        log->debug("Workflow {} has {} rules, using sequential compilation", id, rules.size());
+        log->debug("Workflow {} has {} rules, using sequential compilation", workflowName, rules.size());
         compile(engine);
         return;
     }
 
-    log->debug("Compiling workflow {} in parallel with {} threads", id, numThreads);
+    log->debug("Compiling workflow {} in parallel with {} threads", workflowName, numThreads);
 
     // Ensure the engine has types and actions bound before compiling
     engine.bindTypesToState();
@@ -200,7 +202,7 @@ void Workflow::compileParallel(LuaEngine& engine, size_t numThreads) {
     // Rules at the same level can be compiled concurrently
     auto levels = buildCompilationLevels();
     
-    log->debug("Workflow {} has {} compilation levels", id, levels.size());
+    log->debug("Workflow {} has {} compilation levels", workflowName, levels.size());
 
     // Create thread pool for compilation
     std::vector<std::thread> threads;
@@ -328,7 +330,7 @@ void Workflow::compileParallel(LuaEngine& engine, size_t numThreads) {
     useEnginePool_ = true;
     compiled_ = true;
 
-    log->info("Workflow {} compiled in parallel successfully", id);
+    log->info("Workflow {} compiled in parallel successfully", workflowName);
 }
 
 std::vector<std::vector<Rule*>> Workflow::buildCompilationLevels() {
@@ -411,7 +413,7 @@ std::vector<RuleResult> Workflow::execute(LuaEngine& engine, const std::vector<R
         if (rule->dependsOnRuleName.has_value()) {
             auto depResult = context.getResult(rule->dependsOnRuleName.value());
             if (!depResult.has_value() || !depResult->isSuccess()) {
-                log->debug("Skipping rule {} - dependency failed in workflow {}", rule->id, id);
+                log->debug("Skipping rule {} - dependency failed in workflow {}", rule->name, workflowName);
                 // Dependency failed - skip this rule silently
                 continue;
             }
