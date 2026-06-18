@@ -223,7 +223,7 @@ std::vector<AsyncRuleResult> AsyncWorkflow::executeParallelAsync(
             }
             
             futures.push_back(
-                threadPool_->enqueue([this, &parameters, rule]() -> AsyncRuleResult {
+                threadPool_->enqueue([this, parameters, rule]() -> AsyncRuleResult {
                     AsyncRuleResult asyncResult;
                     asyncResult.result.ruleName = rule->name;
                     
