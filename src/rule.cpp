@@ -446,7 +446,7 @@ std::vector<Rule::Id> Rule::getDependencyChain(const std::vector<std::reference_
 
 void Rule::storeInCache(const std::vector<RuleParameter>& parameters, const RuleResult& result) const {
     if (cacheDuration.has_value() && cacheDuration->count() > 0) {
-        std::lock_guard<std::mutex> lock(*cacheMutex_);
+        std::lock_guard<std::mutex> lock(cacheMutex_);
         auto cacheKey = buildCacheKey(parameters);
         cache_[cacheKey] = {
             std::make_shared<RuleResult>(result), 
@@ -473,7 +473,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
 
     // Check cache first if cacheDuration is set
     if (cacheDuration.has_value() && cacheDuration->count() > 0) {
-        std::lock_guard<std::mutex> lock(*cacheMutex_);
+        std::lock_guard<std::mutex> lock(cacheMutex_);
         auto cacheKey = buildCacheKey(parameters);
         auto it = cache_.find(cacheKey);
         if (it != cache_.end()) {
