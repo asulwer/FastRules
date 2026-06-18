@@ -93,7 +93,7 @@ void Workflow::validate() {
     // Check for circular dependencies
     checkCircularDependencies();
 
-    log->info("Workflow {} validated successfully", id);
+    log->info("Workflow {} validated successfully", workflowName);
     validated_ = true;
 }
 
@@ -107,7 +107,8 @@ void Workflow::compile(LuaEngine& engine) {
         validate();
     }
 
-    log->debug("Compiling workflow {}", id);
+    std::string workflowName = !name.empty() ? name : (!description.empty() ? description : std::to_string(id));
+    log->debug("Compiling workflow {}", workflowName);
 
     // Ensure the engine has types and actions bound before compiling
     engine.bindTypesToState();
@@ -130,7 +131,7 @@ void Workflow::compile(LuaEngine& engine) {
     size_t poolSize = std::thread::hardware_concurrency();
     if (poolSize < 2) poolSize = 2;
     
-    log->debug("Creating engine clone pool with {} clones for workflow {}", poolSize, id);
+    log->debug("Creating engine clone pool with {} clones for workflow {}", poolSize, workflowName);
     
     // Clear and rebuild the engine storage
     enginePoolStorage_.clear();
@@ -156,7 +157,7 @@ void Workflow::compile(LuaEngine& engine) {
     
     useEnginePool_ = true;
 
-    log->info("Workflow {} compiled successfully ({} engine clones ready, pool initialized)", id, poolSize);
+    log->info("Workflow {} compiled successfully ({} engine clones ready, pool initialized)", workflowName, poolSize);
     compiled_ = true;
 }
 
@@ -391,13 +392,13 @@ std::vector<RuleResult> Workflow::execute(LuaEngine& engine, const std::vector<R
         compile(engine);
     }
 
-    log->debug("Executing workflow {}", id);
+    std::string workflowName = !name.empty() ? name : (!description.empty() ? description : std::to_string(id));
+    log->debug("Executing workflow {}", workflowName);
 
     RuleContext context;
     std::vector<RuleResult> results;
 
     auto executionOrder = resolveExecutionOrder();
-    std::string workflowName = !name.empty() ? name : (!description.empty() ? description : std::to_string(id));
     log->info("Executing {} rules in workflow {}", executionOrder.size(), workflowName);
 
     for (auto& rule : executionOrder) {
@@ -425,7 +426,7 @@ std::vector<RuleResult> Workflow::execute(LuaEngine& engine, const std::vector<R
         }
     }
 
-    log->info("Workflow {} executed - {} results", static_cast<int>(id), results.size());
+    log->info("Workflow {} executed - {} results", workflowName, results.size());
     return results;
 }
 
