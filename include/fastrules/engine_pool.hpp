@@ -41,6 +41,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstddef>
+#include <memory>
 
 namespace fastrules {
 
@@ -54,10 +55,10 @@ class LuaEngine;
  */
 struct EngineNode {
     LuaEngine* engine;       ///< The engine instance
-    EngineNode* next;        ///< Next node in stack
+    std::shared_ptr<EngineNode> next;        ///< Next node in stack
     
     /// @brief Construct from engine pointer
-    explicit EngineNode(LuaEngine* e) : engine(e), next(nullptr) {}
+    explicit EngineNode(LuaEngine* e) : engine(e) {}
 };
 
 /**
@@ -75,7 +76,7 @@ struct EngineNode {
  * // Create engines
  * std::vector<std::unique_ptr<LuaEngine>> engines;
  * for (int i = 0; i < 4; ++i) {
- *     engines.push_back(std::make_unique<LuaEngine>());
+ *     engines.push_back(std::make_unique<LuaEngine>();
  * }
  * 
  * // Create pool
@@ -97,7 +98,7 @@ public:
     /**
      * @brief Construct an empty pool
      */
-    EnginePool() : head_(nullptr) {}
+    EnginePool() = default;
 
     /**
      * @brief Destructor
@@ -126,16 +127,15 @@ public:
      * @param engine The engine to add
      */
     void push(LuaEngine* engine) {
-        auto* node = new EngineNode(engine);
-        node->next = head_.load(std::memory_order_relaxed);
+        auto node = std::make_shared<EngineNode>(engine);
+        auto current = head_.load(std::memory_order_relaxed);
         
-        // Try to CAS head to new node
-        while (!head_.compare_exchange_weak(
-            node->next, node,
+        do {
+            node->next = current;
+        } while (!head_.compare_exchange_weak(
+            current, node,
             std::memory_order_release,
-            std::memory_order_relaxed)) {
-            // CAS failed, retry with updated node->next
-        }
+            std::memory_order_relaxed));
     }
 
     /**
@@ -147,21 +147,21 @@ public:
      * @return Pointer to an engine, or nullptr if pool is empty
      */
     LuaEngine* pop() {
-        EngineNode* node = head_.load(std::memory_order_relaxed);
+        auto current = head_.load(std::memory_order_relaxed);
         
-        while (node != nullptr) {
+        while (current != nullptr) {
             // Try to CAS head to next node
             if (head_.compare_exchange_weak(
-                node, node->next,
+                current, current->next,
                 std::memory_order_acquire,
                 std::memory_order_relaxed)) {
-                LuaEngine* engine = node->engine;
-                delete node;
+                LuaEngine* engine = current->engine;
+                // current shared_ptr will be destroyed when it goes out of scope
                 return engine;
             }
             
             // CAS failed, reload head
-            node = head_.load(std::memory_order_relaxed);
+            current = head_.load(std::memory_order_relaxed);
             
             // Spin-wait with pause
             #if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
@@ -186,19 +186,18 @@ public:
     LuaEngine* tryPop(std::chrono::milliseconds timeout) {
         auto deadline = std::chrono::steady_clock::now() + timeout;
         
-        EngineNode* node = head_.load(std::memory_order_relaxed);
+        auto current = head_.load(std::memory_order_relaxed);
         
-        while (node != nullptr) {
+        while (current != nullptr) {
             if (head_.compare_exchange_weak(
-                node, node->next,
+                current, current->next,
                 std::memory_order_acquire,
                 std::memory_order_relaxed)) {
-                LuaEngine* engine = node->engine;
-                delete node;
+                LuaEngine* engine = current->engine;
                 return engine;
             }
             
-            node = head_.load(std::memory_order_relaxed);
+            current = head_.load(std::memory_order_relaxed);
             
             // Check timeout
             if (std::chrono::steady_clock::now() >= deadline) {
@@ -226,7 +225,7 @@ public:
     }
 
 private:
-    std::atomic<EngineNode*> head_;  ///< Atomic head of stack
+    std::atomic<std::shared_ptr<EngineNode>> head_{nullptr};  ///< Atomic head of stack
 };
 
 } // namespace fastrules

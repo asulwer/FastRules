@@ -541,6 +541,7 @@ private:
     
     mutable std::mutex luaStateMutex_;                    ///< Protects Lua state operations
     mutable std::shared_mutex registryMutex_;             ///< Protects reference registries
+    ///< Lock ordering: Always lock luaStateMutex_ before registryMutex_ to prevent deadlock
 
     // ========================================================================
     // Thread-Local Context

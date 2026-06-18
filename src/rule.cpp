@@ -19,7 +19,7 @@
 namespace fastrules {
 
 // Rule default constructor
-Rule::Rule() : cacheMutex_(std::make_unique<std::mutex>()) {}
+Rule::Rule() : cacheMutex_() {}
 
 // Rule destructor (out-of-line to ensure single vtable)
 Rule::~Rule() = default;
@@ -43,7 +43,7 @@ Rule::Rule(const Rule& other) {
     
     // Initialize cache members (don't copy cache contents)
     cacheGeneration_ = 0;
-    cacheMutex_ = std::make_unique<std::mutex>();
+    // cacheMutex_ is default constructed
     
     // Note: compiled Lua refs are per-engine, don't copy them
     // They'll be recompiled when compile() is called
@@ -88,7 +88,7 @@ Rule& Rule::operator=(const Rule& other) {
         // Reset cache (don't copy cache contents)
         cache_.clear();
         cacheGeneration_ = 0;
-        // mutex stays valid
+        // cacheMutex_ stays valid
         
         // Reset compiled refs (per-engine)
         compiledExpressionRef = std::nullopt;
@@ -733,7 +733,7 @@ Rule::Builder Rule::create(Id id, const std::string& expression, bool active) {
 // ============================================================================
 
 int Rule::invalidateCache() {
-    std::lock_guard<std::mutex> lock(*cacheMutex_);
+    std::lock_guard<std::mutex> lock(cacheMutex_);
     ++cacheGeneration_;
     cache_.clear();  // Clear all cached entries
     return cacheGeneration_;

@@ -49,9 +49,39 @@ struct AsyncWorkflow::ThreadPoolImpl {
             stop_ = true;
         }
         condition_.notify_all();
+        
+        // Add timeout mechanism for joining threads
         for (auto& worker : workers_) {
             if (worker.joinable()) {
-                try { worker.join(); } catch (...) {}
+                try {
+                    // Wait for thread to finish with timeout
+                    std::future<void> future = std::async(std::launch::async, [&worker]() {
+                        worker.join();
+                    });
+                    
+                    // Wait for up to 5 seconds
+                    if (future.wait_for(std::chrono::seconds(5)) == std::future_status::timeout) {
+                        // Log timeout error if a logger is available
+                        try {
+                            auto log = fastrules::logger();
+                            if (log) {
+                                log->error("ThreadPool worker thread join timeout");
+                            }
+                        } catch (...) {
+                            // Logger not available -- ignore
+                        }
+                    }
+                } catch (...) {
+                    // Log exception during join if a logger is available
+                    try {
+                        auto log = fastrules::logger();
+                        if (log) {
+                            log->error("Exception during ThreadPool worker thread join");
+                        }
+                    } catch (...) {
+                        // Logger not available -- ignore
+                    }
+                }
             }
         }
     }

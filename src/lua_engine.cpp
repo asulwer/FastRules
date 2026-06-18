@@ -231,7 +231,7 @@ struct DeadlineGuard {
         : ptr(p), dismissed(false) {}
     
     ~DeadlineGuard() {
-        if (!dismissed && ptr && *ptr) {
+        if (!dismissed && ptr) {
             *ptr = nullptr;
         }
     }
