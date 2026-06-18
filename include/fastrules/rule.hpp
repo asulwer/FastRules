@@ -201,7 +201,7 @@ struct RuleParameter {
  * - Child rules are stored as shared_ptr to enable sharing
  */
 
-class FASTRULES_API Rule {
+class Rule {
 public:
     using Id = int;  ///< Rule identifier type
 
