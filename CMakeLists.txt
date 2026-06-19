@@ -336,6 +336,7 @@ set(FASTRULES_CORE_SOURCES
     src/performance_counters.cpp
     src/aot_compiler.cpp
     src/rule_versioning.cpp
+    src/work_stealing_thread_pool.cpp
 )
 
 # Backend-specific sources
@@ -366,9 +367,11 @@ set(FASTRULES_PUBLIC_HEADERS
     include/fastrules/rule_context.hpp
     include/fastrules/rule_result.hpp
     include/fastrules/rule_versioning.hpp
+    include/fastrules/simple_work_stealing_queue.hpp  # Work-stealing queue
     include/fastrules/streaming_result.hpp
     include/fastrules/type_registry.hpp
     include/fastrules/workflow.hpp
+    include/fastrules/work_stealing_thread_pool.hpp  # Work-stealing thread pool
 )
 
 # ============================================================================
@@ -492,6 +495,9 @@ if(FASTRULES_BUILD_TESTS)
         tests/test_engine_pool.cpp
         tests/test_auto_detection.cpp
         tests/test_concurrent_compilation.cpp
+        tests/test_work_stealing.cpp
+        tests/test_coroutines.cpp
+        tests/test_async_integration.cpp
     )
 
     set_property(TARGET fastrules_tests PROPERTY FOLDER "Tests")
@@ -554,6 +560,10 @@ if(FASTRULES_BUILD_EXAMPLES)
     add_executable(repl_example examples/repl_example.cpp)
     set_property(TARGET repl_example PROPERTY FOLDER "Examples")
     target_link_libraries(repl_example PRIVATE fastrules)
+
+    add_executable(coroutine_example examples/coroutine_example.cpp)
+    set_property(TARGET coroutine_example PROPERTY FOLDER "Examples")
+    target_link_libraries(coroutine_example PRIVATE fastrules)
 
     add_executable(debug_context examples/debug_context.cpp)
     set_property(TARGET debug_context PROPERTY FOLDER "Examples")

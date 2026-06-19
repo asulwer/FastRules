@@ -93,26 +93,4 @@ void WorkStealingThreadPool::workerLoop(size_t workerIndex) {
     }
 }
 
-template<typename Func, typename... Args>
-auto WorkStealingThreadPool::enqueue(Func&& func, Args&&... args) 
-    -> std::future<std::invoke_result_t<Func, Args...>> {
-    
-    using return_type = std::invoke_result_t<Func, Args...>;
-    
-    auto task = std::make_shared<std::packaged_task<return_type()>>(
-        std::bind(std::forward<Func>(func), std::forward<Args>(args)...)
-    );
-    
-    std::future<return_type> result = task->get_future();
-    
-    // Push task to a random local queue for load balancing
-    static thread_local std::mt19937 rng{std::random_device{}()};
-    static thread_local std::uniform_int_distribution<size_t> dist(0, localQueues_.size() - 1);
-    
-    size_t queueIndex = dist(rng);
-    localQueues_[queueIndex]->push([task]() { (*task)(); });
-    
-    return result;
-}
-
 } // namespace fastrules
