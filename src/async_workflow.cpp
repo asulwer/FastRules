@@ -19,91 +19,17 @@ namespace fastrules {
 // ============================================================================
 
 struct AsyncWorkflow::ThreadPoolImpl {
-    std::vector<std::thread> workers_;
-    std::queue<std::function<void()>> tasks_;
-    std::mutex queueMutex_;
-    std::condition_variable condition_;
-    bool stop_ = false;
+    std::unique_ptr<WorkStealingThreadPool> workStealingPool_;
     
     explicit ThreadPoolImpl(size_t numThreads) {
-        for (size_t i = 0; i < numThreads; ++i) {
-            workers_.emplace_back([this] {
-                for (;;) {
-                    std::function<void()> task;
-                    {
-                        std::unique_lock<std::mutex> lock(queueMutex_);
-                        condition_.wait(lock, [this] { return stop_ || !tasks_.empty(); });
-                        if (stop_ && tasks_.empty()) return;
-                        task = std::move(tasks_.front());
-                        tasks_.pop();
-                    }
-                    try { task(); } catch (...) {}
-                }
-            });
-        }
+        workStealingPool_ = std::make_unique<WorkStealingThreadPool>(numThreads);
     }
     
-    ~ThreadPoolImpl() {
-        {
-            std::unique_lock<std::mutex> lock(queueMutex_);
-            stop_ = true;
-        }
-        condition_.notify_all();
-        
-        // Add timeout mechanism for joining threads
-        for (auto& worker : workers_) {
-            if (worker.joinable()) {
-                try {
-                    // Wait for thread to finish with timeout
-                    std::future<void> future = std::async(std::launch::async, [&worker]() {
-                        worker.join();
-                    });
-                    
-                    // Wait for up to 5 seconds
-                    if (future.wait_for(std::chrono::seconds(5)) == std::future_status::timeout) {
-                        // Log timeout error if a logger is available
-                        try {
-                            auto log = fastrules::logger();
-                            if (log) {
-                                log->error("ThreadPool worker thread join timeout");
-                            }
-                        } catch (...) {
-                            // Logger not available -- ignore
-                        }
-                    }
-                } catch (...) {
-                    // Log exception during join if a logger is available
-                    try {
-                        auto log = fastrules::logger();
-                        if (log) {
-                            log->error("Exception during ThreadPool worker thread join");
-                        }
-                    } catch (...) {
-                        // Logger not available -- ignore
-                    }
-                }
-            }
-        }
-    }
+    ~ThreadPoolImpl() = default;
     
     template<typename Func, typename... Args>
     auto enqueue(Func&& func, Args&&... args) -> std::future<std::invoke_result_t<Func, Args...>> {
-        using return_type = std::invoke_result_t<Func, Args...>;
-        
-        auto task = std::make_shared<std::packaged_task<return_type()>>(
-            std::bind(std::forward<Func>(func), std::forward<Args>(args)...)
-        );
-        
-        std::future<return_type> result = task->get_future();
-        
-        {
-            std::unique_lock<std::mutex> lock(queueMutex_);
-            if (stop_) throw std::runtime_error("enqueue on stopped ThreadPool");
-            tasks_.emplace([task]() { (*task)(); });
-        }
-        
-        condition_.notify_one();
-        return result;
+        return workStealingPool_->enqueue(std::forward<Func>(func), std::forward<Args>(args)...);
     }
 };
 

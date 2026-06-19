@@ -48,6 +48,7 @@
 
 #include "fastrules/workflow.hpp"
 #include "fastrules/engine_pool.hpp"
+#include "fastrules/work_stealing_thread_pool.hpp"
 
 #include <future>
 #include <memory>
