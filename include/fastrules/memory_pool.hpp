@@ -26,7 +26,7 @@ template<typename T>
 class MemoryPool {
 private:
     std::queue<std::unique_ptr<T>> pool_;
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
     size_t maxSize_;
     std::atomic<size_t> allocatedCount_{0};
 
@@ -115,7 +115,7 @@ template<typename T>
 class VectorPool {
 private:
     std::queue<std::unique_ptr<std::vector<T>>> pool_;
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
     size_t maxSize_;
     size_t initialCapacity_;
     std::atomic<size_t> allocatedCount_{0};

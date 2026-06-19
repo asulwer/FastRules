@@ -12,6 +12,7 @@
 #include <memory>
 #include <filesystem>
 #include <chrono>
+#include <functional>
 
 // Forward declarations
 struct lua_State;

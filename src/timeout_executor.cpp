@@ -5,9 +5,6 @@
 
 namespace fastrules {
 
-RuleTimeoutException::RuleTimeoutException(const std::string& message) 
-    : std::runtime_error("Timeout: " + message) {}
-
 // TimeoutExecutor implementation is header-only since it's templated
 
 } // namespace fastrules

@@ -214,9 +214,6 @@ int main() {
         
         std::cout << "   Rule name: " << rule_result.ruleName << "\n";
         std::cout << "   Success: " << (rule_result.success ? "true" : "false") << "\n";
-        if (rule_result.values.find("value") != rule_result.values.end()) {
-            std::cout << "   Computed value: " << rule_result.values.at("value").get<int>() << "\n";
-        }
         std::cout << "\n";
         
         // Example 3: Multiple concurrent coroutines
@@ -274,9 +271,6 @@ int main() {
         for (const auto& result : workflow_results) {
             std::cout << "     Rule: " << result.ruleName 
                       << ", Success: " << (result.success ? "true" : "false");
-            if (result.values.find("doubledValue") != result.values.end()) {
-                std::cout << ", Doubled Value: " << result.values.at("doubledValue").get<int>();
-            }
             std::cout << "\n";
         }
         

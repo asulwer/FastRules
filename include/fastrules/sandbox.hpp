@@ -12,6 +12,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <memory>
+#include <stdexcept>
 
 // Forward declarations
 struct lua_State;
@@ -190,6 +191,27 @@ public:
      * @return Maximum instructions
      */
     size_t getMaxInstructions() const;
+
+    /**
+     * @brief Get restricted functions
+     * 
+     * @return Set of restricted function names
+     */
+    const std::unordered_set<std::string>& getRestrictedFunctions() const;
+
+    /**
+     * @brief Get allowed modules
+     * 
+     * @return Set of allowed module names
+     */
+    const std::unordered_set<std::string>& getAllowedModules() const;
+
+    /**
+     * @brief Get restricted modules
+     * 
+     * @return Set of restricted module names
+     */
+    const std::unordered_set<std::string>& getRestrictedModules() const;
 };
 
 /**

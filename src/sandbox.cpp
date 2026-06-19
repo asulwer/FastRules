@@ -8,9 +8,6 @@
 
 namespace fastrules {
 
-SandboxViolationException::SandboxViolationException(const std::string& message) 
-    : std::runtime_error("Sandbox violation: " + message) {}
-
 SandboxConfig::SandboxConfig()
     : maxMemoryBytes_(1024 * 1024 * 100)  // 100 MB default
     , maxInstructions_(1000000)           // 1 million instructions default
@@ -112,6 +109,18 @@ size_t SandboxConfig::getMaxInstructions() const {
     return maxInstructions_;
 }
 
+const std::unordered_set<std::string>& SandboxConfig::getRestrictedFunctions() const {
+    return restrictedFunctions_;
+}
+
+const std::unordered_set<std::string>& SandboxConfig::getAllowedModules() const {
+    return allowedModules_;
+}
+
+const std::unordered_set<std::string>& SandboxConfig::getRestrictedModules() const {
+    return restrictedModules_;
+}
+
 // Static instance for SandboxManager
 static SandboxManager* g_sandboxManager = nullptr;
 
@@ -210,13 +219,13 @@ void SandboxManager::restrictDangerousFunctions(lua_State* lua) {
     }
     
     // Remove dangerous global functions
-    for (const auto& function : config_->restrictedFunctions_) {
+    for (const auto& function : config_->getRestrictedFunctions()) {
         lua_pushnil(lua);
         lua_setglobal(lua, function.c_str());
     }
     
     // Also check for functions in allowed modules that might be dangerous
-    for (const auto& module : config_->allowedModules_) {
+    for (const auto& module : config_->getAllowedModules()) {
         // This is a simplified approach - in practice, you'd want to check
         // each function in each module against the restricted functions list
     }
@@ -228,7 +237,7 @@ void SandboxManager::restrictDangerousModules(lua_State* lua) {
     }
     
     // Remove dangerous modules from global namespace
-    for (const auto& module : config_->restrictedModules_) {
+    for (const auto& module : config_->getRestrictedModules()) {
         lua_pushnil(lua);
         lua_setglobal(lua, module.c_str());
     }

@@ -7,9 +7,6 @@
 
 namespace fastrules {
 
-ValidationException::ValidationException(const std::string& message) 
-    : std::runtime_error("Validation failed: " + message) {}
-
 LuaExpressionValidator::LuaExpressionValidator(size_t maxLength)
     : identifierPattern_(R"([a-zA-Z_][a-zA-Z0-9_]*)")
     , numberPattern_(R"(\d+\.?\d*)")

@@ -21,7 +21,7 @@ int main() {
     try {
         // Create a Lua engine
         LuaEngine engine;
-        lua_State* lua = engine.getLuaState();
+        lua_State* lua = engine.luaState();
         
         // Create AOT compiler with cache directory
         AotCompiler compiler(".fastrules_cache");
