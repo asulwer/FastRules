@@ -1,76 +1,131 @@
+/**
+ * @file aot_compiler.hpp
+ * @brief Ahead-of-Time (AOT) compilation for FastRules
+ * 
+ * Provides caching and pre-compilation of Lua expressions to improve performance.
+ */
+
 #pragma once
 
 #include <string>
-#include <vector>
-#include <memory>
-#include <optional>
 #include <unordered_map>
-#include <fstream>
+#include <memory>
+#include <filesystem>
+#include <chrono>
+
+// Forward declarations
+struct lua_State;
 
 namespace fastrules {
 
-// Forward declarations
-class LuaEngine;
-class Rule;
-class Workflow;
-
-// Pre-compiled bytecode bundle for AOT distribution
-// At build time: compile rules -> save bytecode to .dat file
-// At runtime: load bytecode -> skip compilation overhead
-class AotBundle {
-public:
-    struct CompiledRule {
-        std::string ruleName;
-        std::string expression;
-        std::string action;
-        
-        // Lua bytecode (binary blob)
-        std::string expressionBytecode;
-        std::string actionBytecode;
-        
-        bool hasExpression = false;
-        bool hasAction = false;
-    };
-
-    std::string workflowId;
-    std::vector<CompiledRule> rules;
-    
-    // Serialize bundle to binary format
-    [[nodiscard]] bool saveToFile(const std::string& path) const;
-    
-    // Deserialize bundle from binary format
-    [[nodiscard]] static std::optional<AotBundle> loadFromFile(const std::string& path);
-    
-    // Serialize to string (for embedding in source code)
-    [[nodiscard]] std::string toHexString() const;
-    
-    // Deserialize from hex string
-    [[nodiscard]] static std::optional<AotBundle> fromHexString(const std::string& hex);
-    
-private:
-    [[nodiscard]] static std::string serializeString(const std::string& str);
-    [[nodiscard]] static std::pair<std::string, size_t> deserializeString(const std::string& data, size_t offset);
+/**
+ * @brief AOT compiled chunk with metadata
+ */
+struct AotCompiledChunk {
+    std::string bytecode;                    ///< Compiled bytecode
+    std::chrono::system_clock::time_point compiledAt;  ///< Compilation timestamp
+    size_t hitCount = 0;                     ///< Cache hit counter
 };
 
-// AOT compiler: pre-compiles rules at build time
+/**
+ * @brief Ahead-of-Time compiler for Lua expressions
+ * 
+ * Caches compiled Lua chunks to avoid repeated compilation overhead.
+ * Can pre-compile common expressions at build time.
+ */
 class AotCompiler {
-public:
-    // Compile a workflow into an AotBundle
-    [[nodiscard]] static AotBundle compileWorkflow(const Workflow& workflow, LuaEngine& engine);
-    
-    // Compile a single rule into bytecode
-    [[nodiscard]] static AotBundle::CompiledRule compileRule(const Rule& rule, LuaEngine& engine);
-    
-    // Load a pre-compiled bundle into a LuaEngine
-    // Returns true if all rules loaded successfully
-    [[nodiscard]] static bool loadBundle(LuaEngine& engine, const AotBundle& bundle);
-    
-    // Quick check: does a bundle file exist and is valid?
-    [[nodiscard]] static bool isBundleValid(const std::string& path);
-    
 private:
-    [[nodiscard]] static std::optional<std::string> dumpBytecode(LuaEngine& engine, const std::string& source);
-    [[nodiscard]] static bool loadBytecode(LuaEngine& engine, const std::string& bytecode);
+    std::unordered_map<std::string, AotCompiledChunk> cache_;
+    std::filesystem::path cacheDirectory_;
+    bool useDiskCache_ = true;
+
+public:
+    /**
+     * @brief Construct AOT compiler
+     * 
+     * @param cacheDir Directory for disk cache (optional)
+     */
+    explicit AotCompiler(const std::filesystem::path& cacheDir = ".fastrules_cache");
+
+    /**
+     * @brief Compile expression to bytecode
+     * 
+     * @param expression Lua expression to compile
+     * @param lua Lua state for compilation
+     * @return Compiled bytecode
+     */
+    std::string compileToBytecode(const std::string& expression, lua_State* lua);
+
+    /**
+     * @brief Get compiled chunk from cache or compile if needed
+     * 
+     * @param expression Lua expression
+     * @param lua Lua state
+     * @return AOT compiled chunk
+     */
+    const AotCompiledChunk& getOrCompile(const std::string& expression, lua_State* lua);
+
+    /**
+     * @brief Pre-compile expressions at build time
+     * 
+     * @param expressions List of expressions to pre-compile
+     * @param lua Lua state
+     */
+    void precompile(const std::vector<std::string>& expressions, lua_State* lua);
+
+    /**
+     * @brief Save cache to disk
+     */
+    void saveCache();
+
+    /**
+     * @brief Load cache from disk
+     */
+    void loadCache();
+
+    /**
+     * @brief Clear cache
+     */
+    void clearCache();
+
+    /**
+     * @brief Get cache statistics
+     * 
+     * @return Cache hit ratio and size
+     */
+    std::pair<double, size_t> getCacheStats() const;
+};
+
+/**
+ * @brief Simple Lua expression cache
+ * 
+ * Lightweight cache for compiled Lua expressions.
+ */
+class LuaExpressionCache {
+private:
+    std::unordered_map<std::string, std::string> cache_;
+    size_t maxCacheSize_ = 1000;
+
+public:
+    /**
+     * @brief Get or compile expression
+     * 
+     * @param expression Lua expression
+     * @param compileFunc Function to compile expression if not cached
+     * @return Compiled expression
+     */
+    std::string getOrCompile(const std::string& expression, 
+                            const std::function<std::string(const std::string&)>& compileFunc);
+    
+    /**
+     * @brief Clear cache
+     */
+    void clear();
+    
+    /**
+     * @brief Get cache size
+     */
+    size_t size() const { return cache_.size(); }
 };
 
 } // namespace fastrules

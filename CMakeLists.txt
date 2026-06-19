@@ -337,6 +337,11 @@ set(FASTRULES_CORE_SOURCES
     src/aot_compiler.cpp
     src/rule_versioning.cpp
     src/work_stealing_thread_pool.cpp
+    src/aot_compiler.cpp
+    src/memory_pool.cpp
+    src/input_validator.cpp
+    src/timeout_executor.cpp
+    src/sandbox.cpp
 )
 
 # Backend-specific sources
@@ -368,6 +373,11 @@ set(FASTRULES_PUBLIC_HEADERS
     include/fastrules/rule_result.hpp
     include/fastrules/rule_versioning.hpp
     include/fastrules/simple_work_stealing_queue.hpp  # Work-stealing queue
+    include/fastrules/aot_compiler.hpp  # AOT compilation
+    include/fastrules/memory_pool.hpp  # Memory pooling
+    include/fastrules/input_validator.hpp  # Input validation
+    include/fastrules/timeout_executor.hpp  # Timeout enforcement
+    include/fastrules/sandbox.hpp  # Lua sandboxing
     include/fastrules/streaming_result.hpp
     include/fastrules/type_registry.hpp
     include/fastrules/workflow.hpp
@@ -498,6 +508,11 @@ if(FASTRULES_BUILD_TESTS)
         tests/test_work_stealing.cpp
         tests/test_coroutines.cpp
         tests/test_async_integration.cpp
+        tests/test_aot_compiler.cpp
+        tests/test_memory_pool.cpp
+        tests/test_input_validator.cpp
+        tests/test_timeout_executor.cpp
+        tests/test_sandbox.cpp
     )
 
     set_property(TARGET fastrules_tests PROPERTY FOLDER "Tests")
@@ -564,6 +579,26 @@ if(FASTRULES_BUILD_EXAMPLES)
     add_executable(coroutine_example examples/coroutine_example.cpp)
     set_property(TARGET coroutine_example PROPERTY FOLDER "Examples")
     target_link_libraries(coroutine_example PRIVATE fastrules)
+
+    add_executable(aot_compiler_example examples/aot_compiler_example.cpp)
+    set_property(TARGET aot_compiler_example PROPERTY FOLDER "Examples")
+    target_link_libraries(aot_compiler_example PRIVATE fastrules)
+
+    add_executable(memory_pool_example examples/memory_pool_example.cpp)
+    set_property(TARGET memory_pool_example PROPERTY FOLDER "Examples")
+    target_link_libraries(memory_pool_example PRIVATE fastrules)
+
+    add_executable(input_validator_example examples/input_validator_example.cpp)
+    set_property(TARGET input_validator_example PROPERTY FOLDER "Examples")
+    target_link_libraries(input_validator_example PRIVATE fastrules)
+
+    add_executable(timeout_executor_example examples/timeout_executor_example.cpp)
+    set_property(TARGET timeout_executor_example PROPERTY FOLDER "Examples")
+    target_link_libraries(timeout_executor_example PRIVATE fastrules)
+
+    add_executable(sandbox_example examples/sandbox_example.cpp)
+    set_property(TARGET sandbox_example PROPERTY FOLDER "Examples")
+    target_link_libraries(sandbox_example PRIVATE fastrules)
 
     add_executable(debug_context examples/debug_context.cpp)
     set_property(TARGET debug_context PROPERTY FOLDER "Examples")
