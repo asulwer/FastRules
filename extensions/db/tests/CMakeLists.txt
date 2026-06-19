@@ -13,6 +13,7 @@ endif()
 add_executable(fastrules-db-tests
     test_main.cpp
     test_db_repository.cpp
+    test_db_repository_extended.cpp
 )
 set_property(TARGET fastrules-db-tests PROPERTY FOLDER "Extensions/DB/Tests")
 

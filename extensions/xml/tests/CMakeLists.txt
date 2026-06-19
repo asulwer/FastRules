@@ -8,6 +8,7 @@ endif()
 add_executable(fastrules-xml-tests
     test_main.cpp
     test_xml_repository.cpp
+    test_xml_repository_extended.cpp
 )
 set_property(TARGET fastrules-xml-tests PROPERTY FOLDER "Extensions/XML/Tests")
 

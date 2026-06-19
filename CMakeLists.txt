@@ -513,6 +513,13 @@ if(FASTRULES_BUILD_TESTS)
         tests/test_input_validator.cpp
         tests/test_timeout_executor.cpp
         tests/test_sandbox.cpp
+        tests/test_rule_result.cpp
+        tests/test_rule_context.cpp
+        tests/test_lua_engine_extended.cpp
+        tests/test_memory_pool_extended.cpp
+        tests/test_sandbox_extended.cpp
+        tests/test_input_validator_extended.cpp
+        tests/test_aot_compiler_extended.cpp
     )
 
     set_property(TARGET fastrules_tests PROPERTY FOLDER "Tests")

@@ -10,6 +10,7 @@ add_executable(fastrules-json-tests
     test_json_repository.cpp
     test_json_loader.cpp
     test_json_xml_roundtrip.cpp
+    test_json_repository_extended.cpp
 )
 set_property(TARGET fastrules-json-tests PROPERTY FOLDER "Extensions/JSON/Tests")
 

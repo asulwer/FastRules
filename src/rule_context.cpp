@@ -35,6 +35,36 @@
 
 namespace fastrules {
 
+// ========================================================================
+// Copy Constructor and Assignment
+// ========================================================================
+
+RuleContext::RuleContext(const RuleContext& other) {
+    std::shared_lock lock(other.mutex_);
+    results_ = other.results_;
+    variables_ = other.variables_;
+    lastError_ = other.lastError_;
+}
+
+RuleContext& RuleContext::operator=(const RuleContext& other) {
+    if (this != &other) {
+        // Lock both contexts to prevent deadlock
+        // We need to be careful about locking order to avoid deadlock
+        // For simplicity, we'll lock the other context first
+        std::shared_lock otherLock(other.mutex_);
+        std::unique_lock thisLock(mutex_);
+        
+        results_ = other.results_;
+        variables_ = other.variables_;
+        lastError_ = other.lastError_;
+    }
+    return *this;
+}
+
+// ========================================================================
+// Result Management
+// ========================================================================
+
 /**
  * @brief Store a rule execution result
  * 
