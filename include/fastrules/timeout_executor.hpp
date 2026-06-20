@@ -58,23 +58,39 @@ public:
         cancelled_.store(false);
         
         // Launch the function in a separate thread
-        auto future = std::async(std::launch::async, [&]() -> decltype(fn()) {
-            return fn();
+        std::promise<decltype(fn())> resultPromise;
+        auto resultFuture = resultPromise.get_future();
+        
+        auto worker = std::thread([&fn, promise = std::move(resultPromise)]() mutable {
+            try {
+                promise.set_value(fn());
+            } catch (...) {
+                promise.set_exception(std::current_exception());
+            }
         });
         
         // Wait for completion or timeout
-        if (future.wait_for(maxExecutionTime_) == std::future_status::timeout) {
+        if (resultFuture.wait_for(maxExecutionTime_) == std::future_status::timeout) {
             // Mark as cancelled
             cancelled_.store(true);
             
-            // Try to terminate the thread (this is not guaranteed to work)
-            // In practice, you might need platform-specific code for forceful termination
+            // We can't safely terminate the thread, so we'll just detach it
+            // and let it finish naturally (this is a limitation of C++ threading)
+            if (worker.joinable()) {
+                worker.detach();
+            }
+            
             throw RuleTimeoutException("Rule execution timed out after " + 
                                      std::to_string(maxExecutionTime_.count()) + " milliseconds");
         }
         
+        // Wait for the worker to finish naturally
+        if (worker.joinable()) {
+            worker.join();
+        }
+        
         // Get the result
-        return future.get();
+        return resultFuture.get();
     }
 
     /**
@@ -137,19 +153,11 @@ public:
      */
     template<typename F>
     auto execute(F&& fn) -> decltype(fn()) {
-        // Layer 1: Soft timeout with warning
-        TimeoutExecutor softExecutor(softTimeout_);
-        
-        // Layer 2: Hard timeout that throws exception
-        TimeoutExecutor hardExecutor(hardTimeout_);
+        // Use a single timeout executor for simplicity
+        TimeoutExecutor executor(maxExecutionTime_);
         
         try {
-            // Execute with hard timeout
-            return hardExecutor.executeWithTimeout([&]() -> decltype(fn()) {
-                // Check for soft timeout periodically
-                // This would require the function to be cooperative
-                // In practice, you might need to use signals or other mechanisms
-                
+            return executor.executeWithTimeout([&fn]() -> decltype(fn()) {
                 return fn();
             });
         } catch (const RuleTimeoutException&) {
@@ -188,8 +196,8 @@ public:
  */
 class TimeoutGuard {
 private:
-    TimeoutExecutor executor_;
-    std::future<void> timeoutFuture_;
+    std::chrono::milliseconds timeout_;
+    std::atomic<bool> timedOut_{false};
     std::atomic<bool> completed_{false};
 
 public:
@@ -199,16 +207,9 @@ public:
      * @param timeout Timeout duration
      */
     explicit TimeoutGuard(std::chrono::milliseconds timeout)
-        : executor_(timeout) {
-        
-        // Launch timeout checker
-        timeoutFuture_ = std::async(std::launch::async, [this, timeout]() {
-            std::this_thread::sleep_for(timeout);
-            if (!completed_.load()) {
-                // Timeout occurred - this is where you'd implement
-                // platform-specific termination if needed
-            }
-        });
+        : timeout_(timeout) {
+        // For now, we don't implement active timeout checking in the guard
+        // The main timeout enforcement is handled by TimeoutExecutor
     }
 
     /**
@@ -224,7 +225,7 @@ public:
      * @return true if timeout has occurred
      */
     bool isTimedOut() const {
-        return executor_.isCancelled();
+        return timedOut_.load();
     }
 };
 

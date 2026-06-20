@@ -3,6 +3,7 @@
 #include <fastrules/repository.hpp>
 #include <pugixml.hpp>
 #include <filesystem>
+#include <mutex>
 
 namespace fastrules {
 namespace ext {
@@ -53,6 +54,7 @@ private:
     std::filesystem::path filepath_;
     pugi::xml_document doc_;
     bool dirty_ = false;
+    mutable std::mutex mutex_;
     
     void load();
     void write();

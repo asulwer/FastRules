@@ -4,6 +4,7 @@
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include <filesystem>
+#include <mutex>
 
 namespace fastrules {
 namespace ext {
@@ -53,6 +54,7 @@ private:
     std::filesystem::path filepath_;
     nlohmann::json data_;
     bool dirty_ = false;
+    mutable std::mutex mutex_;
     
     void load();
     void write();

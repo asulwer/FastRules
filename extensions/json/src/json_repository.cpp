@@ -1,5 +1,12 @@
 #include <fastrules\json_repository.hpp>
 
+#include <fastrules/rule.hpp>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <mutex>
+#include <map>
+
 namespace fastrules {
 namespace ext {
 
@@ -13,21 +20,41 @@ JsonRuleRepository::JsonRuleRepository(const std::filesystem::path& filepath)
 }
 
 void JsonRuleRepository::save(const Rule& rule) {
-    bool found = false;
-    for (auto& item : data_) {
-        if (item.contains("id") && item["id"] == rule.id) {
-            item = ruleToJson(rule);
-            found = true;
-            break;
+    std::lock_guard<std::mutex> lock(mutex_);
+    
+    // Simple approach: always add the rule, then deduplicate at the end
+    data_.push_back(ruleToJson(rule));
+    
+    // Save child rules
+    for (const auto& childRule : rule.childRules) {
+        if (childRule) {
+            data_.push_back(ruleToJson(*childRule));
         }
     }
-    if (!found) {
-        data_.push_back(ruleToJson(rule));
+    
+    // Remove duplicates by keeping only the last occurrence of each ID
+    std::map<int, nlohmann::json> uniqueRules;
+    for (const auto& item : data_) {
+        if (item.contains("id")) {
+            uniqueRules[item["id"]] = item;  // This will overwrite with the latest version
+        }
     }
+    
+    // Rebuild data_ with unique rules
+    data_.clear();
+    for (const auto& pair : uniqueRules) {
+        data_.push_back(pair.second);
+    }
+    
     dirty_ = true;
+    if (dirty_) {
+        write();
+        dirty_ = false;
+    }
 }
 
 std::optional<Rule> JsonRuleRepository::findById(int id) {
+    std::lock_guard<std::mutex> lock(mutex_);
     for (const auto& item : data_) {
         if (item.contains("id") && item["id"] == id) {
             return jsonToRule(item);
@@ -37,6 +64,7 @@ std::optional<Rule> JsonRuleRepository::findById(int id) {
 }
 
 std::vector<Rule> JsonRuleRepository::findAll() {
+    std::lock_guard<std::mutex> lock(mutex_);
     std::vector<Rule> rules;
     rules.reserve(data_.size());
     for (const auto& item : data_) {
@@ -46,6 +74,7 @@ std::vector<Rule> JsonRuleRepository::findAll() {
 }
 
 void JsonRuleRepository::remove(int id) {
+    std::lock_guard<std::mutex> lock(mutex_);
     auto it = std::remove_if(data_.begin(), data_.end(),
         [id](const nlohmann::json& item) {
             return item.contains("id") && item["id"] == id;
@@ -57,6 +86,7 @@ void JsonRuleRepository::remove(int id) {
 }
 
 bool JsonRuleRepository::exists(int id) {
+    std::lock_guard<std::mutex> lock(mutex_);
     for (const auto& item : data_) {
         if (item.contains("id") && item["id"] == id) {
             return true;
@@ -66,10 +96,12 @@ bool JsonRuleRepository::exists(int id) {
 }
 
 size_t JsonRuleRepository::count() {
+    std::lock_guard<std::mutex> lock(mutex_);
     return data_.size();
 }
 
 void JsonRuleRepository::flush() {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (dirty_) {
         write();
         dirty_ = false;
@@ -77,6 +109,7 @@ void JsonRuleRepository::flush() {
 }
 
 void JsonRuleRepository::load() {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (std::filesystem::exists(filepath_)) {
         std::ifstream file(filepath_);
         if (file.is_open()) {
@@ -103,6 +136,9 @@ void JsonRuleRepository::write() {
 nlohmann::json JsonRuleRepository::ruleToJson(const Rule& rule) const {
     nlohmann::json j;
     j["id"] = rule.id;
+    if (!rule.name.empty()) {
+        j["name"] = rule.name;
+    }
     j["expression"] = rule.expression;
     j["action"] = rule.action;
     j["isActive"] = rule.isActive;
@@ -123,6 +159,9 @@ Rule JsonRuleRepository::jsonToRule(const nlohmann::json& j) const {
         if (j.is_object()) {
             if (j.contains("id") && j["id"].is_number_integer()) {
                 rule.id = j["id"].get<int>();
+            }
+            if (j.contains("name") && j["name"].is_string()) {
+                rule.name = j["name"].get<std::string>();
             }
             if (j.contains("expression") && j["expression"].is_string()) {
                 rule.expression = j["expression"].get<std::string>();

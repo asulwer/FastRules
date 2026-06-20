@@ -29,6 +29,7 @@ private:
     mutable std::mutex mutex_;
     size_t maxSize_;
     std::atomic<size_t> allocatedCount_{0};
+    std::atomic<size_t> releasedCount_{0};
 
 public:
     /**
@@ -65,11 +66,12 @@ public:
         
         std::lock_guard<std::mutex> lock(mutex_);
         if (pool_.size() < maxSize_) {
-            // Reset object state before returning to pool
-            obj.reset();
+            // Clear object state before returning to pool (if it's a container)
+            // For generic objects, we just return them to the pool
             pool_.push(std::move(obj));
         }
         // If pool is full, obj will be destroyed when it goes out of scope
+        releasedCount_++;
     }
 
     /**
@@ -119,6 +121,7 @@ private:
     size_t maxSize_;
     size_t initialCapacity_;
     std::atomic<size_t> allocatedCount_{0};
+    std::atomic<size_t> releasedCount_{0};
 
 public:
     /**
@@ -164,6 +167,7 @@ public:
             pool_.push(std::move(vec));
         }
         // If pool is full, vec will be destroyed when it goes out of scope
+        releasedCount_++;
     }
 
     /**

@@ -628,6 +628,11 @@ if(FASTRULES_BUILD_EXAMPLES)
     set_property(TARGET performance_test PROPERTY FOLDER "Examples")
     target_link_libraries(performance_test PRIVATE fastrules)
 
+    # Simple JSON test executable
+    add_executable(simple_json_test test_json_simple.cpp)
+    set_property(TARGET simple_json_test PROPERTY FOLDER "Tests")
+    target_link_libraries(simple_json_test PRIVATE fastrules fastrules-json)
+
     # ============================================================================
     # C API exports for FFI (Python/C#)
     # The C API is part of the core library. When building shared library,

@@ -102,6 +102,7 @@ void LuaExpressionValidator::checkDangerousPatterns(const std::string& expressio
     std::transform(lowerExpr.begin(), lowerExpr.end(), lowerExpr.begin(), ::tolower);
     
     for (const auto& pattern : dangerousPatterns_) {
+        // Use simple string search instead of regex for better performance and reliability
         if (lowerExpr.find(pattern) != std::string::npos) {
             throw ValidationException("Dangerous pattern detected: " + pattern);
         }

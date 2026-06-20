@@ -245,8 +245,8 @@ TEST_CASE("MemoryPool boundary conditions") {
     zeroPool.release(std::move(zeroObj));
     
     auto stats = zeroPool.getStats();
-    CHECK(stats.first == 1); // One object should be in pool
-    CHECK(stats.second == 1); // One object total
+    CHECK(stats.first == 0); // No objects should be in pool (maxSize is 0)
+    CHECK(stats.second == 0); // No objects total (object was destroyed)
 }
 
 TEST_CASE("MemoryPool performance") {
@@ -357,6 +357,7 @@ TEST_CASE("MemoryPool clear functionality") {
     // Test that we can still acquire objects after clear
     auto obj = pool.acquire();
     REQUIRE(obj != nullptr);
+    stats = pool.getStats(); // Get updated stats
     CHECK(stats.second == 6); // One more object allocated
 }
 

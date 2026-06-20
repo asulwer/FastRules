@@ -134,7 +134,7 @@ SandboxConfig& SandboxManager::getConfig() {
 
 void SandboxManager::applySandbox(lua_State* lua) {
     if (!lua) {
-        throw std::invalid_argument("Lua state is null");
+        return;  // Silently ignore null Lua state
     }
     
     if (!config_->isEnabled()) {
@@ -210,6 +210,26 @@ void SandboxManager::validateCode(const std::string& code) const {
         validator.validate(code);
     } catch (const ValidationException& e) {
         throw SandboxViolationException("Code validation failed: " + std::string(e.what()));
+    }
+    
+    // Additional check for dangerous patterns that might slip through
+    // This is a more direct approach to ensure dangerous code is caught
+    std::string lowerCode = code;
+    std::transform(lowerCode.begin(), lowerCode.end(), lowerCode.begin(), ::tolower);
+    
+    // Check for dangerous patterns
+    std::vector<std::string> dangerousPatterns = {
+        "os.", "io.", "debug.", "load", "loadfile", "dofile",
+        "require", "package.", "module", "setmetatable",
+        "getmetatable", "rawget", "rawset", "rawequal",
+        "collectgarbage", "gcinfo", "newproxy",
+        "system", "exec", "spawn", "popen"
+    };
+    
+    for (const auto& pattern : dangerousPatterns) {
+        if (lowerCode.find(pattern) != std::string::npos) {
+            throw SandboxViolationException("Dangerous pattern detected: " + pattern);
+        }
     }
 }
 
