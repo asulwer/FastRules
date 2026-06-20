@@ -193,7 +193,7 @@ void LuaExpressionValidator::validateSyntax(const std::string& expression) const
     }
 }
 
-void LuaExpressionValidator::validateFunctions(const std::string& expression) const {
+void LuaExpressionValidator::validateFunctions(const std::string& /*expression*/) const {
     // This is a simplified function validation
     // In practice, you'd want a proper AST parser to identify function calls
     

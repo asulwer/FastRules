@@ -102,7 +102,19 @@ std::string JsonSerialization::serialize(const RuleVersionManager& manager) {
         auto now = std::chrono::system_clock::now();
         auto time_t = std::chrono::system_clock::to_time_t(now);
         std::stringstream ss;
-        ss << std::put_time(std::gmtime(&time_t), "%Y-%m-%dT%H:%M:%SZ");
+#ifdef _WIN32
+        std::tm tm;
+        if (gmtime_s(&tm, &time_t) != 0) {
+            throw std::runtime_error("gmtime_s failed");
+        }
+        ss << std::put_time(&tm, "%Y-%m-%dT%H:%M:%SZ");
+#else
+        std::tm tm;
+        if (gmtime_r(&time_t, &tm) == nullptr) {
+            throw std::runtime_error("gmtime_r failed");
+        }
+        ss << std::put_time(&tm, "%Y-%m-%dT%H:%M:%SZ");
+#endif
         return ss.str();
     }();
     

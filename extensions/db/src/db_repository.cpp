@@ -129,8 +129,10 @@ std::optional<Rule> DbRuleRepository::findById(int id) {
         "SELECT id, name, expression, action, description, is_active, priority, timeout_ms, cache_duration_ms, depends_on_rule_name "
         "FROM rules WHERE id = :id", soci::use(id));
     
-    for (auto& row : rs) {
-        return rowToRule(row);
+    auto it = rs.begin();
+    auto end = rs.end();
+    if (it != end) {
+        return rowToRule(*it);
     }
     return std::nullopt;
 }
@@ -272,14 +274,17 @@ std::optional<Workflow> DbWorkflowRepository::findById(int id) {
     soci::rowset<soci::row> rs = ((*session_).prepare <<
         "SELECT id, name, description, is_active FROM workflows WHERE id = :id", soci::use(id));
 
-    for (auto& row : rs) {
+    auto outerIt = rs.begin();
+    auto outerEnd = rs.end();
+    if (outerIt != outerEnd) {
+        auto& row = *outerIt;
         Workflow wf;
         wf.id = row.get<int>(0);
         wf.name = row.get<std::string>(1, "");
         wf.description = row.get<std::string>(2, "");
         DbBool isActive;
-    isActive = row.get<int>(3) != 0;
-    wf.isActive = isActive;
+        isActive = row.get<int>(3) != 0;
+        wf.isActive = isActive;
 
         soci::rowset<soci::row> ruleRs = ((*session_).prepare <<
             "SELECT r.id, r.name, r.expression, r.action, r.description, r.is_active, r.priority, "
@@ -291,8 +296,10 @@ std::optional<Workflow> DbWorkflowRepository::findById(int id) {
             soci::use(id));
 
         DbRuleRepository ruleRepo(session_);
-        for (auto& rrow : ruleRs) {
-            wf.rules.push_back(std::make_shared<Rule>(ruleRepo.rowToRule(rrow)));
+        auto it = ruleRs.begin();
+        auto end = ruleRs.end();
+        for (; it != end; ++it) {
+            wf.rules.push_back(std::make_shared<Rule>(ruleRepo.rowToRule(*it)));
         }
 
         return wf;
@@ -418,17 +425,19 @@ std::optional<RuleVersion> DbVersionRepository::findVersion(int ruleId, const st
         "FROM rule_versions WHERE rule_id = :rid AND version_id = :vid",
         soci::use(ruleId), soci::use(versionId));
     
-    for (auto& row : rs) {
+    auto it = rs.begin();
+    auto end = rs.end();
+    if (it != end) {
         RuleVersion rv;
-        rv.versionId = row.get<std::string>(0);
+        rv.versionId = it->get<std::string>(0);
         rv.ruleName = std::to_string(ruleId);
-        rv.expression = row.get<std::string>(1);
-        rv.action = row.get<std::string>(2);
-        rv.priority = row.get<int>(3);
-        rv.isActive = row.get<int>(4) != 0;
-        rv.author = row.get<std::string>(6);
-        rv.changeSummary = row.get<std::string>(7);
-        rv.parentVersionId = row.get<std::string>(8);
+        rv.expression = it->get<std::string>(1);
+        rv.action = it->get<std::string>(2);
+        rv.priority = it->get<int>(3);
+        rv.isActive = it->get<int>(4) != 0;
+        rv.author = it->get<std::string>(6);
+        rv.changeSummary = it->get<std::string>(7);
+        rv.parentVersionId = it->get<std::string>(8);
         return rv;
     }
     return std::nullopt;

@@ -223,7 +223,7 @@ class MemoryManager {
 private:
     // Pools for common FastRules objects
     std::unique_ptr<MemoryPool<class RuleContext>> contextPool_;
-    std::unique_ptr<VectorPool<class RuleResult>> resultVectorPool_;
+    std::unique_ptr<VectorPool<struct RuleResult>> resultVectorPool_;
     
     // Singleton instance
     static std::unique_ptr<MemoryManager> instance_;
@@ -261,14 +261,14 @@ public:
      * 
      * @return Unique pointer to RuleResult vector
      */
-    std::unique_ptr<std::vector<class RuleResult>> acquireResultVector();
+    std::unique_ptr<std::vector<struct RuleResult>> acquireResultVector();
 
     /**
      * @brief Release RuleResult vector back to pool
      * 
      * @param results Vector to release
      */
-    void releaseResultVector(std::unique_ptr<std::vector<class RuleResult>> results);
+    void releaseResultVector(std::unique_ptr<std::vector<struct RuleResult>> results);
 
     /**
      * @brief Pre-allocate objects in pools

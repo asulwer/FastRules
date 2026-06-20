@@ -289,7 +289,7 @@ inline std::optional<TypeDescriptor> TypeRegistry::getDescriptor(
 
 // Template implementation for registerType
 template<typename T, typename Registrar>
-void TypeRegistry::registerType(const std::string& name, Registrar registrar) {
+void TypeRegistry::registerType(const std::string& name, Registrar /*registrar*/) {
     // Implementation needed - TypeRegistrar requires lua_State
     // For now, create descriptor and let registrar populate it
     TypeDescriptor descriptor;

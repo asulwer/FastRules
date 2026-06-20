@@ -60,7 +60,8 @@ If upgrading from 0.1.0:
 - DB workflow save no longer deadlocks by calling `exists()` while holding a `unique_lock`.
 - DB thread-safety test now gives each worker its own SOCI session.
 - JSON performance test threshold relaxed to allow slower Debug builds.
-- Fixed test input length assertion (`longExpr` = 9993, total = 10000).
+- Fixed input-validator length assertion (`longExpr` = 9993, total expression length = 10000).
+- Fixed `C4702` unreachable-code warning in `timeout_executor.hpp` by replacing the manual promise helpers with `std::packaged_task` and removing the redundant `try/catch` rethrow in `RuleExecutor::execute`.
 - Updated README / docs references for the unified C API header.
 
 ### Fixed

@@ -57,17 +57,11 @@ public:
         // Reset cancelled flag
         cancelled_.store(false);
         
-        // Launch the function in a separate thread
-        std::promise<decltype(fn())> resultPromise;
-        auto resultFuture = resultPromise.get_future();
-        
-        auto worker = std::thread([&fn, promise = std::move(resultPromise)]() mutable {
-            try {
-                promise.set_value(fn());
-            } catch (...) {
-                promise.set_exception(std::current_exception());
-            }
-        });
+        // Wrap the work in a packaged_task so void / non-void return types
+        // are handled uniformly.
+        std::packaged_task<decltype(fn())()> task(std::forward<F>(fn));
+        auto resultFuture = task.get_future();
+        std::thread worker(std::move(task));
         
         // Wait for completion or timeout
         if (resultFuture.wait_for(maxExecutionTime_) == std::future_status::timeout) {
@@ -155,17 +149,7 @@ public:
     auto execute(F&& fn) -> decltype(fn()) {
         // Use a single timeout executor for simplicity
         TimeoutExecutor executor(maxExecutionTime_);
-        
-        try {
-            return executor.executeWithTimeout([&fn]() -> decltype(fn()) {
-                return fn();
-            });
-        } catch (const RuleTimeoutException&) {
-            throw;
-        } catch (...) {
-            // Re-throw other exceptions
-            throw;
-        }
+        return executor.executeWithTimeout(std::forward<F>(fn));
     }
 
     /**

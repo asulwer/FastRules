@@ -49,7 +49,7 @@ struct Customer {
 };
 
 // Standalone C++ function we want to call from Lua actions
-void sendEmail(const std::string& to, const std::string& subject, const std::string& body) {
+void sendEmail(const std::string& to, const std::string& subject, const std::string& /*body*/) {
     std::cout << "  [EMAIL] To: " << to << ", Subject: " << subject << std::endl;
 }
 

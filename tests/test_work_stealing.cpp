@@ -43,9 +43,8 @@ TEST_CASE("Work-stealing thread pool with exceptions") {
     fastrules::WorkStealingThreadPool pool(2);
     
     // Test task that throws an exception
-    auto future = pool.enqueue([]() {
+    auto future = pool.enqueue([]() -> int {
         throw std::runtime_error("Test exception");
-        return 42;
     });
     
     // Check that the exception is properly propagated

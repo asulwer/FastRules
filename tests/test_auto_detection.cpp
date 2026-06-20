@@ -272,9 +272,9 @@ TEST_CASE("Auto-detection adjusts threshold based on performance") {
     }
     
     workflow.compile(engine);
-    
-    size_t initialThreshold = workflow.getAdaptiveThreshold();
-    
+
+    (void)workflow.getAdaptiveThreshold();
+
     // Execute enough times to trigger multiple profiling checks
     std::vector<RuleParameter> params;
     for (int i = 0; i < 250; ++i) {

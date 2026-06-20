@@ -128,7 +128,6 @@ int main() {
             exceptionExecutor.executeWithTimeout([]() {
                 std::this_thread::sleep_for(200ms);
                 throw std::runtime_error("This exception should not be thrown");
-                return 42;
             });
             std::cout << "   ✓ Execution completed\n";
         } catch (const RuleTimeoutException& e) {
@@ -142,7 +141,6 @@ int main() {
             exceptionExecutor.executeWithTimeout([]() {
                 std::this_thread::sleep_for(10ms);
                 throw std::runtime_error("Test exception");
-                return 42;
             });
             std::cout << "   ✓ Execution completed\n";
         } catch (const RuleTimeoutException& e) {
@@ -161,7 +159,7 @@ int main() {
         for (int i = 0; i < 100; ++i) {
             TimeoutExecutor quickExecutor(1ms);
             try {
-                auto result = quickExecutor.executeWithTimeout([]() {
+                auto result [[maybe_unused]] = quickExecutor.executeWithTimeout([]() {
                     return 42;
                 });
                 // Don't print each result to avoid spam
