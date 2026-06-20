@@ -17,23 +17,26 @@ If upgrading from 0.1.0:
 - **Test discovery unified.** `enable_testing()` is now called at the root level; run `ctest` from the build root to execute both core and extension tests.
 
 ### Added
-- AOT compilation — pre-compile workflows to binary bundles for faster loading
-- Rule versioning — semantic versioning with history tracking and rollback support
-- Rate limiting — per-rule execution rate limits with burst support
-- Performance counters — thread-safe metrics collection with JSON export
-- Execution tracing — detailed step-by-step execution traces with JSON export
-- State cleanup — automatic Lua state cleanup for long-running applications
-- Expression validation — dangerous pattern detection and syntax validation
-- vcpkg manifest — `vcpkg.json` with feature flags for LuaJIT and tests
-- Conan recipe — `conanfile.py` with options for LuaJIT, tests, and examples
-- CMake install target — proper `install()` commands and package config files
-- Conan test_package — validation package for Conan recipe testing
+- AOT compilation — pre-compile workflows to binary bundles for faster loading.
+- Rule versioning — semantic versioning with history tracking and rollback support.
+- Rate limiting — per-rule execution rate limits with burst support.
+- Performance counters — thread-safe metrics collection with JSON export.
+- Execution tracing — detailed step-by-step execution traces with JSON export.
+- State cleanup — automatic Lua state cleanup for long-running applications.
+- Expression validation — dangerous pattern detection and syntax validation.
+- Security hardening — memory pooling, timeout enforcement, input validation, and sandboxing.
+- Work-stealing thread pool and C++20 coroutine support with full integration and testing.
+- vcpkg manifest — `vcpkg.json` with feature flags for LuaJIT and tests.
+- Conan recipe — `conanfile.py` with options for LuaJIT, tests, and examples.
+- CMake install target — proper `install()` commands and package config files.
+- Conan `test_package` — validation package for Conan recipe testing.
 - **Persistence extensions (NEW):**
-  - `fastrules-json` — JSON file-based persistence (human-readable, version-control friendly)
-  - `fastrules-xml` — XML file-based persistence (enterprise environments)
-  - `fastrules-db` — Database persistence via SOCI (PostgreSQL, MySQL, SQLite)
-  - Repository pattern with `IRuleRepository`, `IWorkflowRepository`, `IVersionRepository`
-  - Schema management and transaction support in DB extension
+  - `fastrules-json` — JSON file-based persistence (human-readable, version-control friendly).
+  - `fastrules-xml` — XML file-based persistence (enterprise environments).
+  - `fastrules-db` — Database persistence via SOCI (PostgreSQL, MySQL, SQLite).
+  - Repository pattern with `IRuleRepository`, `IWorkflowRepository`, `IVersionRepository`.
+  - Schema management and transaction support in DB extension.
+- Comprehensive test files for all core components and extension repositories.
 
 ### Changed
 - Refactored CMake build system:
@@ -51,8 +54,17 @@ If upgrading from 0.1.0:
 - Memory pool accounting now treats `allocatedCount_` as live objects and decrements it when objects are destroyed or `clear()` discards pooled objects.
 - `LuaEngine::buildParamPairs` no longer overwrites missing parameters with `nil`, preserving globals set via `setGlobal`.
 - `DbConnectionFactory` uses `soci::factory_sqlite3()` directly for the SQLite backend, avoiding SOCI dynamic backend-loader issues on Windows.
+- `compileExpression` now returns `std::nullopt` only for empty/whitespace input; syntax errors still throw `RuleCompilationException`.
+- `std::gmtime` replaced with `gmtime_s` (Windows) / `gmtime_r` (POSIX) in JSON serialization for thread safety.
 
 ### Fixed
+- Core compilation errors across the library, examples, and extensions.
+- RuleContext copy constructor implementation.
+- Duplicate rule/workflow repository code consolidated.
+- Thread-safety issues in core and DB extension tests.
+- Timeout executor reliability issues and unreachable-code warnings.
+- Sandbox violations and unsafe runtime behavior.
+- C API export macro redefinition (`FASTRULES_C_API`) now exported only through `fastrules.h` / `fastrules_export.hpp`.
 - Empty/whitespace expressions now throw `ValidationException` in `input_validator.cpp` while still allowing syntax errors to throw `RuleCompilationException` from `LuaEngine::compileExpression`.
 - Coroutine Lua test expression changed to a valid single expression (`"x + 1"`).
 - Memory-pool and vector-pool thread-safety/reuse tests updated to allow for object reuse instead of requiring one allocation per acquire.
@@ -60,20 +72,23 @@ If upgrading from 0.1.0:
 - DB workflow save no longer deadlocks by calling `exists()` while holding a `unique_lock`.
 - DB thread-safety test now gives each worker its own SOCI session.
 - JSON performance test threshold relaxed to allow slower Debug builds.
-- Fixed input-validator length assertion (`longExpr` = 9993, total expression length = 10000).
-- Fixed `C4702` unreachable-code warning in `timeout_executor.hpp` by replacing the manual promise helpers with `std::packaged_task` and removing the redundant `try/catch` rethrow in `RuleExecutor::execute`.
-- Updated README / docs references for the unified C API header.
+- Input-validator length assertion fixed (`longExpr` = 9993, total expression length = 10000).
+- `C4702` unreachable-code warning in `timeout_executor.hpp` fixed by replacing manual promise helpers with `std::packaged_task` and removing the redundant `try/catch` rethrow in `RuleExecutor::execute`.
+- `C4099` class/struct mismatch for `RuleResult` fixed by using `struct RuleResult` consistently in `memory_pool.hpp`.
+- `C4100` unreferenced-parameter warnings fixed in `input_validator.cpp`, `type_registry.hpp`, and `custom_methods_example.cpp`.
+- DB `soci::rowset` loops rewritten with explicit iterators to avoid unreachable-code warnings.
+- `std::gmtime` deprecation warnings on Windows.
+- Extension example path resolution made robust.
+- REPL example EOF handling on Windows.
+- Macro header MSVC warning suppression.
+- MSVC runtime library mismatch between fastrules and dependencies.
+- Missing CMake install/export configuration.
+- Conan recipe missing `build_examples` option.
+- Extension tests now wired to root CTest.
 
-### Fixed
-- MSVC runtime library mismatch between fastrules and dependencies
-- Missing CMake install/export configuration
-- Conan recipe missing `build_examples` option
-- Extension tests now wired to root CTest
-- AOT compiler no longer requires sol2 backend
-- `std::gmtime` deprecation warnings on Windows
-- Extension example path resolution made robust
-- REPL example EOF handling on Windows
-- Macro header MSVC warning suppression
+### Removed
+- `todo.md` — no longer needed after resolving all build/runtime errors.
+- Temporary cache files and backup files cleaned from the repository.
 
 ## [0.1.0] - 2024-06-05
 
