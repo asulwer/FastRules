@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
+#include <new>
 
 namespace fastrules {
 
@@ -817,9 +818,8 @@ void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
                 std::memcpy(&val, ptr + offset, sizeof(bool));
                 lua_pushboolean(L, val);
             } else if (typeStr == "string") {
-                std::string val;
-                std::memcpy(&val, ptr + offset, sizeof(std::string));
-                lua_pushstring(L, val.c_str());
+                const std::string* val = reinterpret_cast<const std::string*>(ptr + offset);
+                lua_pushstring(L, val->c_str());
             } else {
                 lua_pushnil(L);
             }
@@ -874,8 +874,10 @@ void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
                 bool val = lua_toboolean(L, 3);
                 std::memcpy(ptr + offset, &val, sizeof(bool));
             } else if (typeStr == "string") {
-                std::string val = lua_tostring(L, 3) ? lua_tostring(L, 3) : "";
-                std::memcpy(ptr + offset, &val, sizeof(std::string));
+                const char* s = lua_tostring(L, 3);
+                std::string* target = reinterpret_cast<std::string*>(ptr + offset);
+                target->~basic_string();
+                new (target) std::string(s ? s : "");
             }
             return 0;
         });

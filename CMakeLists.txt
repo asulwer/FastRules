@@ -44,6 +44,13 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_SUPPRESS_REGENERATION ON)
 set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY ON)
 
+# Consolidate all runtime artifacts (executables and DLLs) into a single
+# per-configuration directory so examples can find their runtime dependencies
+# without relying on the user's PATH.
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>)
+
 # Set MSVC runtime library globally before any targets are created
 if(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")

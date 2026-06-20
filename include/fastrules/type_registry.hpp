@@ -15,7 +15,7 @@
  * 4. Bind type to Lua state via engine.bindTypesToState()
  * 
  * Field Access:
- - Fields are accessed via memory offset and memcpy
+ * - Fields are accessed via memory offset and memcpy
  * - Type safety is enforced at registration time
  * - Custom types need extractPointer function
  * 
@@ -54,9 +54,13 @@
 #include <optional>
 #include <unordered_map>
 #include <typeindex>
+#include <type_traits>
+#include <cstdint>
+#include <tuple>
+#include <utility>
 
-// Forward declaration for Lua C API
-struct lua_State;
+// Lua C API is required for method invoker generation
+#include <lua.hpp>
 
 namespace fastrules {
 
@@ -235,7 +239,18 @@ public:
          * @endcode
          */
         template<typename FieldType>
-        TypeRegistrar& bind(const std::string& name, FieldType T::* ptr);
+        TypeRegistrar& bind(const std::string& name, FieldType T::* ptr) {
+            TypeField field;
+            field.name = name;
+            // Common offset-from-member-pointer idiom. Cast through uintptr_t
+            // to avoid compiler warnings about dereferencing null.
+            field.offset = static_cast<size_t>(
+                reinterpret_cast<uintptr_t>(
+                    &((reinterpret_cast<T*>(0)->*ptr))));
+            field.luaType = getLuaType<FieldType>();
+            desc_.fields.push_back(std::move(field));
+            return *this;
+        }
 
         /**
          * @brief Bind a method
@@ -252,8 +267,18 @@ public:
          * @endcode
          */
         template<typename ReturnType, typename... Args>
-        TypeRegistrar& method(const std::string& name, 
-                               ReturnType (T::*ptr)(Args...));
+        TypeRegistrar& method(const std::string& name,
+                              ReturnType (T::*ptr)(Args...)) {
+            addMethod(name, ptr);
+            return *this;
+        }
+
+        template<typename ReturnType, typename... Args>
+        TypeRegistrar& method(const std::string& name,
+                              ReturnType (T::*ptr)(Args...) const) {
+            addMethod(name, ptr);
+            return *this;
+        }
 
     private:
         TypeDescriptor& desc_;  ///< The descriptor being populated
@@ -265,7 +290,143 @@ public:
          * @return Lua type string
          */
         template<typename FieldType>
-        std::string getLuaType();
+        std::string getLuaType() {
+            std::string result = "unknown";
+            if constexpr (std::is_same_v<FieldType, bool>) {
+                result = "bool";
+            } else if constexpr (std::is_same_v<FieldType, int> ||
+                                 std::is_same_v<FieldType, unsigned int> ||
+                                 std::is_same_v<FieldType, long> ||
+                                 std::is_same_v<FieldType, unsigned long> ||
+                                 std::is_same_v<FieldType, short> ||
+                                 std::is_same_v<FieldType, unsigned short> ||
+                                 std::is_same_v<FieldType, long long> ||
+                                 std::is_same_v<FieldType, unsigned long long> ||
+                                 std::is_same_v<FieldType, char>) {
+                result = "int";
+            } else if constexpr (std::is_same_v<FieldType, double> ||
+                                 std::is_same_v<FieldType, float>) {
+                result = "double";
+            } else if constexpr (std::is_same_v<FieldType, std::string>) {
+                result = "string";
+            }
+            return result;
+        }
+
+        template<typename ReturnType, typename... Args>
+        void addMethod(const std::string& name,
+                       ReturnType (T::*ptr)(Args...)) {
+            TypeMethod m;
+            m.name = name;
+            m.invoker = buildInvoker(ptr);
+            desc_.methods.push_back(std::move(m));
+        }
+
+        template<typename ReturnType, typename... Args>
+        void addMethod(const std::string& name,
+                       ReturnType (T::*ptr)(Args...) const) {
+            TypeMethod m;
+            m.name = name;
+            m.invoker = buildInvoker(ptr);
+            desc_.methods.push_back(std::move(m));
+        }
+
+        // Helpers to read Lua arguments into a tuple
+        template<typename Arg>
+        static Arg readArg(lua_State* L, int index) {
+            if constexpr (std::is_same_v<Arg, int>) {
+                return static_cast<int>(lua_tointeger(L, index));
+            } else if constexpr (std::is_same_v<Arg, double>) {
+                return lua_tonumber(L, index);
+            } else if constexpr (std::is_same_v<Arg, float>) {
+                return static_cast<float>(lua_tonumber(L, index));
+            } else if constexpr (std::is_same_v<Arg, bool>) {
+                return lua_toboolean(L, index) != 0;
+            } else if constexpr (std::is_same_v<Arg, std::string>) {
+                const char* s = lua_tostring(L, index);
+                return s ? std::string(s) : std::string();
+            } else {
+                static_assert(std::is_same_v<Arg, void>,
+                              "Unsupported method argument type");
+                return Arg{};
+            }
+        }
+
+        template<typename... Args, size_t... I>
+        static std::tuple<Args...> readArgs(lua_State* L, int base,
+                                            std::index_sequence<I...>) {
+            return std::make_tuple(readArg<Args>(L, base + static_cast<int>(I))...);
+        }
+
+        template<typename ReturnType, typename... Args, size_t... I>
+        static ReturnType callMethod(T* self,
+                                     ReturnType (T::*ptr)(Args...),
+                                     const std::tuple<Args...>& args,
+                                     std::index_sequence<I...>) {
+            return (self->*ptr)(std::get<I>(args)...);
+        }
+
+        template<typename ReturnType, typename... Args, size_t... I>
+        static ReturnType callMethod(T* self,
+                                     ReturnType (T::*ptr)(Args...) const,
+                                     const std::tuple<Args...>& args,
+                                     std::index_sequence<I...>) {
+            return (self->*ptr)(std::get<I>(args)...);
+        }
+
+        template<typename ReturnType>
+        static void pushReturn(lua_State* L, ReturnType&& value) {
+            using Decayed = std::decay_t<ReturnType>;
+            if constexpr (std::is_same_v<Decayed, bool>) {
+                lua_pushboolean(L, value);
+            } else if constexpr (std::is_integral_v<Decayed>) {
+                lua_pushinteger(L, static_cast<lua_Integer>(value));
+            } else if constexpr (std::is_floating_point_v<Decayed>) {
+                lua_pushnumber(L, static_cast<lua_Number>(value));
+            } else if constexpr (std::is_same_v<Decayed, std::string>) {
+                lua_pushstring(L, value.c_str());
+            } else if constexpr (std::is_same_v<Decayed, const char*>) {
+                lua_pushstring(L, value);
+            } else if constexpr (!std::is_void_v<Decayed>) {
+                lua_pushnil(L);
+            }
+        }
+
+        template<typename ReturnType, typename... Args>
+        std::function<int(void*, lua_State*)> buildInvoker(ReturnType (T::*ptr)(Args...)) {
+            return [ptr](void* obj, lua_State* L) -> int {
+                T* self = static_cast<T*>(obj);
+                constexpr size_t arity = sizeof...(Args);
+                auto args = readArgs<Args...>(L, 2, std::make_index_sequence<arity>{});
+                if constexpr (std::is_void_v<ReturnType>) {
+                    callMethod(self, ptr, args, std::make_index_sequence<arity>{});
+                    return 0;
+                } else {
+                    ReturnType result = callMethod(self, ptr, args,
+                                                   std::make_index_sequence<arity>{});
+                    pushReturn(L, std::move(result));
+                    return 1;
+                }
+            };
+        }
+
+        template<typename ReturnType, typename... Args>
+        std::function<int(void*, lua_State*)> buildInvoker(ReturnType (T::*ptr)(Args...) const) {
+            return [ptr](void* obj, lua_State* L) -> int {
+                T* self = static_cast<T*>(obj);
+                constexpr size_t arity = sizeof...(Args);
+                auto args = readArgs<Args...>(L, 2, std::make_index_sequence<arity>{});
+                if constexpr (std::is_void_v<ReturnType>) {
+                    callMethod(self, ptr, args, std::make_index_sequence<arity>{});
+                    return 0;
+                } else {
+                    ReturnType result = callMethod(self, ptr, args,
+                                                   std::make_index_sequence<arity>{});
+                    pushReturn(L, std::move(result));
+                    return 1;
+                }
+            };
+        }
     };
 
 private:
@@ -289,14 +450,32 @@ inline std::optional<TypeDescriptor> TypeRegistry::getDescriptor(
 
 // Template implementation for registerType
 template<typename T, typename Registrar>
-void TypeRegistry::registerType(const std::string& name, Registrar /*registrar*/) {
-    // Implementation needed - TypeRegistrar requires lua_State
-    // For now, create descriptor and let registrar populate it
+void TypeRegistry::registerType(const std::string& name, Registrar registrar) {
+    std::type_index key(typeid(T));
+
+    // If the type is already registered, merge the new bindings into the
+    // existing descriptor. This allows macros like FASTRULES_REGISTER_METHODS_N
+    // to add methods after FASTRULES_REGISTER_TYPE_N has already bound fields.
     TypeDescriptor descriptor;
+    auto it = types_.find(key);
+    if (it != types_.end()) {
+        descriptor = it->second;
+    }
+
+    // Ensure the name and pointer extractor are always present.
     descriptor.name = name;
-    // Note: TypeRegistrar needs proper lua_State for full implementation
-    // This is a placeholder that allows compilation
-    types_[std::type_index(typeid(T))] = std::move(descriptor);
+    descriptor.extractPointer = [](const std::any& value) -> void* {
+        try {
+            return std::any_cast<T*>(value);
+        } catch (...) {
+            return nullptr;
+        }
+    };
+
+    TypeRegistrar<T> reg(descriptor);
+    registrar(reg);
+
+    types_[key] = std::move(descriptor);
 }
 
 } // namespace fastrules

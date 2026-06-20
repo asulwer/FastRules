@@ -89,6 +89,7 @@
 #include <mutex>
 #include <stdexcept>
 #include <typeindex>
+#include <type_traits>
 
 namespace fastrules {
 
@@ -172,7 +173,15 @@ struct RuleParameter {
     /// @brief Construct a parameter with name and value
     template<typename T>
     RuleParameter(std::string n, T v)
-        : name(std::move(n)), value(std::move(v)) {}
+        : name(std::move(n)), value(std::move(v)) {
+        // For pointer values, register the pointee type so that registered C++
+        // types are passed as userdata rather than being converted to nil.
+        if constexpr (std::is_pointer_v<T>) {
+            type = std::type_index(typeid(std::remove_pointer_t<T>));
+        } else {
+            type = std::type_index(typeid(T));
+        }
+    }
 
     /// @brief Construct with explicit type declaration
     template<typename T>

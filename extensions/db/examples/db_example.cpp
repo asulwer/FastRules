@@ -6,6 +6,7 @@
 #include <fastrules/db_repository.hpp>
 #include <iostream>
 #include <memory>
+#include <filesystem>
 
 using namespace fastrules;
 using namespace fastrules::ext;
@@ -25,7 +26,7 @@ int main() {
         // ================================================================
         // 1. Create a SOCI session (SQLite for this example)
         // ================================================================
-        auto session = DbConnectionFactory::create("sqlite3", "rules.db");
+        auto session = DbConnectionFactory::create("sqlite3", (std::filesystem::current_path() / "rules.db").string());
         DbRuleRepository repo(session);
 
         // The schema is created automatically on first use

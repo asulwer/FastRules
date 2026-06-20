@@ -74,7 +74,7 @@ public:
         }
         
         std::suspend_never initial_suspend() { return {}; }
-        std::suspend_never final_suspend() noexcept { return {}; }
+        std::suspend_always final_suspend() noexcept { return {}; }
         
         void return_value(std::vector<RuleResult> value) {
             results = std::move(value);

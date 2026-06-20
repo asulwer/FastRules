@@ -198,7 +198,7 @@ int main() {
         rule->id = 1;
         rule->name = "simple-coroutine-rule";
         rule->expression = "value > 10";
-        rule->action = "result.success = true; result.value = value * 2";
+        rule->action = "";
         
         // Compile the rule
         rule->compile(engine);
@@ -243,7 +243,7 @@ int main() {
         rule1->id = 1;
         rule1->name = "check-value-rule";
         rule1->expression = "value > 10";
-        rule1->action = "result.success = true";
+        rule1->action = "";
         workflow.rules.push_back(rule1);
         
         // Rule 2: Double the value if first rule succeeded
@@ -252,7 +252,7 @@ int main() {
         rule2->name = "double-value-rule";
         rule2->expression = "context.getResult(\"check-value-rule\").success";
         rule2->dependsOnRuleName = "check-value-rule";
-        rule2->action = "result.success = true; result.doubledValue = value * 2";
+        rule2->action = "";
         workflow.rules.push_back(rule2);
         
         // Compile workflow

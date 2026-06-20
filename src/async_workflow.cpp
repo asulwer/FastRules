@@ -11,6 +11,7 @@
 #include <queue>
 #include <atomic>
 #include <optional>
+#include <memory>
 
 namespace fastrules {
 
@@ -134,9 +135,15 @@ std::vector<AsyncRuleResult> AsyncWorkflow::executeParallelAsync(
         }
     }
 
+    // Shared context across dependency levels so rules can read results from
+    // prior levels via context.getResult(...).
+    RuleContext sharedContext;
+
     for (const auto& level : dependencyLevels) {
         std::vector<std::future<AsyncRuleResult>> futures;
         futures.reserve(level.size());
+        std::vector<std::shared_ptr<RuleContext>> localContexts;
+        localContexts.reserve(level.size());
         
         for (const auto& rule : level) {
             if (!rule->isActive) {
@@ -148,8 +155,13 @@ std::vector<AsyncRuleResult> AsyncWorkflow::executeParallelAsync(
                 continue;
             }
             
+            // Give each rule a copy of the shared context for reading prior
+            // level results, while isolating its own writes.
+            auto localCtx = std::make_shared<RuleContext>(sharedContext);
+            localContexts.push_back(localCtx);
+
             futures.push_back(
-                threadPool_->enqueue([this, parameters, rule]() -> AsyncRuleResult {
+                threadPool_->enqueue([this, parameters, rule, localCtx]() -> AsyncRuleResult {
                     AsyncRuleResult asyncResult;
                     asyncResult.result.ruleName = rule->name;
                     
@@ -160,9 +172,8 @@ std::vector<AsyncRuleResult> AsyncWorkflow::executeParallelAsync(
                         return asyncResult;
                     }
                     
-                    RuleContext localContext;
                     try {
-                        asyncResult.result = rule->execute(*eng, localContext, parameters);
+                        asyncResult.result = rule->execute(*eng, *localCtx, parameters);
                     } catch (...) {
                         asyncResult.result.success = false;
                         asyncResult.exception = std::current_exception();
@@ -176,6 +187,10 @@ std::vector<AsyncRuleResult> AsyncWorkflow::executeParallelAsync(
         
         for (auto& future : futures) {
             allResults.push_back(std::move(future.get()));
+            // Merge this rule's result into the shared context so the next
+            // dependency level can read it.
+            const auto& latest = allResults.back().result;
+            sharedContext.setResult(latest.ruleName, latest);
         }
     }
 

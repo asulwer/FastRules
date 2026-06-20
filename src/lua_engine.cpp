@@ -526,6 +526,10 @@ std::string LuaEngine::makeBackendId(int ref) const {
 }
 
 std::optional<int> LuaEngine::compileExpression(const std::string& expression) {
+    // Ensure registered types are bound to this Lua state before compiling
+    // any expression that may reference them.
+    bindTypesToState();
+
     if (maxExpressionLength_ > 0 && expression.size() > maxExpressionLength_) {
         throw RuleCompilationException(
             "Expression exceeds maximum length of " + std::to_string(maxExpressionLength_) + 
@@ -568,6 +572,9 @@ std::optional<int> LuaEngine::compileExpression(const std::string& expression) {
 }
 
 std::optional<int> LuaEngine::compileAction(const std::string& action) {
+    // Ensure action callbacks are bound before compiling an action.
+    bindActionsToState();
+
     if (action.empty()) {
         return std::nullopt;
     }
@@ -608,6 +615,10 @@ std::optional<int> LuaEngine::compileAction(const std::string& action) {
 }
 
 std::optional<int> LuaEngine::compileCoroutine(const std::string& expression) {
+    // Ensure registered types and actions are bound before compiling.
+    bindTypesToState();
+    bindActionsToState();
+
     if (expression.empty()) {
         return std::nullopt;
     }
@@ -647,31 +658,19 @@ std::optional<int> LuaEngine::compileCoroutine(const std::string& expression) {
 }
 
 std::vector<std::pair<std::string, std::any>> LuaEngine::buildParamPairs(
-    int ref,
+    int /*ref*/,
     const std::vector<RuleParameter>& parameters)
 {
     std::vector<std::pair<std::string, std::any>> pairs;
 
-    std::shared_lock<std::shared_mutex> lock(registryMutex_);
-    auto it = paramNames_.find(ref);
-    if (it == paramNames_.end()) {
-        return pairs;
-    }
-    const auto& paramNames = it->second;
-    lock.unlock();
-
-    std::unordered_map<std::string, std::any> paramMap;
+    // Always set every parameter that was actually supplied at runtime.
+    // The compiler's extracted parameter list may miss identifiers, but the
+    // caller knows what data is available. Missing (not-supplied) parameters
+    // are intentionally left unset so that externally-set globals (e.g. via
+    // setGlobal) remain visible to the expression.
+    pairs.reserve(parameters.size());
     for (const auto& param : parameters) {
-        paramMap[param.name] = param.value;
-    }
-
-    for (const auto& name : paramNames) {
-        auto pit = paramMap.find(name);
-        if (pit != paramMap.end()) {
-            pairs.emplace_back(name, pit->second);
-        }
-        // Missing parameters are intentionally skipped so that externally-set
-        // globals (e.g. via setGlobal) remain visible to the expression.
+        pairs.emplace_back(param.name, param.value);
     }
 
     return pairs;
