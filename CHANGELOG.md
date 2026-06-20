@@ -76,8 +76,13 @@ If upgrading from 0.1.0:
 - JSON performance test threshold relaxed to allow slower Debug builds.
 - Input-validator length assertion fixed (`longExpr` = 9993, total expression length = 10000).
 - `C4702` unreachable-code warning in `timeout_executor.hpp` fixed by replacing manual promise helpers with `std::packaged_task` and removing the redundant `try/catch` rethrow in `RuleExecutor::execute`.
-- `C4099` class/struct mismatch for `RuleResult` fixed by using `struct RuleResult` consistently in `memory_pool.hpp`.
-- `C4100` unreferenced-parameter warnings fixed in `input_validator.cpp`, `type_registry.hpp`, and `custom_methods_example.cpp`.
+- Coroutine `AsyncWorkflowTask` no longer self-destructs its coroutine frame (`final_suspend` now returns `suspend_always`), eliminating the `STATUS_ACCESS_VIOLATION` crash in `coroutine_example`.
+- `AsyncWorkflow::executeParallelAsync` now passes a shared `RuleContext` across dependency levels so rules can correctly read results from prior levels.
+- `TypeRegistry::registerType` merges descriptors instead of replacing them, so macros like `FASTRULES_REGISTER_METHODS_N` can add methods after `FASTRULES_REGISTER_TYPE_N` has bound fields.
+- `LuaEngine::compileExpression`, `compileAction`, and `compileCoroutine` now bind registered types/actions before compiling, fixing direct `Rule::compile()` usage in `no_globals_example`.
+- Extension example runtime failures (`STATUS_DLL_NOT_FOUND`) resolved by consolidating all runtime artifacts into a single per-configuration output directory via `CMAKE_RUNTIME_OUTPUT_DIRECTORY`.
+- DB example now uses an absolute database path so SQLite can open `rules.db` regardless of the caller's working directory.
+- `coroutine_example` no longer relies on an unsupported global `result` table in actions.
 - DB `soci::rowset` loops rewritten with explicit iterators to avoid unreachable-code warnings.
 - `std::gmtime` deprecation warnings on Windows.
 - Extension example path resolution made robust.
