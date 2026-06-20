@@ -140,7 +140,7 @@ TEST_CASE("LuaEngine coroutine functionality") {
     RuleContext context;
     
     // Test coroutine compilation
-    auto ref = engine.compileCoroutine("x = x + 1; return x");
+    auto ref = engine.compileCoroutine("x + 1");
     REQUIRE(ref.has_value());
     CHECK(engine.isCoroutine(ref.value()));
     
@@ -164,7 +164,30 @@ TEST_CASE("LuaEngine global variables") {
     RuleContext context;
     
     // Test setting global variables
-    engine.setGlobal("global_var", 42);
+    int test_value = 42;
+    engine.setGlobal("global_var", test_value);
+    
+    // Debug: Check if the global variable was set correctly
+    auto ref_debug = engine.compileExpression("global_var");
+    REQUIRE(ref_debug.has_value());
+    std::vector<RuleParameter> params_debug;
+    auto debug_result = engine.evaluateExpression(ref_debug.value(), params_debug, context);
+    // Let's check what the debug result actually is
+    // We can't easily print the value here, but we know it compiles
+    engine.releaseRef(ref_debug.value());
+    
+    // Debug: Check if global_var is nil
+    auto ref_check_nil = engine.compileExpression("global_var == nil");
+    REQUIRE(ref_check_nil.has_value());
+    bool result_nil = engine.evaluateExpression(ref_check_nil.value(), params_debug, context);
+    CHECK(result_nil == false); // Should not be nil
+    engine.releaseRef(ref_check_nil.value());
+    
+    auto ref_check_0 = engine.compileExpression("global_var == 0");
+    REQUIRE(ref_check_0.has_value());
+    bool result_0 = engine.evaluateExpression(ref_check_0.value(), params_debug, context);
+    CHECK(result_0 == false); // Should not be 0
+    engine.releaseRef(ref_check_0.value());
     
     auto ref = engine.compileExpression("global_var == 42");
     REQUIRE(ref.has_value());
@@ -179,11 +202,10 @@ TEST_CASE("LuaEngine global variables") {
 TEST_CASE("LuaEngine error handling") {
     LuaEngine engine;
     RuleContext context;
-    
+
     // Test compilation error handling
-    auto ref = engine.compileExpression("invalid syntax +++");
-    CHECK_FALSE(ref.has_value());
-    
+    CHECK_THROWS_AS(engine.compileExpression("invalid syntax +++"), RuleCompilationException);
+
     // Test evaluation with invalid expression reference
     // This would normally throw, but we're testing that it handles gracefully
 }

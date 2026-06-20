@@ -29,15 +29,11 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         endif()
     endif()
 elseif(MSVC)
-    # MSVC warnings - level 3 instead of 4 to reduce noise
+    # MSVC warnings: level 4, warnings on, not fatal (/WX-). Do not add
+    # project-wide /wd flags here; fix the code that causes warnings instead.
     add_compile_options(
-        /W3
-        /wd4265  # disable virtual destructor warning for rule classes
-        /wd4100  # disable unreferenced formal parameter
-        /wd4458  # disable declaration hides class member
-        /wd4459  # disable declaration hides global declaration
-        /wd4996  # disable deprecated function warning
-        /wd4101  # disable unreferenced local variable
+        /W4
+        /WX-
     )
 endif()
 
@@ -69,67 +65,45 @@ include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 option(FASTRULES_BUILD_TESTS "Build tests" ON)
 option(FASTRULES_BUILD_EXAMPLES "Build examples" ON)
 option(FASTRULES_BUILD_EXTENSIONS "Build optional persistence extensions" OFF)
-option(FASTRULES_BUILD_DB "Build database persistence extension (requires SOCI)" OFF)
 option(FASTRULES_BUILD_COVERAGE "Build with coverage instrumentation" OFF)
 option(FASTRULES_BUILD_SHARED "Build as shared library (DLL/SO/Dylib)" OFF)
-option(FASTRULES_BUILD_C_API "Build C API shared library for Python/C# bindings" OFF)
-option(FASTRULES_USE_LUAJIT "Use LuaJIT instead of PUC-Rio Lua (requires manual build on Windows)" OFF)
 # LuaBridge3 backend only
 set(FASTRULES_LUA_BACKEND "luabridge3" CACHE STRING "Lua binding backend")
 
-# Collect requested vcpkg features based on build options
-set(VCPKG_MANIFEST_FEATURES "")
+# When extensions are enabled, all three are built together.
+if(FASTRULES_BUILD_EXTENSIONS)
+    set(FASTRULES_BUILD_JSON_EXT ON)
+    set(FASTRULES_BUILD_XML_EXT ON)
+    set(FASTRULES_BUILD_DB_EXT ON)
+else()
+    set(FASTRULES_BUILD_JSON_EXT OFF)
+    set(FASTRULES_BUILD_XML_EXT OFF)
+    set(FASTRULES_BUILD_DB_EXT OFF)
+endif()
+
+# Collect requested vcpkg features based on build options.
+# NOTE: VCPKG_MANIFEST_FEATURES must be set as a CMake cache variable (e.g. via
+# -DVCPKG_MANIFEST_FEATURES=...) because vcpkg evaluates it before CMakeLists.txt runs.
+set(_FASTRULES_VCPKG_FEATURES "")
 if(FASTRULES_BUILD_TESTS)
-    list(APPEND VCPKG_MANIFEST_FEATURES "tests")
+    list(APPEND _FASTRULES_VCPKG_FEATURES "tests")
 endif()
 if(FASTRULES_BUILD_EXTENSIONS)
-    list(APPEND VCPKG_MANIFEST_FEATURES "json" "xml")
-    if(FASTRULES_BUILD_DB)
-        list(APPEND VCPKG_MANIFEST_FEATURES "db")
+    list(APPEND _FASTRULES_VCPKG_FEATURES "json" "xml")
+    if(FASTRULES_BUILD_DB_EXT)
+        list(APPEND _FASTRULES_VCPKG_FEATURES "db")
     endif()
 endif()
-if(VCPKG_MANIFEST_FEATURES)
-    message(STATUS "vcpkg manifest features: ${VCPKG_MANIFEST_FEATURES}")
+if(_FASTRULES_VCPKG_FEATURES)
+    message(STATUS "Requested vcpkg manifest features: ${_FASTRULES_VCPKG_FEATURES}")
 endif()
 
 # Suppress CTest dashboard targets from all dependencies
 set_property(GLOBAL PROPERTY CTEST_TARGETS_ADDED 1)
 
-# Third-party dependencies via CPM or FetchContent
+# Third-party dependencies: vcpkg provides everything except luabridge3,
+# which is header-only and not in the vcpkg registry.
 include(FetchContent)
-
-# nlohmann/json
-FetchContent_Declare(
-    json
-    GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG v3.11.3
-    GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE
-)
-
-FetchContent_Declare(
-    lua
-    GIT_REPOSITORY https://github.com/lua/lua.git
-    GIT_TAG v5.4.7
-    GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE
-)
-
-FetchContent_Declare(
-    spdlog
-    GIT_REPOSITORY https://github.com/gabime/spdlog.git
-    GIT_TAG v1.14.1
-    GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE
-)
-
-FetchContent_Declare(
-    doctest
-    GIT_REPOSITORY https://github.com/doctest/doctest.git
-    GIT_TAG v2.4.11
-    GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE
-)
 
 FetchContent_Declare(
     luabridge3
@@ -139,186 +113,23 @@ FetchContent_Declare(
     GIT_PROGRESS TRUE
 )
 
-# LuaJIT option — fetch and build automatically if requested
-if(FASTRULES_USE_LUAJIT)
-    FetchContent_Declare(
-        luajit
-        GIT_REPOSITORY https://github.com/LuaJIT/LuaJIT.git
-        GIT_TAG v2.1
-        GIT_SHALLOW TRUE
-        GIT_PROGRESS TRUE
-    )
-    FetchContent_MakeAvailable(luajit)
-    
-    # On Windows with MSVC, LuaJIT must be built with its own msvcbuild.bat
-    # because it requires buildvm (a build tool) to generate bytecode headers.
-    if(MSVC)
-        set(LUAJIT_BUILD_DIR "${luajit_SOURCE_DIR}/src")
-        set(LUAJIT_LIB "${LUAJIT_BUILD_DIR}/lua51.lib")
-        
-        # Find vcvarsall.bat to set up the VS build environment
-        find_file(VCVARSALL_BAT NAMES vcvarsall.bat
-            PATHS
-                "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build"
-                "C:/Program Files/Microsoft Visual Studio/2022/Professional/VC/Auxiliary/Build"
-                "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build"
-                "C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build"
-                "C:/Program Files (x86)/Microsoft Visual Studio/2022/Professional/VC/Auxiliary/Build"
-                "C:/Program Files (x86)/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build"
-        )
-        
-        if(NOT VCVARSALL_BAT)
-            message(FATAL_ERROR "Cannot find vcvarsall.bat. LuaJIT requires Visual Studio build tools.")
-        endif()
-        
-        # Determine architecture
-        if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-            set(LUAJIT_ARCH_ARG "x64")
-        else()
-            set(LUAJIT_ARCH_ARG "x86")
-        endif()
-        
-        # Build LuaJIT static library using msvcbuild.bat
-        # The build generates: lua51.lib, lua51.dll, luajit.exe in src/
-        # Note: Must call vcvarsall.bat and msvcbuild.bat in the same cmd process
-        # because vcvarsall.bat sets environment variables needed by msvcbuild.bat
-        set(LUAJIT_BUILD_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/build_luajit.bat")
-        file(WRITE ${LUAJIT_BUILD_SCRIPT} "@echo off\n")
-        file(APPEND ${LUAJIT_BUILD_SCRIPT} "call \"${VCVARSALL_BAT}\" ${LUAJIT_ARCH_ARG}\n")
-        file(APPEND ${LUAJIT_BUILD_SCRIPT} "cd /d \"${LUAJIT_BUILD_DIR}\"\n")
-        file(APPEND ${LUAJIT_BUILD_SCRIPT} "msvcbuild.bat static lua52compat\n")
-        
-        add_custom_command(
-            OUTPUT ${LUAJIT_LIB}
-            COMMAND cmd /c "${LUAJIT_BUILD_SCRIPT}"
-            WORKING_DIRECTORY ${LUAJIT_BUILD_DIR}
-            COMMENT "Building LuaJIT static library with msvcbuild.bat..."
-            VERBATIM
-        )
-        
-        # Create a custom target that depends on the built library
-        add_custom_target(luajit_build DEPENDS ${LUAJIT_LIB})
-        
-        # Create an imported static library target
-        add_library(lua_static STATIC IMPORTED GLOBAL)
-        set_target_properties(lua_static PROPERTIES
-            IMPORTED_LOCATION "${LUAJIT_LIB}"
-            INTERFACE_INCLUDE_DIRECTORIES "${LUAJIT_BUILD_DIR}"
-        )
-        add_dependencies(lua_static luajit_build)
-        
-        target_compile_definitions(lua_static INTERFACE LUAJIT_ENABLE_LUA52COMPAT)
-        
-        message(STATUS "Using LuaJIT (MSVC build via msvcbuild.bat)")
-        message(STATUS "  LuaJIT source: ${luajit_SOURCE_DIR}")
-        message(STATUS "  LuaJIT lib: ${LUAJIT_LIB}")
-    else()
-        # Non-Windows: use make
-        set(LUAJIT_BUILD_DIR "${luajit_SOURCE_DIR}")
-        set(LUAJIT_LIB "${LUAJIT_BUILD_DIR}/src/libluajit.a")
-        
-        include(ExternalProject)
-        ExternalProject_Add(
-            luajit_external
-            SOURCE_DIR ${LUAJIT_BUILD_DIR}
-            CONFIGURE_COMMAND ""
-            BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} -C "${LUAJIT_BUILD_DIR}" amalg BUILDMODE=static XCFLAGS=-DLUAJIT_ENABLE_LUA52COMPAT
-            INSTALL_COMMAND ""
-            BUILD_BYPRODUCTS ${LUAJIT_LIB}
-        )
-        
-        add_library(lua_static STATIC IMPORTED GLOBAL)
-        set_target_properties(lua_static PROPERTIES
-            IMPORTED_LOCATION "${LUAJIT_LIB}"
-            INTERFACE_INCLUDE_DIRECTORIES "${LUAJIT_BUILD_DIR}/src"
-        )
-        add_dependencies(lua_static luajit_external)
-        target_compile_definitions(lua_static INTERFACE LUAJIT_ENABLE_LUA52COMPAT)
-        
-        message(STATUS "Using LuaJIT (make build)")
-    endif()
-    
-    # Fetch dependencies
-    FetchContent_MakeAvailable(json luabridge3 doctest)
+# Find vcpkg packages
+find_package(spdlog CONFIG REQUIRED)
+find_package(unofficial-lua CONFIG REQUIRED)
+find_package(doctest CONFIG REQUIRED)
 
-    # Organize external targets in VS solution
-    if(TARGET nlohmann_json)
-        set_target_properties(nlohmann_json PROPERTIES FOLDER "ThirdParty")
-    endif()
-    if(TARGET spdlog)
-        set_target_properties(spdlog PROPERTIES FOLDER "ThirdParty")
-    endif()
-    if(TARGET doctest)
-        set_target_properties(doctest PROPERTIES FOLDER "ThirdParty")
-    endif()
-    if(TARGET luabridge3)
-        set_target_properties(luabridge3 PROPERTIES FOLDER "ThirdParty")
-    endif()
-else()
-    # Only use FetchContent when NOT in vcpkg manifest mode
-    if(NOT VCPKG_MANIFEST_MODE)
-        FetchContent_MakeAvailable(lua json luabridge3 doctest)
+# Lua wrapper target: single canonical target regardless of platform or build mode
+add_library(lua_static INTERFACE)
+target_link_libraries(lua_static INTERFACE unofficial::lua::lua)
 
-        # Organize external targets in VS solution
-        if(TARGET nlohmann_json)
-            set_target_properties(nlohmann_json PROPERTIES FOLDER "ThirdParty")
-        endif()
-        if(TARGET spdlog)
-            set_target_properties(spdlog PROPERTIES FOLDER "ThirdParty")
-        endif()
-        if(TARGET doctest)
-            set_target_properties(doctest PROPERTIES FOLDER "ThirdParty")
-        endif()
-        if(TARGET luabridge3)
-            set_target_properties(luabridge3 PROPERTIES FOLDER "ThirdParty")
-        endif()
-        if(TARGET Documentation)
-            set_target_properties(Documentation PROPERTIES FOLDER "ThirdParty")
-            set_property(TARGET Documentation PROPERTY EXCLUDE_FROM_ALL TRUE)
-        endif()
-    else()
-        # In vcpkg manifest mode, just make luabridge3 available (header-only, not in vcpkg)
-        FetchContent_MakeAvailable(luabridge3)
-        if(TARGET luabridge3)
-            set_target_properties(luabridge3 PROPERTIES FOLDER "ThirdParty")
-        endif()
-        if(TARGET Documentation)
-            set_target_properties(Documentation PROPERTIES FOLDER "ThirdParty")
-            set_property(TARGET Documentation PROPERTY EXCLUDE_FROM_ALL TRUE)
-        endif()
-        # Find vcpkg packages - spdlog is optional
-        find_package(spdlog CONFIG QUIET)
-        if(spdlog_FOUND)
-            message(STATUS "spdlog found - logging enabled")
-        else()
-            message(WARNING "spdlog not found - logging will be disabled")
-            add_compile_definitions(FASTRULES_NO_SPDLOG)
-        endif()
-        if(FASTRULES_BUILD_TESTS)
-            find_package(doctest CONFIG REQUIRED)
-        endif()
-    endif()
+# Fetch LuaBridge3 (header-only, not available via vcpkg)
+FetchContent_MakeAvailable(luabridge3)
+if(TARGET luabridge3)
+    set_target_properties(luabridge3 PROPERTIES FOLDER "ThirdParty")
 endif()
-
-# If we chose PUC-Rio Lua (not LuaJIT)
-if(NOT FASTRULES_USE_LUAJIT)
-    if(VCPKG_MANIFEST_MODE)
-        # Using vcpkg lua - find the package
-        # vcpkg's lua provides unofficial-lua config
-        find_package(unofficial-lua CONFIG REQUIRED)
-        # Create an interface library that wraps unofficial::lua::lua
-        if(NOT TARGET lua_static)
-            add_library(lua_static INTERFACE)
-            target_link_libraries(lua_static INTERFACE unofficial::lua::lua)
-        endif()
-    elseif(DEFINED lua_SOURCE_DIR AND EXISTS ${lua_SOURCE_DIR})
-        # Fetched via FetchContent - build from source
-        file(GLOB LUA_SRCS ${lua_SOURCE_DIR}/*.c)
-        list(FILTER LUA_SRCS EXCLUDE REGEX "luac?\\.c$")
-        add_library(lua_static STATIC ${LUA_SRCS})
-        set_target_properties(lua_static PROPERTIES FOLDER "ThirdParty")
-        target_include_directories(lua_static PUBLIC ${lua_SOURCE_DIR})
-    endif()
+if(TARGET Documentation)
+    set_target_properties(Documentation PROPERTIES FOLDER "ThirdParty")
+    set_property(TARGET Documentation PROPERTY EXCLUDE_FROM_ALL TRUE)
 endif()
 
 # === fastrules library ===
@@ -337,7 +148,6 @@ set(FASTRULES_CORE_SOURCES
     src/aot_compiler.cpp
     src/rule_versioning.cpp
     src/work_stealing_thread_pool.cpp
-    src/aot_compiler.cpp
     src/memory_pool.cpp
     src/input_validator.cpp
     src/timeout_executor.cpp
@@ -355,7 +165,7 @@ set(FASTRULES_PUBLIC_HEADERS
     include/fastrules/action_callback.hpp
     include/fastrules/aot_compiler.hpp
     include/fastrules/async_workflow.hpp
-    include/fastrules/c_api.h
+    include/fastrules/fastrules.h
     include/fastrules/execution_tracer.hpp
     include/fastrules/expression_validator.hpp
     include/fastrules/fastrules.hpp
@@ -395,6 +205,7 @@ if(FASTRULES_BUILD_SHARED)
     )
 else()
     add_library(fastrules STATIC ${FASTRULES_CORE_SOURCES})
+    target_compile_definitions(fastrules PUBLIC FASTRULES_STATIC)
 endif()
 set_property(TARGET fastrules PROPERTY FOLDER "Core")
 
@@ -432,95 +243,30 @@ target_include_directories(fastrules
 target_link_libraries(fastrules
     PUBLIC
         lua_static
+        spdlog::spdlog
 )
 
-# Note: LNK4197 warning (vtable exported multiple times) is suppressed via
-# pragma warning(disable: 4197) in rule.hpp around the Rule class definition.
-# This is cleaner than using linker flags and follows Microsoft's guidance
-# for handling this informational warning on exported classes with virtual functions.
-
-# Link spdlog only if found
-if(spdlog_FOUND)
-    target_link_libraries(fastrules PUBLIC spdlog::spdlog)
-endif()
-
+# C API is part of the core library; export it when building shared
 target_include_directories(fastrules PRIVATE ${luabridge3_SOURCE_DIR}/Source)
 
-if(MSVC)
-    target_compile_options(fastrules PRIVATE /W4 /WX-)
-    if(FASTRULES_USE_LUAJIT)
-        target_compile_definitions(fastrules PRIVATE FASTRULES_USE_LUAJIT)
-    endif()
-    target_compile_definitions(fastrules PUBLIC FASTRULES_USE_LUABRIDGE3)
-else()
-    target_compile_options(fastrules PRIVATE -Wall -Wextra -Wpedantic)
-    if(FASTRULES_USE_LUAJIT)
-        target_compile_definitions(fastrules PRIVATE FASTRULES_USE_LUAJIT)
-    endif()
-    target_compile_definitions(fastrules PUBLIC FASTRULES_USE_LUABRIDGE3)
-endif()
+target_compile_definitions(fastrules PUBLIC FASTRULES_USE_LUABRIDGE3)
+
+# C API is part of the core library; export symbols with the same rules as the
+# rest of the library via fastrules_export.hpp / fastrules.h.
 
 # === Tests ===
 if(FASTRULES_BUILD_TESTS)
     enable_testing()
 
-    # Build extension tests into the same CTest suite when extensions are enabled
-    if(FASTRULES_BUILD_EXTENSIONS)
-        # Pass CTest integration through to extension subdirectories
-        set(FASTRULES_IN_TREE_TESTS TRUE CACHE BOOL "" FORCE)
-    endif()
+    # Pass CTest integration through to extension subdirectories
+    set(FASTRULES_IN_TREE_TESTS ON)
 
-    # Try to find doctest via find_package first
-    find_package(doctest CONFIG QUIET)
-    if(NOT doctest_FOUND)
-        FetchContent_Declare(
-            doctest
-            GIT_REPOSITORY https://github.com/doctest/doctest.git
-            GIT_TAG v2.4.11
-            GIT_SHALLOW TRUE
-        )
-        FetchContent_MakeAvailable(doctest)
-    endif()
-    
-    # Ensure doctest is available
-    if(NOT DEFINED doctest_SOURCE_DIR)
-        set(doctest_SOURCE_DIR "${doctest_SOURCE_DIR}")
-    endif()
 
-    add_executable(fastrules_tests
-        tests/test_main.cpp
-        tests/test_rule.cpp
-        tests/test_workflow.cpp
-        tests/test_lua_engine.cpp
-        tests/test_async.cpp
-        tests/test_security_features.cpp
-        tests/test_new_features.cpp
-        tests/test_execution_tracing.cpp
-        tests/test_rate_limiter.cpp
-        tests/test_caching.cpp
-        tests/test_edge_cases.cpp
-        tests/test_performance.cpp
-        tests/test_error_paths.cpp
-        tests/test_fuzz_expression.cpp
-        tests/test_engine_pool.cpp
-        tests/test_auto_detection.cpp
-        tests/test_concurrent_compilation.cpp
-        tests/test_work_stealing.cpp
-        tests/test_coroutines.cpp
-        tests/test_async_integration.cpp
-        tests/test_aot_compiler.cpp
-        tests/test_memory_pool.cpp
-        tests/test_input_validator.cpp
-        tests/test_timeout_executor.cpp
-        tests/test_sandbox.cpp
-        tests/test_rule_result.cpp
-        tests/test_rule_context.cpp
-        tests/test_lua_engine_extended.cpp
-        tests/test_memory_pool_extended.cpp
-        tests/test_sandbox_extended.cpp
-        tests/test_input_validator_extended.cpp
-        tests/test_aot_compiler_extended.cpp
-    )
+    # doctest is provided by vcpkg
+    find_package(doctest CONFIG REQUIRED)
+
+    file(GLOB FASTRULES_TEST_SOURCES tests/*.cpp)
+    add_executable(fastrules_tests ${FASTRULES_TEST_SOURCES})
 
     set_property(TARGET fastrules_tests PROPERTY FOLDER "Tests")
 
@@ -535,171 +281,101 @@ if(FASTRULES_BUILD_TESTS)
     # Suppress CTest dashboard targets from VS solution
     set_property(GLOBAL PROPERTY CTEST_USE_LAUNCHERS OFF)
 
-    # doctest doesn't require a CMake module like Catch2
-    # Tests are registered directly
+    # On Windows, copy runtime DLLs next to test executables so ctest can run
+    # them without relying on PATH. Only vcpkg DLLs are copied here; the main
+    # fastrules.dll is already next to fastrules_tests in the root output dir.
+    if(WIN32)
+        set(_FASTRULES_TEST_DLL_SRC_DIRS
+            "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin"
+            "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin"
+        )
+        string(JOIN "|" _FASTRULES_TEST_DLL_SRC_DIRS_STR ${_FASTRULES_TEST_DLL_SRC_DIRS})
+
+        add_custom_command(TARGET fastrules_tests POST_BUILD
+            COMMAND ${CMAKE_COMMAND}
+                -D SRC_DIRS="${_FASTRULES_TEST_DLL_SRC_DIRS_STR}"
+                -D DST_DIR="$<TARGET_FILE_DIR:fastrules_tests>"
+                -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/copy_test_dlls.cmake"
+            COMMENT "Copying runtime DLLs to fastrules_tests output directory"
+        )
+    endif()
+
     add_test(NAME fastrules_tests COMMAND fastrules_tests)
 endif()
 
 # === Examples ===
 if(FASTRULES_BUILD_EXAMPLES)
-    # Working examples (use current LuaBridge3 API)
-    add_executable(simple_example examples/simple_example.cpp)
-    set_property(TARGET simple_example PROPERTY FOLDER "Examples")
-    target_link_libraries(simple_example PRIVATE fastrules)
+    set(FASTRULES_EXAMPLES
+        simple_example
+        luabridge3_basic_example
+        core_only_example
+        workflow_bubble_up
+        parent_child_example
+        multi_object_example
+        no_globals_example
+        typed_example
+        custom_methods_example
+        repl_example
+        coroutine_example
+        aot_compiler_example
+        memory_pool_example
+        input_validator_example
+        timeout_executor_example
+        sandbox_example
+        debug_context
+        macro_example
+        console_logging_example
+        loop_example
+        performance_test
+    )
 
-    add_executable(luabridge3_basic_example examples/luabridge3_basic_example.cpp)
-    set_property(TARGET luabridge3_basic_example PROPERTY FOLDER "Examples")
-    target_link_libraries(luabridge3_basic_example PRIVATE fastrules)
+    foreach(example ${FASTRULES_EXAMPLES})
+        add_executable(${example} examples/${example}.cpp)
+        set_property(TARGET ${example} PROPERTY FOLDER "Examples")
+        target_link_libraries(${example} PRIVATE fastrules)
+    endforeach()
 
-    add_executable(core_only_example examples/core_only_example.cpp)
-    set_property(TARGET core_only_example PROPERTY FOLDER "Examples")
-    target_link_libraries(core_only_example PRIVATE fastrules)
+    # Copy DLL to FFI example directories when building shared library on Windows
+    if(FASTRULES_BUILD_SHARED AND WIN32)
+        file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example")
+        file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example")
 
-    add_executable(workflow_bubble_up examples/workflow_bubble_up.cpp)
-    set_property(TARGET workflow_bubble_up PROPERTY FOLDER "Examples")
-    target_link_libraries(workflow_bubble_up PRIVATE fastrules)
+        add_custom_command(TARGET fastrules POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "$<TARGET_FILE:fastrules>"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/"
+            COMMENT "Copying fastrules.dll to csharp_example"
+        )
+        add_custom_command(TARGET fastrules POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "$<TARGET_FILE:fastrules>"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/"
+            COMMENT "Copying fastrules.dll to python_example"
+        )
 
-    add_executable(parent_child_example examples/parent_child_example.cpp)
-    set_property(TARGET parent_child_example PROPERTY FOLDER "Examples")
-    target_link_libraries(parent_child_example PRIVATE fastrules)
+        # Custom targets to run C# and Python examples from the IDE
+        add_custom_target(csharp_example
+            COMMAND dotnet run --project "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/FastRulesExample.csproj"
+            DEPENDS fastrules
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example"
+            COMMENT "Running C# example"
+            SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/FastRulesExample.cs"
+        )
+        set_property(TARGET csharp_example PROPERTY FOLDER "Examples")
 
-    add_executable(multi_object_example examples/multi_object_example.cpp)
-    set_property(TARGET multi_object_example PROPERTY FOLDER "Examples")
-    target_link_libraries(multi_object_example PRIVATE fastrules)
-
-    add_executable(no_globals_example examples/no_globals_example.cpp)
-    set_property(TARGET no_globals_example PROPERTY FOLDER "Examples")
-    target_link_libraries(no_globals_example PRIVATE fastrules)
-
-    add_executable(typed_example examples/typed_example.cpp)
-    set_property(TARGET typed_example PROPERTY FOLDER "Examples")
-    target_link_libraries(typed_example PRIVATE fastrules)
-
-    add_executable(custom_methods_example examples/custom_methods_example.cpp)
-    set_property(TARGET custom_methods_example PROPERTY FOLDER "Examples")
-    target_link_libraries(custom_methods_example PRIVATE fastrules)
-
-    add_executable(repl_example examples/repl_example.cpp)
-    set_property(TARGET repl_example PROPERTY FOLDER "Examples")
-    target_link_libraries(repl_example PRIVATE fastrules)
-
-    add_executable(coroutine_example examples/coroutine_example.cpp)
-    set_property(TARGET coroutine_example PROPERTY FOLDER "Examples")
-    target_link_libraries(coroutine_example PRIVATE fastrules)
-
-    add_executable(aot_compiler_example examples/aot_compiler_example.cpp)
-    set_property(TARGET aot_compiler_example PROPERTY FOLDER "Examples")
-    target_link_libraries(aot_compiler_example PRIVATE fastrules)
-
-    add_executable(memory_pool_example examples/memory_pool_example.cpp)
-    set_property(TARGET memory_pool_example PROPERTY FOLDER "Examples")
-    target_link_libraries(memory_pool_example PRIVATE fastrules)
-
-    add_executable(input_validator_example examples/input_validator_example.cpp)
-    set_property(TARGET input_validator_example PROPERTY FOLDER "Examples")
-    target_link_libraries(input_validator_example PRIVATE fastrules)
-
-    add_executable(timeout_executor_example examples/timeout_executor_example.cpp)
-    set_property(TARGET timeout_executor_example PROPERTY FOLDER "Examples")
-    target_link_libraries(timeout_executor_example PRIVATE fastrules)
-
-    add_executable(sandbox_example examples/sandbox_example.cpp)
-    set_property(TARGET sandbox_example PROPERTY FOLDER "Examples")
-    target_link_libraries(sandbox_example PRIVATE fastrules)
-
-    add_executable(debug_context examples/debug_context.cpp)
-    set_property(TARGET debug_context PROPERTY FOLDER "Examples")
-    target_link_libraries(debug_context PRIVATE fastrules)
-
-    add_executable(macro_example examples/macro_example.cpp)
-    set_property(TARGET macro_example PROPERTY FOLDER "Examples")
-    target_link_libraries(macro_example PRIVATE fastrules)
-
-    add_executable(console_logging_example examples/console_logging_example.cpp)
-    set_property(TARGET console_logging_example PROPERTY FOLDER "Examples")
-    target_link_libraries(console_logging_example PRIVATE fastrules)
-	
-	add_executable(loop_example examples/loop_example.cpp)
-    set_property(TARGET loop_example PROPERTY FOLDER "Examples")
-    target_link_libraries(loop_example PRIVATE fastrules)
-
-    # Performance test executable
-    add_executable(performance_test examples/performance_test.cpp)
-    set_property(TARGET performance_test PROPERTY FOLDER "Examples")
-    target_link_libraries(performance_test PRIVATE fastrules)
-
-    # Simple JSON test executable
-    add_executable(simple_json_test test_json_simple.cpp)
-    set_property(TARGET simple_json_test PROPERTY FOLDER "Tests")
-    target_link_libraries(simple_json_test PRIVATE fastrules fastrules-json)
-
-    # ============================================================================
-    # C API exports for FFI (Python/C#)
-    # The C API is part of the core library. When building shared library,
-    # export C API symbols for FFI use.
-    # ============================================================================
-    if(FASTRULES_BUILD_SHARED)
-        # Export C API symbols from the main fastrules library
-        target_compile_definitions(fastrules PRIVATE FASTRULES_C_API_BUILDING)
-        
-        if(WIN32)
-            set_target_properties(fastrules PROPERTIES
-                WINDOWS_EXPORT_ALL_SYMBOLS TRUE
-            )
-        endif()
-        
-        # Copy DLL and dependencies to example directories
-        if(WIN32)
-            # Ensure destination directories exist
-            file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example")
-            file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example")
-            
-            add_custom_command(TARGET fastrules POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "$<TARGET_FILE:fastrules>"
-                    "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/"
-                COMMENT "Copying fastrules.dll to csharp_example"
-            )
-            add_custom_command(TARGET fastrules POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "$<TARGET_FILE:fastrules>"
-                    "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/"
-                COMMENT "Copying fastrules.dll to python_example"
-            )
-        endif()
-        
-        message(STATUS "Building FastRules with C API exports for FFI (Python/C#)")
-        
-        # Add custom targets for C# and Python examples (for VS solution organization)
-        if(WIN32)
-            # C# Example - add as a custom target so it appears in VS
-            add_custom_target(csharp_example
-                COMMAND dotnet run --project "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/FastRulesExample.csproj"
-                DEPENDS fastrules
-                WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example"
-                COMMENT "Running C# example"
-                SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/examples/csharp_example/FastRulesExample.cs"
-            )
-            set_property(TARGET csharp_example PROPERTY FOLDER "Examples")
-            
-            # Python Example - add as a custom target
-            add_custom_target(python_example
-                COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/fastrules_example.py"
-                DEPENDS fastrules
-                WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example"
-                COMMENT "Running Python example"
-                SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/fastrules_example.py"
-            )
-            set_property(TARGET python_example PROPERTY FOLDER "Examples")
-        endif()
+        add_custom_target(python_example
+            COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/fastrules_example.py"
+            DEPENDS fastrules
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example"
+            COMMENT "Running Python example"
+            SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/examples/python_example/fastrules_example.py"
+        )
+        set_property(TARGET python_example PROPERTY FOLDER "Examples")
     endif()
 endif()
 
 # Optional extensions (JSON, XML, DB persistence)
 if(FASTRULES_BUILD_EXTENSIONS)
-    set(FASTRULES_BUILD_JSON_EXT ON CACHE BOOL "" FORCE)
-    set(FASTRULES_BUILD_XML_EXT ON CACHE BOOL "" FORCE)
-    set(FASTRULES_BUILD_DB_EXT ON CACHE BOOL "" FORCE)
     add_subdirectory(extensions)
 endif()
 
@@ -769,22 +445,10 @@ if(EXISTS ${luabridge3_SOURCE_DIR}/Source/LuaBridge)
     )
 endif()
 
-if(NOT FASTRULES_USE_LUAJIT)
-    if(EXISTS ${lua_SOURCE_DIR})
-        install(DIRECTORY
-            ${lua_SOURCE_DIR}/
-            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/lua
-            FILES_MATCHING PATTERN "*.h"
-        )
-    endif()
-endif()
-
-# Install Lua library (only if we built it from source, not imported)
-if(NOT FASTRULES_USE_LUAJIT)
-    install(TARGETS lua_static
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    )
-endif()
+# Install Lua library
+install(TARGETS lua_static
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
 
 # Create package config files
 include(CMakePackageConfigHelpers)

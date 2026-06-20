@@ -7,16 +7,16 @@ parent: API
 
 # C API
 
-FastRules provides a C API for interoperability with other languages (Python, C#, etc.) via FFI. The C API is built into the core library when `FASTRULES_BUILD_SHARED` is enabled.
+FastRules provides a C API for interoperability with other languages (Python, C#, etc.) via FFI. The C API is always built into the core library and exported when `FASTRULES_BUILD_SHARED` is enabled.
 
 ## Building with C API
 
 ### CMake Option
 
-Enable the shared library build with C API exports:
+Enable the shared library build to export the C API:
 
 ```bash
-cmake -B build -S . -DFASTRULES_BUILD_SHARED=ON -DFASTRULES_BUILD_C_API=ON
+cmake -B build -S . -DFASTRULES_BUILD_SHARED=ON
 cmake --build build --config Release
 ```
 
@@ -28,9 +28,7 @@ Use the provided PowerShell script:
 .\build.ps1 -Configuration Release
 ```
 
-This automatically enables `FASTRULES_BUILD_SHARED` and `FASTRULES_BUILD_C_API`, generating:
-- `fastrules.dll` - Core library with C API exports
-- `fastrules.lib` - Import library for linking
+This builds `fastrules.dll` (Debug or Release) with the C API exported.
 
 ## Using the C API
 

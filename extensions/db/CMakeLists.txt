@@ -4,27 +4,17 @@ project(fastrules-db LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# SOCI backend selection
 set(FASTRULES_DB_BACKEND "sqlite3" CACHE STRING "Database backend: postgresql, mysql, sqlite3, odbc")
 set_property(CACHE FASTRULES_DB_BACKEND PROPERTY STRINGS postgresql mysql sqlite3 odbc)
 
-# Determine if we're building standalone or as part of fastrules
-if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
-    # Standalone build — need to find fastrules and SOCI
-    find_package(fastrules REQUIRED CONFIG)
-    find_package(SOCI REQUIRED COMPONENTS core ${FASTRULES_DB_BACKEND})
-    set(FASTRULES_CORE_TARGET fastrules::fastrules)
-    set(FASTRULES_INCLUDE_DIR "")
-else()
-    # Building as part of fastrules — use the in-tree target
-    set(FASTRULES_CORE_TARGET fastrules)
-    set(FASTRULES_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
-    # SOCI must be available
-    find_package(SOCI COMPONENTS core ${FASTRULES_DB_BACKEND})
-    if(NOT SOCI_FOUND)
-        message(WARNING "SOCI not found. DB extension will not be built. Install SOCI via vcpkg: vcpkg install soci[core,sqlite3]:x64-windows")
-        return()
-    endif()
+set(FASTRULES_CORE_TARGET fastrules)
+set(FASTRULES_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
+
+# SOCI must be available
+find_package(SOCI COMPONENTS core ${FASTRULES_DB_BACKEND})
+if(NOT SOCI_FOUND)
+    message(WARNING "SOCI not found. DB extension will not be built. Install SOCI via vcpkg: vcpkg install soci[core,sqlite3]:x64-windows")
+    return()
 endif()
 
 add_library(fastrules-db STATIC

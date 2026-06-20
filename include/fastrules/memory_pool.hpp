@@ -69,8 +69,11 @@ public:
             // Clear object state before returning to pool (if it's a container)
             // For generic objects, we just return them to the pool
             pool_.push(std::move(obj));
+        } else {
+            // Pool is full; destroy the object so it is no longer counted
+            obj.reset();
+            allocatedCount_--;
         }
-        // If pool is full, obj will be destroyed when it goes out of scope
         releasedCount_++;
     }
 
@@ -104,6 +107,7 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
         while (!pool_.empty()) {
             pool_.pop();
+            allocatedCount_--;
         }
     }
 };
@@ -165,8 +169,11 @@ public:
         if (pool_.size() < maxSize_) {
             vec->clear();  // Clear data before returning to pool
             pool_.push(std::move(vec));
+        } else {
+            // Pool is full; destroy the vector so it is no longer counted
+            vec.reset();
+            allocatedCount_--;
         }
-        // If pool is full, vec will be destroyed when it goes out of scope
         releasedCount_++;
     }
 
@@ -202,15 +209,16 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
         while (!pool_.empty()) {
             pool_.pop();
+            allocatedCount_--;
         }
     }
 };
 
 /**
- * @brief FastRules memory manager
- * 
- * Centralized memory management for FastRules objects.
- */
+     * @brief FastRules memory manager
+     * 
+     * Centralized memory management for FastRules objects.
+     */
 class MemoryManager {
 private:
     // Pools for common FastRules objects

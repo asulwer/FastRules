@@ -1,19 +1,11 @@
 /**
  * FastRules C API Implementation
- * 
+ *
  * This file implements the C API by wrapping the C++ FastRules classes.
- * Build as a shared library for use with Python, C#, etc.
- * 
  * Uses only FastRules core - no JSON dependency.
  */
 
-// FASTRULES_C_API_BUILDING is defined via compiler flags when building the DLL
-// Only define it here if not already defined
-#ifndef FASTRULES_C_API_BUILDING
-#define FASTRULES_C_API_BUILDING
-#endif
-
-#include <fastrules/c_api.h>
+#include <fastrules/fastrules.h>
 #include <fastrules.hpp>
 
 #include <memory>
@@ -49,29 +41,29 @@ static void set_error(FastRulesEngine* engine, const char* msg) {
 // Supports: int, double, bool, string
 static std::vector<RuleParameter> parse_params(const char* params_str) {
     std::vector<RuleParameter> params;
-    
+
     if (!params_str || strlen(params_str) == 0) {
         return params;
     }
-    
+
     std::string input(params_str);
     size_t pos = 0;
-    
+
     while (pos < input.length()) {
         // Find '='
         size_t eq_pos = input.find('=', pos);
         if (eq_pos == std::string::npos) break;
-        
+
         std::string key = input.substr(pos, eq_pos - pos);
-        
+
         // Find ';' or end
         size_t end_pos = input.find(';', eq_pos + 1);
         if (end_pos == std::string::npos) {
             end_pos = input.length();
         }
-        
+
         std::string value_str = input.substr(eq_pos + 1, end_pos - eq_pos - 1);
-        
+
         // Trim whitespace
         auto trim = [](std::string& s) {
             size_t start = s.find_first_not_of(" \t");
@@ -81,7 +73,7 @@ static std::vector<RuleParameter> parse_params(const char* params_str) {
         };
         trim(key);
         trim(value_str);
-        
+
         // Parse value based on content
         if (value_str == "true" || value_str == "TRUE") {
             params.emplace_back(key, true);
@@ -104,10 +96,10 @@ static std::vector<RuleParameter> parse_params(const char* params_str) {
                 }
             }
         }
-        
+
         pos = end_pos + 1;
     }
-    
+
     return params;
 }
 
@@ -115,24 +107,24 @@ static std::vector<RuleParameter> parse_params(const char* params_str) {
 // id: rule ID, name: rule name, success: 1 or 0, error: optional message
 static char* format_results(const std::vector<RuleResult>& results) {
     std::ostringstream oss;
-    
+
     for (size_t i = 0; i < results.size(); ++i) {
         if (i > 0) oss << ";";
-        
+
         const auto& result = results[i];
-        
+
         // Include rule ID and name
         oss << result.ruleId << ":";
         std::string rule_name = result.ruleName.empty() ? "" : result.ruleName;
         oss << rule_name << ":";
-        
+
         oss << (result.isSuccess() ? 1 : 0);
-        
+
         if (result.exception.has_value()) {
             oss << ":" << result.exception->what();
         }
     }
-    
+
     std::string str = oss.str();
     char* output = static_cast<char*>(std::malloc(str.length() + 1));
     if (output) {
@@ -182,7 +174,7 @@ fastrules_workflow_t fastrules_workflow_create(
     if (!engine) {
         return nullptr;
     }
-    
+
     try {
         auto* workflow = new FastRulesWorkflow();
         workflow->workflow = std::make_unique<Workflow>();
@@ -213,12 +205,12 @@ fastrules_error_t fastrules_workflow_add_rule(
     if (!engine || !workflow) {
         return FASTRULES_ERROR_NULL_PTR;
     }
-    
+
     if (!expression) {
         set_error(engine, "Expression cannot be null");
         return FASTRULES_ERROR_NULL_PTR;
     }
-    
+
     try {
         auto rule = std::make_shared<Rule>();
         rule->id = id;
@@ -236,7 +228,7 @@ fastrules_error_t fastrules_workflow_add_rule(
             rule->description = description;
         }
         rule->isActive = isActive;
-        
+
         workflow->workflow->rules.push_back(rule);
         return FASTRULES_OK;
     } catch (const std::exception& e) {
@@ -254,7 +246,7 @@ fastrules_error_t fastrules_workflow_set_rule_priority(
     if (!engine || !workflow) {
         return FASTRULES_ERROR_NULL_PTR;
     }
-    
+
     try {
         for (auto& rule : workflow->workflow->rules) {
             if (rule->id == rule_id) {
@@ -287,17 +279,17 @@ fastrules_error_t fastrules_engine_register_type(
     if (!engine || !type_name || !fields) {
         return FASTRULES_ERROR_NULL_PTR;
     }
-    
+
     try {
         std::vector<std::pair<std::string, std::string>> field_list;
-        
+
         // Parse fields: "field1:type1;field2:type2"
         std::string fields_str(fields);
         size_t pos = 0;
         while (pos < fields_str.length()) {
             size_t sep = fields_str.find(';', pos);
             if (sep == std::string::npos) sep = fields_str.length();
-            
+
             std::string field_def = fields_str.substr(pos, sep - pos);
             size_t colon = field_def.find(':');
             if (colon != std::string::npos) {
@@ -307,10 +299,10 @@ fastrules_error_t fastrules_engine_register_type(
             }
             pos = sep + 1;
         }
-        
+
         // Store in global registry
         g_registered_types[engine][type_name] = field_list;
-        
+
         // Also register with FastRules type system
         // This uses the C++ API to register the type
         // For now, we store it and use it when creating parameters
@@ -332,7 +324,7 @@ fastrules_error_t fastrules_add_typed_param(
     if (!engine || !name || !type_name || !fields_values || !out_params) {
         return FASTRULES_ERROR_NULL_PTR;
     }
-    
+
     try {
         // Check if type is registered
         auto it = g_registered_types.find(engine);
@@ -340,35 +332,35 @@ fastrules_error_t fastrules_add_typed_param(
             set_error(engine, "Type not registered");
             return FASTRULES_ERROR_UNKNOWN;
         }
-        
+
         // Build parameter string: "customer.age=25;customer.name=Alice"
         std::ostringstream oss;
-        
+
         // Parse existing params
         std::string existing(params ? params : "");
         if (!existing.empty()) {
             oss << existing;
         }
-        
+
         // Parse field values: "age=25;name=Alice"
         std::string fv_str(fields_values);
         size_t pos = 0;
         while (pos < fv_str.length()) {
             size_t sep = fv_str.find(';', pos);
             if (sep == std::string::npos) sep = fv_str.length();
-            
+
             std::string fv = fv_str.substr(pos, sep - pos);
             size_t eq = fv.find('=');
             if (eq != std::string::npos) {
                 std::string field = fv.substr(0, eq);
                 std::string value = fv.substr(eq + 1);
-                
+
                 if (oss.tellp() > 0) oss << ";";
                 oss << name << "." << field << "=" << value;
             }
             pos = sep + 1;
         }
-        
+
         std::string result = oss.str();
         *out_params = static_cast<char*>(std::malloc(result.length() + 1));
         if (*out_params) {
@@ -378,7 +370,7 @@ fastrules_error_t fastrules_add_typed_param(
             std::strcpy(*out_params, result.c_str());
 #endif
         }
-        
+
         return FASTRULES_OK;
     } catch (const std::exception& e) {
         set_error(engine, e.what());
@@ -397,7 +389,7 @@ fastrules_error_t fastrules_workflow_compile(
     if (!engine || !workflow) {
         return FASTRULES_ERROR_NULL_PTR;
     }
-    
+
     try {
         workflow->workflow->compile(*engine->engine);
         return FASTRULES_OK;
@@ -420,20 +412,20 @@ fastrules_error_t fastrules_workflow_execute(
     if (!engine || !workflow || !results) {
         return FASTRULES_ERROR_NULL_PTR;
     }
-    
+
     try {
         // Parse parameters (format: "key=value;key2=value2")
         auto params = parse_params(params_str);
-        
+
         // Execute
         auto results_vec = workflow->workflow->execute(*engine->engine, params);
-        
+
         // Format results
         *results = format_results(results_vec);
         if (!*results) {
             return FASTRULES_ERROR_MEMORY;
         }
-        
+
         return FASTRULES_OK;
     } catch (const std::exception& e) {
         set_error(engine, e.what());
@@ -450,20 +442,20 @@ fastrules_error_t fastrules_workflow_execute_parallel(
     if (!engine || !workflow || !results) {
         return FASTRULES_ERROR_NULL_PTR;
     }
-    
+
     try {
         // Parse parameters
         auto params = parse_params(params_str);
-        
+
         // Execute
         auto results_vec = workflow->workflow->executeParallel(*engine->engine, params);
-        
+
         // Format results
         *results = format_results(results_vec);
         if (!*results) {
             return FASTRULES_ERROR_MEMORY;
         }
-        
+
         return FASTRULES_OK;
     } catch (const std::exception& e) {
         set_error(engine, e.what());
@@ -501,18 +493,18 @@ fastrules_type_t fastrules_register_type(
     if (!engine || !type_name || !fields) {
         return nullptr;
     }
-    
+
     try {
         auto type = std::make_shared<FastRulesType>();
         type->name = type_name;
-        
+
         // Parse fields: "field1:type1;field2:type2"
         std::string fields_str(fields);
         size_t pos = 0;
         while (pos < fields_str.length()) {
             size_t sep = fields_str.find(';', pos);
             if (sep == std::string::npos) sep = fields_str.length();
-            
+
             std::string field_def = fields_str.substr(pos, sep - pos);
             size_t colon = field_def.find(':');
             if (colon != std::string::npos) {
@@ -522,11 +514,11 @@ fastrules_type_t fastrules_register_type(
             }
             pos = sep + 1;
         }
-        
+
         // Store in global registry
         auto type_ptr = type.get();
         g_type_registry[engine][type_name] = type;
-        
+
         return type_ptr;
     } catch (...) {
         return nullptr;
@@ -540,7 +532,7 @@ fastrules_object_t fastrules_object_create(
     if (!engine || !type) {
         return nullptr;
     }
-    
+
     try {
         auto obj = new FastRulesObject();
         obj->type = type;
@@ -560,7 +552,7 @@ fastrules_error_t fastrules_object_set_field(
     if (!obj || !field_name || !value) {
         return FASTRULES_ERROR_NULL_PTR;
     }
-    
+
     try {
         obj->field_values[field_name] = value;
         return FASTRULES_OK;
@@ -587,23 +579,23 @@ fastrules_error_t fastrules_add_object_param(
     if (!engine || !param_name || !obj || !out_params) {
         return FASTRULES_ERROR_NULL_PTR;
     }
-    
+
     try {
         // Build parameter string from object fields
         std::ostringstream oss;
-        
+
         // Include existing params
         if (existing_params && strlen(existing_params) > 0) {
             oss << existing_params << ";";
         }
-        
+
         // Add object fields as prefixed parameters
         // e.g., "customer" + "age" = "customer.age=25"
         for (const auto& [field_name, value] : obj->field_values) {
             if (oss.tellp() > 0) oss << ";";
             oss << param_name << "." << field_name << "=" << value;
         }
-        
+
         std::string result = oss.str();
         *out_params = static_cast<char*>(std::malloc(result.length() + 1));
         if (*out_params) {
@@ -613,7 +605,7 @@ fastrules_error_t fastrules_add_object_param(
             std::strcpy(*out_params, result.c_str());
 #endif
         }
-        
+
         return FASTRULES_OK;
     } catch (...) {
         return FASTRULES_ERROR_UNKNOWN;

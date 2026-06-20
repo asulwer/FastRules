@@ -12,7 +12,7 @@ Quick reference for core classes. See child pages for full details.
 
 ## C API
 
-The C API provides FFI bindings for Python, C#, and other languages. Built into the shared library when `FASTRULES_BUILD_SHARED` and `FASTRULES_BUILD_C_API` are enabled.
+The C API provides FFI bindings for Python, C#, and other languages. It is always exported from the core library; the header is `include/fastrules/fastrules.h`.
 
 ```c
 // C example

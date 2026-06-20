@@ -186,7 +186,7 @@ TEST_CASE("InputValidator edge cases") {
     CHECK_THROWS_AS(validator.validate("   "), ValidationException);
     
     // Test very long expressions (within limit)
-    std::string longExpr(9999, 'x');
+    std::string longExpr(9993, 'x');
     longExpr = "return " + longExpr;
     CHECK_NOTHROW(validator.validate(longExpr));
     

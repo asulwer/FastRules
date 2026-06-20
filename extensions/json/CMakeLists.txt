@@ -4,31 +4,11 @@ project(fastrules-json LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Determine if we're building standalone or as part of fastrules
-if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
-    # Standalone build — need to find fastrules
-    find_package(fastrules REQUIRED CONFIG)
-    find_package(nlohmann_json REQUIRED)
-    set(FASTRULES_CORE_TARGET fastrules::fastrules)
-    set(FASTRULES_INCLUDE_DIR "")
-else()
-    # Building as part of fastrules — use the in-tree target
-    set(FASTRULES_CORE_TARGET fastrules)
-    set(FASTRULES_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
-    # nlohmann/json is already available from parent
-    if(NOT TARGET nlohmann_json::nlohmann_json)
-        # Try to find via CMake config first
-        find_package(nlohmann_json QUIET CONFIG)
-        if(NOT nlohmann_json_FOUND)
-            # Fallback: create alias from the header-only target fetched by parent
-            if(TARGET nlohmann_json)
-                add_library(nlohmann_json::nlohmann_json ALIAS nlohmann_json)
-            else()
-                find_package(nlohmann_json REQUIRED)
-            endif()
-        endif()
-    endif()
-endif()
+# nlohmann/json is provided by vcpkg
+find_package(nlohmann_json CONFIG REQUIRED)
+
+set(FASTRULES_CORE_TARGET fastrules)
+set(FASTRULES_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
 
 add_library(fastrules-json STATIC
     src/json_loader.cpp
@@ -53,12 +33,6 @@ target_include_directories(fastrules-json PUBLIC
     include
     ${FASTRULES_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/extensions/include
-)
-
-# Add nlohmann/json include directory explicitly for IntelliSense
-target_include_directories(fastrules-json SYSTEM PUBLIC
-    ${nlohmann_json_SOURCE_DIR}/include
-    ${nlohmann_json_SOURCE_DIR}/single_include
 )
 
 target_link_libraries(fastrules-json PUBLIC

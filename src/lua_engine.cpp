@@ -217,6 +217,8 @@ std::unique_ptr<LuaValue> anyToLuaValue(LuaBackend& backend, const std::any& val
             // Logger not available -- ignore
         }
     }
+    // If we get here, we don't know how to convert the type
+    // This is not an error -- just means we don't have a binding for it
     return backend.makeNil();
 }
 
@@ -530,6 +532,12 @@ std::optional<int> LuaEngine::compileExpression(const std::string& expression) {
             " characters (was " + std::to_string(expression.size()) + ")");
     }
 
+    // Empty or whitespace-only expressions are not compilable
+    if (expression.empty() ||
+        std::all_of(expression.begin(), expression.end(), [](unsigned char c) { return std::isspace(c); })) {
+        return std::nullopt;
+    }
+
     std::vector<std::string> params = extractParameterNames(expression);
 
     int ref;
@@ -661,9 +669,9 @@ std::vector<std::pair<std::string, std::any>> LuaEngine::buildParamPairs(
         auto pit = paramMap.find(name);
         if (pit != paramMap.end()) {
             pairs.emplace_back(name, pit->second);
-        } else {
-            pairs.emplace_back(name, std::any{});
         }
+        // Missing parameters are intentionally skipped so that externally-set
+        // globals (e.g. via setGlobal) remain visible to the expression.
     }
 
     return pairs;

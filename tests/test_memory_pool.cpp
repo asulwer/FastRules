@@ -124,7 +124,11 @@ TEST_CASE("MemoryPool thread safety") {
     
     // Check pool statistics
     auto stats = pool.getStats();
-    CHECK(stats.second == 100); // Total allocated should be 100
+    // All live objects should be back in the pool; the exact count depends on
+    // how much the threads overlapped, but it must equal the live-object count.
+    CHECK(stats.first == stats.second);
+    CHECK(stats.second > 0);
+    CHECK(stats.second <= 100);
 }
 
 TEST_CASE("MemoryPool with preallocation") {

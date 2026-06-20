@@ -4,32 +4,29 @@ This example demonstrates how to use FastRules from Python via a C API wrapper.
 
 ## Prerequisites
 
-1. **Build FastRules C API as a shared library:**
-   
-   The C API source files are located in `examples/c_api/`:
-   - `fastrules_c_api.h` - C API header
-   - `fastrules_c_api.cpp` - C API implementation
+1. **Build FastRules as a shared library:**
+
+   The C API is part of the core library; the public header is `include/fastrules/fastrules.h`.
 
    ```bash
    # Build using CMake (recommended)
    cmake -B build -S . \
-     -DFASTRULES_BUILD_SHARED=ON \
-     -DFASTRULES_BUILD_C_API=ON
+     -DFASTRULES_BUILD_SHARED=ON
    cmake --build build --config Release
    ```
 
    Or compile manually:
    ```bash
    # On Windows (MSVC):
-   cl /LD /O2 /I../../include /I../c_api \
-      ../c_api/fastrules_c_api.cpp \
-      /link /OUT:fastrules_c_api.dll \
+   cl /LD /O2 /I../../include \
+      c_api.cpp \
+      /link /OUT:fastrules.dll \
       ../../build/Release/fastrules.lib
    
    # On Linux:
-   g++ -shared -fPIC -O3 -I../../include -I../c_api \
-       -o libfastrules_c_api.so \
-       ../c_api/fastrules_c_api.cpp \
+   g++ -shared -fPIC -O3 -I../../include \
+       -o libfastrules.so \
+       c_api.cpp \
        -L../../build -lfastrules
    ```
 
@@ -50,7 +47,7 @@ fastrules_example.py (Python)
    [ctypes]
        |
        v
-fastrules_c_api.dll / libfastrules_c_api.so (C API)
+   fastrules.dll / libfastrules.so (C API, part of core)
        |
        v
    FastRules C++ Library
@@ -61,7 +58,7 @@ fastrules_c_api.dll / libfastrules_c_api.so (C API)
 
 ## C API Location
 
-The C API is centralized in `examples/c_api/` and used by:
+The C API is implemented in `src/c_api.cpp` and declared in `include/fastrules/fastrules.h`. It is used by:
 - **C# Example** (`examples/csharp_example/`) - via P/Invoke
 - **Python Example** (`examples/python_example/`) - via ctypes
 

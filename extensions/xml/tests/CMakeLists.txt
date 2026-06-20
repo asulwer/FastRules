@@ -1,10 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
 
-# doctest is already available from parent if building in-tree
-if(NOT TARGET doctest::doctest)
-    find_package(doctest REQUIRED)
-endif()
-
 add_executable(fastrules-xml-tests
     test_main.cpp
     test_xml_repository.cpp
@@ -17,5 +12,32 @@ target_link_libraries(fastrules-xml-tests PRIVATE
     doctest::doctest
 )
 
-# Tests are registered directly with add_test
-add_test(NAME fastrules-xml-tests COMMAND fastrules-xml-tests)
+# On Windows, copy runtime DLLs next to the test executable so ctest can run it
+# without relying on PATH. Only vcpkg DLLs are copied; fastrules.dll lives in
+# the root output dir and is added to PATH in the add_test command below.
+if(WIN32)
+    set(_XML_TEST_DLL_SRC_DIRS
+        "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin"
+        "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin"
+    )
+    string(JOIN "|" _XML_TEST_DLL_SRC_DIRS_STR ${_XML_TEST_DLL_SRC_DIRS})
+
+    add_custom_command(TARGET fastrules-xml-tests POST_BUILD
+        COMMAND ${CMAKE_COMMAND}
+            -D SRC_DIRS="${_XML_TEST_DLL_SRC_DIRS_STR}"
+            -D DST_DIR="$<TARGET_FILE_DIR:fastrules-xml-tests>"
+            -P "${CMAKE_SOURCE_DIR}/cmake/copy_test_dlls.cmake"
+        COMMENT "Copying runtime DLLs to fastrules-xml-tests output directory"
+    )
+endif()
+
+# Tests are registered directly with add_test.
+# On Windows, prepend the root build output dir so the extension test finds
+# fastrules.dll without copying it (avoids parallel-build races).
+if(WIN32)
+    add_test(NAME fastrules-xml-tests
+        COMMAND ${CMAKE_COMMAND} -E env "PATH=${CMAKE_SOURCE_DIR}/build_vs/Debug;${CMAKE_SOURCE_DIR}/build_vs/Release" $<TARGET_FILE:fastrules-xml-tests>
+    )
+else()
+    add_test(NAME fastrules-xml-tests COMMAND fastrules-xml-tests)
+endif()

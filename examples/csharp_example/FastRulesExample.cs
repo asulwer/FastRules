@@ -4,8 +4,8 @@ using System.Collections.Generic;
 
 // FastRules C# Example
 // This example uses the FastRules C API via P/Invoke.
-// The C API is part of FastRules Core: include/fastrules/c_api/fastrules_c_api.h
-// Build with: .\build.ps1 (builds fastrules_c_api.dll and copies to this directory)
+// The C API is part of FastRules Core: include/fastrules/fastrules.h
+// Build with: cmake -B build -DFASTRULES_BUILD_SHARED=ON, then copy fastrules.dll to this directory.
 
 namespace FastRulesExample
 {
@@ -23,58 +23,58 @@ namespace FastRulesExample
         internal IntPtr Handle => _engine;
 
         // P/Invoke declarations - import from fastrules_c_api.dll
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr fastrules_engine_create();
 
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
         private static extern void fastrules_engine_destroy(IntPtr engine);
 
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr fastrules_engine_get_last_error(IntPtr engine);
 
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr fastrules_workflow_create(IntPtr engine, int id, string description);
 
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
         private static extern int fastrules_workflow_add_rule(IntPtr engine, IntPtr workflow, int id, 
             string name, string expression, string action, string description, bool isActive);
 
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
         private static extern int fastrules_workflow_set_rule_priority(IntPtr engine, IntPtr workflow, 
             int rule_id, int priority);
 
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
         private static extern void fastrules_workflow_destroy(IntPtr workflow);
 
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
         private static extern int fastrules_workflow_compile(IntPtr engine, IntPtr workflow);
 
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
         private static extern int fastrules_workflow_execute(IntPtr engine, IntPtr workflow, string paramsStr, out IntPtr results);
 
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
         private static extern int fastrules_workflow_execute_parallel(IntPtr engine, IntPtr workflow, string paramsStr, out IntPtr results);
 
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
         private static extern void fastrules_free(IntPtr ptr);
 
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr fastrules_get_version();
 
         // Complex Object Support
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr fastrules_register_type(IntPtr engine, string typeName, string fields);
 
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr fastrules_object_create(IntPtr engine, IntPtr type);
 
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
         private static extern int fastrules_object_set_field(IntPtr engine, IntPtr obj, string fieldName, string value);
 
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
         private static extern void fastrules_object_destroy(IntPtr engine, IntPtr obj);
 
-        [DllImport("fastrules_c_api", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("fastrules", CallingConvention = CallingConvention.Cdecl)]
         private static extern int fastrules_add_object_param(IntPtr engine, string existingParams, string paramName, IntPtr obj, out IntPtr outParams);
 
         public FastRulesEngine()

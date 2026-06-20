@@ -4,16 +4,15 @@ This example demonstrates how to use FastRules from C# via P/Invoke with in-memo
 
 ## Prerequisites
 
-1. **Build FastRules with C API:**
+1. **Build FastRules as a shared library:**
    ```powershell
-   .\build.ps1
+   .\build.ps1 -Configuration Release
    ```
    
    Or manually:
    ```bash
    cmake -B build -S . \
-     -DFASTRULES_BUILD_SHARED=ON \
-     -DFASTRULES_BUILD_C_API=ON
+     -DFASTRULES_BUILD_SHARED=ON
    cmake --build build --config Release
    ```
 
@@ -21,7 +20,7 @@ This example demonstrates how to use FastRules from C# via P/Invoke with in-memo
 
 ## Usage
 
-The C API DLL and its dependencies are automatically copied to this directory during the build.
+The `fastrules.dll` and its dependencies are automatically copied to this directory when the shared library is built.
 
 ```powershell
 # Run the example
@@ -41,10 +40,10 @@ FastRulesExample.cs
    [P/Invoke]
        |
        v
-fastrules_c_api.h / fastrules_c_api.cpp (C wrapper)
+   fastrules.h / c_api.cpp (C wrapper, part of core)
        |
        v
-   FastRules C++ Library (Core only)
+   FastRules C++ Library (Core)
        |
        v
    Lua Engine
@@ -105,10 +104,10 @@ var results = workflow.Execute(new Dictionary<string, object> { ["customer"] = o
 
 ## Troubleshooting
 
-### "Could not load fastrules_c_api.dll"
+### "Could not load fastrules.dll"
 
 Ensure the DLL is:
-1. Built with C API enabled (`-DFASTRULES_BUILD_C_API=ON`)
+1. Built with `-DFASTRULES_BUILD_SHARED=ON`
 2. Copied to the output directory
 3. All dependencies (lua.dll, spdlog.dll, fmt.dll) are available
 

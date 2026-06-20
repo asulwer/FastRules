@@ -28,7 +28,8 @@ std::unique_ptr<Rule> createRule(int id, const std::string& name, const std::str
 }
 
 TEST_CASE("DbRuleRepository with SQLite") {
-    auto tempFile = getUniqueTempFile("test_rules");
+    // Use a simple file name in the current directory to avoid temp-path issues.
+    auto tempFile = std::filesystem::current_path() / "test_rules_basic.db";
     
     // Clean up any existing file (may fail if locked from previous crashed run)
     try { std::filesystem::remove(tempFile); } catch (...) {}

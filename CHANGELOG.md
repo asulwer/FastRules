@@ -36,11 +36,32 @@ If upgrading from 0.1.0:
   - Schema management and transaction support in DB extension
 
 ### Changed
-- Updated README with accurate requirements and installation options
-- Fixed MSVC runtime library linkage (LNK4098 warnings)
-- CI workflow now generates code coverage reports
-- CI workflow now produces vcpkg and Conan artifacts
-- vcpkg.json now includes version override for Lua 5.4.6
+- Refactored CMake build system:
+  - Removed `FASTRULES_BUILD_C_API` option; the C API is always exported from the core library via `fastrules.h`.
+  - Removed duplicate compiler warning flags and duplicate `aot_compiler.cpp` source listing.
+  - `FASTRULES_BUILD_EXTENSIONS=ON` now builds all three extensions (json, xml, db).
+  - Generated examples and gathered tests via loops / `file(GLOB)` instead of one-by-one boilerplate.
+  - Extension CMakeLists now use `find_package` first with `FetchContent` fallback and no longer hard-code dependency source paths.
+  - DB test CMake now copies only matching-config vcpkg DLLs, creates SOCI backend aliases, and sets the backend search path via the test runner environment.
+- Refactored `build.ps1`:
+  - Supports `-Configuration {Debug|Release|Both}` (default `Debug`).
+  - No longer forces shared libraries, kills processes, manually copies DLLs, or renames SOCI backends.
+  - Auto-detects vcpkg and only passes the toolchain when not already cached.
+  - Runs `ctest` with `--timeout 120` to prevent hangs.
+- Memory pool accounting now treats `allocatedCount_` as live objects and decrements it when objects are destroyed or `clear()` discards pooled objects.
+- `LuaEngine::buildParamPairs` no longer overwrites missing parameters with `nil`, preserving globals set via `setGlobal`.
+- `DbConnectionFactory` uses `soci::factory_sqlite3()` directly for the SQLite backend, avoiding SOCI dynamic backend-loader issues on Windows.
+
+### Fixed
+- Empty/whitespace expressions now throw `ValidationException` in `input_validator.cpp` while still allowing syntax errors to throw `RuleCompilationException` from `LuaEngine::compileExpression`.
+- Coroutine Lua test expression changed to a valid single expression (`"x + 1"`).
+- Memory-pool and vector-pool thread-safety/reuse tests updated to allow for object reuse instead of requiring one allocation per acquire.
+- DB repository schema and persistence now include the `name` column for rules.
+- DB workflow save no longer deadlocks by calling `exists()` while holding a `unique_lock`.
+- DB thread-safety test now gives each worker its own SOCI session.
+- JSON performance test threshold relaxed to allow slower Debug builds.
+- Fixed test input length assertion (`longExpr` = 9993, total = 10000).
+- Updated README / docs references for the unified C API header.
 
 ### Fixed
 - MSVC runtime library mismatch between fastrules and dependencies

@@ -7,11 +7,11 @@ with in-memory workflow/rule creation (no JSON required).
 
 Requirements:
 - Python 3.7+
-- fastrules shared library (fastrules_c_api.dll on Windows, libfastrules_c_api.so on Linux)
+- fastrules shared library (fastrules.dll on Windows, libfastrules.so on Linux)
 
 Build with:
-    .\build.ps1 (Windows) or cmake with -DFASTRULES_BUILD_C_API=ON
-    This copies fastrules_c_api.dll and dependencies to this directory.
+    cmake -B build -DFASTRULES_BUILD_SHARED=ON
+    Then copy fastrules.dll (or libfastrules.so) and dependencies to this directory.
 """
 
 import ctypes

@@ -507,10 +507,38 @@ void LuaBridge3Backend::removeCompiled(const std::string& id) {
 }
 
 void LuaBridge3Backend::setGlobal(const std::string& name, const LuaValue& value) {
+    // Handle LuaBridgeValue directly
     if (auto* lbVal = dynamic_cast<const LuaBridgeValue*>(&value)) {
         lbVal->push();
     } else {
-        lua_pushnil(pImpl_->L);
+        // Handle other LuaValue types by converting them to Lua stack values
+        switch (value.type()) {
+            case LuaType::Nil:
+                lua_pushnil(pImpl_->L);
+                break;
+            case LuaType::Boolean:
+                lua_pushboolean(pImpl_->L, value.toBool() ? 1 : 0);
+                break;
+            case LuaType::Number:
+                lua_pushnumber(pImpl_->L, value.toNumber());
+                break;
+            case LuaType::Integer:
+                lua_pushinteger(pImpl_->L, value.toInteger());
+                break;
+            case LuaType::String:
+                lua_pushstring(pImpl_->L, value.toString().c_str());
+                break;
+            case LuaType::Table:
+            case LuaType::Function:
+            case LuaType::Userdata:
+                // For complex types, we push nil as a fallback
+                // In a full implementation, we'd need to convert the table properly
+                lua_pushnil(pImpl_->L);
+                break;
+            default:
+                lua_pushnil(pImpl_->L);
+                break;
+        }
     }
     lua_setglobal(pImpl_->L, name.c_str());
     pImpl_->globals_.insert(name);

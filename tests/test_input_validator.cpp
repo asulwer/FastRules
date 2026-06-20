@@ -79,7 +79,7 @@ TEST_CASE("ParameterValidator basic functionality") {
     CHECK_THROWS_AS(validator.validateValue(longValue), fastrules::ValidationException);
     
     // Test invalid parameter values - null bytes
-    std::string nullValue = "test\0value";
+    std::string nullValue = std::string("test") + '\0' + "value";
     CHECK_THROWS_AS(validator.validateValue(nullValue), fastrules::ValidationException);
 }
 
@@ -102,7 +102,7 @@ TEST_CASE("ParameterValidator sanitization") {
     CHECK(sanitizedValue == cleanValue);
     
     // Test null byte removal
-    std::string nullValue = "test\0value";
+    std::string nullValue = std::string("test") + '\0' + "value";
     std::string sanitizedNull = validator.sanitizeValue(nullValue);
     CHECK(sanitizedNull == "testvalue");
 }

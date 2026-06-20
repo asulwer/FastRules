@@ -40,13 +40,13 @@ LuaExpressionValidator::LuaExpressionValidator(size_t maxLength)
     
     // Initialize dangerous patterns
     dangerousPatterns_ = {
-        "os\\.", "io\\.", "debug\\.", "load", "loadfile", "dofile",
+        "os\\.", "io\\.", "debug\\.", "loadstring", "load", "loadfile", "dofile",
         "require", "package\\.", "module", "setmetatable",
         "getmetatable", "rawget", "rawset", "rawequal",
-        "collectgarbage", "gcinfo", "newproxy",
+        "collectgarbage", "gcinfo", "newproxy", "getfenv", "setfenv",
         "system", "exec", "spawn", "popen",
         "import", "using", "include", "source",
-        "eval", "execute", "run", "call"
+        "eval", "execute", "run", "call", "_g"
     };
 }
 
@@ -55,7 +55,13 @@ void LuaExpressionValidator::validate(const std::string& expression) const {
     if (expression.length() > maxLength_) {
         throw ValidationException("Expression too long (max " + std::to_string(maxLength_) + " characters)");
     }
-    
+
+    // Empty or whitespace-only expressions are not valid Lua
+    if (expression.empty() ||
+        std::all_of(expression.begin(), expression.end(), [](unsigned char c) { return std::isspace(c); })) {
+        throw ValidationException("Expression cannot be empty or whitespace-only");
+    }
+
     // Check for dangerous patterns
     checkDangerousPatterns(expression);
     
@@ -101,10 +107,36 @@ void LuaExpressionValidator::checkDangerousPatterns(const std::string& expressio
     std::string lowerExpr = expression;
     std::transform(lowerExpr.begin(), lowerExpr.end(), lowerExpr.begin(), ::tolower);
     
+    // Check for dangerous patterns
     for (const auto& pattern : dangerousPatterns_) {
-        // Use simple string search instead of regex for better performance and reliability
-        if (lowerExpr.find(pattern) != std::string::npos) {
-            throw ValidationException("Dangerous pattern detected: " + pattern);
+        // Handle patterns with escaped dots
+        if (pattern.find("\\.") != std::string::npos) {
+            // Pattern contains escaped dot, replace with actual dot for matching
+            std::string searchPattern = pattern;
+            // Replace escaped dots with actual dots
+            size_t pos = 0;
+            while ((pos = searchPattern.find("\\.", pos)) != std::string::npos) {
+                searchPattern.replace(pos, 2, ".");
+                pos += 1;
+            }
+            
+            if (lowerExpr.find(searchPattern) != std::string::npos) {
+                throw ValidationException("Dangerous pattern detected: " + pattern);
+            }
+        } else {
+            // Word boundary patterns for simple strings
+            size_t pos = 0;
+            while ((pos = lowerExpr.find(pattern, pos)) != std::string::npos) {
+                // Check if it's a word boundary
+                bool isStartBoundary = (pos == 0 || !std::isalnum(lowerExpr[pos - 1]));
+                bool isEndBoundary = (pos + pattern.length() >= lowerExpr.length() || 
+                                    !std::isalnum(lowerExpr[pos + pattern.length()]));
+                
+                if (isStartBoundary && isEndBoundary) {
+                    throw ValidationException("Dangerous pattern detected: " + pattern);
+                }
+                pos += 1;
+            }
         }
     }
 }
@@ -220,6 +252,9 @@ void ParameterValidator::validateValue(const std::string& value) const {
     if (value.find('\0') != std::string::npos) {
         throw ValidationException("Parameter value contains null bytes");
     }
+    
+    // Note: Empty values are allowed in some contexts, so we don't throw for empty strings
+    // unless specifically required by the application logic
 }
 
 void ParameterValidator::validate(const std::string& name, const std::string& value) const {
