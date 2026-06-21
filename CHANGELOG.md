@@ -19,10 +19,10 @@ If upgrading from 0.1.0:
 - **Test discovery unified.** `enable_testing()` is now called at the root level; run `ctest` from the build root to execute both core and extension tests.
 
 ### Added
-- Core stress-test suite built on doctest:
+- Core stress-test suite (standalone executable, not tied to CTest or doctest):
   - `FASTRULES_BUILD_STRESS_TESTS` CMake option (default `OFF`) to mirror the existing test/example flags.
-  - Core stress executable covering compile throughput, execute throughput, parallel execution, engine-pool exhaustion, concurrent compile+execute, auto-reset stress, large workflows, deep child-rule chains, action throughput, timeout-executor storm, `executeAsync` backlog, coroutine churn, type-registration churn, parameter bloat, exception-path stress, engine clone pressure, and mixed-workload soak.
-  - Run with standard doctest options (e.g., `--test-case="compile throughput"`) plus workload knobs `--duration`, `--iterations`, `--threads`, `--rules`, and `--parameters`.
+  - `fastrules-stress-core` executable covering compile throughput, execute throughput, parallel execution, engine-pool exhaustion, concurrent compile+execute, auto-reset stress, large workflows, deep child-rule chains, action throughput, timeout-executor storm, `executeAsync` backlog, coroutine churn, type-registration churn, parameter bloat, exception-path stress, engine clone pressure, and mixed-workload soak.
+  - Controlled via command-line knobs: `--duration`, `--iterations`, `--threads`, `--rules`, and `--parameters`.
 - Fixed duplicated `RuleTimeoutException` definition by extracting it into `include/fastrules/rule_timeout_exception.hpp` and including it from both `rule.hpp` and `timeout_executor.hpp`.
 
 - AOT compilation — pre-compile workflows to binary bundles for faster loading.

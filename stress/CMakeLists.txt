@@ -6,11 +6,7 @@ cmake_minimum_required(VERSION 3.28)
 
 add_executable(fastrules-stress-core core_stress.cpp)
 set_property(TARGET fastrules-stress-core PROPERTY FOLDER "Stress/Core")
-
-target_link_libraries(fastrules-stress-core PRIVATE
-    fastrules
-    doctest::doctest
-)
+target_link_libraries(fastrules-stress-core PRIVATE fastrules)
 
 # Include the stress harness headers from the root stress/ directory.
 target_include_directories(fastrules-stress-core PRIVATE
