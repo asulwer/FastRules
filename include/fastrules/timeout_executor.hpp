@@ -56,33 +56,24 @@ public:
     auto executeWithTimeout(F&& fn) -> decltype(fn()) {
         // Reset cancelled flag
         cancelled_.store(false);
-        
-        // Wrap the work in a packaged_task so void / non-void return types
-        // are handled uniformly.
-        std::packaged_task<decltype(fn())()> task(std::forward<F>(fn));
-        auto resultFuture = task.get_future();
-        std::thread worker(std::move(task));
-        
+
+        // Wrap the work in a heap-allocated packaged_task. The detached worker
+        // thread owns its own copy, so the callable and its captures stay valid
+        // even after executeWithTimeout returns. Callers must not capture the
+        // caller's stack by reference; true hard termination of arbitrary C++
+        // code is not possible in standard C++.
+        using result_type = decltype(fn());
+        auto task = std::make_shared<std::packaged_task<result_type()>>(std::forward<F>(fn));
+        auto resultFuture = task->get_future();
+        std::thread([task]() mutable { (*task)(); }).detach();
+
         // Wait for completion or timeout
         if (resultFuture.wait_for(maxExecutionTime_) == std::future_status::timeout) {
-            // Mark as cancelled
             cancelled_.store(true);
-            
-            // We can't safely terminate the thread, so we'll just detach it
-            // and let it finish naturally (this is a limitation of C++ threading)
-            if (worker.joinable()) {
-                worker.detach();
-            }
-            
-            throw RuleTimeoutException("Rule execution timed out after " + 
+            throw RuleTimeoutException("Rule execution timed out after " +
                                      std::to_string(maxExecutionTime_.count()) + " milliseconds");
         }
-        
-        // Wait for the worker to finish naturally
-        if (worker.joinable()) {
-            worker.join();
-        }
-        
+
         // Get the result
         return resultFuture.get();
     }

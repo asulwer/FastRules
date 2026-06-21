@@ -69,10 +69,12 @@ public:
         
         std::future<return_type> result = task->get_future();
         
-        // Push task to a random local queue for load balancing
+        // Push task to a random local queue for load balancing.
+        // The distribution is not static so a thread using multiple pools always
+        // indexes within the current pool's range.
         static thread_local std::mt19937 rng{std::random_device{}()};
-        static thread_local std::uniform_int_distribution<size_t> dist(0, localQueues_.size() - 1);
-        
+        std::uniform_int_distribution<size_t> dist(0, localQueues_.size() - 1);
+
         size_t queueIndex = dist(rng);
         localQueues_[queueIndex]->push([task]() { (*task)(); });
         

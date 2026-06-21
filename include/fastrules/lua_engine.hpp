@@ -477,7 +477,16 @@ public:
      */
     [[nodiscard]] size_t getMemoryUsageKB();
 
+private:
+    /**
+     * @brief Memory usage query that assumes luaStateMutex_ is already held
+     */
+    [[nodiscard]] size_t getMemoryUsageKBUnsafe() const noexcept;
+
+public:
+
     // ========================================================================
+
     // Logging
     // ========================================================================
     

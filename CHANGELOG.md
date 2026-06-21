@@ -85,6 +85,11 @@ If upgrading from 0.1.0:
 - `Workflow::executeStreaming` no longer uses `static thread_local` generator state; each `StreamingResult` owns its own `RuleContext` and index, preventing cross-generator corruption and memory leaks.
 - DB example CMake now copies `fmt.dll`/`fmtd.dll` so the DB example no longer fails with `STATUS_DLL_NOT_FOUND`.
 - Extension example/test runtime failures (`STATUS_DLL_NOT_FOUND`) resolved by copying only the matching build configuration's vcpkg DLLs to each output directory, avoiding Debug/Release runtime mixups.
+- `TimeoutExecutor::executeWithTimeout` no longer detaches a stack-allocated `std::thread`; the task is heap-owned by the detached worker, removing the use-after-free risk on the local worker handle.
+- `Workflow::executeAsync` no longer captures the caller-supplied `LuaEngine` by reference. It runs on a pre-compiled engine clone from the workflow pool, so the returned future does not depend on caller objects.
+- `WorkStealingThreadPool::enqueue` uses a non-static distribution sized to the current pool, so a thread submitting to multiple pools cannot produce out-of-range indices.
+- `LuaEngine` auto-reset now triggers *before* compiling a new expression/action/coroutine. Resetting after compilation was invalidating the reference that had just been returned to the caller.
+- `LuaEngine::getMemoryUsageKB()` now takes the Lua-state mutex normally when called without already holding it; `resetState()` uses a private unsafe helper to avoid self-deadlock.
 - DB example now uses an absolute database path so SQLite can open `rules.db` regardless of the caller's working directory.
 - `coroutine_example` no longer relies on an unsupported global `result` table in actions.
 - DB `soci::rowset` loops rewritten with explicit iterators to avoid unreachable-code warnings.

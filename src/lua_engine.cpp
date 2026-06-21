@@ -540,6 +540,19 @@ std::optional<int> LuaEngine::compileExpression(const std::string& expression) {
 
     std::vector<std::string> params = extractParameterNames(expression);
 
+    // Reset the Lua state before compiling if memory is already over the
+    // threshold. Resetting after compilation would invalidate the reference we
+    // are about to return.
+    if (autoResetThresholdKB_ > 0) {
+        size_t memKB = getMemoryUsageKB();
+        if (memKB > autoResetThresholdKB_) {
+            if (logger_) {
+                logger_->warn("Lua state memory ({} KB) exceeded threshold ({} KB). Triggering state reset.", memKB, autoResetThresholdKB_);
+            }
+            resetState();
+        }
+    }
+
     int ref;
     std::string backendId;
     try {
@@ -560,16 +573,6 @@ std::optional<int> LuaEngine::compileExpression(const std::string& expression) {
         throw RuleCompilationException(std::string("Compilation failed: ") + e.what());
     }
 
-    if (autoResetThresholdKB_ > 0) {
-        size_t memKB = getMemoryUsageKB();
-        if (memKB > autoResetThresholdKB_) {
-            if (logger_) {
-                logger_->warn("Lua state memory ({} KB) exceeded threshold ({} KB). Triggering state reset.", memKB, autoResetThresholdKB_);
-            }
-            resetState();
-        }
-    }
-
     return ref;
 }
 
@@ -585,6 +588,16 @@ std::optional<int> LuaEngine::compileAction(const std::string& action) {
     }
 
     std::vector<std::string> params = extractParameterNames(action);
+
+    if (autoResetThresholdKB_ > 0) {
+        size_t memKB = getMemoryUsageKB();
+        if (memKB > autoResetThresholdKB_) {
+            if (logger_) {
+                logger_->warn("Lua state memory ({} KB) exceeded threshold ({} KB). Triggering state reset.", memKB, autoResetThresholdKB_);
+            }
+            resetState();
+        }
+    }
 
     int ref;
     std::string backendId;
@@ -603,16 +616,6 @@ std::optional<int> LuaEngine::compileAction(const std::string& action) {
         throw RuleCompilationException(std::string("Compilation failed: ") + e.what());
     }
 
-    if (autoResetThresholdKB_ > 0) {
-        size_t memKB = getMemoryUsageKB();
-        if (memKB > autoResetThresholdKB_) {
-            if (logger_) {
-                logger_->warn("Lua state memory ({} KB) exceeded threshold ({} KB). Triggering state reset.", memKB, autoResetThresholdKB_);
-            }
-            resetState();
-        }
-    }
-
     return ref;
 }
 
@@ -622,6 +625,16 @@ std::optional<int> LuaEngine::compileCoroutine(const std::string& expression) {
     }
 
     std::vector<std::string> params = extractParameterNames(expression);
+
+    if (autoResetThresholdKB_ > 0) {
+        size_t memKB = getMemoryUsageKB();
+        if (memKB > autoResetThresholdKB_) {
+            if (logger_) {
+                logger_->warn("Lua state memory ({} KB) exceeded threshold ({} KB). Triggering state reset.", memKB, autoResetThresholdKB_);
+            }
+            resetState();
+        }
+    }
 
     int ref;
     std::string backendId;
@@ -644,16 +657,6 @@ std::optional<int> LuaEngine::compileCoroutine(const std::string& expression) {
         paramNames_[ref] = params;
         compileCount_.fetch_add(1);
         refToBackendId_[ref] = backendId;
-    }
-
-    if (autoResetThresholdKB_ > 0) {
-        size_t memKB = getMemoryUsageKB();
-        if (memKB > autoResetThresholdKB_) {
-            if (logger_) {
-                logger_->warn("Lua state memory ({} KB) exceeded threshold ({} KB). Triggering state reset.", memKB, autoResetThresholdKB_);
-            }
-            resetState();
-        }
     }
 
     return ref;
@@ -932,7 +935,7 @@ void LuaEngine::resetState() {
     generation_.fetch_add(1);
 
     if (logger_) {
-        size_t memBefore = getMemoryUsageKB();
+        size_t memBefore = getMemoryUsageKBUnsafe();
         logger_->info("Resetting Lua state. Memory before: {} KB, compiled refs: {}, compile count: {}", memBefore, refToBackendId_.size(), compileCount_.load());
     }
 
@@ -965,7 +968,7 @@ void LuaEngine::resetState() {
     bindActionsToState();
 
     if (logger_) {
-        size_t memAfter = getMemoryUsageKB();
+        size_t memAfter = getMemoryUsageKBUnsafe();
         logger_->info("Lua state reset complete. Memory after: {} KB", memAfter);
     }
 }
@@ -977,10 +980,11 @@ void LuaEngine::collectGarbage() {
 }
 
 size_t LuaEngine::getMemoryUsageKB() {
-    std::unique_lock<std::mutex> lock(luaStateMutex_, std::try_to_lock);
-    if (!lock.owns_lock()) {
-        return 0;
-    }
+    std::lock_guard<std::mutex> lock(luaStateMutex_);
+    return backend_->memoryUsageKB();
+}
+
+size_t LuaEngine::getMemoryUsageKBUnsafe() const noexcept {
     return backend_->memoryUsageKB();
 }
 

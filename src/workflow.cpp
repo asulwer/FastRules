@@ -621,11 +621,29 @@ void Workflow::releaseEngine(LuaEngine* engine) {
     }
 }
 
-std::future<std::vector<RuleResult>> Workflow::executeAsync(LuaEngine& engine, const std::vector<RuleParameter>& parameters) {
-    // Return future that will execute asynchronously
-    // Capture parameters by VALUE to avoid dangling reference when async runs later
-    return std::async(std::launch::async, [this, &engine, parameters]() {
-        return this->execute(engine, parameters);
+std::future<std::vector<RuleResult>> Workflow::executeAsync(LuaEngine& /*engine*/, const std::vector<RuleParameter>& parameters) {
+    // Use a pre-compiled engine clone from the workflow's own pool. The
+    // caller-supplied engine is ignored because the future must outlive this
+    // call and cannot safely reference caller-owned objects. The workflow must
+    // outlive the returned future.
+    return std::async(std::launch::async, [this, parameters]() {
+        auto* threadEngine = acquireEngine();
+        if (!threadEngine) {
+            RuleResult errorResult;
+            errorResult.ruleName = name;
+            errorResult.success = false;
+            errorResult.exception = RuleException("Failed to acquire engine from pool for async execution");
+            return std::vector<RuleResult>{errorResult};
+        }
+
+        try {
+            auto results = this->execute(*threadEngine, parameters);
+            releaseEngine(threadEngine);
+            return results;
+        } catch (...) {
+            releaseEngine(threadEngine);
+            throw;
+        }
     });
 }
 
