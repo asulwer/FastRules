@@ -526,10 +526,6 @@ std::string LuaEngine::makeBackendId(int ref) const {
 }
 
 std::optional<int> LuaEngine::compileExpression(const std::string& expression) {
-    // Ensure registered types are bound to this Lua state before compiling
-    // any expression that may reference them.
-    bindTypesToState();
-
     if (maxExpressionLength_ > 0 && expression.size() > maxExpressionLength_) {
         throw RuleCompilationException(
             "Expression exceeds maximum length of " + std::to_string(maxExpressionLength_) + 
@@ -547,16 +543,22 @@ std::optional<int> LuaEngine::compileExpression(const std::string& expression) {
     int ref;
     std::string backendId;
     try {
+        // Lua is not thread-safe; hold the Lua-state mutex while touching the
+        // backend during compilation. The registry mutex is acquired after the
+        // Lua mutex to keep the lock order consistent with execution methods.
+        std::scoped_lock<std::mutex> luaLock(luaStateMutex_);
+        bindTypesToState();
+
         std::lock_guard<std::shared_mutex> lock(registryMutex_);
         ref = nextRefId_++;
         backendId = makeBackendId(ref);
         backend_->compileExpression(backendId, expression);
         paramNames_[ref] = params;
         compileCount_.fetch_add(1);
+        refToBackendId_[ref] = backendId;
     } catch (const std::exception& e) {
         throw RuleCompilationException(std::string("Compilation failed: ") + e.what());
     }
-    refToBackendId_[ref] = backendId;
 
     if (autoResetThresholdKB_ > 0) {
         size_t memKB = getMemoryUsageKB();
@@ -572,9 +574,6 @@ std::optional<int> LuaEngine::compileExpression(const std::string& expression) {
 }
 
 std::optional<int> LuaEngine::compileAction(const std::string& action) {
-    // Ensure action callbacks are bound before compiling an action.
-    bindActionsToState();
-
     if (action.empty()) {
         return std::nullopt;
     }
@@ -590,16 +589,19 @@ std::optional<int> LuaEngine::compileAction(const std::string& action) {
     int ref;
     std::string backendId;
     try {
+        std::scoped_lock<std::mutex> luaLock(luaStateMutex_);
+        bindActionsToState();
+
         std::lock_guard<std::shared_mutex> lock(registryMutex_);
         ref = nextRefId_++;
         backendId = makeBackendId(ref);
         backend_->compileAction(backendId, action);
         paramNames_[ref] = params;
         compileCount_.fetch_add(1);
+        refToBackendId_[ref] = backendId;
     } catch (const std::exception& e) {
         throw RuleCompilationException(std::string("Compilation failed: ") + e.what());
     }
-    refToBackendId_[ref] = backendId;
 
     if (autoResetThresholdKB_ > 0) {
         size_t memKB = getMemoryUsageKB();
@@ -615,10 +617,6 @@ std::optional<int> LuaEngine::compileAction(const std::string& action) {
 }
 
 std::optional<int> LuaEngine::compileCoroutine(const std::string& expression) {
-    // Ensure registered types and actions are bound before compiling.
-    bindTypesToState();
-    bindActionsToState();
-
     if (expression.empty()) {
         return std::nullopt;
     }
@@ -629,6 +627,10 @@ std::optional<int> LuaEngine::compileCoroutine(const std::string& expression) {
     std::string backendId;
     void* handle = nullptr;
     {
+        std::scoped_lock<std::mutex> luaLock(luaStateMutex_);
+        bindTypesToState();
+        bindActionsToState();
+
         std::lock_guard<std::shared_mutex> lock(registryMutex_);
         ref = nextRefId_++;
         backendId = makeBackendId(ref);
@@ -641,8 +643,8 @@ std::optional<int> LuaEngine::compileCoroutine(const std::string& expression) {
         coroutineHandles_[ref] = handle;
         paramNames_[ref] = params;
         compileCount_.fetch_add(1);
+        refToBackendId_[ref] = backendId;
     }
-    refToBackendId_[ref] = backendId;
 
     if (autoResetThresholdKB_ > 0) {
         size_t memKB = getMemoryUsageKB();

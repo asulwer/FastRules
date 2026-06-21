@@ -27,6 +27,7 @@ if(WIN32)
             "$<IF:$<CONFIG:Debug>,${VCPKG_BIN_DIR_DEBUG}/sqlite3.dll,${VCPKG_BIN_DIR}/sqlite3.dll>"
             "$<IF:$<CONFIG:Debug>,${VCPKG_BIN_DIR_DEBUG}/lua.dll,${VCPKG_BIN_DIR}/lua.dll>"
             "$<IF:$<CONFIG:Debug>,${VCPKG_BIN_DIR_DEBUG}/spdlogd.dll,${VCPKG_BIN_DIR}/spdlog.dll>"
+            "$<IF:$<CONFIG:Debug>,${VCPKG_BIN_DIR_DEBUG}/fmtd.dll,${VCPKG_BIN_DIR}/fmt.dll>"
             "${OUTPUT_DIR}/"
         COMMENT "Copying dependency DLLs ($<CONFIG>)"
     )

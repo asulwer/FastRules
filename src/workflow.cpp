@@ -685,24 +685,17 @@ StreamingResult Workflow::executeStreaming(LuaEngine& engine, const std::vector<
         compile(engine);
     }
 
-    // Capture workflow state by value for the generator
+    // Capture workflow state by value for the generator.
+    // The generator owns its own context and index so multiple StreamingResult
+    // instances (and instances moved across threads) do not share state.
     auto rulesCopy = rules;
 
-    return StreamingResult([this, &engine, parameters, rulesCopy]() mutable -> std::optional<RuleResult> {
-        // Use a persistent context and index stored in the closure
-        static thread_local RuleContext* ctx = nullptr;
-        static thread_local size_t idx = 0;
-        static thread_local bool initialized = false;
-
-        if (!initialized) {
-            ctx = new RuleContext();
-            idx = 0;
-            initialized = true;
-        }
-
+    return StreamingResult([this, &engine, parameters, rulesCopy,
+                            ctx = std::make_shared<RuleContext>(),
+                            idx = std::make_shared<size_t>(0)]() mutable -> std::optional<RuleResult> {
         // Find next rule to execute
-        while (idx < rulesCopy.size()) {
-            auto& rule = rulesCopy[idx++];
+        while (*idx < rulesCopy.size()) {
+            auto& rule = rulesCopy[(*idx)++];
 
             if (!rule->isActive) {
                 continue;
@@ -724,10 +717,6 @@ StreamingResult Workflow::executeStreaming(LuaEngine& engine, const std::vector<
             }
         }
 
-        // Cleanup on end
-        delete ctx;
-        ctx = nullptr;
-        initialized = false;
         return std::nullopt;
     });
 }

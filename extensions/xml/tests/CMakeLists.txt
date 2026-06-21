@@ -16,15 +16,14 @@ target_link_libraries(fastrules-xml-tests PRIVATE
 # without relying on PATH. Only vcpkg DLLs are copied; fastrules.dll lives in
 # the root output dir and is added to PATH in the add_test command below.
 if(WIN32)
-    set(_XML_TEST_DLL_SRC_DIRS
-        "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin"
-        "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin"
+    # Only copy DLLs matching the current build configuration.
+    set(_XML_TEST_DLL_SRC_DIR
+        "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/$<$<CONFIG:Debug>:debug/>bin"
     )
-    string(JOIN "|" _XML_TEST_DLL_SRC_DIRS_STR ${_XML_TEST_DLL_SRC_DIRS})
 
     add_custom_command(TARGET fastrules-xml-tests POST_BUILD
         COMMAND ${CMAKE_COMMAND}
-            -D SRC_DIRS="${_XML_TEST_DLL_SRC_DIRS_STR}"
+            -D SRC_DIRS="${_XML_TEST_DLL_SRC_DIR}"
             -D DST_DIR="$<TARGET_FILE_DIR:fastrules-xml-tests>"
             -P "${CMAKE_SOURCE_DIR}/cmake/copy_test_dlls.cmake"
         COMMENT "Copying runtime DLLs to fastrules-xml-tests output directory"

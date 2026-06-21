@@ -35,7 +35,7 @@ if(WIN32 AND VCPKG_INSTALLED_DIR)
         # Copy vcpkg DLLs
         add_custom_command(TARGET ${target} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin"
+                "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/$<$<CONFIG:Debug>:debug/>bin"
                 "$<TARGET_FILE_DIR:${target}>"
         )
         

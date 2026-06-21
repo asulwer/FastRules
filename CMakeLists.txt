@@ -44,13 +44,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_SUPPRESS_REGENERATION ON)
 set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY ON)
 
-# Consolidate all runtime artifacts (executables and DLLs) into a single
-# per-configuration directory so examples can find their runtime dependencies
-# without relying on the user's PATH.
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>)
-
 # Set MSVC runtime library globally before any targets are created
 if(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
@@ -292,15 +285,15 @@ if(FASTRULES_BUILD_TESTS)
     # them without relying on PATH. Only vcpkg DLLs are copied here; the main
     # fastrules.dll is already next to fastrules_tests in the root output dir.
     if(WIN32)
-        set(_FASTRULES_TEST_DLL_SRC_DIRS
-            "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin"
-            "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin"
+        # Only copy DLLs matching the current build configuration to avoid
+        # mixing Debug/Release runtimes (e.g. soci_sqlite3_4_0.dll has no d-suffix).
+        set(_FASTRULES_TEST_DLL_SRC_DIR
+            "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/$<$<CONFIG:Debug>:debug/>bin"
         )
-        string(JOIN "|" _FASTRULES_TEST_DLL_SRC_DIRS_STR ${_FASTRULES_TEST_DLL_SRC_DIRS})
 
         add_custom_command(TARGET fastrules_tests POST_BUILD
             COMMAND ${CMAKE_COMMAND}
-                -D SRC_DIRS="${_FASTRULES_TEST_DLL_SRC_DIRS_STR}"
+                -D SRC_DIRS="${_FASTRULES_TEST_DLL_SRC_DIR}"
                 -D DST_DIR="$<TARGET_FILE_DIR:fastrules_tests>"
                 -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/copy_test_dlls.cmake"
             COMMENT "Copying runtime DLLs to fastrules_tests output directory"
