@@ -155,7 +155,7 @@ TEST_CASE("LuaEngine type registration") {
     LuaEngine engine;
 
     // Test registering a simple type
-    engine.registerType<std::string>("StringType", [](auto& reg) {
+    engine.registerType<std::string>("StringType", [](auto& /*reg*/) {
         // Register methods if needed
     });
 
