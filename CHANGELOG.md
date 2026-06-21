@@ -21,7 +21,8 @@ If upgrading from 0.1.0:
 ### Added
 - Core stress-test suite with a lightweight internal harness:
   - `FASTRULES_BUILD_STRESS_TESTS` CMake option (default `OFF`) to mirror the existing test/example flags.
-  - Core stress executable covering compile throughput, execute throughput, parallel execution, engine-pool exhaustion, concurrent compile+execute, and auto-reset stress.
+  - Core stress executable covering compile throughput, execute throughput, parallel execution, engine-pool exhaustion, concurrent compile+execute, auto-reset stress, large workflows, deep child-rule chains, action throughput, timeout-executor storm, `executeAsync` backlog, coroutine churn, type-registration churn, parameter bloat, exception-path stress, engine clone pressure, and mixed-workload soak.
+- Fixed duplicated `RuleTimeoutException` definition by extracting it into `include/fastrules/rule_timeout_exception.hpp` and including it from both `rule.hpp` and `timeout_executor.hpp`.
 
 - AOT compilation — pre-compile workflows to binary bundles for faster loading.
 - Rule versioning — semantic versioning with history tracking and rollback support.

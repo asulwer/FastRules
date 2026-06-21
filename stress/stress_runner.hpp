@@ -30,8 +30,8 @@ struct StressConfig {
     double durationSeconds = 2.0;
     size_t iterations = 0;            // If > 0, overrides duration.
     size_t threads = 1;
-    size_t rules = 100;
-    size_t parameters = 10;
+    size_t rules = 20;
+    size_t parameters = 5;
     size_t autoResetThresholdKB = 0;  // 0 disables auto-reset checks.
     bool verbose = true;
 

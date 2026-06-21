@@ -7,22 +7,14 @@
 
 #pragma once
 
+#include "fastrules/rule_timeout_exception.hpp"
+
 #include <chrono>
 #include <future>
 #include <thread>
-#include <stdexcept>
 #include <atomic>
 
 namespace fastrules {
-
-/**
- * @brief Exception thrown when a rule execution times out
- */
-class RuleTimeoutException : public std::runtime_error {
-public:
-    explicit RuleTimeoutException(const std::string& message = "Rule execution timed out") 
-        : std::runtime_error(message) {}
-};
 
 /**
  * @brief Hard timeout executor

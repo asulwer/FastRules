@@ -91,6 +91,8 @@
 #include <typeindex>
 #include <type_traits>
 
+#include "fastrules/rule_timeout_exception.hpp"
+
 namespace fastrules {
 
 // Forward declarations
@@ -125,17 +127,6 @@ public:
 class RuleValidationException : public std::runtime_error {
 public:
     explicit RuleValidationException(const std::string& msg) : std::runtime_error(msg) {}
-};
-
-/**
- * @brief Exception thrown when rule execution times out
- *
- * Thrown when a rule exceeds its configured timeout.
- * The timeout mechanism uses Lua debug hooks.
- */
-class RuleTimeoutException : public std::runtime_error {
-public:
-    explicit RuleTimeoutException(const std::string& msg) : std::runtime_error(msg) {}
 };
 
 /**
