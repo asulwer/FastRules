@@ -19,10 +19,9 @@ If upgrading from 0.1.0:
 - **Test discovery unified.** `enable_testing()` is now called at the root level; run `ctest` from the build root to execute both core and extension tests.
 
 ### Added
-- Stress-test suite with a lightweight internal harness:
+- Core stress-test suite with a lightweight internal harness:
+  - `FASTRULES_BUILD_STRESS_TESTS` CMake option (default `OFF`) to mirror the existing test/example flags.
   - Core stress executable covering compile throughput, execute throughput, parallel execution, engine-pool exhaustion, concurrent compile+execute, and auto-reset stress.
-  - Extension stress executables for JSON, XML, and DB persistence (load/execute roundtrip, repository churn, DB compile+execute from repository).
-  - CMake option `FASTRULES_BUILD_STRESS_TESTS` (default `OFF`) plus per-extension options to mirror the test/example organization.
 
 - AOT compilation — pre-compile workflows to binary bundles for faster loading.
 - Rule versioning — semantic versioning with history tracking and rollback support.
