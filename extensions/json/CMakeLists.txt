@@ -55,6 +55,12 @@ elseif(FASTRULES_JSON_BUILD_TESTS AND FASTRULES_IN_TREE_TESTS)
     add_subdirectory(tests)
 endif()
 
+# Stress tests
+option(FASTRULES_JSON_BUILD_TESTS_STRESS "Build JSON extension stress tests" ${FASTRULES_BUILD_STRESS_TESTS})
+if(FASTRULES_JSON_BUILD_TESTS_STRESS)
+    add_subdirectory(stress)
+endif()
+
 # Install
 include(GNUInstallDirs)
 install(TARGETS fastrules-json

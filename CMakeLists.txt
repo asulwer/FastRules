@@ -64,6 +64,7 @@ include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 # Define options BEFORE collecting vcpkg features
 option(FASTRULES_BUILD_TESTS "Build tests" ON)
 option(FASTRULES_BUILD_EXAMPLES "Build examples" ON)
+option(FASTRULES_BUILD_STRESS_TESTS "Build stress tests" OFF)
 option(FASTRULES_BUILD_EXTENSIONS "Build optional persistence extensions" OFF)
 option(FASTRULES_BUILD_COVERAGE "Build with coverage instrumentation" OFF)
 option(FASTRULES_BUILD_SHARED "Build as shared library (DLL/SO/Dylib)" OFF)
@@ -301,6 +302,12 @@ if(FASTRULES_BUILD_TESTS)
     endif()
 
     add_test(NAME fastrules_tests COMMAND fastrules_tests)
+endif()
+
+# === Stress tests ===
+if(FASTRULES_BUILD_STRESS_TESTS)
+    set(FASTRULES_IN_TREE_STRESS ON)
+    add_subdirectory(stress)
 endif()
 
 # === Examples ===
