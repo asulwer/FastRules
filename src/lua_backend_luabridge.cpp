@@ -271,7 +271,7 @@ static void pushAny(lua_State* L, const std::any& value) {
 struct LuaBridge3Backend::Impl {
     lua_State* L = nullptr;
     std::unordered_map<std::string, int> compiled_;     // id -> registry ref
-    std::unordered_map<void*, lua_State*> coroutines_;  // handle -> thread
+    std::unordered_map<int, lua_State*> coroutines_;     // registry ref -> thread
     std::unordered_set<std::string> globals_;
     std::unordered_map<std::string, LuaNativeFunc> nativeFuncs_;
     std::unordered_map<std::string, LuaPredicateFunc> predicates_;
@@ -322,7 +322,15 @@ void LuaBridge3Backend::reset() {
         luaL_unref(pImpl_->L, LUA_REGISTRYINDEX, ref);
     }
     pImpl_->compiled_.clear();
+
+    // Release all coroutine thread refs
+    for (auto& [threadRef, thread] : pImpl_->coroutines_) {
+        if (thread) {
+            luaL_unref(pImpl_->L, LUA_REGISTRYINDEX, threadRef);
+        }
+    }
     pImpl_->coroutines_.clear();
+
     pImpl_->globals_.clear();
     pImpl_->nativeFuncs_.clear();
     pImpl_->predicates_.clear();
@@ -456,22 +464,26 @@ void* LuaBridge3Backend::createCoroutine(const std::string& id) {
         return nullptr;
     }
 
-    // Create a new thread
+    // Create a new thread. lua_newthread pushes the thread onto the main
+    // state's stack, so take a registry reference and pop it to avoid leaking
+    // a stack reference for every coroutine.
     lua_State* thread = lua_newthread(pImpl_->L);
     if (!thread) {
         return nullptr;
     }
+    int threadRef = luaL_ref(pImpl_->L, LUA_REGISTRYINDEX);
 
     // Push compiled function onto thread stack
     lua_rawgeti(thread, LUA_REGISTRYINDEX, it->second);
 
-    void* handle = thread;
-    pImpl_->coroutines_[handle] = thread;
+    void* handle = reinterpret_cast<void*>(static_cast<intptr_t>(threadRef));
+    pImpl_->coroutines_[threadRef] = thread;
     return handle;
 }
 
 bool LuaBridge3Backend::resumeCoroutine(void* handle) {
-    auto it = pImpl_->coroutines_.find(handle);
+    int threadRef = static_cast<int>(reinterpret_cast<intptr_t>(handle));
+    auto it = pImpl_->coroutines_.find(threadRef);
     if (it == pImpl_->coroutines_.end()) {
         return true; // finished
     }
@@ -496,7 +508,12 @@ bool LuaBridge3Backend::resumeCoroutine(void* handle) {
 }
 
 void LuaBridge3Backend::closeCoroutine(void* handle) {
-    pImpl_->coroutines_.erase(handle);
+    int threadRef = static_cast<int>(reinterpret_cast<intptr_t>(handle));
+    auto it = pImpl_->coroutines_.find(threadRef);
+    if (it != pImpl_->coroutines_.end()) {
+        luaL_unref(pImpl_->L, LUA_REGISTRYINDEX, threadRef);
+        pImpl_->coroutines_.erase(it);
+    }
 }
 
 void LuaBridge3Backend::removeCompiled(const std::string& id) {

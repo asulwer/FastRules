@@ -23,6 +23,8 @@ If upgrading from 0.1.0:
   - `FASTRULES_BUILD_STRESS_TESTS` CMake option (default `OFF`) to mirror the existing test/example flags.
   - `fastrules-stress-core` executable covering compile throughput, execute throughput, parallel execution, engine-pool exhaustion, concurrent compile+execute, auto-reset stress, large workflows, deep child-rule chains, action throughput, timeout-executor storm, `executeAsync` backlog, coroutine churn, type-registration churn, parameter bloat, exception-path stress, engine clone pressure, and mixed-workload soak.
   - Controlled via command-line knobs: `--duration`, `--iterations`, `--threads`, `--rules`, and `--parameters`.
+- Fixed coroutine memory leak: `LuaBridge3Backend::createCoroutine` left every new Lua thread referenced on the main state's stack, and `closeCoroutine` did not release that reference. Now each coroutine is stored via a registry reference and properly unreferenced on close/reset. Stress-test `coroutine churn` memory dropped from ~600 MB to ~50 KB as a result.
+
 - Fixed duplicated `RuleTimeoutException` definition by extracting it into `include/fastrules/rule_timeout_exception.hpp` and including it from both `rule.hpp` and `timeout_executor.hpp`.
 
 - AOT compilation — pre-compile workflows to binary bundles for faster loading.

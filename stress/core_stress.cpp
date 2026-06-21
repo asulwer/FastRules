@@ -221,6 +221,7 @@ static StressResult coroutineChurn(const StressConfig& cfg) {
         auto ref = engine->compileCoroutine("true");
         RuleContext ctx;
         engine->resumeCoroutine(*ref, params, ctx);
+        engine->releaseRef(*ref);
     });
 }
 
