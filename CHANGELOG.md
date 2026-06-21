@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Removed CTest integration. Tests are now run as plain doctest executables.
+  - Removed `enable_testing()` and `add_test()` registrations from root and extension test CMakeLists.
+  - Extension test targets now copy `fastrules.dll` next to the executable at build time so they can be run directly.
+  - Updated `README.md` to show direct execution instead of `ctest`.
+
+
 ## [0.2.0] - 2026-06-20
 
 ### Migration Guide
