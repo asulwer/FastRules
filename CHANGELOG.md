@@ -80,7 +80,11 @@ If upgrading from 0.1.0:
 - `AsyncWorkflow::executeParallelAsync` now passes a shared `RuleContext` across dependency levels so rules can correctly read results from prior levels.
 - `TypeRegistry::registerType` merges descriptors instead of replacing them, so macros like `FASTRULES_REGISTER_METHODS_N` can add methods after `FASTRULES_REGISTER_TYPE_N` has bound fields.
 - `LuaEngine::compileExpression`, `compileAction`, and `compileCoroutine` now bind registered types/actions before compiling, fixing direct `Rule::compile()` usage in `no_globals_example`.
-- Extension example runtime failures (`STATUS_DLL_NOT_FOUND`) resolved by consolidating all runtime artifacts into a single per-configuration output directory via `CMAKE_RUNTIME_OUTPUT_DIRECTORY`.
+- `LuaEngine::compileExpression`, `compileAction`, and `compileCoroutine` now lock `luaStateMutex_` while touching the Lua backend, preventing concurrent compile/execute threads from corrupting the Lua state.
+- The `refToBackendId_` registration is now performed while still holding `registryMutex_`, removing a race where concurrent execution could see a ref before its backend ID was set.
+- `Workflow::executeStreaming` no longer uses `static thread_local` generator state; each `StreamingResult` owns its own `RuleContext` and index, preventing cross-generator corruption and memory leaks.
+- DB example CMake now copies `fmt.dll`/`fmtd.dll` so the DB example no longer fails with `STATUS_DLL_NOT_FOUND`.
+- Extension example/test runtime failures (`STATUS_DLL_NOT_FOUND`) resolved by copying only the matching build configuration's vcpkg DLLs to each output directory, avoiding Debug/Release runtime mixups.
 - DB example now uses an absolute database path so SQLite can open `rules.db` regardless of the caller's working directory.
 - `coroutine_example` no longer relies on an unsupported global `result` table in actions.
 - DB `soci::rowset` loops rewritten with explicit iterators to avoid unreachable-code warnings.
