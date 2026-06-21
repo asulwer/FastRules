@@ -83,6 +83,7 @@ Write-Host "  Generator:      Visual Studio 17 2022"
 Write-Host "  Build mode:     $Configuration"
 Write-Host "  C++ Standard:   23"
 Write-Host "  Tests:          ON"
+Write-Host "  Stress:         ON"
 Write-Host "  Examples:       ON"
 Write-Host "  Extensions:     ON"
 Write-Host ""
@@ -95,7 +96,8 @@ $cmakeArgs = @(
     '-G', 'Visual Studio 17 2022'
     '-DCMAKE_CXX_STANDARD=23'
     '-DCMAKE_CXX_STANDARD_REQUIRED=ON'
-    '-DFASTRULES_BUILD_TESTS=ON'
+    '-DFASTRULES_BUILD_STRESS_TESTS=ON'
+	'-DFASTRULES_BUILD_TESTS=ON'
     '-DFASTRULES_BUILD_EXAMPLES=ON'
     '-DFASTRULES_BUILD_EXTENSIONS=ON'
 )

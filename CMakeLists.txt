@@ -62,8 +62,8 @@ endif()
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Define options BEFORE collecting vcpkg features
-option(FASTRULES_BUILD_TESTS "Build tests" ON)
-option(FASTRULES_BUILD_EXAMPLES "Build examples" ON)
+option(FASTRULES_BUILD_TESTS "Build tests" OFF)
+option(FASTRULES_BUILD_EXAMPLES "Build examples" OFF)
 option(FASTRULES_BUILD_STRESS_TESTS "Build stress tests" OFF)
 option(FASTRULES_BUILD_EXTENSIONS "Build optional persistence extensions" OFF)
 option(FASTRULES_BUILD_COVERAGE "Build with coverage instrumentation" OFF)
@@ -90,17 +90,14 @@ if(FASTRULES_BUILD_TESTS)
     list(APPEND _FASTRULES_VCPKG_FEATURES "tests")
 endif()
 if(FASTRULES_BUILD_EXTENSIONS)
-    list(APPEND _FASTRULES_VCPKG_FEATURES "json" "xml")
-    if(FASTRULES_BUILD_DB_EXT)
-        list(APPEND _FASTRULES_VCPKG_FEATURES "db")
-    endif()
+    list(APPEND _FASTRULES_VCPKG_FEATURES "json" "xml" "db")    
 endif()
 if(_FASTRULES_VCPKG_FEATURES)
     message(STATUS "Requested vcpkg manifest features: ${_FASTRULES_VCPKG_FEATURES}")
 endif()
 
 # Suppress CTest dashboard targets from all dependencies
-set_property(GLOBAL PROPERTY CTEST_TARGETS_ADDED 1)
+#set_property(GLOBAL PROPERTY CTEST_TARGETS_ADDED 1)
 
 # Third-party dependencies: vcpkg provides everything except luabridge3,
 # which is header-only and not in the vcpkg registry.
