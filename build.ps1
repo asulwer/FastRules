@@ -46,9 +46,6 @@
 .PARAMETER BuildShared
     Build a shared library instead of static (FASTRULES_BUILD_SHARED). Default is $false.
 
-.PARAMETER BuildCoverage
-    Enable coverage instrumentation (FASTRULES_BUILD_COVERAGE). Default is $false.
-
 .PARAMETER VcpkgFeatures
     vcpkg manifest features to enable (VCPKG_MANIFEST_FEATURES).
     Default is tests, json, xml, db.
@@ -92,7 +89,6 @@ param(
     [bool]$BuildExamples = $false,
     [bool]$BuildExtensions = $false,
     [bool]$BuildShared = $false,
-    [bool]$BuildCoverage = $false,
     [string[]]$VcpkgFeatures = @('tests', 'json', 'xml', 'db'),
     [string[]]$ExtraCmakeArgs = @()
 )
@@ -179,7 +175,6 @@ Write-Host "  Stress:         $(ConvertTo-CMakeBool $BuildStressTests)"
 Write-Host "  Examples:       $(ConvertTo-CMakeBool $BuildExamples)"
 Write-Host "  Extensions:     $(ConvertTo-CMakeBool $BuildExtensions)"
 Write-Host "  Shared:         $(ConvertTo-CMakeBool $BuildShared)"
-Write-Host "  Coverage:       $(ConvertTo-CMakeBool $BuildCoverage)"
 Write-Host ""
 
 $cmakeArgs = @(
@@ -193,7 +188,6 @@ $cmakeArgs = @(
     "-DFASTRULES_BUILD_EXAMPLES=$(ConvertTo-CMakeBool $BuildExamples)"
     "-DFASTRULES_BUILD_EXTENSIONS=$(ConvertTo-CMakeBool $BuildExtensions)"
     "-DFASTRULES_BUILD_SHARED=$(ConvertTo-CMakeBool $BuildShared)"
-    "-DFASTRULES_BUILD_COVERAGE=$(ConvertTo-CMakeBool $BuildCoverage)"
 )
 
 # Pass the vcpkg toolchain when the CMake cache does not already contain it.
