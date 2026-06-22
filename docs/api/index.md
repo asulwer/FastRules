@@ -2,13 +2,24 @@
 layout: default
 title: API Reference
 nav_order: 100
-has_children: false
+has_children: true
 permalink: /api/
 ---
 
 # API Reference
 
-Quick reference for core classes. See child pages for full details.
+Quick reference for core classes. See child pages for full details:
+
+- [Rule](rule.html) — the condition/action pair and its builder
+- [Workflow](workflow.html) — orchestrating ordered rule execution
+- [LuaEngine](lua_engine.html) — compiling and executing Lua
+- [Type Registry](type_registry.html) — binding C++ structs/enums into Lua
+- [Action Callbacks](action_callbacks.html) — calling C++ from Lua actions
+- [Async Workflow](async_workflow.html) — coroutine-based execution
+- [JSON Loader](json_loader.html) — loading rules from JSON (extension)
+
+See also the [Predicate Reference](../predicates.html) and
+[Observability guide](../observability.html).
 
 ## C API
 
@@ -33,7 +44,7 @@ See [C API documentation](c_api.html) for full details.
 
 ## LuaEngine
 
-Compiles and executes Lua expressions. Backend-agnostic (sol2 or LuaBridge3).
+Compiles and executes Lua expressions through the LuaBridge3 backend (abstracted behind `LuaBackend`).
 
 ```cpp
 LuaEngine engine;
@@ -49,8 +60,12 @@ bool pass = engine.evaluateExpression(ref.value(), params, context);
 
 ## Rule
 
+Rule IDs are integers (`Rule::Id` is `int`). Use `withName(...)` for a
+human-readable name (names are what dependencies reference).
+
 ```cpp
-auto rule = Rule::create("check-age", "age >= 18")
+auto rule = Rule::create(1, "age >= 18")     // id is an int
+    .withName("check-age")
     .withAction("eligible = true")
     .withPriority(10)
     .withTimeout(std::chrono::milliseconds(100))
@@ -61,7 +76,8 @@ auto rule = Rule::create("check-age", "age >= 18")
 
 ```cpp
 Workflow workflow;
-workflow.id = "validation";
+workflow.id = 1;                          // id is an int
+workflow.description = "validation";
 workflow.rules.push_back(rule1);
 workflow.rules.push_back(rule2);
 

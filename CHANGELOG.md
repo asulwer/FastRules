@@ -61,6 +61,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   lazily `new`-ed global pointer, removing a data race on first use and a
   process-exit leak.
 
+### Documentation
+- **Corrected the API reference.** Examples that used string rule/workflow IDs
+  now use `int` (the actual `Rule::Id` / `Workflow::id` type), the LuaEngine
+  description no longer claims a removable "sol2 or LuaBridge3" backend choice,
+  and the API Reference section now lists its child pages in the navigation.
+- **Fixed stale version references** (`0.1.0` → `0.2.0`) in the install
+  instructions and `docs/Doxyfile`.
+- **Fixed the execution-tracing snippet** in the performance guide (correct
+  `ExecutionTracer(workflow.id)` constructor and `ruleName` field).
+- **New documentation pages and sections**: a [Predicate Reference](docs/predicates.md)
+  (Lua built-ins + `Rule::` factories), an [Observability guide](docs/observability.md)
+  (execution tracing + performance counters), documented rate limiting (replacing
+  the "Planned" stub) in the security guide, and `EnginePool` / `MemoryManager`
+  pooling in the performance guide.
+- **Added a `Docs Check` CI workflow** that verifies documented versions match
+  `CMakeLists.txt` and guards against re-introducing known stale snippets.
+
 ## [0.2.0] - 2026-06-20
 
 ### Migration Guide

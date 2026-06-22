@@ -61,7 +61,7 @@ vcpkg install fastrules
 
 **Conan:**
 ```bash
-conan install fastrules/0.1.0
+conan install fastrules/0.2.0
 ```
 
 **CMake FetchContent:**

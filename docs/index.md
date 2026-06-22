@@ -78,10 +78,10 @@ vcpkg install fastrules[tests]       # Build tests
 ### Conan
 
 ```bash
-conan install fastrules/0.1.0                          # Core only
-conan install fastrules/0.1.0 -o build_extensions=True  # + JSON/XML
-conan install fastrules/0.1.0 -o with_db=True            # + database
-conan install fastrules/0.1.0 -o with_luajit=True        # Use LuaJIT
+conan install fastrules/0.2.0                          # Core only
+conan install fastrules/0.2.0 -o build_extensions=True  # + JSON/XML
+conan install fastrules/0.2.0 -o with_db=True            # + database
+conan install fastrules/0.2.0 -o with_luajit=True        # Use LuaJIT
 ```
 
 ### CMake FetchContent
@@ -91,7 +91,7 @@ include(FetchContent)
 FetchContent_Declare(
     fastrules
     GIT_REPOSITORY https://github.com/asulwer/fastrules.git
-    GIT_TAG v0.1.0
+    GIT_TAG v0.2.0
 )
 FetchContent_MakeAvailable(fastrules)
 

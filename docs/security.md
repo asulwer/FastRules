@@ -63,12 +63,38 @@ rule->timeout = std::chrono::milliseconds(500);
 
 Rules exceeding the timeout fail with `RuleTimeoutException`. The Lua instruction count hook fires every 1000 instructions to catch infinite loops.
 
-## Rate Limiting (Planned)
+## Rate Limiting
+
+Rules can be throttled with a token-bucket `RateLimiter`, keyed by rule **name**.
+A rule with no limiter attached falls back to the global
+`RateLimiter::global()` instance.
 
 ```cpp
-// Coming soon
-rule->maxExecutionsPerSecond = 100;
+#include <fastrules/rate_limiter.hpp>
+
+// Configure a limit for a named rule on the global limiter
+RateLimiter::global().configure({
+    .ruleName = "check-age",
+    .maxExecutionsPerSecond = 100,
+    .maxExecutionsPerMinute = 1000,
+    .burstSize = 0          // 0 = no burst
+});
+
+// Or attach a dedicated limiter to a rule via the builder
+auto limiter = std::make_shared<RateLimiter>();
+limiter->configure({.ruleName = "check-age", .maxExecutionsPerSecond = 100});
+
+auto rule = Rule::create(1, "age >= 18")
+    .withName("check-age")
+    .withRateLimiter(limiter)
+    .build();
 ```
+
+When a rule exceeds its limit during execution it fails with a
+`RateLimitException` (counted under `totalRulesRateLimited` in the
+[performance counters](observability.html)). For ad-hoc checks use the
+non-throwing `isAllowed(ruleName)` or inspect
+`getCurrentExecutionsPerSecond(ruleName)`.
 
 ## Best Practices
 

@@ -1,0 +1,79 @@
+name: Docs Check
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/docs-check.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/docs-check.yml'
+
+jobs:
+  doc-accuracy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version references match CMakeLists
+        run: |
+          set -euo pipefail
+          VERSION=$(grep -m1 -oE 'project\(fastrules VERSION [0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt \
+                    | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          echo "Project version: $VERSION"
+          status=0
+
+          # conan install fastrules/<ver> must match
+          while IFS= read -r ref; do
+            v=${ref#fastrules/}
+            if [ "$v" != "$VERSION" ]; then
+              echo "::error::docs reference 'fastrules/$v' but project version is $VERSION"
+              status=1
+            fi
+          done < <(grep -rhoE 'fastrules/[0-9]+\.[0-9]+\.[0-9]+' docs || true)
+
+          # GIT_TAG v<ver> must match
+          while IFS= read -r tag; do
+            v=${tag#GIT_TAG v}
+            if [ "$v" != "$VERSION" ]; then
+              echo "::error::docs reference 'GIT_TAG v$v' but project version is $VERSION"
+              status=1
+            fi
+          done < <(grep -rhoE 'GIT_TAG v[0-9]+\.[0-9]+\.[0-9]+' docs || true)
+
+          # docs/Doxyfile PROJECT_NUMBER must match
+          DOXY=$(grep -m1 -oE 'PROJECT_NUMBER *= *"[0-9]+\.[0-9]+\.[0-9]+"' docs/Doxyfile \
+                 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true)
+          if [ -n "$DOXY" ] && [ "$DOXY" != "$VERSION" ]; then
+            echo "::error::docs/Doxyfile PROJECT_NUMBER is $DOXY but project version is $VERSION"
+            status=1
+          fi
+
+          [ "$status" -eq 0 ] && echo "✅ Version references are consistent"
+          exit $status
+
+      - name: Guard against known stale documentation
+        run: |
+          set -euo pipefail
+          status=0
+          guard() {
+            # $1 = ripgrep/grep pattern, $2 = human message
+            if grep -rIn -- "$1" docs >/dev/null 2>&1; then
+              echo "::error::$2"
+              grep -rIn -- "$1" docs || true
+              status=1
+            fi
+          }
+
+          guard 'Backend-agnostic (sol2' 'sol2 backend was removed; only LuaBridge3 exists'
+          guard 'Rate Limiting (Planned)' 'Rate limiting is implemented; remove the "Planned" stub'
+          guard 'workflow.id = "' 'Workflow::id is an int, not a string'
+          guard '->ruleId' 'ExecutionTraceStep field is ruleName, not ruleId'
+
+          [ "$status" -eq 0 ] && echo "✅ No stale documentation markers found"
+          exit $status

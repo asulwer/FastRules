@@ -1,7 +1,7 @@
 # Doxyfile for FastRules API Documentation
 
 PROJECT_NAME           = "FastRules"
-PROJECT_NUMBER         = "0.1.0"
+PROJECT_NUMBER         = "0.2.0"
 PROJECT_BRIEF          = "High-performance C++23 business rules engine"
 
 OUTPUT_DIRECTORY       = _site/api
