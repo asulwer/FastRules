@@ -16,7 +16,6 @@ Quick reference for core classes. See child pages for full details:
 - [Type Registry](type_registry.html) — binding C++ structs/enums into Lua
 - [Action Callbacks](action_callbacks.html) — calling C++ from Lua actions
 - [Async Workflow](async_workflow.html) — coroutine-based execution
-- [JSON Loader](json_loader.html) — loading rules from JSON (extension)
 
 See also the [Predicate Reference](../predicates.html) and
 [Observability guide](../observability.html).
@@ -116,13 +115,4 @@ engine.registerAction("sendEmail", [](const std::any& target, const std::vector<
     auto email = std::any_cast<std::string>(args[0]);
     std::cout << "Sending email to: " << email << "\n";
 });
-```
-
-## JSON Extension
-
-```cpp
-#include <fastrules/json_loader.hpp>
-
-auto json = readFile("rules.json");
-auto workflow = fastrules::JsonLoader::loadWorkflow(json);
 ```
