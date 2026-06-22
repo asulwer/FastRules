@@ -62,6 +62,7 @@ int main() {
         // Action directly modifies the C++ object: customer.processed = true
         auto adultCheck = std::make_shared<fastrules::Rule>();
         adultCheck->id = 1;
+        adultCheck->name = "adultCheck";
         adultCheck->description = "Adult customer check";
         adultCheck->expression = "customer.age >= 18";
         adultCheck->action = "customer.processed = true";  // Direct mutation!
@@ -70,6 +71,7 @@ int main() {
         // Rule 2: Check name is not empty
         auto nameCheck = std::make_shared<fastrules::Rule>();
         nameCheck->id = 2;
+        nameCheck->name = "nameCheck";
         nameCheck->description = "Name not empty check";
         nameCheck->expression = "isNotEmpty(customer.name)";
         workflow.rules.push_back(nameCheck);
@@ -77,6 +79,7 @@ int main() {
         // Rule 3: Check customer is active
         auto activeCheck = std::make_shared<fastrules::Rule>();
         activeCheck->id = 3;
+        activeCheck->name = "activeCheck";
         activeCheck->description = "Customer is active";
         activeCheck->expression = "customer.isActive == true";
         workflow.rules.push_back(activeCheck);

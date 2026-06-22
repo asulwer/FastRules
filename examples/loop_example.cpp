@@ -41,6 +41,7 @@ int main(int argc, char* argv[]) {
         // Rule 1: Validate Age
         auto rule1 = std::make_shared<fastrules::Rule>();
         rule1->id = 1;
+        rule1->name = "validateAge";
         rule1->description = "Validate Age";
         rule1->expression = "customer.age >= 18";
         // Action: set customer.processed = true when rule passes
@@ -50,6 +51,7 @@ int main(int argc, char* argv[]) {
         // Rule 2: Check Active
         auto rule2 = std::make_shared<fastrules::Rule>();
         rule2->id = 2;
+        rule2->name = "checkActive";
         rule2->description = "Check Active";
         rule2->expression = "customer.isActive";
         // No action for this rule

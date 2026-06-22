@@ -19,6 +19,7 @@ int main() {
         std::cout << "Creating Rule..." << std::endl;
         auto rule = std::make_shared<fastrules::Rule>();
         rule->id = 1;
+        rule->name = "ageCheck";
         rule->description = "Age must be 18+";
         rule->expression = "age >= 18";
         workflow.rules.push_back(rule);
