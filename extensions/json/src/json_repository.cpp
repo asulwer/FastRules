@@ -1,4 +1,4 @@
-#include <fastrules\json_repository.hpp>
+#include <fastrules/json_repository.hpp>
 
 #include <fastrules/rule.hpp>
 #include <filesystem>

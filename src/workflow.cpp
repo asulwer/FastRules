@@ -780,9 +780,12 @@ std::vector<std::vector<std::shared_ptr<Rule>>> Workflow::buildDependencyLevels(
     while (!ruleMap.empty()) {
         std::vector<std::shared_ptr<Rule>> level;
 
-        // Find all rules with in-degree 0
-        for (const auto& [ruleId, rule] : ruleMap) {
-            if (inDegree[ruleId] == 0) {
+        // Find all rules with in-degree 0. Iterate the original `rules` vector
+        // (not `ruleMap`) so the order is deterministic and preserves the
+        // workflow's insertion order — unordered_map iteration order is
+        // implementation-defined and varies across standard libraries.
+        for (const auto& rule : rules) {
+            if (ruleMap.find(rule->id) != ruleMap.end() && inDegree[rule->id] == 0) {
                 level.push_back(rule);
             }
         }
@@ -791,8 +794,8 @@ std::vector<std::vector<std::shared_ptr<Rule>>> Workflow::buildDependencyLevels(
             throw RuleValidationException("Circular dependency detected in workflow");
         }
 
-        // Sort level by priority
-        std::sort(level.begin(), level.end(), [](const auto& a, const auto& b) {
+        // Sort level by priority, keeping insertion order for equal priorities.
+        std::stable_sort(level.begin(), level.end(), [](const auto& a, const auto& b) {
             return a->priority < b->priority;
         });
 

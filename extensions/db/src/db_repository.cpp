@@ -1,14 +1,14 @@
-#include <fastrules\db_repository.hpp>
-#include <fastrules\db_bool.hpp>
-#include <soci\sqlite3\soci-sqlite3.h>
+#include <fastrules/db_repository.hpp>
+#include <fastrules/db_bool.hpp>
+#include <soci/sqlite3/soci-sqlite3.h>
 
 // Optional backends — only include if available
 #if __has_include(<soci\postgresql.h>)
-#include <soci\postgresql.h>
+#include <soci/postgresql.h>
 extern "C" void register_factory_postgresql();
 #endif
 #if __has_include(<soci\mysql.h>)
-#include <soci\mysql.h>
+#include <soci/mysql.h>
 extern "C" void register_factory_mysql();
 #endif
 

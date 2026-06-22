@@ -31,6 +31,7 @@
 
 #include "fastrules/rule_context.hpp"
 
+#include <mutex>
 #include <shared_mutex>
 
 namespace fastrules {
