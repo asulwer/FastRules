@@ -40,7 +40,7 @@ Workflow makeChainWorkflow(int id, size_t depth, size_t paramCount) {
 }
 
 // Build a workflow with a single rule that references many parameters.
-Workflow makeBloatWorkflow(int id, size_t paramCount) {
+Workflow makeBloatWorkflow(int id) {
     Workflow wf;
     wf.id = id;
     wf.name = "bloat-workflow-" + std::to_string(id);
@@ -220,7 +220,8 @@ static StressResult coroutineChurn(const StressConfig& cfg) {
     return runner.run("coroutine churn", cfg, [&](size_t) {
         auto ref = engine->compileCoroutine("true");
         RuleContext ctx;
-        engine->resumeCoroutine(*ref, params, ctx);
+        auto result = engine->resumeCoroutine(*ref, params, ctx);
+        (void)result;
         engine->releaseRef(*ref);
     });
 }
@@ -245,7 +246,7 @@ static StressResult parameterBloatStress(const StressConfig& cfg) {
     auto engine = std::make_shared<LuaEngine>();
     engine->setLogger(nullptr);
     size_t paramCount = std::max(cfg.parameters, size_t(100));
-    auto wf = makeBloatWorkflow(1, paramCount);
+    auto wf = makeBloatWorkflow(1);
     auto params = makeParameters(static_cast<int>(paramCount), 0);
 
     StressRunner runner([engine]() { return engine->getMemoryUsageKB(); });
