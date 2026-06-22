@@ -66,3 +66,8 @@ todo.mdTesting/
 # Copied example runtime DLLs
 examples/csharp_example/fastrules.dll
 examples/python_example/fastrules.dll
+
+# Test-generated rule cache / precompilation artifacts
+test_cache*/
+test_precompilation/
+*.frc

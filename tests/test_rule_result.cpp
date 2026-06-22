@@ -118,13 +118,13 @@ TEST_CASE("RuleResult timing") {
     RuleResult result;
     
     // Test timing with actual execution
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::steady_clock::now();
     result.executedAt = start;
-    
+
     // Simulate some work
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    
-    auto end = std::chrono::high_resolution_clock::now();
+
+    auto end = std::chrono::steady_clock::now();
     result.completedAt = end;
     
     auto duration = result.duration();

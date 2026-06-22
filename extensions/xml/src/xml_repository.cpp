@@ -1,4 +1,4 @@
-#include <fastrules\xml_repository.hpp>
+#include <fastrules/xml_repository.hpp>
 
 #include <fastrules/rule.hpp>
 #include <filesystem>

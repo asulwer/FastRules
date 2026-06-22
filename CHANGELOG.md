@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **Deterministic rule execution order.** `Workflow::buildDependencyLevels`
+  collected ready rules in `std::unordered_map` iteration order and ordered them
+  with a non-stable `std::sort`, so independent rules of equal priority could run
+  (and report results) in an implementation-defined order that differed between
+  standard libraries. It now collects rules in the workflow's insertion order and
+  uses `std::stable_sort`, giving a stable, portable order across platforms.
+- **Non-Windows builds of the persistence extensions.** The JSON, XML, and DB
+  extension sources used backslash include paths (e.g. `<fastrules\…>`), which
+  fail on toolchains that treat the backslash literally; switched to forward
+  slashes.
+- **Missing `<mutex>` include in `rule_context.cpp`**, which uses
+  `std::unique_lock` but only included `<shared_mutex>` (it compiled only where
+  `<mutex>` was pulled in transitively).
+- **`RuleResult` timing test** assigned `high_resolution_clock` time points to
+  `steady_clock` fields; it now uses `steady_clock` to match the result type.
 - **Sandbox resource limits now enforced.** `setMemoryLimit` installs a capping
   `lua_Alloc`, and `setInstructionLimit` installs a count hook that raises a Lua
   error when the budget is exceeded (both were previously no-op placeholders).
