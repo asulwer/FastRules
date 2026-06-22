@@ -5,7 +5,6 @@
 #include <fstream>
 #include <iostream>
 #include <mutex>
-#include <map>
 
 namespace fastrules {
 namespace ext {
@@ -19,38 +18,44 @@ JsonRuleRepository::JsonRuleRepository(const std::filesystem::path& filepath)
     load();
 }
 
+JsonRuleRepository::~JsonRuleRepository() {
+    // Honor the documented "written on destruction" contract. Never throw.
+    try {
+        flush();
+    } catch (...) {
+    }
+}
+
+void JsonRuleRepository::upsert(nlohmann::json&& item) {
+    // Replace the existing entry with the same id, otherwise append. This keeps
+    // save() O(n) instead of rebuilding a dedup map (and deep-copying every
+    // stored rule) on each call.
+    if (item.contains("id")) {
+        const auto& id = item["id"];
+        for (auto& existing : data_) {
+            if (existing.contains("id") && existing["id"] == id) {
+                existing = std::move(item);
+                return;
+            }
+        }
+    }
+    data_.push_back(std::move(item));
+}
+
 void JsonRuleRepository::save(const Rule& rule) {
     std::lock_guard<std::mutex> lock(mutex_);
-    
-    // Simple approach: always add the rule, then deduplicate at the end
-    data_.push_back(ruleToJson(rule));
-    
+
+    upsert(ruleToJson(rule));
+
     // Save child rules
     for (const auto& childRule : rule.childRules) {
         if (childRule) {
-            data_.push_back(ruleToJson(*childRule));
+            upsert(ruleToJson(*childRule));
         }
     }
-    
-    // Remove duplicates by keeping only the last occurrence of each ID
-    std::map<int, nlohmann::json> uniqueRules;
-    for (const auto& item : data_) {
-        if (item.contains("id")) {
-            uniqueRules[item["id"]] = item;  // This will overwrite with the latest version
-        }
-    }
-    
-    // Rebuild data_ with unique rules
-    data_.clear();
-    for (const auto& pair : uniqueRules) {
-        data_.push_back(pair.second);
-    }
-    
+
+    // Writes are batched; persisted on flush() or destruction.
     dirty_ = true;
-    if (dirty_) {
-        write();
-        dirty_ = false;
-    }
 }
 
 std::optional<Rule> JsonRuleRepository::findById(int id) {

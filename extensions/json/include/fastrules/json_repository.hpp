@@ -30,8 +30,8 @@ namespace ext {
 class JsonRuleRepository : public IRuleRepository {
 public:
     explicit JsonRuleRepository(const std::filesystem::path& filepath);
-    ~JsonRuleRepository() override = default;
-    
+    ~JsonRuleRepository() override;
+
     void save(const Rule& rule) override;
     std::optional<Rule> findById(int id) override;
     std::vector<Rule> findAll() override;
@@ -58,6 +58,9 @@ private:
     
     void load();
     void write();
+    // Insert the rule JSON, or replace the existing entry with the same id.
+    // Caller must hold mutex_.
+    void upsert(nlohmann::json&& item);
     nlohmann::json ruleToJson(const Rule& rule) const;
     Rule jsonToRule(const nlohmann::json& j) const;
 };
