@@ -396,19 +396,27 @@ if(FASTRULES_BUILD_COVERAGE AND MSVC)
         set(COVERAGE_DIR "${CMAKE_BINARY_DIR}/coverage")
         file(MAKE_DIRECTORY ${COVERAGE_DIR})
         
-        add_custom_target(coverage
-            COMMAND ${OpenCppCoverage_EXECUTABLE}
-                --sources "${CMAKE_SOURCE_DIR}/include"
-                --sources "${CMAKE_SOURCE_DIR}/src"
-                --sources "${CMAKE_SOURCE_DIR}/extensions"
-                --export_type html:${COVERAGE_DIR}/html
-                --export_type cobertura:${COVERAGE_DIR}/cobertura.xml
-                --working_dir "${CMAKE_BINARY_DIR}"
-                -- ctest -C Debug --output-on-failure
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-            COMMENT "Generating code coverage report with OpenCppCoverage..."
-            VERBATIM
-        )
+        # Convert paths to Windows format for OpenCppCoverage
+		file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/include" INCLUDE_PATH)
+		file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/src" SRC_PATH)
+		file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/extensions" EXT_PATH)
+		file(TO_NATIVE_PATH "${COVERAGE_DIR}/html" HTML_PATH)
+		file(TO_NATIVE_PATH "${COVERAGE_DIR}/cobertura.xml" COBERTURA_PATH)
+		file(TO_NATIVE_PATH "${CMAKE_BINARY_DIR}" WORKING_PATH)
+
+		add_custom_target(coverage
+			COMMAND ${OpenCppCoverage_EXECUTABLE}
+				--sources "${INCLUDE_PATH}"
+				--sources "${SRC_PATH}"
+				--sources "${EXT_PATH}"
+				--export_type html:${HTML_PATH}
+				--export_type cobertura:${COBERTURA_PATH}
+				--working_dir "${WORKING_PATH}"
+				-- ctest -C Debug --output-on-failure
+			WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+			COMMENT "Generating code coverage report with OpenCppCoverage..."
+			VERBATIM
+		)
         
         message(STATUS "Coverage target 'coverage' created")
         message(STATUS "  Run: cmake --build . --target coverage")
