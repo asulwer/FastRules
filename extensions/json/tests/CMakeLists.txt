@@ -15,9 +15,9 @@ target_link_libraries(fastrules-json-tests PRIVATE
     doctest::doctest
 )
 
-# On Windows, copy runtime DLLs next to the test executable so it can be run
-# directly without relying on PATH. Only vcpkg DLLs are copied; fastrules.dll
-# lives in the root output dir and is copied below.
+# On Windows, copy runtime DLLs next to the test executable so ctest can run it
+# without relying on PATH. Only vcpkg DLLs are copied; fastrules.dll lives in
+# the root output dir and is added to PATH in the add_test command below.
 if(WIN32)
     # Only copy DLLs matching the current build configuration.
     set(_JSON_TEST_DLL_SRC_DIR
@@ -31,11 +31,15 @@ if(WIN32)
             -P "${CMAKE_SOURCE_DIR}/cmake/copy_test_dlls.cmake"
         COMMENT "Copying runtime DLLs to fastrules-json-tests output directory"
     )
+endif()
 
-    add_custom_command(TARGET fastrules-json-tests POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:fastrules>"
-            "$<TARGET_FILE_DIR:fastrules-json-tests>"
-        COMMENT "Copying fastrules.dll next to fastrules-json-tests"
+# Tests are registered directly with add_test.
+# On Windows, prepend the root build output dir so the extension test finds
+# fastrules.dll without copying it (avoids parallel-build races).
+if(WIN32)
+    add_test(NAME fastrules-json-tests
+        COMMAND ${CMAKE_COMMAND} -E env "PATH=${CMAKE_SOURCE_DIR}/build_vs/Debug;${CMAKE_SOURCE_DIR}/build_vs/Release" $<TARGET_FILE:fastrules-json-tests>
     )
+else()
+    add_test(NAME fastrules-json-tests COMMAND fastrules-json-tests)
 endif()

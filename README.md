@@ -252,19 +252,8 @@ cmake -B build -S . -DFASTRULES_BUILD_TESTS=ON -DFASTRULES_BUILD_EXAMPLES=ON -DF
 # Build
 cmake --build build --config Release
 
-# Test (run doctest binaries directly)
-build\Release\fastrules_tests.exe
-build\Release\fastrules-json-tests.exe
-build\Release\fastrules-xml-tests.exe
-build\Release\fastrules-db-tests.exe
-```
-On Windows the extension test executables copy `fastrules.dll` next to themselves
-at build time. The DB test still needs `SOCI_BACKENDS_PATH` pointed at its
-output directory, e.g.:
-
-```powershell
-$env:SOCI_BACKENDS_PATH = 'build\extensions\db\tests\Release'
-build\extensions\db\tests\Release\fastrules-db-tests.exe
+# Test
+ctest --test-dir build --build-config Release
 ```
 
 ## Example Rule JSON

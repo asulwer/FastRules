@@ -12,12 +12,17 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <memory>
+#include <mutex>
 #include <stdexcept>
 
 // Forward declarations
 struct lua_State;
 
 namespace fastrules {
+
+// Per-state sandbox enforcement data (instruction/memory counters and the
+// saved original allocator). Defined in sandbox.cpp.
+struct SandboxStateData;
 
 /**
  * @brief Exception thrown when sandbox restrictions are violated
@@ -222,13 +227,19 @@ public:
 class SandboxManager {
 private:
     std::unique_ptr<SandboxConfig> config_;
-    std::unordered_map<lua_State*, bool> sandboxedStates_;
+    std::unordered_map<lua_State*, std::unique_ptr<SandboxStateData>> sandboxedStates_;
+    mutable std::mutex statesMutex_;
 
 public:
     /**
      * @brief Construct sandbox manager
      */
     SandboxManager();
+
+    /**
+     * @brief Destructor (defined out-of-line where SandboxStateData is complete)
+     */
+    ~SandboxManager();
 
     /**
      * @brief Get sandbox configuration

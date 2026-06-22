@@ -667,6 +667,11 @@ private:
         int generation;                          ///< Cache generation when stored
     };
 
+    /// Upper bound on cached entries per rule; prevents unbounded growth when
+    /// parameter values vary widely. Eviction drops expired entries first, then
+    /// the entry closest to expiry.
+    static constexpr size_t kMaxCacheEntries = 1024;
+
     mutable std::unordered_map<std::string, CacheEntry> cache_;  ///< Cache storage
     mutable std::mutex cacheMutex_;
     mutable int cacheGeneration_ = 0;                             ///< Current cache generation

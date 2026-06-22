@@ -36,7 +36,6 @@ static void set_error(FastRulesEngine* engine, const char* msg) {
         engine->last_error = msg ? msg : "Unknown error";
     }
 }
-
 // Simple parameter parser: "key=value;key2=value2"
 // Supports: int, double, bool, string
 static std::vector<RuleParameter> parse_params(const char* params_str) {
@@ -103,8 +102,20 @@ static std::vector<RuleParameter> parse_params(const char* params_str) {
     return params;
 }
 
-// Format results as: "id:name:success:error;id:name:success:error"
-// id: rule ID, name: rule name, success: 1 or 0, error: optional message
+// Percent-encode ':' and ';' in a field so they don't break the delimiter format.
+static std::string escape_field(const std::string& s) {
+    std::string out;
+    out.reserve(s.size());
+    for (char c : s) {
+        if (c == ':')      out += "%3A";
+        else if (c == ';') out += "%3B";
+        else               out += c;
+    }
+    return out;
+}
+
+// Format results as: "id:name:success[:error];..."
+// Fields that can contain arbitrary text are percent-encoded (see escape_field).
 static char* format_results(const std::vector<RuleResult>& results) {
     std::ostringstream oss;
 
@@ -113,15 +124,12 @@ static char* format_results(const std::vector<RuleResult>& results) {
 
         const auto& result = results[i];
 
-        // Include rule ID and name
         oss << result.ruleId << ":";
-        std::string rule_name = result.ruleName.empty() ? "" : result.ruleName;
-        oss << rule_name << ":";
-
+        oss << escape_field(result.ruleName) << ":";
         oss << (result.isSuccess() ? 1 : 0);
 
         if (result.exception.has_value()) {
-            oss << ":" << result.exception->what();
+            oss << ":" << escape_field(result.exception->what());
         }
     }
 
@@ -143,6 +151,11 @@ static char* format_results(const std::vector<RuleResult>& results) {
 
 extern "C" {
 
+// Defined after the per-engine global registries below. Erases all registry
+// state keyed by this engine so a destroyed engine does not leak its entries
+// and a later engine allocated at the same address cannot inherit stale state.
+static void cleanup_engine_registries(fastrules_engine_t engine);
+
 fastrules_engine_t fastrules_engine_create(void) {
     try {
         auto* engine = new FastRulesEngine();
@@ -154,6 +167,8 @@ fastrules_engine_t fastrules_engine_create(void) {
 }
 
 void fastrules_engine_destroy(fastrules_engine_t engine) {
+    if (!engine) return;
+    cleanup_engine_registries(engine);
     delete engine;
 }
 
@@ -485,6 +500,13 @@ struct FastRulesObject {
 // Global type registry per engine
 static std::map<fastrules_engine_t, std::map<std::string, std::shared_ptr<FastRulesType>>> g_type_registry;
 
+// Erase all per-engine registry state on engine destruction (see forward
+// declaration near the top of this file).
+static void cleanup_engine_registries(fastrules_engine_t engine) {
+    g_registered_types.erase(engine);
+    g_type_registry.erase(engine);
+}
+
 fastrules_type_t fastrules_register_type(
     fastrules_engine_t engine,
     const char* type_name,
@@ -617,7 +639,7 @@ fastrules_error_t fastrules_add_object_param(
 // ============================================================================
 
 const char* fastrules_get_version(void) {
-    return "1.0.0";
+    return "0.2.0";
 }
 
 } // extern "C"

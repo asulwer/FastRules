@@ -7,12 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-- Removed CTest integration. Tests are now run as plain doctest executables.
-  - Removed `enable_testing()` and `add_test()` registrations from root and extension test CMakeLists.
-  - Extension test targets now copy `fastrules.dll` next to the executable at build time so they can be run directly.
-  - Updated `README.md` to show direct execution instead of `ctest`.
-
+### Fixed
+- **Sandbox resource limits now enforced.** `setMemoryLimit` installs a capping
+  `lua_Alloc`, and `setInstructionLimit` installs a count hook that raises a Lua
+  error when the budget is exceeded (both were previously no-op placeholders).
+  `SandboxManager` is now thread-safe and `getSandboxManager()` uses a
+  thread-safe singleton; `validateCode` uses word-boundary matching to stop
+  false positives (e.g. `payload`, `reload`) while still rejecting dangerous
+  calls. `coroutine` is no longer restricted by default since the engine exposes
+  coroutine features.
+- **C API no longer leaks per-engine state.** `fastrules_engine_destroy` now
+  clears the global type registries keyed by the engine pointer, preventing
+  leaks and stale state on pointer reuse.
+- **`EnginePool::tryPop` honors its timeout.** It now waits for an engine to be
+  returned instead of returning `nullptr` immediately when the pool is empty.
+- **Per-rule result cache is bounded** (max 1024 entries) with expiry-based
+  eviction, preventing unbounded growth under highly variable parameters.
+- **Lua parameter marshalling** handles `int64_t`, `long`, `long long`, the
+  unsigned integer types, and `float` instead of silently converting them to nil.
+- **Backend `reset()` clears action handlers**, so handler IDs restart from 0
+  and stale handlers are not retained.
+- **Work-stealing pool drains queued tasks on shutdown** (previously dropped,
+  leaving their futures unsatisfied), clamps a 0-thread pool to 1 worker, and
+  drops the unused `idleWorkers_` counter.
+- **Version reporting unified** to 0.2.0 across CMake and `fastrules_get_version`.
 
 ## [0.2.0] - 2026-06-20
 

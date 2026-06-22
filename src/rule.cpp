@@ -447,10 +447,37 @@ std::vector<Rule::Id> Rule::getDependencyChain(const std::vector<std::reference_
 void Rule::storeInCache(const std::vector<RuleParameter>& parameters, const RuleResult& result) const {
     if (cacheDuration.has_value() && cacheDuration->count() > 0) {
         std::lock_guard<std::mutex> lock(cacheMutex_);
+        auto now = std::chrono::steady_clock::now();
         auto cacheKey = buildCacheKey(parameters);
+
+        // Bound the cache so workloads with highly variable parameters cannot
+        // grow it without limit. Only enforce when inserting a brand-new key.
+        if (cache_.size() >= kMaxCacheEntries && cache_.find(cacheKey) == cache_.end()) {
+            // First pass: drop expired entries (cheap and usually sufficient).
+            for (auto it = cache_.begin(); it != cache_.end();) {
+                if (it->second.expiresAt <= now) {
+                    it = cache_.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+            // Still full of live entries: evict the one closest to expiring.
+            if (cache_.size() >= kMaxCacheEntries) {
+                auto oldest = cache_.begin();
+                for (auto it = cache_.begin(); it != cache_.end(); ++it) {
+                    if (it->second.expiresAt < oldest->second.expiresAt) {
+                        oldest = it;
+                    }
+                }
+                if (oldest != cache_.end()) {
+                    cache_.erase(oldest);
+                }
+            }
+        }
+
         cache_[cacheKey] = {
-            std::make_shared<RuleResult>(result), 
-            std::chrono::steady_clock::now() + cacheDuration.value(),
+            std::make_shared<RuleResult>(result),
+            now + cacheDuration.value(),
             cacheGeneration_
         };
     }
@@ -614,7 +641,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
     // Store in cache if applicable
     storeInCache(parameters, result);
 
-    return std::move(result);
+    return result;
 }
 
 std::vector<RuleResult> Rule::executeChildRules(LuaEngine& engine, RuleContext& context, const std::vector<RuleParameter>& parameters) {

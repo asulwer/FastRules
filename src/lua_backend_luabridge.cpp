@@ -253,8 +253,22 @@ static void pushAny(lua_State* L, const std::any& value) {
         lua_pushboolean(L, std::any_cast<bool>(value));
     } else if (type == typeid(int)) {
         lua_pushinteger(L, std::any_cast<int>(value));
+    } else if (type == typeid(unsigned int)) {
+        lua_pushinteger(L, static_cast<lua_Integer>(std::any_cast<unsigned int>(value)));
+    } else if (type == typeid(long)) {
+        lua_pushinteger(L, static_cast<lua_Integer>(std::any_cast<long>(value)));
+    } else if (type == typeid(long long)) {
+        lua_pushinteger(L, static_cast<lua_Integer>(std::any_cast<long long>(value)));
+    } else if (type == typeid(int64_t)) {
+        lua_pushinteger(L, static_cast<lua_Integer>(std::any_cast<int64_t>(value)));
+    } else if (type == typeid(unsigned long)) {
+        lua_pushinteger(L, static_cast<lua_Integer>(std::any_cast<unsigned long>(value)));
+    } else if (type == typeid(unsigned long long)) {
+        lua_pushinteger(L, static_cast<lua_Integer>(std::any_cast<unsigned long long>(value)));
     } else if (type == typeid(double)) {
         lua_pushnumber(L, std::any_cast<double>(value));
+    } else if (type == typeid(float)) {
+        lua_pushnumber(L, static_cast<lua_Number>(std::any_cast<float>(value)));
     } else if (type == typeid(std::string)) {
         const std::string& str = std::any_cast<const std::string&>(value);
         lua_pushlstring(L, str.c_str(), str.length());
@@ -334,6 +348,9 @@ void LuaBridge3Backend::reset() {
     pImpl_->globals_.clear();
     pImpl_->nativeFuncs_.clear();
     pImpl_->predicates_.clear();
+    // Action handler closures live in the old Lua state; clear the backing store
+    // too so handler IDs restart from 0 and stale handlers are not retained.
+    pImpl_->actionHandlers_.clear();
 
     lua_close(pImpl_->L);
     pImpl_->L = luaL_newstate();

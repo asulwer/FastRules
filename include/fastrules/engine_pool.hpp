@@ -25,9 +25,11 @@
  * }
  * 
  * // Worker thread:
- * LuaEngine* engine = pool.pop();  // Blocks until available
- * // ... use engine ...
- * pool.push(engine);  // Return to pool
+ * LuaEngine* engine = pool.pop();  // Non-blocking: nullptr if pool is empty
+ * if (engine) {
+ *     // ... use engine ...
+ *     pool.push(engine);  // Return to pool
+ * }
  * @endcode
  * 
  * Performance:
@@ -177,42 +179,40 @@ public:
 
     /**
      * @brief Try to pop an engine with timeout
-     * 
-     * Non-blocking pop with timeout. Returns nullptr if timeout expires.
-     * 
+     *
+     * Waits up to @p timeout for an engine to become available, spinning while
+     * the pool is empty so that an engine returned by another thread can be
+     * acquired before the deadline. Returns nullptr only once the deadline
+     * passes without an engine being available.
+     *
      * @param timeout Maximum time to wait
      * @return Pointer to engine, or nullptr on timeout
      */
     LuaEngine* tryPop(std::chrono::milliseconds timeout) {
         auto deadline = std::chrono::steady_clock::now() + timeout;
-        
-        auto current = head_.load(std::memory_order_relaxed);
-        
-        while (current != nullptr) {
-            if (head_.compare_exchange_weak(
-                current, current->next,
-                std::memory_order_acquire,
-                std::memory_order_relaxed)) {
-                LuaEngine* engine = current->engine;
-                return engine;
+
+        for (;;) {
+            auto current = head_.load(std::memory_order_relaxed);
+
+            if (current != nullptr) {
+                if (head_.compare_exchange_weak(
+                    current, current->next,
+                    std::memory_order_acquire,
+                    std::memory_order_relaxed)) {
+                    return current->engine;
+                }
+                // CAS lost a race; retry immediately without checking the clock.
+            } else if (std::chrono::steady_clock::now() >= deadline) {
+                return nullptr;  // Empty and out of time
             }
-            
-            current = head_.load(std::memory_order_relaxed);
-            
-            // Check timeout
-            if (std::chrono::steady_clock::now() >= deadline) {
-                return nullptr;
-            }
-            
-            // Brief pause
+
+            // Brief pause to reduce contention / busy-spinning.
             #if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
                 _mm_pause();
             #elif defined(__x86_64__) || defined(__i386__)
                 __builtin_ia32_pause();
             #endif
         }
-        
-        return nullptr;  // Pool empty and timeout
     }
 
     /**

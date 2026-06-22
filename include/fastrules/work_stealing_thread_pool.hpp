@@ -35,7 +35,6 @@ private:
     std::vector<std::thread> workers_;
     std::vector<std::unique_ptr<SimpleWorkStealingQueue<std::function<void()>>>> localQueues_;
     std::atomic<bool> stop_;
-    std::atomic<uint32_t> idleWorkers_{0};
     
 public:
     /**

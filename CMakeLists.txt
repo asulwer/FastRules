@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(fastrules VERSION 0.1.0 LANGUAGES C CXX)
+project(fastrules VERSION 0.2.0 LANGUAGES C CXX)
 
 # CMP0091: MSVC runtime library flags are selected by the MSVC_RUNTIME_LIBRARY target property
 # Must be set before any targets are created
@@ -254,6 +254,12 @@ target_compile_definitions(fastrules PUBLIC FASTRULES_USE_LUABRIDGE3)
 
 # === Tests ===
 if(FASTRULES_BUILD_TESTS)
+    enable_testing()
+
+    # Pass CTest integration through to extension subdirectories
+    set(FASTRULES_IN_TREE_TESTS ON)
+
+
     # doctest is provided by vcpkg
     find_package(doctest CONFIG REQUIRED)
 
@@ -270,10 +276,12 @@ if(FASTRULES_BUILD_TESTS)
         target_link_options(fastrules_tests PRIVATE /DEBUG)
     endif()
 
-    # On Windows, copy runtime DLLs next to test executables so they can be
-    # run directly without relying on PATH. Only vcpkg DLLs are copied here;
-    # the main fastrules.dll is already next to fastrules_tests in the root
-    # output dir.
+    # Suppress CTest dashboard targets from VS solution
+    set_property(GLOBAL PROPERTY CTEST_USE_LAUNCHERS OFF)
+
+    # On Windows, copy runtime DLLs next to test executables so ctest can run
+    # them without relying on PATH. Only vcpkg DLLs are copied here; the main
+    # fastrules.dll is already next to fastrules_tests in the root output dir.
     if(WIN32)
         # Only copy DLLs matching the current build configuration to avoid
         # mixing Debug/Release runtimes (e.g. soci_sqlite3_4_0.dll has no d-suffix).
@@ -289,6 +297,8 @@ if(FASTRULES_BUILD_TESTS)
             COMMENT "Copying runtime DLLs to fastrules_tests output directory"
         )
     endif()
+
+    add_test(NAME fastrules_tests COMMAND fastrules_tests)
 endif()
 
 # === Stress tests ===
