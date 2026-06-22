@@ -117,12 +117,3 @@ engine.registerAction("sendEmail", [](const std::any& target, const std::vector<
     std::cout << "Sending email to: " << email << "\n";
 });
 ```
-
-## JSON Extension
-
-```cpp
-#include <fastrules/json_loader.hpp>
-
-auto json = readFile("rules.json");
-auto workflow = fastrules::JsonLoader::loadWorkflow(json);
-```
