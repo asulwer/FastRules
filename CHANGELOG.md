@@ -31,6 +31,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   leaving their futures unsatisfied), clamps a 0-thread pool to 1 worker, and
   drops the unused `idleWorkers_` counter.
 - **Version reporting unified** to 0.2.0 across CMake and `fastrules_get_version`.
+- **`<coroutine>` is now included unconditionally in `rule_result.hpp`.** It was
+  previously guarded by `#ifdef __cpp_lib_coroutine`, but `AsyncTask` uses
+  `std::coroutine_handle`/`std::suspend_never` unconditionally. Because the
+  feature-test macro is only defined once `<coroutine>` (or `<version>`) is
+  included, the guard made the header rely on include order and could fail to
+  compile in isolation.
+- **C API `fastrules_add_typed_param` / `fastrules_add_object_param` report
+  allocation failures.** They now return `FASTRULES_ERROR_MEMORY` when the output
+  buffer allocation fails (previously returned `FASTRULES_OK` with a null/unset
+  out-parameter) and initialize `*out_params` to `NULL` on entry so callers never
+  observe an uninitialized pointer on the error paths.
+- **`getSecurityConfig()` uses a thread-safe function-local static** instead of a
+  lazily `new`-ed global pointer, removing a data race on first use and a
+  process-exit leak.
 
 ## [0.2.0] - 2026-06-20
 

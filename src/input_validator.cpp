@@ -296,9 +296,6 @@ std::string ParameterValidator::sanitizeValue(const std::string& value) const {
     return sanitized;
 }
 
-// Static instance for SecurityConfig
-static SecurityConfig* g_securityConfig = nullptr;
-
 SecurityConfig::SecurityConfig()
     : expressionValidator_(std::make_unique<LuaExpressionValidator>())
     , parameterValidator_(std::make_unique<ParameterValidator>())
@@ -340,10 +337,9 @@ size_t SecurityConfig::getMaxMemory() const {
 }
 
 SecurityConfig& getSecurityConfig() {
-    if (!g_securityConfig) {
-        g_securityConfig = new SecurityConfig();
-    }
-    return *g_securityConfig;
+    // Function-local static: thread-safe initialization (C++11) and no leak at exit.
+    static SecurityConfig instance;
+    return instance;
 }
 
 } // namespace fastrules

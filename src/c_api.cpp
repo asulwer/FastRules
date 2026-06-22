@@ -340,6 +340,8 @@ fastrules_error_t fastrules_add_typed_param(
         return FASTRULES_ERROR_NULL_PTR;
     }
 
+    *out_params = nullptr;
+
     try {
         // Check if type is registered
         auto it = g_registered_types.find(engine);
@@ -378,13 +380,14 @@ fastrules_error_t fastrules_add_typed_param(
 
         std::string result = oss.str();
         *out_params = static_cast<char*>(std::malloc(result.length() + 1));
-        if (*out_params) {
-#ifdef _WIN32
-            strcpy_s(*out_params, result.length() + 1, result.c_str());
-#else
-            std::strcpy(*out_params, result.c_str());
-#endif
+        if (!*out_params) {
+            return FASTRULES_ERROR_MEMORY;
         }
+#ifdef _WIN32
+        strcpy_s(*out_params, result.length() + 1, result.c_str());
+#else
+        std::strcpy(*out_params, result.c_str());
+#endif
 
         return FASTRULES_OK;
     } catch (const std::exception& e) {
@@ -602,6 +605,8 @@ fastrules_error_t fastrules_add_object_param(
         return FASTRULES_ERROR_NULL_PTR;
     }
 
+    *out_params = nullptr;
+
     try {
         // Build parameter string from object fields
         std::ostringstream oss;
@@ -620,13 +625,14 @@ fastrules_error_t fastrules_add_object_param(
 
         std::string result = oss.str();
         *out_params = static_cast<char*>(std::malloc(result.length() + 1));
-        if (*out_params) {
-#ifdef _WIN32
-            strcpy_s(*out_params, result.length() + 1, result.c_str());
-#else
-            std::strcpy(*out_params, result.c_str());
-#endif
+        if (!*out_params) {
+            return FASTRULES_ERROR_MEMORY;
         }
+#ifdef _WIN32
+        strcpy_s(*out_params, result.length() + 1, result.c_str());
+#else
+        std::strcpy(*out_params, result.c_str());
+#endif
 
         return FASTRULES_OK;
     } catch (...) {
