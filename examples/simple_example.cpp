@@ -17,6 +17,7 @@ int main() {
         // Rule 1: Check if customer is an adult (age >= 18)
         auto adultCheck = std::make_shared<fastrules::Rule>();
         adultCheck->id = 1;
+        adultCheck->name = "adultCheck";
         adultCheck->description = "Adult customer check";
         adultCheck->expression = "age >= 18";
         workflow.rules.push_back(adultCheck);
@@ -24,6 +25,7 @@ int main() {
         // Rule 2: Check name is not empty
         auto nameCheck = std::make_shared<fastrules::Rule>();
         nameCheck->id = 2;
+        nameCheck->name = "nameCheck";
         nameCheck->description = "Name not empty check";
         nameCheck->expression = "isNotEmpty(name)";
         workflow.rules.push_back(nameCheck);
@@ -37,12 +39,6 @@ int main() {
         params.emplace_back("age", 25);
         params.emplace_back("name", std::string("Alice"));
         auto results = workflow.execute(engine, params);
-        for (const auto& result : results) {
-            std::cout << "Rule " << result.ruleName
-                      << " - Success: " << (result.isSuccess() ? "Yes" : "No")
-                      << std::endl;
-        }
-
         for (const auto& result : results) {
             std::cout << "Rule " << result.ruleName
                       << " - Success: " << (result.isSuccess() ? "Yes" : "No")

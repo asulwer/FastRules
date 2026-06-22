@@ -90,6 +90,7 @@ int main() {
 
         auto adultCheck = std::make_shared<fastrules::Rule>();
         adultCheck->id = 1;
+        adultCheck->name = "adultCheck";
         adultCheck->description = "Customer must be adult";
         adultCheck->expression = "customer.age >= 18";
         adultCheck->action = "customer.processed = true";
@@ -97,12 +98,14 @@ int main() {
 
         auto premiumCheck = std::make_shared<fastrules::Rule>();
         premiumCheck->id = 2;
+        premiumCheck->name = "premiumCheck";
         premiumCheck->description = "Premium status check";
         premiumCheck->expression = "customer:isPremium()";
         workflow.rules.push_back(premiumCheck);
 
         auto tierCheck = std::make_shared<fastrules::Rule>();
         tierCheck->id = 3;
+        tierCheck->name = "tierCheck";
         tierCheck->description = "Must be gold or platinum";
         tierCheck->expression = "customer:getTier() ~= 'standard'";
         workflow.rules.push_back(tierCheck);
