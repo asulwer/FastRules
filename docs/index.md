@@ -38,6 +38,53 @@ FastRules has a **minimal core** plus **optional persistence extensions**:
 
 **Core** has zero JSON/XML/DB dependencies. Add only the extensions you need.
 
+## Documentation Map
+
+This site documents the full FastRules API and feature set. The
+[README](https://github.com/asulwer/fastrules#readme) is a short getting-started
+showcase; everything else is documented here.
+
+### Start here
+- [Getting Started](getting_started.md) — install, build options, your first rule
+- [Architecture](architecture.md) — core design and component overview
+- [Core Concepts](concepts.md) — rules, workflows, contexts, results
+- [Examples](examples.md) — guide to the runnable examples
+- [Migration from RoslynRules](migration.md)
+
+### API Reference
+- [Rule](api/rule.md)
+- [Workflow](api/workflow.md)
+- [LuaEngine](api/lua_engine.md)
+- [TypeRegistry](api/type_registry.md)
+- [ActionCallbacks](api/action_callbacks.md)
+- [AsyncWorkflow](api/async_workflow.md)
+
+### Features
+- [Predicates](predicates.md) — built-in predicate factories
+- [Parallel Execution](parallel-execution.md) — `executeParallel` vs `AsyncWorkflow`
+- [Adaptive Execution](adaptive-execution.md)
+- [Security](security.md) — sandboxing and expression validation
+- [Observability](observability.md) — tracing and performance counters
+- [Logging](logging.md)
+- [Performance](performance.md)
+- [Lua Compatibility](lua-compatibility.md)
+- [Troubleshooting](troubleshooting.md)
+
+### Advanced
+- [AOT Compilation & Versioning](advanced/aot-and-versioning.md)
+- [Custom Methods](advanced/custom-methods.md)
+
+### Extensions
+- [JSON](extensions/json.md)
+- [XML](extensions/xml.md)
+- [Database](extensions/db.md)
+
+### Embedding & Project
+- [C API](c_api.md) — embedding from C, C#, and Python
+- [Contributing](contributing.md)
+- [Coverage](coverage.md)
+- [Changelog](changelog.md)
+
 ## Features
 
 ### Core

@@ -77,6 +77,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pooling in the performance guide.
 - **Added a `Docs Check` CI workflow** that verifies documented versions match
   `CMakeLists.txt` and guards against re-introducing known stale snippets.
+- **Refocused the README on getting started.** The README is now a concise
+  showcase (why FastRules, build, your first rule, optional file-based rules, and
+  a documentation map) instead of duplicating the full install matrices,
+  extension architecture, and example tables. The complete reference lives in
+  `docs/`, where `docs/index.md` now carries a full documentation map linking
+  every page. Also corrected stale `0.1.0` version references in the README.
 
 ## [0.2.0] - 2026-06-20
 
