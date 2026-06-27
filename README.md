@@ -4,11 +4,12 @@
 [![Coverage](https://codecov.io/gh/asulwer/fastrules/branch/main/graph/badge.svg)](https://codecov.io/gh/asulwer/fastrules)
 [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://asulwer.github.io/FastRules)
 
-High-performance C++23 business rules engine with Lua expressions. Core library is dependency-light; persistence extensions add JSON, XML, or database support as needed.
+High-performance **C++23 business rules engine** with **Lua expressions**. The
+core library is dependency-light; optional persistence extensions add JSON, XML,
+or database support as needed.
 
-> A C++ rewrite of [RoslynRules](https://github.com/asulwer/roslynrules) with Lua instead of C#/Roslyn compilation.
-
-## Why FastRules?
+> A C++ rewrite of [RoslynRules](https://github.com/asulwer/roslynrules) with
+> Lua instead of C#/Roslyn compilation.
 
 | | [RoslynRules](https://github.com/asulwer/roslynrules) | FastRules |
 |---|---|---|
@@ -19,121 +20,29 @@ High-performance C++23 business rules engine with Lua expressions. Core library 
 | **Deployment** | .NET runtime required | Self-contained |
 | **Sandboxing** | Assembly whitelist | Lua environment removal |
 
-## Architecture
-
-FastRules has a **minimal core** plus **optional persistence extensions**:
-
-```
-┌─────────────────────────────────────────┐
-│         fastrules (core)                │
-│  • Lua expressions + actions            │
-│  • Rules, workflows, dependencies       │
-│  • C++ type registration                │
-│  • Parallel / streaming execution       │
-│  • Caching, timeouts, tracing           │
-└─────────────────────────────────────────┘
-                    │
-    ┌───────────────┼───────────────┐
-    ▼               ▼               ▼
-┌─────────┐   ┌─────────┐   ┌─────────────┐
-│fastrules│   │fastrules│   │ fastrules   │
-│-json    │   │-xml     │   │ -db         │
-│         │   │         │   │             │
-│JSON load│   │XML load │   │SOCI-based   │
-│+ save   │   │+ save   │   │PostgreSQL   │
-└─────────┘   └─────────┘   │MySQL, etc.  │
-                            └─────────────┘
-```
-
-**Core** has zero JSON/XML/DB dependencies. Add only the extensions you need.
-
-## Quick Start (Decision Tree)
-
-```
-┌─────────────────────────────────────────────────────┐
-│  What do you need?                                  │
-└─────────────────────────────────────────────────────┘
-    │
-    ├─► Just rules in code ────────► Core only
-    │                                  cmake -B build -S .
-    │
-    ├─► JSON config files ─────────► + JSON extension
-    │                                  -DFASTRULES_BUILD_EXTENSIONS=ON
-    │
-    ├─► XML config files ──────────► + XML extension
-    │                                  (included with EXTENSIONS)
-    │
-    ├─► Database persistence ──────► + DB extension
-    │                                  -DFASTRULES_BUILD_DB=ON
-    │                                  (requires SOCI via vcpkg)
-    │
-    └─► Maximum performance ─────────► LuaJIT backend
-                                       -DFASTRULES_USE_LUAJIT=ON
-```
-
-## Features
-
-### Core
-- ✅ Lua expressions and actions
-- ✅ C++20 coroutines (`co_await`)
-- ✅ [Parallel execution](docs/parallel-execution.md) - executeParallel vs AsyncWorkflow guidance
-- ✅ Streaming results
-- ✅ Dependency chains
-- ✅ Type registration (C++ structs in Lua)
-- ✅ Enum registration
-- ✅ Execution tracing with JSON export
-- ✅ Built-in predicates (isNotNull, inRange, matchesRegex, etc.)
-- ✅ Caching with TTL
-- ✅ Timeout enforcement
-- ✅ Security sandboxing + dangerous pattern detection
-- ✅ Structured logging
-- ✅ State cleanup for long-running apps
-- ✅ **AOT compilation** — pre-compile workflows to binary bundles
-- ✅ **Rule versioning** — semantic versioning with history and rollback
-
-### Extensions
-- ✅ **fastrules-json** — Load/save rules and workflows from JSON (nlohmann/json)
-- ✅ **fastrules-xml** — Load/save rules and workflows from XML (pugixml)
-- ✅ **fastrules-db** — Persist rules to PostgreSQL, MySQL, SQLite, etc. via SOCI
-- ✅ **LuaJIT backend** — Optional LuaJIT instead of PUC-Rio Lua
-
-**Extension Architecture:**
-
-Extensions are built as separate CMake targets that link against the core `fastrules` library.
-Each extension lives in `extensions/<name>/` with its own `CMakeLists.txt`, source code, and tests.
-
-```
-extensions/
-├── json/          # fastrules-json target
-│   ├── src/       # json_repository.cpp, json_loader.cpp
-│   └── tests/     # Extension-specific tests
-├── xml/           # fastrules-xml target
-│   ├── src/       # xml_loader.cpp
-│   └── tests/     # Extension-specific tests
-└── db/            # fastrules-db target (requires SOCI)
-    ├── src/
-    └── examples/
-```
-
-Build with extensions:
-```bash
-cmake -B build -S . -DFASTRULES_BUILD_EXTENSIONS=ON
-```
-
-Link your app against specific extensions:
-```cmake
-target_link_libraries(myapp PRIVATE fastrules fastrules-json fastrules-xml)
-```
-
 ## Requirements
 
 - CMake 3.28+
 - C++23 compiler (GCC 13+, Clang 17+, MSVC 2022+)
 - Git (for FetchContent dependencies)
 
-## Quick Start
+Core dependencies (`lua`, `spdlog`) are resolved automatically via vcpkg
+manifest mode; LuaBridge3 is fetched via CMake FetchContent. No manual setup
+required.
 
-### Core Only (No Extensions)
+## Getting Started
+
+### 1. Build
+
+```bash
+git clone https://github.com/asulwer/fastrules.git
+cd fastrules
+cmake -B build -S . -DFASTRULES_BUILD_TESTS=ON -DFASTRULES_BUILD_EXAMPLES=ON
+cmake --build build --config Release
+ctest --test-dir build --output-on-failure
+```
+
+### 2. Write your first rule
 
 ```cpp
 #include <fastrules.hpp>
@@ -141,138 +50,92 @@ target_link_libraries(myapp PRIVATE fastrules fastrules-json fastrules-xml)
 
 using namespace fastrules;
 
-LuaEngine engine;
+int main() {
+    LuaEngine engine;
 
-// Create a rule in pure C++
-Rule rule;
-rule.id = 1;
-rule.expression = "age >= 18";
-rule.action = "eligible = true";
-rule.priority = 0;
+    // A rule is a Lua condition + an optional Lua action.
+    auto rule = Rule::Builder(1)
+        .withExpression("age >= 18")
+        .withAction("status = 'adult'")
+        .build();
 
-// Compile and execute
-Workflow workflow;
-workflow.description = "Simple validation";
-workflow.rules.push_back(rule);
-workflow.compile(engine);
+    Workflow workflow;
+    workflow.rules.push_back(rule);
+    workflow.compile(engine);
 
-std::vector<RuleParameter> params;
-params.emplace_back("age", 25);
+    std::vector<RuleParameter> params;
+    params.emplace_back("age", 25);          // becomes a Lua global
 
-auto results = workflow.execute(engine, params);
-// results[0].isSuccess() == true
+    auto results = workflow.execute(engine, params);
+    std::cout << (results[0].isSuccess() ? "passed" : "failed") << "\n";
+}
 ```
 
-### With JSON Extension
+That's the whole loop: **build a rule → compile a workflow → execute with
+parameters**. Parameters become Lua globals (or typed objects), expressions
+decide pass/fail, and actions run on success.
+
+### 3. Load rules from a file (optional)
+
+Need rules as configuration instead of code? Build with extensions and load
+from JSON, XML, or a database:
+
+```bash
+cmake -B build -S . -DFASTRULES_BUILD_EXTENSIONS=ON
+```
 
 ```cpp
-#include <fastrules/json_loader.hpp>
 #include <fastrules.hpp>
+#include <fastrules/json_loader.hpp>
 
-// Load workflow from JSON
-auto jsonStr = readFile("rules.json");
-auto workflow = fastrules::JsonLoader::loadWorkflow(jsonStr);
+auto workflow = fastrules::JsonLoader::loadWorkflow(readFile("rules.json"));
 ```
-
-## Installation
-
-### vcpkg
-
-```bash
-vcpkg install fastrules              # Core only
-vcpkg install fastrules[extensions]  # Core + JSON + XML
-vcpkg install fastrules[db]          # Core + database support
-vcpkg install fastrules[luajit]      # Use LuaJIT instead of PUC-Rio Lua
-vcpkg install fastrules[tests]       # Build tests
-```
-
-### Conan
-
-```bash
-conan install fastrules/0.1.0                          # Core only
-conan install fastrules/0.1.0 -o build_extensions=True  # + JSON/XML
-conan install fastrules/0.1.0 -o with_db=True            # + database
-conan install fastrules/0.1.0 -o with_luajit=True        # Use LuaJIT
-```
-
-### CMake FetchContent
-
-```cmake
-include(FetchContent)
-FetchContent_Declare(
-    fastrules
-    GIT_REPOSITORY https://github.com/asulwer/fastrules.git
-    GIT_TAG v0.1.0
-)
-FetchContent_MakeAvailable(fastrules)
-
-target_link_libraries(your_target fastrules)
-
-# Optional: add extensions
-target_link_libraries(your_target fastrules fastrules-json)
-```
-
-### Manual CMake
-
-```bash
-# Core only
-cmake -B build -S . -DFASTRULES_BUILD_TESTS=ON
-
-# Core + JSON/XML extensions
-cmake -B build -S . -DFASTRULES_BUILD_EXTENSIONS=ON
-
-# Core + all extensions (requires SOCI installed)
-cmake -B build -S . -DFASTRULES_BUILD_EXTENSIONS=ON -DFASTRULES_BUILD_DB_EXT=ON
-```
-
-## Examples
-
-| Example | Description | Extensions Used |
-|---|---|---|
-| `simple_example.cpp` | Basic rule creation and execution | None (core only) |
-| `core_only_example.cpp` | Comprehensive core API demo | None (core only) |
-| `json_example.cpp` | Load workflow from JSON | fastrules-json |
-| `json_example_auto.cpp` | Auto-discovery, no manual registration | fastrules-json |
-| `json_typed_example.cpp` | Typed objects in JSON workflows | fastrules-json |
-| `json_workflow_example.cpp` | Full JSON workflow with primitives | fastrules-json |
-| `loop_example.cpp` | Register once, execute in loop | fastrules-json |
-| `xml_example.cpp` | Load/save rules from XML | fastrules-xml |
-| `db_example.cpp` | Database persistence with SOCI | fastrules-db |
-
-## Documentation
-
-Full documentation is available on [GitHub Pages](https://asulwer.github.io/FastRules).
-
-## Building
-
-```powershell
-# Configure with all extensions
-cmake -B build -S . -DFASTRULES_BUILD_TESTS=ON -DFASTRULES_BUILD_EXAMPLES=ON -DFASTRULES_BUILD_EXTENSIONS=ON
-
-# Build
-cmake --build build --config Release
-
-# Test
-ctest --test-dir build --build-config Release
-```
-
-## Example Rule JSON
 
 ```json
 {
   "id": 1,
   "version": "1.0.0",
   "rules": [
-    {
-      "id": 1,
-      "expression": "customer.age >= 18",
-      "action": "eligible = true",
-      "timeout": 100,
-      "priority": 0
-    }
+    { "id": 1, "expression": "customer.age >= 18", "action": "eligible = true", "priority": 0 }
   ]
 }
 ```
+
+## At a Glance
+
+- **Rules & workflows** — condition/action pairs with priority, dependencies,
+  and child rules.
+- **Lua expressions** — fast compile (~1ms), self-contained, no runtime needed.
+- **C++ interop** — register structs and enums for field access in Lua;
+  register C++ callbacks for Lua actions.
+- **Parallel & async** — `executeParallel`, async workflows, streaming results.
+- **Production features** — caching with TTL, timeouts, rate limiting,
+  security sandboxing, structured logging, execution tracing.
+- **Persistence** — JSON, XML, and database (SOCI) extensions, plus AOT
+  compilation and rule versioning.
+- **Embeddable** — C API powers the C# and Python FFI examples.
+
+## Documentation
+
+Full documentation lives at **[asulwer.github.io/FastRules](https://asulwer.github.io/FastRules)**
+and in the [`docs/`](docs/) directory:
+
+| Topic | Description |
+|---|---|
+| [Getting Started](docs/getting_started.md) | Install, build options, your first rule |
+| [Architecture](docs/architecture.md) | Core design and component overview |
+| [Core Concepts](docs/concepts.md) | Rules, workflows, contexts, results |
+| [Examples](docs/examples.md) | Guide to the ~20 runnable examples |
+| [API Reference](docs/api/) | Rule, Workflow, LuaEngine, type registry, callbacks |
+| [Parallel Execution](docs/parallel-execution.md) | `executeParallel` vs `AsyncWorkflow` |
+| [Predicates](docs/predicates.md) | Built-in predicate factories |
+| [Security](docs/security.md) | Sandboxing and expression validation |
+| [Observability](docs/observability.md) | Tracing, performance counters, logging |
+| [Extensions](docs/extensions/) | JSON, XML, and database persistence |
+| [Advanced](docs/advanced/) | AOT compilation, versioning, custom methods |
+| [C API](docs/c_api.md) | Embedding from C, C#, and Python |
+| [Migration](docs/migration.md) | Migrating from RoslynRules |
+| [Troubleshooting](docs/troubleshooting.md) | Common issues and fixes |
 
 ## License
 
