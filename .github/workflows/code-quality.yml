@@ -2,7 +2,7 @@ name: Code Quality
 
 on:
   push:
-    branches: [ main ]
+    branches: [master]
     paths:
       - 'src/**'
       - 'include/**'
@@ -11,7 +11,7 @@ on:
       - '.clang-format'
       - '.github/workflows/code-quality.yml'
   pull_request:
-    branches: [ main ]
+    branches: [master]
     paths:
       - 'src/**'
       - 'include/**'

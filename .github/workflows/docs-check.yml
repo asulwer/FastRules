@@ -2,13 +2,13 @@ name: Docs Check
 
 on:
   push:
-    branches: [ main ]
+    branches: [master]
     paths:
       - 'docs/**'
       - 'CMakeLists.txt'
       - '.github/workflows/docs-check.yml'
   pull_request:
-    branches: [ main ]
+    branches: [master]
     paths:
       - 'docs/**'
       - 'CMakeLists.txt'
