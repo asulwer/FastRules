@@ -93,10 +93,16 @@ See [C API documentation](c_api.md) for details.
 Native C++20 coroutine support:
 
 ```cpp
-AsyncWorkflow async(workflow, 4);
-auto task = coExecuteWorkflow(workflow, engine, params, 4);
-auto results = co_await task;
+// Both take ownership of the workflow, so move it in explicitly.
+AsyncWorkflow async(std::move(workflow), 4);
+
+// Or drive the whole thing through the coroutine helper:
+auto task = coExecuteWorkflow(std::move(workflow), engine, params, 4);
+auto results = task.get();
 ```
+
+`coExecuteWorkflow` takes its `Workflow` **by value** — the returned task owns
+it for the duration. The moved-from workflow must not be reused.
 
 #### Engine Pool Management
 

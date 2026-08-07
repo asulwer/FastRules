@@ -158,9 +158,15 @@ public:
     ~AsyncWorkflow();
 
     /// @brief Move constructor
+    /// @warning Only safe while no task is in flight. Enqueued tasks capture
+    /// the AsyncWorkflow address to reach the engine pool, so moving one that
+    /// still has running work leaves those tasks pointing at the moved-from
+    /// object. executeParallelAsync() waits for all of its own tasks before
+    /// returning, so this only matters if you move concurrently with it.
     AsyncWorkflow(AsyncWorkflow&&) noexcept;
-    
+
     /// @brief Move assignment
+    /// @warning See the move constructor.
     AsyncWorkflow& operator=(AsyncWorkflow&&) noexcept;
     
     /// @brief Disable copy
@@ -227,25 +233,33 @@ private:
     // State
     // ========================================================================
     
+    // DECLARATION ORDER IS LOAD-BEARING.
+    //
+    // Members are destroyed in reverse declaration order, so the thread pool
+    // must be declared LAST: its destructor joins the worker threads, and any
+    // task still running holds a LuaEngine borrowed from enginePoolStorage_.
+    // With the pool declared first, the engines were freed while workers were
+    // still using them - a use-after-free on shutdown.
+
     Workflow workflow_;                      ///< The wrapped workflow
     size_t threadCount_;                     ///< Number of threads
     bool compiled_ = false;                  ///< Whether compiled
 
     // ========================================================================
-    // Thread Pool (PIMPL)
+    // Engine Pool (destroyed after the thread pool has joined)
     // ========================================================================
-    
-    struct ThreadPoolImpl;
-    std::unique_ptr<ThreadPoolImpl> threadPool_;  ///< Thread pool
+
+    bool useEnginePool_ = false;                                    ///< Whether using pool
+    std::vector<std::unique_ptr<LuaEngine>> enginePoolStorage_;    ///< Engine storage
+    std::unique_ptr<EnginePool> enginePool_;                      ///< Engine pool
+    std::vector<std::future<void>> pendingTasks_;                  ///< Pending tasks
 
     // ========================================================================
-    // Engine Pool
+    // Thread Pool (PIMPL) - declared last so it is destroyed (joined) first
     // ========================================================================
-    
-    bool useEnginePool_ = false;                                    ///< Whether using pool
-    std::unique_ptr<EnginePool> enginePool_;                      ///< Engine pool
-    std::vector<std::unique_ptr<LuaEngine>> enginePoolStorage_;    ///< Engine storage
-    std::vector<std::future<void>> pendingTasks_;                  ///< Pending tasks
+
+    struct ThreadPoolImpl;
+    std::unique_ptr<ThreadPoolImpl> threadPool_;  ///< Thread pool
 
     // ========================================================================
     // Internal Methods
@@ -268,9 +282,15 @@ private:
 
 /**
  * @brief Coroutine-based rule execution
- * 
+ *
  * Executes a rule as a coroutine, capturing any exceptions.
- * 
+ *
+ * @note @p engine, @p context and @p parameters are borrowed and must outlive
+ * the call. That holds today because the coroutine's initial_suspend is
+ * std::suspend_never, so the body runs to completion before this function
+ * returns; anything that makes the body suspend early must take them by value.
+ * (@p context is deliberately a reference so the caller observes the writes.)
+ *
  * @param rule The rule to execute
  * @param engine The LuaEngine
  * @param context The execution context
@@ -284,16 +304,31 @@ AsyncRulePromise coExecuteRule(std::shared_ptr<Rule> rule,
 
 /**
  * @brief Coroutine-based workflow execution
- * 
+ *
  * Executes an entire workflow asynchronously.
- * 
- * @param workflow The workflow to execute
+ *
+ * Takes the workflow BY VALUE because it assumes ownership of it: the
+ * AsyncWorkflow built internally moves from it, and the coroutine frame keeps
+ * it alive for the duration. Callers must therefore hand it over explicitly:
+ *
+ * @code
+ * auto task = coExecuteWorkflow(std::move(workflow), engine, params, 4);
+ * auto results = task.get();
+ * // `workflow` is now moved-from - do not reuse it.
+ * @endcode
+ *
+ * @note @p engine and @p parameters are borrowed and must outlive the call.
+ * That holds today because the coroutine's initial_suspend is
+ * std::suspend_never, so the body runs to completion before this function
+ * returns; anything that makes the body suspend early must take them by value.
+ *
+ * @param workflow The workflow to execute (ownership is transferred)
  * @param engine The LuaEngine
  * @param parameters The parameters
  * @param threadCount Number of threads
  * @return Async task yielding results
  */
-AsyncWorkflowTask coExecuteWorkflow(Workflow& workflow,
+AsyncWorkflowTask coExecuteWorkflow(Workflow workflow,
                                      LuaEngine& engine,
                                      const std::vector<RuleParameter>& parameters,
                                      size_t threadCount);

@@ -30,9 +30,13 @@ namespace fastrules {
 //   auto logger = std::make_shared<spdlog::logger>("fastrules", sinks.begin(), sinks.end());
 //   spdlog::set_default_logger(logger);
 
+// NOTE: this deliberately does NOT cache the logger in a function-local static.
+// Caching captured whichever logger happened to be default at the time of the
+// first FastRules call, so a later spdlog::set_default_logger() was silently
+// ignored. spdlog::default_logger() is itself a cheap shared_ptr copy from an
+// already-constructed registry.
 inline std::shared_ptr<spdlog::logger> logger() {
-    static auto log = spdlog::default_logger();
-    return log;
+    return spdlog::default_logger();
 }
 
 } // namespace fastrules

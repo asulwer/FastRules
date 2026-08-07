@@ -19,6 +19,7 @@
 #include <vector>
 #include <random>
 #include <chrono>
+#include <stdexcept>
 
 namespace fastrules {
 
@@ -61,13 +62,20 @@ public:
     template<typename Func, typename... Args>
     auto enqueue(Func&& func, Args&&... args) -> std::future<std::invoke_result_t<Func, Args...>> {
         using return_type = std::invoke_result_t<Func, Args...>;
-        
+
+        // Reject work once shutdown has begun. Without this the task would be
+        // queued after the workers had already drained and exited, leaving the
+        // caller blocked forever on a future that can never be satisfied.
+        if (stop_.load(std::memory_order_acquire)) {
+            throw std::runtime_error("WorkStealingThreadPool: enqueue after shutdown");
+        }
+
         auto task = std::make_shared<std::packaged_task<return_type()>>(
             std::bind(std::forward<Func>(func), std::forward<Args>(args)...)
         );
-        
+
         std::future<return_type> result = task->get_future();
-        
+
         // Push task to a random local queue for load balancing.
         // The distribution is not static so a thread using multiple pools always
         // indexes within the current pool's range.

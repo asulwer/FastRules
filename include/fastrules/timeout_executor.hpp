@@ -44,29 +44,47 @@ public:
      * @return Function result
      * @throws RuleTimeoutException if timeout occurs
      */
+    /**
+     * @warning On timeout the worker thread is NOT stopped - standard C++ has
+     * no way to safely kill a running thread. It keeps running to completion
+     * in the background while this call throws. Two consequences follow:
+     *  - @p fn must not reference the caller's stack (it may outlive this
+     *    call). Capture by value.
+     *  - @p fn should poll isCancelled() and return early where it can,
+     *    otherwise a runaway task occupies a thread for its full duration.
+     */
     template<typename F>
     auto executeWithTimeout(F&& fn) -> decltype(fn()) {
-        // Reset cancelled flag
+        // Reset cancelled flag. Shared with the worker so a cooperative task
+        // can observe the timeout and unwind on its own.
         cancelled_.store(false);
 
-        // Wrap the work in a heap-allocated packaged_task. The detached worker
-        // thread owns its own copy, so the callable and its captures stay valid
-        // even after executeWithTimeout returns. Callers must not capture the
-        // caller's stack by reference; true hard termination of arbitrary C++
-        // code is not possible in standard C++.
+        // Wrap the work in a heap-allocated packaged_task. The worker thread
+        // owns its own copy, so the callable and its captures stay valid even
+        // after executeWithTimeout returns.
         using result_type = decltype(fn());
         auto task = std::make_shared<std::packaged_task<result_type()>>(std::forward<F>(fn));
         auto resultFuture = task->get_future();
-        std::thread([task]() mutable { (*task)(); }).detach();
 
-        // Wait for completion or timeout
+        // Keep the thread joinable so the common (non-timeout) path joins it
+        // instead of leaking a detached thread on every single call.
+        std::thread worker([task]() mutable { (*task)(); });
+
         if (resultFuture.wait_for(maxExecutionTime_) == std::future_status::timeout) {
             cancelled_.store(true);
+            // The task is still running and owns `task`; it cannot be joined
+            // here without waiting for it, which would defeat the timeout.
+            worker.detach();
             throw RuleTimeoutException("Rule execution timed out after " +
                                      std::to_string(maxExecutionTime_.count()) + " milliseconds");
         }
 
-        // Get the result
+        // Completed in time - reclaim the thread rather than leaking it.
+        if (worker.joinable()) {
+            worker.join();
+        }
+
+        // Get the result (rethrows anything the task threw)
         return resultFuture.get();
     }
 
@@ -117,7 +135,7 @@ public:
      */
     explicit RuleExecutor(std::chrono::milliseconds maxExecutionTime = std::chrono::seconds(30))
         : maxExecutionTime_(maxExecutionTime)
-        , softTimeout_(maxExecutionTime - std::chrono::milliseconds(100))
+        , softTimeout_(clampNonNegative(maxExecutionTime - std::chrono::milliseconds(100)))
         , hardTimeout_(maxExecutionTime + std::chrono::milliseconds(100)) {}
 
     /**
@@ -142,8 +160,14 @@ public:
      */
     void setMaxExecutionTime(std::chrono::milliseconds maxExecutionTime) {
         maxExecutionTime_ = maxExecutionTime;
-        softTimeout_ = maxExecutionTime - std::chrono::milliseconds(100);
+        softTimeout_ = clampNonNegative(maxExecutionTime - std::chrono::milliseconds(100));
         hardTimeout_ = maxExecutionTime + std::chrono::milliseconds(100);
+    }
+
+    /// A max execution time below 100ms would otherwise yield a negative soft
+    /// timeout, which reads as "already expired" wherever it is compared.
+    static std::chrono::milliseconds clampNonNegative(std::chrono::milliseconds d) {
+        return d.count() < 0 ? std::chrono::milliseconds(0) : d;
     }
 
     /**

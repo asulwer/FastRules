@@ -7,7 +7,121 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **BREAKING: `coExecuteWorkflow` now takes its `Workflow` by value.** It
+  previously took `Workflow&` and moved from it, silently leaving the caller's
+  workflow empty with nothing at the call site to indicate that. Ownership is
+  now explicit — pass `std::move(workflow)`:
+  ```cpp
+  auto task = coExecuteWorkflow(std::move(workflow), engine, params, 4);
+  ```
+  Taking it by value (rather than by rvalue reference) also means the coroutine
+  frame owns the workflow outright, so it cannot dangle.
+
 ### Fixed
+- **Compiled Lua references are now tracked per engine.** `Rule` kept a single
+  `compiledExpressionRef` shared across every engine, while the "already
+  compiled?" guard checked a map that was never populated. Compiling a second
+  workflow into an engine that had already compiled another therefore left rules
+  holding a reference number belonging to a *different* Lua state, and execution
+  silently evaluated the wrong expression — returning a wrong result with no
+  error. References are now keyed by a new `LuaEngine::instanceId()` (never
+  reused, so a recycled engine address cannot inherit stale entries) and
+  invalidated when the engine's state generation or the rule's own
+  expression/action text changes. Rules also compile lazily into any engine they
+  have not been compiled for, and repeated `compile()` calls no longer leak a
+  Lua registry reference each time.
+- **`AsyncTask<T>` use-after-free (crash).** `final_suspend()` returned
+  `std::suspend_never`, so the coroutine frame destroyed itself at `co_return`;
+  `get()` then read a destroyed promise and `~AsyncTask` destroyed the frame a
+  second time (observed as a segfault). It now suspends at final suspend, is
+  move-only, and propagates exceptions instead of calling `std::terminate`.
+- **`RuleVersionManager::snapshotWorkflow` deadlock.** It held `mutex_` and then
+  called `snapshotRule()`, which re-locked the same non-recursive mutex —
+  throwing `resource deadlock would occur` on MSVC and hanging on
+  libstdc++/libc++. Split into a locked helper. The same defect in
+  `DbWorkflowRepository::findAll` (re-acquiring a held `std::shared_mutex`, which
+  is undefined behaviour) is fixed the same way.
+- **Expression validator no longer rejects ordinary identifiers.**
+  `findDangerousPatterns` matched bare substrings, so `payload`, `download_count`
+  and `package_type` all tripped the `load`/`package` patterns and could not be
+  compiled at all. It now matches on identifier boundaries, as
+  `SandboxManager::validateCode` already did. `input_validator` additionally
+  stops treating `_` as a boundary (which rejected names like `my_run_count`).
+- **Out-of-bounds read building the duplicate-rule-ID error.**
+  `Rule::validate` built its message with `"literal" + id`, i.e. pointer
+  arithmetic on a string literal, producing garbage text and risking a crash for
+  larger ids.
+- **`Workflow::compileParallel` no longer fails on rules with children.**
+  `buildCompilationLevels` counted child rules as in-edges on their parent but
+  only ever decremented from top-level rules, so any workflow of 10+ rules
+  containing a rule with children threw "Not all rules were compiled". Levels are
+  now computed only over rules actually present in the workflow, worker threads
+  claim rules atomically (two workers could previously compile the same rule
+  concurrently), and levels are separated by a real join barrier.
+- **`AsyncWorkflow` shutdown use-after-free.** Member order destroyed the engine
+  pool before the thread pool joined its workers, so an in-flight task could use
+  a freed `LuaEngine`. The thread pool is now declared last (destroyed first).
+- **Unbounded growth of Lua action handlers.** `bindActions` appended a fresh
+  copy of every handler on each call — and it is called on every
+  `compileAction()`, every `Workflow::compile()` and once per engine clone.
+  Handlers now reuse a stable slot per name.
+- **`luaL_error` no longer longjmps over live C++ objects** in the predicate and
+  action-callback closures (which skipped destructors and, in one case, unwound
+  out of a `catch` block). C++ exceptions crossing the Lua C boundary are now
+  converted to Lua errors instead of propagating.
+- **`LuaValue`s surviving a `resetState()`** no longer unref into a closed Lua
+  state; they share a liveness flag with the backend and degrade to nil.
+  Metatable method pointers now reference backend-owned storage with a stable
+  address instead of the type registry's vector, which re-registration replaces.
+- **Sandbox and rule timeouts no longer disable each other.** A `lua_State` has
+  one hook slot; applying the sandbox replaced `LuaEngine`'s timeout hook (and
+  vice versa). The sandbox hook now chains to, and on removal restores, the hook
+  it displaced. `applySandbox` also verifies a cached entry belongs to the state
+  in front of it, so a `lua_State` closed without `removeSandbox()` cannot leave
+  a new state at the same address silently unsandboxed.
+- **Rate limiting configured by rule name now applies.** `Rule::execute` only
+  ever looked up `std::to_string(id)`, while `RateLimiter::Config` is keyed by
+  `ruleName`; both keys are now checked.
+- **Parameter type validation is no longer platform-dependent.** It compared
+  against `std::type_info::name()`, which is implementation-defined — "int" on
+  MSVC but "i" on libstdc++ — so the check silently did nothing on GCC/Clang.
+  It now compares `std::type_index` values.
+- **Results of unnamed rules no longer overwrite each other** in `RuleContext`;
+  they were all stored under the empty-string key. Added `Rule::resultKey()`.
+- **`Workflow::executeParallel` no longer spawns one thread per rule.**
+  Concurrency is capped to the engine-pool size, so a large dependency level no
+  longer creates hundreds of threads that fail with a pool-acquire timeout.
+- **`Workflow::executeStreaming` no longer captures `this`**, so the returned
+  generator does not dangle if the workflow is destroyed first.
+- **Nested rule timeouts** no longer clear an enclosing rule's deadline, and
+  `LuaEngine`'s state mutex is recursive so an action callback may re-enter the
+  engine without self-deadlocking.
+- **Repository durability.** JSON and XML rule stores now write via a
+  unique temporary file plus atomic rename and report failures, instead of
+  silently discarding pending changes when the write failed;
+  `XmlRuleRepository` gained the destructor flush its JSON counterpart already
+  had (without it, `remove()` was lost), `toString()` now serialises the
+  document instead of always returning `""`, and both stores round-trip
+  `description` and `cacheDuration`.
+- **Hardening of untrusted input.** `JsonLoader` bounds `childRules` nesting
+  (unbounded recursion could overflow the stack), reports non-numeric string ids
+  as `RuleException` instead of a bare `std::invalid_argument`, and uses a
+  single atomic workflow-id counter instead of two independent statics that
+  handed out colliding ids. DB rows tolerate NULL columns rather than throwing,
+  and `RuleVersion::createdAt` is no longer dropped when reading versions back.
+- **Smaller fixes.** `AotCompiler` guards a null `lua_tostring`;
+  `MemoryPool`/`VectorPool` no longer wrap their unsigned allocation counter to
+  `SIZE_MAX`; `TimeoutExecutor` joins its worker on the success path instead of
+  leaking a detached thread per call, and clamps a negative soft timeout;
+  `WorkStealingThreadPool::enqueue` rejects work after shutdown rather than
+  returning a future that can never complete; the C API guards its global
+  registries with a mutex and parses an empty value as an empty string rather
+  than `0`; `fastrules::logger()` no longer caches the default logger, so a
+  later `spdlog::set_default_logger()` takes effect; `std::tolower`/`isalnum`
+  are called with `unsigned char` (UB for non-ASCII input); and the unused
+  `WorkStealingQueue` carries a `static_assert` plus documentation of why it is
+  not production ready.
 - **Deterministic rule execution order.** `Workflow::buildDependencyLevels`
   collected ready rules in `std::unordered_map` iteration order and ordered them
   with a non-stable `std::sort`, so independent rules of equal priority could run

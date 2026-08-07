@@ -1,6 +1,7 @@
 #include <fastrules/db_repository.hpp>
 #include <fastrules/db_bool.hpp>
 #include <soci/sqlite3/soci-sqlite3.h>
+#include <ctime>
 
 // Optional backends — only include if available
 #if __has_include(<soci\postgresql.h>)
@@ -180,26 +181,30 @@ void DbRuleRepository::clear() {
 }
 
 Rule DbRuleRepository::rowToRule(soci::row& row) {
+    // Every nullable column is read with a default. soci::row::get<T>(i)
+    // throws when the column is NULL, and rows written by anything other than
+    // this repository (migrations, hand-written SQL, other tools) legitimately
+    // contain NULLs in name/action/description/timeout/cache/depends_on.
     Rule rule;
-    rule.id = row.get<int>(0);
-    rule.name = row.get<std::string>(1);
-    rule.expression = row.get<std::string>(2);
-    rule.action = row.get<std::string>(3);
-    rule.description = row.get<std::string>(4);
+    rule.id = row.get<int>(0, 0);
+    rule.name = row.get<std::string>(1, "");
+    rule.expression = row.get<std::string>(2, "");
+    rule.action = row.get<std::string>(3, "");
+    rule.description = row.get<std::string>(4, "");
     DbBool isActive;
-    isActive = row.get<int>(5) != 0;
+    isActive = row.get<int>(5, 1) != 0;
     rule.isActive = isActive;
-    rule.priority = row.get<int>(6);
-    
-    int timeoutMs = row.get<int>(7);
+    rule.priority = row.get<int>(6, 0);
+
+    int timeoutMs = row.get<int>(7, -1);
     if (timeoutMs >= 0) rule.timeout = std::chrono::milliseconds(timeoutMs);
-    
-    int cacheMs = row.get<int>(8);
+
+    int cacheMs = row.get<int>(8, -1);
     if (cacheMs >= 0) rule.cacheDuration = std::chrono::milliseconds(cacheMs);
-    
-    std::string dependsOn = row.get<std::string>(9);
+
+    std::string dependsOn = row.get<std::string>(9, "");
     if (!dependsOn.empty()) rule.dependsOnRuleName = dependsOn;
-    
+
     return rule;
 }
 
@@ -270,7 +275,11 @@ void DbWorkflowRepository::save(const Workflow& workflow) {
 
 std::optional<Workflow> DbWorkflowRepository::findById(int id) {
     std::shared_lock<std::shared_mutex> lock(mutex_);  // Shared lock for reading
-    
+    return findByIdLocked(id);
+}
+
+// Caller must already hold mutex_ (shared or exclusive).
+std::optional<Workflow> DbWorkflowRepository::findByIdLocked(int id) {
     soci::rowset<soci::row> rs = ((*session_).prepare <<
         "SELECT id, name, description, is_active FROM workflows WHERE id = :id", soci::use(id));
 
@@ -309,14 +318,26 @@ std::optional<Workflow> DbWorkflowRepository::findById(int id) {
 
 std::vector<Workflow> DbWorkflowRepository::findAll() {
     std::shared_lock<std::shared_mutex> lock(mutex_);  // Shared lock for reading
-    
-    std::vector<Workflow> workflows;
-    soci::rowset<soci::row> rs = ((*session_).prepare <<
-        "SELECT id FROM workflows");
 
-    for (auto& row : rs) {
-        int wid = row.get<int>(0);
-        auto wf = findById(wid);
+    std::vector<Workflow> workflows;
+
+    // Read every id first, then close the rowset. Two reasons:
+    //  1. findByIdLocked() must be used instead of findById(): re-acquiring a
+    //     shared_mutex that this thread already holds is undefined behaviour
+    //     and deadlocks on writer-preferring implementations.
+    //  2. Issuing new queries while a rowset is still open on the same SOCI
+    //     session is not portable across backends.
+    std::vector<int> ids;
+    {
+        soci::rowset<soci::row> rs = ((*session_).prepare << "SELECT id FROM workflows");
+        for (auto& row : rs) {
+            ids.push_back(row.get<int>(0));
+        }
+    }
+
+    workflows.reserve(ids.size());
+    for (int wid : ids) {
+        auto wf = findByIdLocked(wid);
         if (wf.has_value()) {
             workflows.push_back(std::move(wf.value()));
         }
@@ -402,17 +423,7 @@ std::vector<RuleVersion> DbVersionRepository::findVersionsForRule(int ruleId) {
         soci::use(ruleId));
 
     for (auto& row : rs) {
-        RuleVersion rv;
-        rv.versionId = row.get<std::string>(0);
-        rv.ruleName = std::to_string(ruleId);
-        rv.expression = row.get<std::string>(1);
-        rv.action = row.get<std::string>(2);
-        rv.priority = row.get<int>(3);
-        rv.isActive = row.get<int>(4) != 0;
-        rv.author = row.get<std::string>(6);
-        rv.changeSummary = row.get<std::string>(7);
-        rv.parentVersionId = row.get<std::string>(8);
-        versions.push_back(rv);
+        versions.push_back(rowToVersion(row, ruleId));
     }
     return versions;
 }
@@ -428,19 +439,33 @@ std::optional<RuleVersion> DbVersionRepository::findVersion(int ruleId, const st
     auto it = rs.begin();
     auto end = rs.end();
     if (it != end) {
-        RuleVersion rv;
-        rv.versionId = it->get<std::string>(0);
-        rv.ruleName = std::to_string(ruleId);
-        rv.expression = it->get<std::string>(1);
-        rv.action = it->get<std::string>(2);
-        rv.priority = it->get<int>(3);
-        rv.isActive = it->get<int>(4) != 0;
-        rv.author = it->get<std::string>(6);
-        rv.changeSummary = it->get<std::string>(7);
-        rv.parentVersionId = it->get<std::string>(8);
-        return rv;
+        return rowToVersion(*it, ruleId);
     }
     return std::nullopt;
+}
+
+// Shared row -> RuleVersion mapping. Nullable columns are read with defaults
+// (soci::row::get<T>(i) throws on NULL), and created_at (column 5) is now
+// carried across - it was previously dropped, leaving createdAt default-
+// constructed and making getVersionAt() time queries meaningless.
+RuleVersion DbVersionRepository::rowToVersion(soci::row& row, int ruleId) {
+    RuleVersion rv;
+    rv.versionId = row.get<std::string>(0, "");
+    rv.ruleName = std::to_string(ruleId);
+    rv.expression = row.get<std::string>(1, "");
+    rv.action = row.get<std::string>(2, "");
+    rv.priority = row.get<int>(3, 0);
+    rv.isActive = row.get<int>(4, 1) != 0;
+    try {
+        std::tm createdTm = row.get<std::tm>(5);
+        rv.createdAt = std::chrono::system_clock::from_time_t(std::mktime(&createdTm));
+    } catch (...) {
+        // Column NULL or not a timestamp on this backend - leave default.
+    }
+    rv.author = row.get<std::string>(6, "");
+    rv.changeSummary = row.get<std::string>(7, "");
+    rv.parentVersionId = row.get<std::string>(8, "");
+    return rv;
 }
 
 void DbVersionRepository::removeAllVersionsForRule(int ruleId) {

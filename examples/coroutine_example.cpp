@@ -263,8 +263,9 @@ int main() {
             {"value", 15}
         };
         
-        // Use existing coExecuteWorkflow function
-        auto workflow_task = coExecuteWorkflow(workflow, engine, workflow_params, 2);
+        // coExecuteWorkflow takes ownership of the workflow, so hand it over
+        // explicitly with std::move. `workflow` must not be used afterwards.
+        auto workflow_task = coExecuteWorkflow(std::move(workflow), engine, workflow_params, 2);
         auto workflow_results = workflow_task.get();
         
         std::cout << "   Workflow results:\n";

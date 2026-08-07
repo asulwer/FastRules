@@ -378,8 +378,13 @@ public:
      * Returns a StreamingResult that yields results one at a time.
      * Useful for memory-constrained environments or when processing
      * results incrementally.
-     * 
-     * @param engine The LuaEngine
+     *
+     * @warning The generator holds a reference to @p engine, which therefore
+     * must stay alive for as long as the returned StreamingResult is used.
+     * The rules and their execution order are captured by value, so the
+     * Workflow itself may be destroyed first.
+     *
+     * @param engine The LuaEngine (must outlive the returned StreamingResult)
      * @param parameters Parameters to pass
      * @return StreamingResult generator
      * 

@@ -139,7 +139,16 @@ Rule RuleVersionHistory::rollbackTo(const std::string& versionId) const {
     
     const auto& version = versionOpt.value();
     Rule rule;
-    rule.id = std::stoi(version.ruleName);
+    // ruleName holds the stringified rule id for versions produced by
+    // RuleVersionManager, but RuleVersion is a public struct that callers may
+    // populate themselves - so a non-numeric name must not escape as a raw
+    // std::invalid_argument from std::stoi.
+    try {
+        rule.id = std::stoi(version.ruleName);
+    } catch (const std::exception&) {
+        throw RuleException("Version '" + versionId + "' has a non-numeric ruleName '" +
+                            version.ruleName + "'; cannot reconstruct a rule id");
+    }
     rule.expression = version.expression;
     rule.action = version.action;
     rule.priority = version.priority;
@@ -220,13 +229,18 @@ std::vector<RuleVersion> RuleVersionHistory::getVersions() const {
  * @param author Who made the changes
  * @param summary Brief description of changes
  */
-void RuleVersionManager::snapshotWorkflow(const Workflow& workflow, 
+void RuleVersionManager::snapshotWorkflow(const Workflow& workflow,
                                           const std::string& author,
                                           const std::string& summary) {
+    // Take the lock once and use the unlocked helper. Calling the public
+    // snapshotRule() from here would re-lock the same non-recursive mutex,
+    // which throws on MSVC and hard-deadlocks on libstdc++/libc++.
     std::lock_guard<std::mutex> lock(mutex_);
-    
+
     for (const auto& rule : workflow.rules) {
-        snapshotRule(*rule, author, summary);
+        if (rule) {
+            snapshotRuleLocked(*rule, author, summary);
+        }
     }
 }
 
@@ -244,7 +258,12 @@ void RuleVersionManager::snapshotWorkflow(const Workflow& workflow,
 void RuleVersionManager::snapshotRule(const Rule& rule, const std::string& author,
                                       const std::string& summary) {
     std::lock_guard<std::mutex> lock(mutex_);
-    
+    snapshotRuleLocked(rule, author, summary);
+}
+
+// Caller must already hold mutex_.
+void RuleVersionManager::snapshotRuleLocked(const Rule& rule, const std::string& author,
+                                            const std::string& summary) {
     RuleVersion version;
     version.versionId = generateVersionId();
     version.ruleName = std::to_string(rule.id);
@@ -305,7 +324,8 @@ Workflow RuleVersionManager::rollbackWorkflow(int workflowId,
         }
     }
     
-    return std::move(workflow);
+    // No std::move: it would suppress NRVO and pessimise the return.
+    return workflow;
 }
 
 /**

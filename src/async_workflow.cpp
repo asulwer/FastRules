@@ -210,10 +210,12 @@ AsyncRulePromise coExecuteRule(std::shared_ptr<Rule> rule,
     co_return asyncResult;
 }
 
-AsyncWorkflowTask coExecuteWorkflow(Workflow& workflow,
+AsyncWorkflowTask coExecuteWorkflow(Workflow workflow,
                                      LuaEngine& engine,
                                      const std::vector<RuleParameter>& parameters,
                                      size_t threadCount) {
+    // `workflow` is a by-value parameter, so this moves out of the coroutine
+    // frame's own copy rather than gutting an object the caller still owns.
     AsyncWorkflow async(std::move(workflow), threadCount);
     async.compile(engine);
     

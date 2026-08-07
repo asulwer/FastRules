@@ -270,29 +270,60 @@ struct AsyncRuleResult {
 
 /**
  * @brief Future/promise types for async workflows
+ *
+ * Ownership: the task owns the coroutine frame and destroys it in its
+ * destructor. final_suspend() must therefore return std::suspend_always - the
+ * frame has to stay alive after co_return so that get() can read the promise.
+ * With std::suspend_never the frame self-destructs at co_return, which makes
+ * both get() and ~AsyncTask() operate on freed memory.
+ *
+ * The type is move-only for the same reason: two AsyncTasks referring to one
+ * frame would destroy it twice.
  */
 template<typename T>
 struct AsyncTask {
     struct promise_type {
         T value;
-        
+        std::exception_ptr exception;
+
         auto get_return_object() { return AsyncTask{std::coroutine_handle<promise_type>::from_promise(*this)}; }
         auto initial_suspend() { return std::suspend_never{}; }
-        auto final_suspend() noexcept { return std::suspend_never{}; }
+        auto final_suspend() noexcept { return std::suspend_always{}; }
         void return_value(T v) { value = std::move(v); }
-        void unhandled_exception() { std::terminate(); }
+        void unhandled_exception() { exception = std::current_exception(); }
     };
-    
+
     std::coroutine_handle<promise_type> handle;
+
+    AsyncTask() noexcept : handle(nullptr) {}
     explicit AsyncTask(std::coroutine_handle<promise_type> h) : handle(h) {}
+
     ~AsyncTask() { if (handle) handle.destroy(); }
-    
-    T get() { 
-        if (handle) {
-            T result = std::move(handle.promise().value);
-            return result;
+
+    AsyncTask(const AsyncTask&) = delete;
+    AsyncTask& operator=(const AsyncTask&) = delete;
+
+    AsyncTask(AsyncTask&& other) noexcept : handle(other.handle) {
+        other.handle = nullptr;
+    }
+    AsyncTask& operator=(AsyncTask&& other) noexcept {
+        if (this != &other) {
+            if (handle) handle.destroy();
+            handle = other.handle;
+            other.handle = nullptr;
         }
-        return T{};
+        return *this;
+    }
+
+    /// @brief Retrieve the coroutine's result, rethrowing any captured exception
+    T get() {
+        if (!handle) {
+            return T{};
+        }
+        if (handle.promise().exception) {
+            std::rethrow_exception(handle.promise().exception);
+        }
+        return std::move(handle.promise().value);
     }
 };
 

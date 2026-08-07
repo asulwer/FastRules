@@ -186,18 +186,58 @@ bool ExpressionValidator::containsDangerousPatterns(const std::string& expressio
  * @param expression The Lua expression to scan
  * @return Vector of descriptions of dangerous patterns found
  */
+namespace {
+
+/// True if @p c can appear inside a Lua identifier.
+bool isIdentifierChar(char c) {
+    auto uc = static_cast<unsigned char>(c);
+    return std::isalnum(uc) != 0 || c == '_';
+}
+
+/**
+ * @brief Find @p pattern in @p haystack at an identifier boundary.
+ *
+ * A plain substring search flags innocent identifiers: "load" matches inside
+ * "payload", "download" and "upload"; "package" matches inside "package_type".
+ * Because Rule::compile() turns a validation failure into a thrown
+ * RuleCompilationException, that made perfectly ordinary rules impossible to
+ * compile.
+ *
+ * Boundaries are checked against identifier characters, so a dotted pattern
+ * such as "os.execute" still matches inside "return os.execute('x')" while
+ * "load" no longer matches inside "payload".
+ */
+bool containsAtIdentifierBoundary(const std::string& haystack, const std::string& pattern) {
+    if (pattern.empty()) {
+        return false;
+    }
+    size_t pos = haystack.find(pattern);
+    while (pos != std::string::npos) {
+        const bool startOk = (pos == 0) || !isIdentifierChar(haystack[pos - 1]);
+        const size_t after = pos + pattern.size();
+        const bool endOk = (after >= haystack.size()) || !isIdentifierChar(haystack[after]);
+        if (startOk && endOk) {
+            return true;
+        }
+        pos = haystack.find(pattern, pos + 1);
+    }
+    return false;
+}
+
+} // namespace
+
 std::vector<std::string> ExpressionValidator::findDangerousPatterns(const std::string& expression) {
     std::vector<std::string> found;
     auto patterns = getDangerousPatterns();
 
     // Convert to lowercase for case-insensitive search
     std::string lowerExpr = expression;
-    std::transform(lowerExpr.begin(), lowerExpr.end(), lowerExpr.begin(), 
+    std::transform(lowerExpr.begin(), lowerExpr.end(), lowerExpr.begin(),
         [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
     // Check each dangerous pattern
     for (const auto& [pattern, description] : patterns) {
-        if (lowerExpr.find(pattern) != std::string::npos) {
+        if (containsAtIdentifierBoundary(lowerExpr, pattern)) {
             found.push_back(description);
         }
     }

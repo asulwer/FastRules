@@ -84,9 +84,11 @@
 #include <optional>
 #include <chrono>
 #include <any>
+#include <cstdint>
 #include <unordered_map>
 #include <unordered_set>
 #include <mutex>
+#include <shared_mutex>
 #include <stdexcept>
 #include <typeindex>
 #include <type_traits>
@@ -395,6 +397,20 @@ public:
     // State Accessors
     // ====================================================================
 
+    /**
+     * @brief Key under which this rule's result is stored in a RuleContext
+     *
+     * Uses the human-readable name when there is one, so that dependencies
+     * (which are declared by name) resolve. Rules without a name fall back to
+     * "#<id>" - otherwise every unnamed rule in a workflow would overwrite the
+     * others under the shared empty-string key.
+     *
+     * @return The context key for this rule
+     */
+    [[nodiscard]] std::string resultKey() const {
+        return name.empty() ? ("#" + std::to_string(id)) : name;
+    }
+
     /// @brief Get whether the rule has been compiled
     [[nodiscard]] bool getIsCompiled() const noexcept { return isCompiled; }
 
@@ -701,28 +717,71 @@ private:
     // ========================================================================
 
     /**
-     * @brief Map of LuaEngine* to compiled expression reference
+     * @brief Compiled Lua references belonging to one specific engine.
      *
-     * Each engine has its own Lua state, so compiled references
-     * are tracked per-engine. The default ref is used when no
-     * engine-specific ref exists.
+     * Every LuaEngine owns its own Lua state, so a reference handed out by one
+     * engine is meaningless in another. Records are keyed by
+     * LuaEngine::instanceId() rather than by pointer, so that an engine which
+     * is destroyed and a new one allocated at the same address cannot inherit
+     * stale references. @c generation pins the record to the engine's state
+     * generation: LuaEngine::resetState() bumps that counter, which
+     * invalidates the record and forces a recompile.
      */
-    std::unordered_map<LuaEngine*, int> engineExpressionRefs_;
-    std::unordered_map<LuaEngine*, int> engineActionRefs_;
-    std::optional<int> compiledExpressionRef;  ///< Default compiled expression ref
-    std::optional<int> compiledActionRef;     ///< Default compiled action ref
+    struct EngineCompilation {
+        std::optional<int> expressionRef;  ///< Ref for `expression`, if any
+        std::optional<int> actionRef;      ///< Ref for `action`, if any
+        int generation = 0;                ///< Engine state generation when compiled
+        std::size_t sourceHash = 0;        ///< Fingerprint of expression + action
+    };
+
+    /**
+     * @brief Fingerprint of this rule's Lua source (expression + action)
+     *
+     * `expression` and `action` are public and may be reassigned after a
+     * compile. Recording the fingerprint lets compile() detect that and
+     * recompile, instead of silently continuing to evaluate the old chunk.
+     */
+    [[nodiscard]] std::size_t sourceFingerprint() const;
+
+    /// Per-engine compiled references, keyed by LuaEngine::instanceId().
+    std::unordered_map<std::uint64_t, EngineCompilation> engineCompilations_;
+
+    /// Guards engineCompilations_; read on the execution hot path.
+    mutable std::shared_mutex refsMutex_;
+
+    /// Serialises compile() so concurrent compilation of one rule is safe.
+    mutable std::mutex compileMutex_;
+
+    /**
+     * @brief Look up the current compilation record for an engine
+     * @param engine The LuaEngine
+     * @return The record, or nullopt if absent or from a stale generation
+     */
+    [[nodiscard]] std::optional<EngineCompilation> lookupCompilation(const LuaEngine& engine) const;
+
+    /**
+     * @brief Compile this rule into @p engine unless already compiled there
+     *
+     * Idempotent and thread-safe. Called lazily by execute() so that a rule
+     * run against an engine it was never compiled for produces correct
+     * results instead of reusing another engine's references.
+     *
+     * @param engine The LuaEngine
+     * @throws RuleCompilationException if compilation fails
+     */
+    void ensureCompiledFor(LuaEngine& engine);
 
     /**
      * @brief Get the compiled expression reference for an engine
      * @param engine The LuaEngine
-     * @return The reference ID, or -1 if not compiled
+     * @return The reference ID, or -1 if this rule has no expression
      */
     int getExpressionRef(LuaEngine& engine);
 
     /**
      * @brief Get the compiled action reference for an engine
      * @param engine The LuaEngine
-     * @return The reference ID, or -1 if not compiled
+     * @return The reference ID, or -1 if this rule has no action
      */
     int getActionRef(LuaEngine& engine);
 

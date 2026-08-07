@@ -44,14 +44,12 @@ Rule::Rule(const Rule& other) {
     // Initialize cache members (don't copy cache contents)
     cacheGeneration_ = 0;
     // cacheMutex_ is default constructed
-    
+
     // Note: compiled Lua refs are per-engine, don't copy them
     // They'll be recompiled when compile() is called
-    compiledExpressionRef = std::nullopt;
-    compiledActionRef = std::nullopt;
-    engineExpressionRefs_.clear();
-    engineActionRefs_.clear();
-    
+    engineCompilations_.clear();
+    isCompiled = false;
+
     // Deep copy child rules
     for (const auto& child : other.childRules) {
         if (child) {
@@ -89,13 +87,11 @@ Rule& Rule::operator=(const Rule& other) {
         cache_.clear();
         cacheGeneration_ = 0;
         // cacheMutex_ stays valid
-        
+
         // Reset compiled refs (per-engine)
-        compiledExpressionRef = std::nullopt;
-        compiledActionRef = std::nullopt;
-        engineExpressionRefs_.clear();
-        engineActionRefs_.clear();
-        
+        engineCompilations_.clear();
+        isCompiled = false;
+
         // Deep copy child rules
         childRules.clear();
         for (const auto& child : other.childRules) {
@@ -160,10 +156,54 @@ std::string Rule::buildCacheKey(const std::vector<RuleParameter>& parameters) co
     return key.str();
 }
 
-void Rule::compile(LuaEngine& engine) {
-    if (engineExpressionRefs_.count(&engine) > 0 || engineActionRefs_.count(&engine) > 0) {
+std::size_t Rule::sourceFingerprint() const {
+    const std::hash<std::string> hasher;
+    std::size_t h = hasher(expression);
+    // Standard hash_combine mix.
+    h ^= hasher(action) + 0x9e3779b9U + (h << 6) + (h >> 2);
+    return h;
+}
+
+std::optional<Rule::EngineCompilation> Rule::lookupCompilation(const LuaEngine& engine) const {
+    std::shared_lock<std::shared_mutex> lock(refsMutex_);
+    auto it = engineCompilations_.find(engine.instanceId());
+    if (it == engineCompilations_.end()) {
+        return std::nullopt;
+    }
+    // A resetState() on the engine throws away every compiled reference, so a
+    // record from an older generation must not be trusted.
+    if (it->second.generation != engine.getGeneration()) {
+        return std::nullopt;
+    }
+    // `expression`/`action` are public fields that callers may reassign after
+    // compiling. If they changed, the cached chunk is stale and must not be
+    // reused - recompile instead of evaluating the previous source.
+    if (it->second.sourceHash != sourceFingerprint()) {
+        return std::nullopt;
+    }
+    return it->second;
+}
+
+void Rule::ensureCompiledFor(LuaEngine& engine) {
+    if (lookupCompilation(engine).has_value()) {
         return;
     }
+    compile(engine);
+}
+
+void Rule::compile(LuaEngine& engine) {
+    // Serialise compilation of this rule so that two threads (e.g. two workers
+    // in compileParallel) cannot compile it concurrently, which would race on
+    // the reference maps and leak one of the two compiled chunks.
+    std::lock_guard<std::mutex> compileLock(compileMutex_);
+
+    if (lookupCompilation(engine).has_value()) {
+        return;
+    }
+
+    EngineCompilation compilation;
+    compilation.generation = engine.getGeneration();
+    compilation.sourceHash = sourceFingerprint();
 
     if (!expression.empty()) {
         auto validation = ExpressionValidator::validate(expression);
@@ -184,7 +224,7 @@ void Rule::compile(LuaEngine& engine) {
             throw RuleCompilationException(oss.str());
         }
         try {
-            compiledExpressionRef = engine.compileExpression(expression);
+            compilation.expressionRef = engine.compileExpression(expression);
         } catch (const std::exception& e) {
             throw RuleCompilationException(
                 "Rule '" + std::to_string(id) + "': Failed to compile expression\n  Expression: " + expression + "\n  Error: " + e.what()
@@ -205,7 +245,7 @@ void Rule::compile(LuaEngine& engine) {
             throw RuleCompilationException(oss.str());
         }
         try {
-            compiledActionRef = engine.compileAction(action);
+            compilation.actionRef = engine.compileAction(action);
         } catch (const std::exception& e) {
             throw RuleCompilationException(
                 "Rule '" + std::to_string(id) + "': Failed to compile action\n  Action: " + action + "\n  Error: " + e.what()
@@ -216,6 +256,11 @@ void Rule::compile(LuaEngine& engine) {
     // Compile child rules
     for (auto& child : childRules) {
         child->compile(engine);
+    }
+
+    {
+        std::lock_guard<std::shared_mutex> lock(refsMutex_);
+        engineCompilations_[engine.instanceId()] = compilation;
     }
 
     isCompiled = true;
@@ -321,7 +366,10 @@ void Rule::validate(const std::vector<std::reference_wrapper<const Rule>>& allRu
     for (const auto& r : allRules) {
         const Id& rid = r.get().id;
         if (seenIds.count(rid)) {
-            throw RuleValidationException("Duplicate rule ID: " + rid);
+            // NOTE: must be std::to_string(rid). `"literal" + rid` compiles but
+            // is pointer arithmetic on the string literal, which reads out of
+            // bounds and produces garbage (or crashes) for any non-tiny id.
+            throw RuleValidationException("Duplicate rule ID: " + std::to_string(rid));
         }
         seenIds.insert(rid);
     }
@@ -541,9 +589,19 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
         } else {
             limiter = &RateLimiter::global();
         }
-        if (!limiter->isAllowed(std::to_string(id))) {
+        // Try the rule's name first, then its id. RateLimiter::Config is keyed
+        // by `ruleName`, so a limiter configured with the human-readable name
+        // would never have matched a lookup that only ever used the id.
+        // isAllowed() returns true for unconfigured keys, so checking both is
+        // safe: whichever one the caller configured is the one that applies.
+        const std::string idKey = std::to_string(id);
+        bool allowed = limiter->isAllowed(idKey);
+        if (allowed && !name.empty() && name != idKey) {
+            allowed = limiter->isAllowed(name);
+        }
+        if (!allowed) {
             log->warn("Rate limit exceeded for rule {}", ruleName);
-            throw RateLimitException("Rate limit exceeded for rule '" + std::to_string(id) + "'");
+            throw RateLimitException("Rate limit exceeded for rule '" + ruleName + "'");
         }
 
         // Validate parameter types before execution
@@ -555,9 +613,11 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
             log->debug("Executing {} child rules for rule {}", childRules.size(), ruleName);
             result.childResults = executeChildRules(engine, context, parameters);
 
-            // Store child results in context so parent expressions can access them
-            for (const auto& childResult : result.childResults) {
-                context.setResult(childResult.ruleName, childResult);
+            // Store child results in context so parent expressions can access
+            // them. Key off the child Rule (not result.ruleName) so unnamed
+            // children get distinct "#<id>" keys instead of all colliding on "".
+            for (size_t i = 0; i < result.childResults.size() && i < childRules.size(); ++i) {
+                context.setResult(childRules[i]->resultKey(), result.childResults[i]);
             }
 
             // Preference: parent only evaluates if ALL children pass
@@ -566,27 +626,27 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
                     log->info("Child rule {} failed - parent {} aborted", childResult.ruleName, ruleName);
                     setFailure(result, "Child rule " + childResult.ruleName + " failed");
                     storeInCache(parameters, result);
-                    context.setResult(name, result);
+                    context.setResult(resultKey(), result);
                     return result;
                 }
             }
         }
 
         // Step 2: Evaluate parent expression (only if all children passed)
-        if (!expression.empty() && compiledExpressionRef.has_value()) {
+        if (!expression.empty()) {
             log->trace("Evaluating expression for rule {}: {}", id, expression);
             bool exprResult = evaluateExpression(engine, context, parameters);
             if (!exprResult) {
                 log->info("Rule {} expression evaluated to false", ruleName);
                 setFailure(result, "Expression evaluated to false");
                 storeInCache(parameters, result);
-                context.setResult(name, result);
+                context.setResult(resultKey(), result);
                 return result;
             }
         }
 
         // Step 3: Execute action (only if expression passed)
-        if (!action.empty() && compiledActionRef.has_value()) {
+        if (!action.empty()) {
             log->trace("Executing action for rule {}: {}", id, action);
             executeAction(engine, context, parameters);
         }
@@ -600,26 +660,26 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
         log->error("Rate limit exception in rule {}: {}", ruleName, ex.what());
         result.success = false;
         result.exception = RuleException(ex.what());
-        context.setLastError(name, "Rate limit exceeded: " + std::string(ex.what()));
+        context.setLastError(resultKey(), "Rate limit exceeded: " + std::string(ex.what()));
         PerformanceCounters::instance().recordExecution(false, false, false, false, true);
     } catch (const RuleTimeoutException& ex) {
         log->error("Timeout in rule {}: {}", ruleName, ex.what());
         result.success = false;
         result.exception = RuleException(ex.what());
-        context.setLastError(name, "Timeout: " + std::string(ex.what()));
+        context.setLastError(resultKey(), "Timeout: " + std::string(ex.what()));
         PerformanceCounters::instance().recordExecution(false, false, false, true, false);
     } catch (const RuleException& ex) {
         log->error("Rule {} exception: {}", ruleName, ex.what());
         setFailure(result, ex.what());
-        context.setLastError(name, ex.what());
+        context.setLastError(resultKey(), ex.what());
     } catch (const std::exception& ex) {
         log->error("Standard exception in rule {}: {}", ruleName, ex.what());
         setFailure(result, ex.what());
-        context.setLastError(name, ex.what());
+        context.setLastError(resultKey(), ex.what());
     } catch (...) {
         log->critical("Unknown exception during rule {} execution", id);
         setFailure(result, "Unknown exception during rule execution");
-        context.setLastError(name, "Unknown exception");
+        context.setLastError(resultKey(), "Unknown exception");
     }
 
     auto endTime = std::chrono::steady_clock::now();
@@ -636,7 +696,7 @@ RuleResult Rule::execute(LuaEngine& engine, RuleContext& context, const std::vec
         std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime));
 
     // Store result in context for dependency access
-    context.setResult(name, result);
+    context.setResult(resultKey(), result);
 
     // Store in cache if applicable
     storeInCache(parameters, result);
@@ -679,25 +739,22 @@ void Rule::executeAction(LuaEngine& engine, RuleContext& context, const std::vec
 }
 
 int Rule::getExpressionRef(LuaEngine& engine) {
-    auto it = engineExpressionRefs_.find(&engine);
-    if (it != engineExpressionRefs_.end()) {
-        return it->second;
-    }
-    // Fallback to the default compiled ref
-    if (compiledExpressionRef.has_value()) {
-        return compiledExpressionRef.value();
+    // Never fall back to another engine's reference: references are indices
+    // into a specific Lua state's registry, and different engines routinely
+    // hand out the same numeric ids for entirely different chunks.
+    ensureCompiledFor(engine);
+    auto compilation = lookupCompilation(engine);
+    if (compilation.has_value() && compilation->expressionRef.has_value()) {
+        return compilation->expressionRef.value();
     }
     return -1;
 }
 
 int Rule::getActionRef(LuaEngine& engine) {
-    auto it = engineActionRefs_.find(&engine);
-    if (it != engineActionRefs_.end()) {
-        return it->second;
-    }
-    // Fallback to the default compiled ref
-    if (compiledActionRef.has_value()) {
-        return compiledActionRef.value();
+    ensureCompiledFor(engine);
+    auto compilation = lookupCompilation(engine);
+    if (compilation.has_value() && compilation->actionRef.has_value()) {
+        return compilation->actionRef.value();
     }
     return -1;
 }

@@ -9,6 +9,7 @@
 #include <fastrules.hpp>
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 #include <cstring>
@@ -78,6 +79,11 @@ static std::vector<RuleParameter> parse_params(const char* params_str) {
             params.emplace_back(key, true);
         } else if (value_str == "false" || value_str == "FALSE") {
             params.emplace_back(key, false);
+        } else if (value_str.empty()) {
+            // An empty value is an empty string, not the integer 0. strtol on
+            // "" leaves endptr at the terminator, which would otherwise look
+            // like a successful parse.
+            params.emplace_back(key, std::string());
         } else {
             // Try integer
             char* endptr;
@@ -283,8 +289,16 @@ fastrules_error_t fastrules_workflow_set_rule_priority(
 // Type Registration (for complex objects like Customer)
 // ============================================================================
 
-// Store registered types per engine
+// Store registered types per engine.
+// Guarded by g_registry_mutex: the C API is callable from any thread and these
+// are process-wide maps, so unsynchronised access is a data race.
 static std::map<fastrules_engine_t, std::map<std::string, std::vector<std::pair<std::string, std::string>>>> g_registered_types;
+
+// Protects g_registered_types and g_type_registry (declared further down).
+static std::mutex& registry_mutex() {
+    static std::mutex m;
+    return m;
+}
 
 fastrules_error_t fastrules_engine_register_type(
     fastrules_engine_t engine,
@@ -316,7 +330,10 @@ fastrules_error_t fastrules_engine_register_type(
         }
 
         // Store in global registry
-        g_registered_types[engine][type_name] = field_list;
+        {
+            std::lock_guard<std::mutex> lock(registry_mutex());
+            g_registered_types[engine][type_name] = field_list;
+        }
 
         // Also register with FastRules type system
         // This uses the C++ API to register the type
@@ -344,10 +361,13 @@ fastrules_error_t fastrules_add_typed_param(
 
     try {
         // Check if type is registered
-        auto it = g_registered_types.find(engine);
-        if (it == g_registered_types.end() || it->second.find(type_name) == it->second.end()) {
-            set_error(engine, "Type not registered");
-            return FASTRULES_ERROR_UNKNOWN;
+        {
+            std::lock_guard<std::mutex> lock(registry_mutex());
+            auto it = g_registered_types.find(engine);
+            if (it == g_registered_types.end() || it->second.find(type_name) == it->second.end()) {
+                set_error(engine, "Type not registered");
+                return FASTRULES_ERROR_UNKNOWN;
+            }
         }
 
         // Build parameter string: "customer.age=25;customer.name=Alice"
@@ -506,6 +526,7 @@ static std::map<fastrules_engine_t, std::map<std::string, std::shared_ptr<FastRu
 // Erase all per-engine registry state on engine destruction (see forward
 // declaration near the top of this file).
 static void cleanup_engine_registries(fastrules_engine_t engine) {
+    std::lock_guard<std::mutex> lock(registry_mutex());
     g_registered_types.erase(engine);
     g_type_registry.erase(engine);
 }
@@ -542,7 +563,10 @@ fastrules_type_t fastrules_register_type(
 
         // Store in global registry
         auto type_ptr = type.get();
-        g_type_registry[engine][type_name] = type;
+        {
+            std::lock_guard<std::mutex> lock(registry_mutex());
+            g_type_registry[engine][type_name] = type;
+        }
 
         return type_ptr;
     } catch (...) {

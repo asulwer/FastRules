@@ -34,6 +34,14 @@ public:
 private:
     [[nodiscard]] static std::shared_ptr<Rule> parseRule(const nlohmann::json& j);
     [[nodiscard]] static nlohmann::json serializeRule(const Rule& rule);
+
+private:
+    // Depth-tracking implementations. childRules nesting is bounded so that
+    // hostile or malformed JSON cannot drive unbounded recursion.
+    [[nodiscard]] static std::shared_ptr<Rule> parseRuleAtDepth(const nlohmann::json& j, int depth);
+    [[nodiscard]] static nlohmann::json serializeRuleAtDepth(const Rule& rule, int depth);
+
+public:
 };
 
 } // namespace fastrules

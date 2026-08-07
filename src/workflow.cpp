@@ -204,53 +204,46 @@ void Workflow::compileParallel(LuaEngine& engine, size_t numThreads) {
     
     log->debug("Workflow {} has {} compilation levels", workflowName, levels.size());
 
-    // Create thread pool for compilation
-    std::vector<std::thread> threads;
-    std::atomic<size_t> currentLevel{0};
     std::atomic<bool> hasError{false};
     std::exception_ptr compileException;
     std::mutex exceptionMutex;
 
-    // Worker function
-    auto worker = [&](size_t workerId) {
-        // Each worker gets its own engine clone
-        std::unique_ptr<LuaEngine> localEngine;
-        try {
-            localEngine = engine.clone();
-        } catch (...) {
-            hasError = true;
-            return;
-        }
+    // Compile one level at a time. Joining the threads between levels is a
+    // genuine barrier, so a rule that depends on a child rule listed in this
+    // same workflow never starts before that child has finished. (The previous
+    // implementation advanced the level counter as soon as every rule had been
+    // *picked up*, not once they had finished compiling.)
+    for (size_t levelIdx = 0; levelIdx < levels.size() && !hasError.load(); ++levelIdx) {
+        const auto& level = levels[levelIdx];
 
-        while (!hasError.load(std::memory_order_acquire)) {
-            size_t levelIdx = currentLevel.load(std::memory_order_acquire);
-            if (levelIdx >= levels.size()) {
-                break;  // All levels done
+        // Index of the next rule to hand out; fetch_add is the claim.
+        std::atomic<size_t> nextRule{0};
+
+        auto worker = [&]() {
+            // Each worker gets its own engine clone: Lua states are not
+            // thread-safe, so workers must not share one.
+            std::unique_ptr<LuaEngine> localEngine;
+            try {
+                localEngine = engine.clone();
+            } catch (...) {
+                std::lock_guard<std::mutex> lock(exceptionMutex);
+                if (!compileException) {
+                    compileException = std::current_exception();
+                }
+                hasError = true;
+                return;
             }
 
-            // Get rules for this level
-            const auto& level = levels[levelIdx];
-            
-            // Find next uncompiled rule in this level
-            Rule* ruleToCompile = nullptr;
-            for (auto* rule : level) {
-                // Check if rule needs compilation
-                bool needsCompile = false;
-                {
-                    std::lock_guard<std::mutex> lock(exceptionMutex);
-                    if (!rule->isCompiled) {
-                        needsCompile = true;
-                    }
+            for (;;) {
+                if (hasError.load(std::memory_order_acquire)) {
+                    return;
                 }
-                if (needsCompile) {
-                    ruleToCompile = rule;
-                    break;
+                size_t idx = nextRule.fetch_add(1, std::memory_order_relaxed);
+                if (idx >= level.size()) {
+                    return;
                 }
-            }
-
-            if (ruleToCompile) {
                 try {
-                    ruleToCompile->compile(*localEngine);
+                    level[idx]->compile(*localEngine);
                 } catch (...) {
                     std::lock_guard<std::mutex> lock(exceptionMutex);
                     if (!compileException) {
@@ -259,34 +252,21 @@ void Workflow::compileParallel(LuaEngine& engine, size_t numThreads) {
                     hasError = true;
                     return;
                 }
-            } else {
-                // All rules in this level compiled, move to next level
-                size_t expected = levelIdx;
-                if (currentLevel.compare_exchange_strong(expected, levelIdx + 1,
-                                                          std::memory_order_acq_rel,
-                                                          std::memory_order_acquire)) {
-                    log->debug("Level {} completed by worker {}", levelIdx, workerId);
-                }
-                
-                // If this was the last level, we're done
-                if (levelIdx + 1 >= levels.size()) {
-                    break;
-                }
+            }
+        };
+
+        size_t levelThreads = std::min(numThreads, std::max<size_t>(level.size(), 1));
+        std::vector<std::thread> threads;
+        threads.reserve(levelThreads);
+        for (size_t i = 0; i < levelThreads; ++i) {
+            threads.emplace_back(worker);
+        }
+        for (auto& t : threads) {
+            if (t.joinable()) {
+                t.join();
             }
         }
-    };
-
-    // Launch worker threads
-    threads.reserve(numThreads);
-    for (size_t i = 0; i < numThreads; ++i) {
-        threads.emplace_back(worker, i);
-    }
-
-    // Wait for all threads to complete
-    for (auto& t : threads) {
-        if (t.joinable()) {
-            t.join();
-        }
+        log->debug("Level {} of workflow {} compiled", levelIdx, workflowName);
     }
 
     // Check for errors
@@ -301,8 +281,8 @@ void Workflow::compileParallel(LuaEngine& engine, size_t numThreads) {
         }
     }
 
-    // Also compile the original engine that was passed in
-    // This ensures workflow.execute(engine) works with the same engine
+    // Also compile into the caller's engine so workflow.execute(engine) works.
+    // Compiled references are per-engine, so this is required, not redundant.
     for (auto& rule : rules) {
         rule->compile(engine);
     }
@@ -334,27 +314,35 @@ void Workflow::compileParallel(LuaEngine& engine, size_t numThreads) {
 }
 
 std::vector<std::vector<Rule*>> Workflow::buildCompilationLevels() {
+    // Compilation levels group top-level rules that may be compiled
+    // concurrently.
+    //
+    // Rule::compile() already walks into childRules and compiles them as part
+    // of compiling their parent, and child rules are normally NOT also present
+    // in `rules`. An earlier version counted each child as an in-edge on its
+    // parent and then only ever decremented that count from entries of `rules`,
+    // so any rule owning children could never reach in-degree zero and was
+    // silently dropped - which made compileParallel() throw "Not all rules were
+    // compiled". Only count children that actually appear in `rules`.
     std::vector<std::vector<Rule*>> levels;
-    std::unordered_map<int, Rule*> ruleMap;
     std::unordered_map<int, int> inDegree;
+    std::unordered_set<const Rule*> topLevel;
 
-    // Build rule map
     for (auto& rule : rules) {
-        ruleMap[rule->id] = rule.get();
         inDegree[rule->id] = 0;
+        topLevel.insert(rule.get());
     }
 
-    // Calculate in-degrees based on child rule dependencies
+    // A child that is also listed in `rules` must compile before its parent.
     for (auto& rule : rules) {
-        // Each child rule must compile before its parent
         for (const auto& child : rule->childRules) {
-            if (child && child->id != 0) {
+            if (child && topLevel.contains(child.get())) {
                 inDegree[rule->id]++;
             }
         }
     }
 
-    // Kahn's algorithm for topological sort by levels
+    std::unordered_set<const Rule*> remaining(topLevel);
     std::vector<Rule*> currentLevel;
     for (auto& rule : rules) {
         if (inDegree[rule->id] == 0) {
@@ -363,22 +351,40 @@ std::vector<std::vector<Rule*>> Workflow::buildCompilationLevels() {
     }
 
     while (!currentLevel.empty()) {
+        for (auto* rule : currentLevel) {
+            remaining.erase(rule);
+        }
         levels.push_back(std::move(currentLevel));
         currentLevel.clear();
 
         for (auto* rule : levels.back()) {
-            // Find parents (rules that have this rule as child)
             for (auto& potentialParent : rules) {
+                if (!remaining.contains(potentialParent.get())) {
+                    continue;
+                }
                 for (const auto& child : potentialParent->childRules) {
                     if (child.get() == rule) {
-                        inDegree[potentialParent->id]--;
-                        if (inDegree[potentialParent->id] == 0) {
+                        if (--inDegree[potentialParent->id] == 0) {
                             currentLevel.push_back(potentialParent.get());
                         }
+                        break;  // count each parent/child edge once
                     }
                 }
             }
         }
+    }
+
+    // Any rule still remaining sits in a child-rule cycle. Rather than drop it
+    // (and fail the "all rules compiled" check later), emit it as a final
+    // level; Rule::compile() is idempotent and will simply do the work.
+    if (!remaining.empty()) {
+        std::vector<Rule*> leftovers;
+        for (auto& rule : rules) {
+            if (remaining.contains(rule.get())) {
+                leftovers.push_back(rule.get());
+            }
+        }
+        levels.push_back(std::move(leftovers));
     }
 
     return levels;
@@ -496,7 +502,7 @@ std::vector<RuleResult> Workflow::executeWithTrace(LuaEngine& engine,
 
         tracer.addStep(std::move(execStep));
 
-        context.setResult(rule->name, result);
+        context.setResult(rule->resultKey(), result);
 
         if (!result.skipped) {
             results.push_back(result);
@@ -522,62 +528,84 @@ std::vector<RuleResult> Workflow::executeParallel(LuaEngine& engine, const std::
     // Build dependency levels
     auto dependencyLevels = buildDependencyLevels();
 
+    // Never launch more concurrent tasks than there are engines in the pool.
+    // std::async(launch::async) spawns a fresh OS thread per call, so a level
+    // with hundreds of rules used to create hundreds of threads that then
+    // fought over a handful of engines and failed with a pool-timeout error.
+    const size_t maxConcurrency = std::max<size_t>(enginePoolStorage_.size(), 1);
+
     // Execute each level in parallel using pre-compiled engine clones from the pool
     for (const auto& level : dependencyLevels) {
-        std::vector<std::future<std::pair<int, RuleResult>>> futures;
-
+        // Gather the rules that actually run in this level.
+        std::vector<std::shared_ptr<Rule>> pending;
+        pending.reserve(level.size());
         for (const auto& rule : level) {
-            if (!rule->isActive) {
-                continue;
+            if (rule->isActive) {
+                pending.push_back(rule);
             }
-
-            futures.push_back(
-                std::async(std::launch::async, [&context, &parameters, rule, this]() {
-                    // Acquire a pre-compiled engine clone from the pool
-                    auto* threadEngine = acquireEngine();
-                    
-                    // Safety check: if pool exhausted, return error
-                    if (!threadEngine) {
-                        RuleResult errorResult;
-                        errorResult.ruleName = rule->name;
-                        errorResult.success = false;
-                        errorResult.exception = RuleException("Failed to acquire engine from pool - timeout or pool empty");
-                        return std::make_pair(rule->id, errorResult);
-                    }
-                    
-                    // Check dependency before execution
-                    if (rule->dependsOnRuleName.has_value()) {
-                        auto depResult = context.getResult(rule->dependsOnRuleName.value());
-                        if (!depResult.has_value() || !depResult->isSuccess()) {
-                            RuleResult skipResult;
-                            skipResult.ruleName = rule->name;
-                            skipResult.success = false;
-                            skipResult.exception = RuleException("Dependency failed: " + rule->dependsOnRuleName.value());
-                            releaseEngine(threadEngine);
-                            return std::make_pair(rule->id, skipResult);
-                        }
-                    }
-
-                    // Execute with the cloned engine (no mutex contention!)
-                    auto result = rule->execute(*threadEngine, context, parameters);
-                    
-                    // Release engine back to the pool
-                    releaseEngine(threadEngine);
-                    
-                    return std::make_pair(rule->id, result);
-                })
-            );
         }
 
-        // Collect results from this level
-        for (auto& future : futures) {
-            auto [ruleId, result] = future.get();
+        // Process the level in batches sized to the engine pool.
+        for (size_t offset = 0; offset < pending.size(); offset += maxConcurrency) {
+            const size_t batchEnd = std::min(offset + maxConcurrency, pending.size());
+            std::vector<std::future<RuleResult>> futures;
+            futures.reserve(batchEnd - offset);
 
-            std::lock_guard<std::mutex> lock(resultsMutex);
-            results.push_back(result);
+            for (size_t i = offset; i < batchEnd; ++i) {
+                auto rule = pending[i];
+                futures.push_back(
+                    std::async(std::launch::async, [&context, &parameters, rule, this]() {
+                        RuleResult outcome;
+                        outcome.ruleName = rule->name;
+                        outcome.ruleId = rule->id;
 
-            // Add to context for dependent rules
-            context.setResult(result.ruleName, result);
+                        // Acquire a pre-compiled engine clone from the pool
+                        auto* threadEngine = acquireEngine();
+
+                        // Safety check: if pool exhausted, return error
+                        if (!threadEngine) {
+                            outcome.success = false;
+                            outcome.exception = RuleException("Failed to acquire engine from pool - timeout or pool empty");
+                            return outcome;
+                        }
+
+                        // Check dependency before execution
+                        if (rule->dependsOnRuleName.has_value()) {
+                            auto depResult = context.getResult(rule->dependsOnRuleName.value());
+                            if (!depResult.has_value() || !depResult->isSuccess()) {
+                                outcome.success = false;
+                                outcome.exception = RuleException("Dependency failed: " + rule->dependsOnRuleName.value());
+                                releaseEngine(threadEngine);
+                                return outcome;
+                            }
+                        }
+
+                        try {
+                            // Execute with the cloned engine (no mutex contention!)
+                            outcome = rule->execute(*threadEngine, context, parameters);
+                        } catch (...) {
+                            releaseEngine(threadEngine);
+                            throw;
+                        }
+
+                        // Release engine back to the pool
+                        releaseEngine(threadEngine);
+                        return outcome;
+                    })
+                );
+            }
+
+            // Collect results from this batch
+            for (size_t i = 0; i < futures.size(); ++i) {
+                auto result = futures[i].get();
+
+                std::lock_guard<std::mutex> lock(resultsMutex);
+                results.push_back(result);
+
+                // Add to context for dependent rules. Key off the Rule so
+                // unnamed rules do not all collide under the empty string.
+                context.setResult(pending[offset + i]->resultKey(), result);
+            }
         }
     }
 
@@ -706,14 +734,21 @@ StreamingResult Workflow::executeStreaming(LuaEngine& engine, const std::vector<
     // Capture workflow state by value for the generator.
     // The generator owns its own context and index so multiple StreamingResult
     // instances (and instances moved across threads) do not share state.
-    auto rulesCopy = rules;
+    //
+    // Rules are captured as shared_ptr copies and the execution order is
+    // resolved up front, so the generator does NOT depend on the Workflow
+    // outliving it. The engine is still captured by pointer - it cannot be
+    // copied - so the caller must keep `engine` alive for as long as the
+    // returned StreamingResult is used (documented on the declaration).
+    auto order = std::make_shared<std::vector<std::shared_ptr<Rule>>>(resolveExecutionOrder());
+    LuaEngine* enginePtr = &engine;
 
-    return StreamingResult([this, &engine, parameters, rulesCopy,
+    return StreamingResult([enginePtr, parameters, order,
                             ctx = std::make_shared<RuleContext>(),
                             idx = std::make_shared<size_t>(0)]() mutable -> std::optional<RuleResult> {
         // Find next rule to execute
-        while (*idx < rulesCopy.size()) {
-            auto& rule = rulesCopy[(*idx)++];
+        while (*idx < order->size()) {
+            auto& rule = (*order)[(*idx)++];
 
             if (!rule->isActive) {
                 continue;
@@ -721,14 +756,14 @@ StreamingResult Workflow::executeStreaming(LuaEngine& engine, const std::vector<
 
             // Check dependency
             if (rule->dependsOnRuleName.has_value()) {
-                auto depResult = ctx->getResult(rule->dependsOnRuleName.value().c_str());
+                auto depResult = ctx->getResult(rule->dependsOnRuleName.value());
                 if (!depResult.has_value() || !depResult->isSuccess()) {
                     continue;
                 }
             }
 
-            auto result = rule->execute(engine, *ctx, parameters);
-            ctx->setResult(rule->name, result);
+            auto result = rule->execute(*enginePtr, *ctx, parameters);
+            ctx->setResult(rule->resultKey(), result);
 
             if (!result.skipped) {
                 return result;

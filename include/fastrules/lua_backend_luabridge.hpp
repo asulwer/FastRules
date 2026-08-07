@@ -57,6 +57,18 @@ public:
     // Helper for predicate lookup (used by C handler)
     LuaPredicateFunc* getPredicate(const std::string& name);
 
+    /**
+     * @brief Liveness flag for this backend's Lua state
+     *
+     * The flag is set to false immediately before the state is closed (by
+     * reset() or by the destructor). LuaValue instances hold a copy so they
+     * can detect that their state has gone away instead of unref-ing into
+     * freed memory.
+     *
+     * @return Shared flag, true while the current Lua state is open
+     */
+    [[nodiscard]] std::shared_ptr<const bool> aliveFlag() const;
+
     // ── State management ──────────────────────────────────────────────────
     void openLibraries() override;
     [[nodiscard]] lua_State* state() const override;

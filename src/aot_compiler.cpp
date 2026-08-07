@@ -32,7 +32,10 @@ std::string AotCompiler::compileToBytecode(const std::string& expression, lua_St
 
     // Compile the expression to bytecode
     if (luaL_loadstring(lua, expression.c_str()) != LUA_OK) {
-        std::string error = lua_tostring(lua, -1);
+        // lua_tostring returns nullptr when the error object is not a string
+        // (or convertible to one); constructing a std::string from it is UB.
+        const char* msg = lua_tostring(lua, -1);
+        std::string error = msg ? msg : "Unknown compilation error";
         lua_pop(lua, 1);
         throw std::runtime_error("Failed to compile expression: " + error);
     }
@@ -134,8 +137,8 @@ void AotCompiler::saveCache() {
         std::filesystem::path indexFile = cacheDirectory_ / "index.frc";
         std::ofstream file(indexFile);
         if (file.is_open()) {
-            for (const auto& [expression, chunk] : cache_) {
-                file << std::hash<std::string>{}(expression) << "=" << expression << "\n";
+            for (const auto& entry : cache_) {
+                file << std::hash<std::string>{}(entry.first) << "=" << entry.first << "\n";
             }
         }
     } catch (...) {
@@ -151,10 +154,13 @@ void AotCompiler::loadCache() {
         if (std::filesystem::exists(indexFile)) {
             std::ifstream file(indexFile);
             if (file.is_open()) {
+                // The index only records which expressions have on-disk
+                // bytecode; entries are faulted in lazily by getOrCompile(),
+                // which reads "<hash>.frc" directly. Nothing to do here beyond
+                // confirming the index is readable.
                 std::string line;
                 while (std::getline(file, line)) {
-                    // In a real implementation, we would load the actual cache entries
-                    // This is a simplified version
+                    (void)line;
                 }
             }
         }

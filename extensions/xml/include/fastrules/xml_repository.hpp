@@ -33,8 +33,12 @@ namespace ext {
 class XmlRuleRepository : public IRuleRepository {
 public:
     explicit XmlRuleRepository(const std::filesystem::path& filepath);
-    ~XmlRuleRepository() override = default;
-    
+
+    /// Flushes pending changes, matching JsonRuleRepository's contract.
+    /// Without this, remove() (which only marks the document dirty) was lost
+    /// unless the caller happened to call flush() explicitly.
+    ~XmlRuleRepository() override;
+
     void save(const Rule& rule) override;
     std::optional<Rule> findById(int id) override;
     std::vector<Rule> findAll() override;

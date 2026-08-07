@@ -73,6 +73,8 @@
 #include <optional>
 #include <chrono>
 #include <any>
+#include <atomic>
+#include <cstdint>
 #include <mutex>
 #include <shared_mutex>
 
@@ -448,6 +450,19 @@ public:
     /// @brief Get the current state generation (incremented on reset)
     [[nodiscard]] int getGeneration() const noexcept { return generation_.load(); }
 
+    /**
+     * @brief Get this engine's unique instance identifier
+     *
+     * Every LuaEngine (including every clone) receives a fresh, never-reused
+     * id at construction. Callers that cache per-engine state must key it on
+     * this id rather than on the engine's address: an engine can be destroyed
+     * and a new one allocated at the same address, which would otherwise
+     * cause the new engine to inherit the old one's cached state.
+     *
+     * @return A process-unique, monotonically increasing identifier
+     */
+    [[nodiscard]] std::uint64_t instanceId() const noexcept { return instanceId_; }
+
     // ========================================================================
     // State Management
     // ========================================================================
@@ -526,6 +541,12 @@ private:
     /// @brief Next reference ID to assign
     int nextRefId_ = 1;
 
+    /// @brief Process-unique id for this engine instance (never reused)
+    std::uint64_t instanceId_ = nextInstanceId();
+
+    /// @brief Allocate the next process-unique engine instance id
+    [[nodiscard]] static std::uint64_t nextInstanceId() noexcept;
+
     // ========================================================================
     // Components
     // ========================================================================
@@ -548,7 +569,13 @@ private:
     // Thread Safety
     // ========================================================================
     
-    mutable std::mutex luaStateMutex_;                    ///< Protects Lua state operations
+    /// Protects Lua state operations.
+    ///
+    /// Recursive because a Lua action can call back into C++ (via a registered
+    /// ActionCallback) and that C++ code may legitimately re-enter this same
+    /// engine. With a plain std::mutex that self-deadlocks; the Lua state is
+    /// still only ever touched by one thread at a time.
+    mutable std::recursive_mutex luaStateMutex_;
     mutable std::shared_mutex registryMutex_;             ///< Protects reference registries
     ///< Lock ordering: Always lock luaStateMutex_ before registryMutex_ to prevent deadlock
 

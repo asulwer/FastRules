@@ -34,6 +34,13 @@ struct SandboxStateData {
     lua_Alloc origAlloc = nullptr;
     void* origUd = nullptr;
     bool allocInstalled = false;
+
+    // Hook that was installed before the sandbox took over the single hook
+    // slot (e.g. LuaEngine's timeout hook). Chained from our hook and restored
+    // by removeSandbox.
+    lua_Hook chainedHook = nullptr;
+    int chainedMask = 0;
+    int chainedCount = 0;
 };
 
 // Memory-capping allocator. Denies (returns nullptr) any growth that would push
@@ -65,12 +72,26 @@ static void* sandboxLimitAlloc(void* ud, void* ptr, size_t osize, size_t nsize) 
 
 // Instruction-count hook. Fetches the SandboxStateData pointer from the registry
 // and raises a Lua error once the configured instruction budget is exceeded.
-static void sandboxInstructionHook(lua_State* L, lua_Debug* /*ar*/) {
+//
+// A lua_State has exactly ONE hook slot. LuaEngine installs its own count hook
+// to enforce rule timeouts, so installing this hook on an engine's state would
+// silently disable timeouts (and vice versa). To keep both working, this hook
+// chains to whatever hook was already installed before the sandbox was applied.
+static void sandboxInstructionHook(lua_State* L, lua_Debug* ar) {
     lua_pushlightuserdata(L, const_cast<char*>(&kSandboxDataKey));
     lua_rawget(L, LUA_REGISTRYINDEX);
     auto* d = static_cast<SandboxStateData*>(lua_touserdata(L, -1));
     lua_pop(L, 1);
-    if (!d || d->instructionLimit == 0) {
+    if (!d) {
+        return;
+    }
+
+    // Run the pre-existing hook first so it keeps enforcing its own policy.
+    if (d->chainedHook != nullptr && d->chainedHook != sandboxInstructionHook) {
+        d->chainedHook(L, ar);
+    }
+
+    if (d->instructionLimit == 0) {
         return;
     }
     d->instructionCount += static_cast<size_t>(kInstructionHookStep);
@@ -216,8 +237,23 @@ void SandboxManager::applySandbox(lua_State* lua) {
 
     {
         std::lock_guard<std::mutex> lock(statesMutex_);
-        if (sandboxedStates_.find(lua) != sandboxedStates_.end()) {
-            return;  // Already sandboxed
+        auto existing = sandboxedStates_.find(lua);
+        if (existing != sandboxedStates_.end()) {
+            // Confirm the entry really belongs to THIS state. A lua_State can
+            // be closed without removeSandbox() and a fresh one allocated at
+            // the same address; the stale entry would then make us skip
+            // sandboxing the new state entirely - a silent security hole.
+            // The registry pointer only survives in the state we installed it
+            // in, so a mismatch identifies a recycled address.
+            lua_pushlightuserdata(lua, const_cast<char*>(&kSandboxDataKey));
+            lua_rawget(lua, LUA_REGISTRYINDEX);
+            void* registered = lua_touserdata(lua, -1);
+            lua_pop(lua, 1);
+
+            if (registered == existing->second.get()) {
+                return;  // Genuinely already sandboxed
+            }
+            sandboxedStates_.erase(existing);  // Stale: re-sandbox below
         }
     }
 
@@ -273,8 +309,14 @@ void SandboxManager::removeSandbox(lua_State* lua) {
 
     SandboxStateData* d = it->second.get();
 
-    // Disable the instruction hook.
-    lua_sethook(lua, nullptr, 0, 0);
+    // Restore whatever hook we displaced (e.g. LuaEngine's timeout hook)
+    // rather than clearing the slot outright.
+    if (d && d->chainedHook != nullptr) {
+        lua_sethook(lua, d->chainedHook, d->chainedMask,
+                    d->chainedCount > 0 ? d->chainedCount : kInstructionHookStep);
+    } else {
+        lua_sethook(lua, nullptr, 0, 0);
+    }
 
     // Clear the registry pointer.
     lua_pushlightuserdata(lua, const_cast<char*>(&kSandboxDataKey));
@@ -416,10 +458,28 @@ void SandboxManager::setInstructionLimit(lua_State* lua, size_t maxInstructions)
     d->instructionLimit = maxInstructions;
     d->instructionCount = 0;
 
-    if (maxInstructions == 0) {
-        lua_sethook(lua, nullptr, 0, 0);  // unlimited
+    // Capture whatever hook is currently installed so it can be chained from
+    // ours and restored on removeSandbox. Do this only once, and never record
+    // our own hook as the chained one.
+    if (d->chainedHook == nullptr) {
+        lua_Hook existing = lua_gethook(lua);
+        if (existing != nullptr && existing != sandboxInstructionHook) {
+            d->chainedHook = existing;
+            d->chainedMask = lua_gethookmask(lua);
+            d->chainedCount = lua_gethookcount(lua);
+        }
+    }
+
+    if (maxInstructions == 0 && d->chainedHook == nullptr) {
+        lua_sethook(lua, nullptr, 0, 0);  // unlimited and nothing to chain
     } else {
-        lua_sethook(lua, sandboxInstructionHook, LUA_MASKCOUNT, kInstructionHookStep);
+        // Our hook runs the chained one too, so a count hook must fire at
+        // least as often as the hook it replaced.
+        int count = kInstructionHookStep;
+        if (d->chainedCount > 0 && d->chainedCount < count) {
+            count = d->chainedCount;
+        }
+        lua_sethook(lua, sandboxInstructionHook, LUA_MASKCOUNT | d->chainedMask, count);
     }
 }
 

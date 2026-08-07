@@ -224,26 +224,34 @@ std::unique_ptr<LuaValue> anyToLuaValue(LuaBackend& backend, const std::any& val
 
 } // anonymous namespace
 
-// Simple scope guard for g_deadline cleanup - no exceptions, no std::function
+// Simple scope guard for g_deadline cleanup - no exceptions, no std::function.
+//
+// Saves and restores the previous deadline rather than clearing it, so that a
+// nested evaluation (an action callback re-entering the engine) cannot drop an
+// outer rule's timeout when it returns.
 struct DeadlineGuard {
     std::chrono::steady_clock::time_point** ptr;
-    bool dismissed;
-    
-    explicit DeadlineGuard(std::chrono::steady_clock::time_point** p) 
-        : ptr(p), dismissed(false) {}
-    
+    std::chrono::steady_clock::time_point* previous;
+
+    explicit DeadlineGuard(std::chrono::steady_clock::time_point** p)
+        : ptr(p), previous(p ? *p : nullptr) {}
+
     ~DeadlineGuard() {
-        if (!dismissed && ptr) {
-            *ptr = nullptr;
+        if (ptr) {
+            *ptr = previous;
         }
     }
-    
-    void dismiss() { dismissed = true; }
-    
+
     // No copy, no move - simple RAII
     DeadlineGuard(const DeadlineGuard&) = delete;
     DeadlineGuard& operator=(const DeadlineGuard&) = delete;
 };
+
+std::uint64_t LuaEngine::nextInstanceId() noexcept {
+    // Starts at 1 so that 0 is never a valid id.
+    static std::atomic<std::uint64_t> counter{0};
+    return counter.fetch_add(1, std::memory_order_relaxed) + 1;
+}
 
 LuaEngine::LuaEngine() : backend_(LuaBackend::create()) {
     backend_->openLibraries();
@@ -272,6 +280,13 @@ LuaEngine::LuaEngine(LuaEngine&& other) noexcept
     , compileCount_(other.compileCount_.load())
     , generation_(other.generation_.load())
 {
+    // The Lua state (and therefore every compiled reference) moves with the
+    // engine, so the identity must move too - otherwise rules that already
+    // cached references against `other` would silently stop matching.
+    instanceId_ = other.instanceId_;
+    maxExpressionLength_ = other.maxExpressionLength_;
+    autoResetThresholdKB_ = other.autoResetThresholdKB_;
+    logger_ = std::move(other.logger_);
 }
 
 LuaEngine& LuaEngine::operator=(LuaEngine&& other) noexcept {
@@ -288,10 +303,14 @@ LuaEngine& LuaEngine::operator=(LuaEngine&& other) noexcept {
         coroutineHandles_ = std::move(other.coroutineHandles_);
         paramNames_ = std::move(other.paramNames_);
         nextRefId_ = other.nextRefId_;
+        instanceId_ = other.instanceId_;
         typeRegistry_ = std::move(other.typeRegistry_);
         actionCallbacks_ = std::move(other.actionCallbacks_);
         compileCount_ = other.compileCount_.load();
         generation_ = other.generation_.load();
+        maxExpressionLength_ = other.maxExpressionLength_;
+        autoResetThresholdKB_ = other.autoResetThresholdKB_;
+        logger_ = std::move(other.logger_);
     }
     return *this;
 }
@@ -302,10 +321,13 @@ std::unique_ptr<LuaEngine> LuaEngine::clone() const {
     engine->actionCallbacks_ = actionCallbacks_;
     // NOTE: Do NOT copy refToBackendId_ or paramNames_ - these are tied to
     // the original Lua state. The cloned engine will compile its own refs.
+    // The clone also keeps the fresh instanceId_ assigned by its constructor,
+    // so callers caching per-engine state treat it as a distinct engine.
     engine->maxExpressionLength_ = maxExpressionLength_;
     engine->compileCount_.store(compileCount_.load());
-    engine->generation_.store(generation_.load());
+    // A clone starts a brand-new Lua state, so its generation restarts at 0.
     engine->autoResetThresholdKB_ = autoResetThresholdKB_;
+    engine->logger_ = logger_;
     engine->bindTypesToState();
     engine->bindActionsToState();
     return engine;
@@ -559,7 +581,7 @@ std::optional<int> LuaEngine::compileExpression(const std::string& expression) {
         // Lua is not thread-safe; hold the Lua-state mutex while touching the
         // backend during compilation. The registry mutex is acquired after the
         // Lua mutex to keep the lock order consistent with execution methods.
-        std::scoped_lock<std::mutex> luaLock(luaStateMutex_);
+        std::scoped_lock<std::recursive_mutex> luaLock(luaStateMutex_);
         bindTypesToState();
 
         std::lock_guard<std::shared_mutex> lock(registryMutex_);
@@ -602,7 +624,7 @@ std::optional<int> LuaEngine::compileAction(const std::string& action) {
     int ref;
     std::string backendId;
     try {
-        std::scoped_lock<std::mutex> luaLock(luaStateMutex_);
+        std::scoped_lock<std::recursive_mutex> luaLock(luaStateMutex_);
         bindActionsToState();
 
         std::lock_guard<std::shared_mutex> lock(registryMutex_);
@@ -640,7 +662,7 @@ std::optional<int> LuaEngine::compileCoroutine(const std::string& expression) {
     std::string backendId;
     void* handle = nullptr;
     {
-        std::scoped_lock<std::mutex> luaLock(luaStateMutex_);
+        std::scoped_lock<std::recursive_mutex> luaLock(luaStateMutex_);
         bindTypesToState();
         bindActionsToState();
 
@@ -692,7 +714,7 @@ std::any LuaEngine::luaValueToAny(const LuaValue& value) const {
 }
 
 bool LuaEngine::resumeCoroutine(int ref, const std::vector<RuleParameter>& parameters, RuleContext& context) {
-    std::scoped_lock<std::mutex> luaLock(luaStateMutex_);
+    std::scoped_lock<std::recursive_mutex> luaLock(luaStateMutex_);
     
     std::shared_lock<std::shared_mutex> lock(registryMutex_);
     auto handleIt = coroutineHandles_.find(ref);
@@ -747,7 +769,7 @@ bool LuaEngine::isCoroutine(int ref) const {
 }
 
 bool LuaEngine::evaluateExpression(int ref, const std::vector<RuleParameter>& parameters, RuleContext& context, std::optional<std::chrono::milliseconds> timeout) {
-    std::scoped_lock<std::mutex> luaLock(luaStateMutex_);
+    std::scoped_lock<std::recursive_mutex> luaLock(luaStateMutex_);
     
     std::shared_lock<std::shared_mutex> lock(registryMutex_);
     auto it = refToBackendId_.find(ref);
@@ -778,9 +800,9 @@ bool LuaEngine::evaluateExpression(int ref, const std::vector<RuleParameter>& pa
     if (hasTimeout) {
         deadline = std::chrono::steady_clock::now() + timeout.value();
         g_deadline = &deadline;
-    } else {
-        guard.dismiss();  // No timeout set, don't reset g_deadline
     }
+    // With no timeout the guard simply restores whatever deadline was already
+    // in effect, preserving an enclosing rule.s timeout across nested calls.
 
     auto result = backend_->evaluate(backendId, pairs);
 
@@ -805,7 +827,7 @@ bool LuaEngine::evaluateExpression(int ref, const std::vector<RuleParameter>& pa
 }
 
 void LuaEngine::executeAction(int ref, const std::vector<RuleParameter>& parameters, RuleContext& context, std::optional<std::chrono::milliseconds> timeout) {
-    std::scoped_lock<std::mutex> luaLock(luaStateMutex_);
+    std::scoped_lock<std::recursive_mutex> luaLock(luaStateMutex_);
     
     std::shared_lock<std::shared_mutex> lock(registryMutex_);
     auto it = refToBackendId_.find(ref);
@@ -834,9 +856,9 @@ void LuaEngine::executeAction(int ref, const std::vector<RuleParameter>& paramet
     if (hasTimeout) {
         deadline = std::chrono::steady_clock::now() + timeout.value();
         g_deadline = &deadline;
-    } else {
-        guard.dismiss();  // No timeout set, don't reset g_deadline
     }
+    // With no timeout the guard simply restores whatever deadline was already
+    // in effect, preserving an enclosing rule.s timeout across nested calls.
 
     backend_->executeAction(backendId, pairs);
 
@@ -930,7 +952,7 @@ void LuaEngine::discoverCallbacks(const std::vector<std::string>& actions) {
 // ============================================================================
 
 void LuaEngine::resetState() {
-    std::lock_guard<std::mutex> luaLock(luaStateMutex_);
+    std::lock_guard<std::recursive_mutex> luaLock(luaStateMutex_);
 
     generation_.fetch_add(1);
 
@@ -974,13 +996,13 @@ void LuaEngine::resetState() {
 }
 
 void LuaEngine::collectGarbage() {
-    std::lock_guard<std::mutex> lock(luaStateMutex_);
+    std::lock_guard<std::recursive_mutex> lock(luaStateMutex_);
     backend_->collectGarbage();
     backend_->collectGarbage();
 }
 
 size_t LuaEngine::getMemoryUsageKB() {
-    std::lock_guard<std::mutex> lock(luaStateMutex_);
+    std::lock_guard<std::recursive_mutex> lock(luaStateMutex_);
     return backend_->memoryUsageKB();
 }
 

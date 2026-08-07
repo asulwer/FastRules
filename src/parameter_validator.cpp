@@ -42,15 +42,79 @@ namespace fastrules {
  */
 void ParameterValidator::validateTypes(const std::vector<RuleParameter>& parameters) {
     for (const auto& param : parameters) {
-        // Only validate if a type is explicitly declared
-        if (param.type.has_value() && !valueMatchesType(param.type.value().name(), param.value)) {
+        if (!param.type.has_value()) {
+            continue;
+        }
+        // Compare std::type_index values directly rather than routing through
+        // type_info::name(). That name is implementation-defined - MSVC yields
+        // "int" but libstdc++ yields "i" - so the string-based check silently
+        // degraded to a no-op on GCC/Clang and behaved differently per platform.
+        if (!valueMatchesTypeIndex(param.type.value(), param.value)) {
             std::ostringstream oss;
-            oss << "Parameter '" << param.name << "' declared as type '" 
-                << (param.type.has_value() ? param.type.value().name() : "any")
-                << "' but value does not match";
+            oss << "Parameter '" << param.name << "' declared as type '"
+                << param.type.value().name()
+                << "' but value holds '"
+                << (param.value.has_value() ? param.value.type().name() : "nil")
+                << "'";
             throw ParameterTypeException(oss.str());
         }
     }
+}
+
+bool ParameterValidator::valueMatchesTypeIndex(const std::type_index& declaredType,
+                                               const std::any& value) {
+    // nil/null matches any type (Lua nil is valid for any parameter)
+    if (!value.has_value()) {
+        return true;
+    }
+
+    // Exact match is the common case (RuleParameter records typeid(T) of the
+    // value it was constructed from).
+    if (std::type_index(value.type()) == declaredType) {
+        return true;
+    }
+
+    // Only a scalar-vs-scalar mismatch is diagnosable here. Everything else is
+    // the TypeRegistry's business - in particular pointer parameters, for which
+    // RuleParameter deliberately records the POINTEE type, so a `Customer*`
+    // value legitimately carries a declared type of `Customer`.
+    const bool declaredScalar = isNumericTypeIndex(declaredType) ||
+                                isStringTypeIndex(declaredType) ||
+                                declaredType == std::type_index(typeid(bool));
+    const bool valueScalar = isInt(value) || isDouble(value) || isBool(value) || isString(value);
+    if (!declaredScalar || !valueScalar) {
+        return true;
+    }
+
+    if (declaredType == std::type_index(typeid(bool))) {
+        return isBool(value);
+    }
+    if (isStringTypeIndex(declaredType)) {
+        return isString(value);
+    }
+    // Declared numeric: accept any numeric value (Lua performs the conversion
+    // anyway), including bool, which Lua treats as truthy/falsy.
+    return isInt(value) || isDouble(value) || isBool(value);
+}
+
+bool ParameterValidator::isStringTypeIndex(const std::type_index& t) {
+    return t == std::type_index(typeid(std::string)) ||
+           t == std::type_index(typeid(const char*)) ||
+           t == std::type_index(typeid(char*));
+}
+
+bool ParameterValidator::isNumericTypeIndex(const std::type_index& t) {
+    return t == std::type_index(typeid(int)) ||
+           t == std::type_index(typeid(unsigned int)) ||
+           t == std::type_index(typeid(short)) ||
+           t == std::type_index(typeid(unsigned short)) ||
+           t == std::type_index(typeid(long)) ||
+           t == std::type_index(typeid(unsigned long)) ||
+           t == std::type_index(typeid(long long)) ||
+           t == std::type_index(typeid(unsigned long long)) ||
+           t == std::type_index(typeid(float)) ||
+           t == std::type_index(typeid(double)) ||
+           t == std::type_index(typeid(long double));
 }
 
 /**

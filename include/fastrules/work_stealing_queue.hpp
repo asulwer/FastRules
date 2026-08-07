@@ -1,19 +1,29 @@
 /**
  * @file work_stealing_queue.hpp
  * @brief Lock-free work-stealing queue for thread pool
- * 
+ *
  * Implements a lock-free work-stealing queue based on the Chase-Lev deque algorithm.
  * Each thread has a local queue, and when idle, threads can "steal" work from
  * other threads' queues to improve load balancing.
- * 
+ *
  * Thread Safety:
  * - Single producer (owner thread can push/pop)
  * - Multiple consumers (any thread can steal)
- * 
+ *
  * Memory Ordering:
  * - push(): Release ordering on tail_
  * - pop(): Acquire ordering on head_ and tail_
  * - steal(): Acquire ordering on head_
+ *
+ * @warning NOT USED BY THE SHIPPING THREAD POOL, AND NOT PRODUCTION READY.
+ * WorkStealingThreadPool uses SimpleWorkStealingQueue (mutex-based) instead.
+ * Two unresolved problems make this class unsafe as written:
+ *   1. resize() reassigns buffer_ while stealers may be reading it - a data
+ *      race and potential use-after-free. A correct Chase-Lev deque retires
+ *      old buffers through a reclamation scheme rather than freeing them.
+ *   2. std::atomic<T> requires T to be trivially copyable, so it cannot hold
+ *      the std::function<void()> tasks the pool actually queues.
+ * Use SimpleWorkStealingQueue unless and until those are addressed.
  */
 
 #pragma once
@@ -21,6 +31,7 @@
 #include <atomic>
 #include <memory>
 #include <optional>
+#include <type_traits>
 #include <vector>
 
 namespace fastrules {
@@ -37,14 +48,21 @@ namespace fastrules {
  */
 template<typename T>
 class WorkStealingQueue {
+    static_assert(std::is_trivially_copyable_v<T>,
+                  "WorkStealingQueue stores elements in std::atomic<T>, which requires a "
+                  "trivially copyable T. For task types such as std::function<void()>, use "
+                  "SimpleWorkStealingQueue instead.");
+
 private:
     static constexpr size_t kInitialSize = 1024;
-    
+
     std::vector<std::atomic<T>> buffer_;
     std::atomic<size_t> head_;
     std::atomic<size_t> tail_;
     size_t mask_;
-    
+
+    // NOTE: unsafe in the presence of concurrent steal() - see the file-level
+    // warning. Only reachable from the owner thread's push().
     void resize() {
         size_t old_size = buffer_.size();
         size_t new_size = old_size * 2;

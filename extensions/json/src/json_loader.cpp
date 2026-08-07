@@ -14,16 +14,39 @@ namespace fastrules {
 namespace {
     // Thread-safe ID generation
     std::atomic<int> ruleIdCounter{0};
+
+    // Shared by every workflow-id fallback. Previously two separate
+    // `static int counter` locals (one per branch) each started at 0, so the
+    // two fallback paths handed out colliding workflow ids - and neither was
+    // thread-safe.
+    std::atomic<int> workflowIdCounter{0};
+
+    // Bound on childRules nesting. Untrusted JSON could otherwise drive
+    // parseRule()/serializeRule() into unbounded recursion and blow the stack.
+    constexpr int kMaxRuleNestingDepth = 64;
 }
 
 std::shared_ptr<Rule> JsonLoader::parseRule(const nlohmann::json& j) {
+    return parseRuleAtDepth(j, 0);
+}
+
+std::shared_ptr<Rule> JsonLoader::parseRuleAtDepth(const nlohmann::json& j, int depth) {
+    if (depth > kMaxRuleNestingDepth) {
+        throw RuleException("Rule nesting exceeds the maximum supported depth of " +
+                            std::to_string(kMaxRuleNestingDepth));
+    }
     auto rule = std::make_shared<Rule>();
 
     if (j.contains("id")) {
         if (j["id"].is_number_integer()) {
             rule->id = j["id"];
         } else if (j["id"].is_string()) {
-            rule->id = std::stoi(j["id"].get<std::string>());
+            try {
+                rule->id = std::stoi(j["id"].get<std::string>());
+            } catch (const std::exception&) {
+                throw RuleException("Rule 'id' is a string but not a valid integer: " +
+                                    j["id"].get<std::string>());
+            }
         } else {
             rule->id = ++ruleIdCounter;
         }
@@ -94,7 +117,7 @@ std::shared_ptr<Rule> JsonLoader::parseRule(const nlohmann::json& j) {
 
     if (j.contains("childRules") && j["childRules"].is_array()) {
         for (const auto& child : j["childRules"]) {
-            auto childRule = parseRule(child);
+            auto childRule = parseRuleAtDepth(child, depth + 1);
             childRule->parentRule = rule;
             rule->childRules.push_back(childRule);
         }
@@ -104,6 +127,14 @@ std::shared_ptr<Rule> JsonLoader::parseRule(const nlohmann::json& j) {
 }
 
 nlohmann::json JsonLoader::serializeRule(const Rule& rule) {
+    return serializeRuleAtDepth(rule, 0);
+}
+
+nlohmann::json JsonLoader::serializeRuleAtDepth(const Rule& rule, int depth) {
+    if (depth > kMaxRuleNestingDepth) {
+        throw RuleException("Rule nesting exceeds the maximum supported depth of " +
+                            std::to_string(kMaxRuleNestingDepth));
+    }
     nlohmann::json j;
     j["id"] = rule.id;
     j["description"] = rule.description;
@@ -132,7 +163,9 @@ nlohmann::json JsonLoader::serializeRule(const Rule& rule) {
 
     j["childRules"] = nlohmann::json::array();
     for (const auto& child : rule.childRules) {
-        j["childRules"].push_back(serializeRule(*child));
+        if (child) {
+            j["childRules"].push_back(serializeRuleAtDepth(*child, depth + 1));
+        }
     }
 
     return j;
@@ -147,14 +180,17 @@ Workflow JsonLoader::loadWorkflow(const std::string& jsonString) {
         if (j["id"].is_number_integer()) {
             workflow.id = j["id"];
         } else if (j["id"].is_string()) {
-            workflow.id = std::stoi(j["id"].get<std::string>());
+            try {
+                workflow.id = std::stoi(j["id"].get<std::string>());
+            } catch (const std::exception&) {
+                throw RuleException("Workflow 'id' is a string but not a valid integer: " +
+                                    j["id"].get<std::string>());
+            }
         } else {
-            static int counter = 0;
-            workflow.id = ++counter;
+            workflow.id = ++workflowIdCounter;
         }
     } else {
-        static int counter = 0;
-        workflow.id = ++counter;
+        workflow.id = ++workflowIdCounter;
     }
 
     if (j.contains("description") && j["description"].is_string()) {

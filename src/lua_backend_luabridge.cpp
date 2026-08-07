@@ -25,7 +25,17 @@ static int luaPredicateCallHandler(lua_State* L);
 class LuaBridgeValue : public LuaValue {
 public:
     LuaBridgeValue() : L_(nullptr), ref_(LUA_REFNIL) {}
-    explicit LuaBridgeValue(lua_State* L, int stackIndex) : L_(L) {
+
+    /**
+     * @param L          the Lua state the value lives in
+     * @param stackIndex stack slot to take a registry reference to
+     * @param alive      liveness flag shared with the owning backend. The
+     *                   backend clears it immediately before lua_close(), so a
+     *                   LuaValue that outlives a resetState() degrades to nil
+     *                   instead of unref-ing a destroyed state.
+     */
+    explicit LuaBridgeValue(lua_State* L, int stackIndex, std::shared_ptr<const bool> alive = nullptr)
+        : L_(L), alive_(std::move(alive)) {
         if (L_) {
             lua_pushvalue(L_, stackIndex);
             ref_ = luaL_ref(L_, LUA_REGISTRYINDEX);
@@ -35,24 +45,25 @@ public:
     }
 
     ~LuaBridgeValue() override {
-        if (L_ && ref_ != LUA_REFNIL && ref_ != LUA_NOREF) {
+        if (valid()) {
             luaL_unref(L_, LUA_REGISTRYINDEX, ref_);
         }
     }
 
     // Move constructor / assignment
     LuaBridgeValue(LuaBridgeValue&& other) noexcept
-        : L_(other.L_), ref_(other.ref_) {
+        : L_(other.L_), ref_(other.ref_), alive_(std::move(other.alive_)) {
         other.ref_ = LUA_NOREF;
     }
 
     LuaBridgeValue& operator=(LuaBridgeValue&& other) noexcept {
         if (this != &other) {
-            if (L_ && ref_ != LUA_REFNIL && ref_ != LUA_NOREF) {
+            if (valid()) {
                 luaL_unref(L_, LUA_REGISTRYINDEX, ref_);
             }
             L_ = other.L_;
             ref_ = other.ref_;
+            alive_ = std::move(other.alive_);
             other.ref_ = LUA_NOREF;
         }
         return *this;
@@ -62,16 +73,24 @@ public:
     LuaBridgeValue(const LuaBridgeValue&) = delete;
     LuaBridgeValue& operator=(const LuaBridgeValue&) = delete;
 
+    /// True when the referenced Lua state is still open and the ref is real.
+    [[nodiscard]] bool valid() const {
+        return L_ != nullptr
+            && ref_ != LUA_REFNIL
+            && ref_ != LUA_NOREF
+            && (!alive_ || *alive_);
+    }
+
     void push() const {
-        if (!L_ || ref_ == LUA_REFNIL || ref_ == LUA_NOREF) {
-            if (L_) lua_pushnil(L_);
+        if (!valid()) {
+            if (L_ && (!alive_ || *alive_)) lua_pushnil(L_);
         } else {
             lua_rawgeti(L_, LUA_REGISTRYINDEX, ref_);
         }
     }
 
     [[nodiscard]] LuaType type() const override {
-        if (!L_ || ref_ == LUA_REFNIL || ref_ == LUA_NOREF) return LuaType::Nil;
+        if (!valid()) return LuaType::Nil;
         push();
         int t = lua_type(L_, -1);
         lua_pop(L_, 1);
@@ -96,7 +115,7 @@ public:
     }
 
     [[nodiscard]] bool isNil() const override {
-        if (!L_ || ref_ == LUA_REFNIL || ref_ == LUA_NOREF) return true;
+        if (!valid()) return true;
         push();
         bool result = lua_isnil(L_, -1);
         lua_pop(L_, 1);
@@ -104,7 +123,7 @@ public:
     }
 
     [[nodiscard]] bool isString() const override {
-        if (!L_ || ref_ == LUA_REFNIL || ref_ == LUA_NOREF) return false;
+        if (!valid()) return false;
         push();
         bool result = lua_isstring(L_, -1) != 0;
         lua_pop(L_, 1);
@@ -112,7 +131,7 @@ public:
     }
 
     [[nodiscard]] bool isTable() const override {
-        if (!L_ || ref_ == LUA_REFNIL || ref_ == LUA_NOREF) return false;
+        if (!valid()) return false;
         push();
         bool result = lua_istable(L_, -1);
         lua_pop(L_, 1);
@@ -120,7 +139,7 @@ public:
     }
 
     [[nodiscard]] bool toBool() const override {
-        if (!L_ || ref_ == LUA_REFNIL || ref_ == LUA_NOREF) return false;
+        if (!valid()) return false;
         push();
         bool result = lua_toboolean(L_, -1);
         lua_pop(L_, 1);
@@ -128,7 +147,7 @@ public:
     }
 
     [[nodiscard]] double toNumber() const override {
-        if (!L_ || ref_ == LUA_REFNIL || ref_ == LUA_NOREF) return 0.0;
+        if (!valid()) return 0.0;
         push();
         double result = 0.0;
         if (lua_isnumber(L_, -1)) {
@@ -139,7 +158,7 @@ public:
     }
 
     [[nodiscard]] int64_t toInteger() const override {
-        if (!L_ || ref_ == LUA_REFNIL || ref_ == LUA_NOREF) return 0;
+        if (!valid()) return 0;
         push();
         int64_t result = 0;
         if (lua_isinteger(L_, -1)) {
@@ -152,7 +171,7 @@ public:
     }
 
     [[nodiscard]] std::string toString() const override {
-        if (!L_ || ref_ == LUA_REFNIL || ref_ == LUA_NOREF) return "";
+        if (!valid()) return "";
         push();
         std::string result;
         if (lua_isstring(L_, -1)) {
@@ -164,7 +183,7 @@ public:
     }
 
     [[nodiscard]] size_t length() const override {
-        if (!L_ || ref_ == LUA_REFNIL || ref_ == LUA_NOREF) return 0;
+        if (!valid()) return 0;
         push();
         size_t len = 0;
         if (lua_istable(L_, -1)) {
@@ -183,7 +202,7 @@ public:
 
     [[nodiscard]] std::vector<std::string> keys() const override {
         std::vector<std::string> result;
-        if (!L_ || ref_ == LUA_REFNIL || ref_ == LUA_NOREF) return result;
+        if (!valid()) return result;
         push();
         if (!lua_istable(L_, -1)) {
             lua_pop(L_, 1);
@@ -202,7 +221,7 @@ public:
     }
 
     [[nodiscard]] std::unique_ptr<LuaValue> get(const std::string& key) const override {
-        if (!L_ || ref_ == LUA_REFNIL || ref_ == LUA_NOREF) {
+        if (!valid()) {
             return std::make_unique<LuaBridgeValue>();
         }
         push();
@@ -211,13 +230,13 @@ public:
             return std::make_unique<LuaBridgeValue>();
         }
         lua_getfield(L_, -1, key.c_str());
-        auto val = std::make_unique<LuaBridgeValue>(L_, -1);
+        auto val = std::make_unique<LuaBridgeValue>(L_, -1, alive_);
         lua_pop(L_, 2); // pop value and table
         return val;
     }
 
     void set(const std::string& key, const LuaValue& value) override {
-        if (!L_ || ref_ == LUA_REFNIL || ref_ == LUA_NOREF) return;
+        if (!valid()) return;
         push();
         if (!lua_istable(L_, -1)) {
             lua_pop(L_, 1);
@@ -234,10 +253,14 @@ public:
 
     [[nodiscard]] int ref() const { return ref_; }
     [[nodiscard]] lua_State* luaState() const { return L_; }
+    [[nodiscard]] const std::shared_ptr<const bool>& aliveFlag() const { return alive_; }
 
 private:
     lua_State* L_;
     int ref_;
+    /// Cleared by the owning backend immediately before lua_close(), so that a
+    /// value outliving a reset() cannot touch a destroyed Lua state.
+    std::shared_ptr<const bool> alive_;
 };
 
 // ============================================================================
@@ -282,6 +305,11 @@ static void pushAny(lua_State* L, const std::any& value) {
 // ============================================================================
 // LuaBridge3Backend implementation
 // ============================================================================
+// Registry key (its address) under which the backend pointer is stashed.
+// Using the registry rather than a global keeps it out of reach of Lua code,
+// which could otherwise overwrite or delete a plain global.
+static const char kBackendPtrKey = 0;
+
 struct LuaBridge3Backend::Impl {
     lua_State* L = nullptr;
     std::unordered_map<std::string, int> compiled_;     // id -> registry ref
@@ -290,6 +318,18 @@ struct LuaBridge3Backend::Impl {
     std::unordered_map<std::string, LuaNativeFunc> nativeFuncs_;
     std::unordered_map<std::string, LuaPredicateFunc> predicates_;
     std::vector<ActionCallbacks::Handler> actionHandlers_;
+    // name -> slot in actionHandlers_. Without this, every bindActions() call
+    // appended a fresh copy of every handler and the vector grew without bound.
+    std::unordered_map<std::string, int> actionHandlerIds_;
+    // Stable copies of bound TypeMethods, keyed "<metatable>::<method>".
+    // Metatables hold raw pointers to these as light userdata, so they must
+    // not move. Pointing directly at TypeRegistry's vector was unsafe:
+    // re-registering a type replaces that vector and leaves the metatable
+    // holding dangling pointers.
+    std::unordered_map<std::string, std::unique_ptr<TypeMethod>> boundMethods_;
+    // Shared with every LuaBridgeValue handed out; set to false just before
+    // lua_close() so stale values cannot touch a destroyed state.
+    std::shared_ptr<bool> alive = std::make_shared<bool>(true);
 };
 
 LuaBridge3Backend::LuaBridge3Backend() : pImpl_(std::make_unique<Impl>()) {
@@ -306,19 +346,35 @@ LuaBridge3Backend::~LuaBridge3Backend() {
             luaL_unref(pImpl_->L, LUA_REGISTRYINDEX, ref);
         }
         pImpl_->compiled_.clear();
+        // Announce the state's death before closing it.
+        *pImpl_->alive = false;
         lua_close(pImpl_->L);
         pImpl_->L = nullptr;
     }
 }
 
+std::shared_ptr<const bool> LuaBridge3Backend::aliveFlag() const {
+    return pImpl_->alive;
+}
+
 void LuaBridge3Backend::openLibraries() {
     luaL_openlibs(pImpl_->L);
-    
-    // Store backend pointer for closures to access action handlers
-    LuaBridge3Backend** ptr = reinterpret_cast<LuaBridge3Backend**>(
-        lua_newuserdata(pImpl_->L, sizeof(LuaBridge3Backend*)));
-    *ptr = this;
-    lua_setglobal(pImpl_->L, "__fastrules_backend_ptr");
+
+    // Store backend pointer in the registry for closures to access action
+    // handlers. The registry is not reachable from Lua code.
+    lua_pushlightuserdata(pImpl_->L, const_cast<char*>(&kBackendPtrKey));
+    lua_pushlightuserdata(pImpl_->L, this);
+    lua_rawset(pImpl_->L, LUA_REGISTRYINDEX);
+}
+
+// Fetch the backend pointer stashed by openLibraries(). Returns nullptr if
+// absent. Leaves the Lua stack balanced.
+static LuaBridge3Backend* backendFromRegistry(lua_State* L) {
+    lua_pushlightuserdata(L, const_cast<char*>(&kBackendPtrKey));
+    lua_rawget(L, LUA_REGISTRYINDEX);
+    auto* backend = static_cast<LuaBridge3Backend*>(lua_touserdata(L, -1));
+    lua_pop(L, 1);
+    return backend;
 }
 
 lua_State* LuaBridge3Backend::state() const {
@@ -351,9 +407,21 @@ void LuaBridge3Backend::reset() {
     // Action handler closures live in the old Lua state; clear the backing store
     // too so handler IDs restart from 0 and stale handlers are not retained.
     pImpl_->actionHandlers_.clear();
+    pImpl_->actionHandlerIds_.clear();
+    // Metatables referencing these are destroyed with the old state.
+    pImpl_->boundMethods_.clear();
+
+    // Retire the old liveness flag so any LuaValue still referencing the state
+    // we are about to close becomes inert, then install a fresh flag for the
+    // new state.
+    *pImpl_->alive = false;
+    pImpl_->alive = std::make_shared<bool>(true);
 
     lua_close(pImpl_->L);
     pImpl_->L = luaL_newstate();
+    if (!pImpl_->L) {
+        throw std::runtime_error("Failed to create replacement Lua state during reset");
+    }
     openLibraries();
 }
 
@@ -435,7 +503,7 @@ std::unique_ptr<LuaValue> LuaBridge3Backend::evaluate(
         throw std::runtime_error("Expression evaluation failed: " + error);
     }
 
-    auto result = std::make_unique<LuaBridgeValue>(pImpl_->L, -1);
+    auto result = std::make_unique<LuaBridgeValue>(pImpl_->L, -1, pImpl_->alive);
     lua_pop(pImpl_->L, 1); // pop result
     return result;
 }
@@ -581,7 +649,7 @@ void LuaBridge3Backend::setGlobal(const std::string& name, const LuaValue& value
 
 std::unique_ptr<LuaValue> LuaBridge3Backend::getGlobal(const std::string& name) {
     lua_getglobal(pImpl_->L, name.c_str());
-    auto val = std::make_unique<LuaBridgeValue>(pImpl_->L, -1);
+    auto val = std::make_unique<LuaBridgeValue>(pImpl_->L, -1, pImpl_->alive);
     lua_pop(pImpl_->L, 1);
     return val;
 }
@@ -646,36 +714,56 @@ void LuaBridge3Backend::registerPredicate(const std::string& name, LuaPredicateF
     lua_pop(pImpl_->L, 1);
 }
 
-// Static helper to call predicates
+// Static helper to call predicates.
+//
+// luaL_error() does not return - with Lua built as C (the default) it
+// longjmps, which skips the destructors of any C++ object still in scope. So
+// every non-trivial local is confined to an inner scope, the message is copied
+// onto the Lua stack while that scope is still live, and lua_error() is only
+// raised afterwards, when there is nothing left to unwind.
 static int luaPredicateCallHandler(lua_State* L) {
     // Get the predicate name from upvalue index 1
     const char* name = lua_tostring(L, lua_upvalueindex(1));
     // Get the backend instance from upvalue index 2
     auto* backend = static_cast<LuaBridge3Backend*>(lua_touserdata(L, lua_upvalueindex(2)));
-    
+
     if (!name || !backend) {
         return luaL_error(L, "Invalid predicate call - missing name or backend");
     }
-    
-    // Look up the predicate function in the backend's map
-    // Access the private Impl through a helper - we need to access it via public method
+
     auto* predFunc = backend->getPredicate(name);
     if (!predFunc) {
         return luaL_error(L, "Predicate '%s' not found or null in backend map", name);
     }
-    
-    // Collect arguments
-    int nargs = lua_gettop(L);
-    std::vector<std::unique_ptr<LuaValue>> args;
-    args.reserve(nargs);
-    for (int i = 1; i <= nargs; ++i) {
-        args.push_back(std::make_unique<LuaBridgeValue>(L, i));
+
+    bool result = false;
+    bool failed = false;
+    {
+        // Collect arguments
+        int nargs = lua_gettop(L);
+        std::vector<std::unique_ptr<LuaValue>> args;
+        args.reserve(static_cast<size_t>(nargs));
+        for (int i = 1; i <= nargs; ++i) {
+            args.push_back(std::make_unique<LuaBridgeValue>(L, i, backend->aliveFlag()));
+        }
+
+        try {
+            result = (*predFunc)(L, args);
+        } catch (const std::exception& e) {
+            // A C++ exception must not propagate through the Lua C call
+            // boundary; convert it to a Lua error instead.
+            lua_pushfstring(L, "Predicate '%s' threw: %s", name, e.what());
+            failed = true;
+        } catch (...) {
+            lua_pushfstring(L, "Predicate '%s' threw an unknown exception", name);
+            failed = true;
+        }
+    }  // all C++ objects destroyed here
+
+    if (failed) {
+        return lua_error(L);
     }
-    
-    // Call the predicate
-    bool result = (*predFunc)(L, args);
-    
-    // Push result
+
     lua_pushboolean(L, result);
     return 1;
 }
@@ -691,56 +779,56 @@ LuaPredicateFunc* LuaBridge3Backend::getPredicate(const std::string& name) {
 
 std::unique_ptr<LuaValue> LuaBridge3Backend::makeNil() {
     lua_pushnil(pImpl_->L);
-    auto val = std::make_unique<LuaBridgeValue>(pImpl_->L, -1);
+    auto val = std::make_unique<LuaBridgeValue>(pImpl_->L, -1, pImpl_->alive);
     lua_pop(pImpl_->L, 1);
     return val;
 }
 
 std::unique_ptr<LuaValue> LuaBridge3Backend::makeBool(bool value) {
     lua_pushboolean(pImpl_->L, value);
-    auto val = std::make_unique<LuaBridgeValue>(pImpl_->L, -1);
+    auto val = std::make_unique<LuaBridgeValue>(pImpl_->L, -1, pImpl_->alive);
     lua_pop(pImpl_->L, 1);
     return val;
 }
 
 std::unique_ptr<LuaValue> LuaBridge3Backend::makeInt(int value) {
     lua_pushinteger(pImpl_->L, static_cast<lua_Integer>(value));
-    auto val = std::make_unique<LuaBridgeValue>(pImpl_->L, -1);
+    auto val = std::make_unique<LuaBridgeValue>(pImpl_->L, -1, pImpl_->alive);
     lua_pop(pImpl_->L, 1);
     return val;
 }
 
 std::unique_ptr<LuaValue> LuaBridge3Backend::makeDouble(double value) {
     lua_pushnumber(pImpl_->L, value);
-    auto val = std::make_unique<LuaBridgeValue>(pImpl_->L, -1);
+    auto val = std::make_unique<LuaBridgeValue>(pImpl_->L, -1, pImpl_->alive);
     lua_pop(pImpl_->L, 1);
     return val;
 }
 
 std::unique_ptr<LuaValue> LuaBridge3Backend::makeString(const std::string& value) {
     lua_pushlstring(pImpl_->L, value.c_str(), value.length());
-    auto val = std::make_unique<LuaBridgeValue>(pImpl_->L, -1);
+    auto val = std::make_unique<LuaBridgeValue>(pImpl_->L, -1, pImpl_->alive);
     lua_pop(pImpl_->L, 1);
     return val;
 }
 
 std::unique_ptr<LuaValue> LuaBridge3Backend::makeString(const char* value) {
     lua_pushstring(pImpl_->L, value);
-    auto val = std::make_unique<LuaBridgeValue>(pImpl_->L, -1);
+    auto val = std::make_unique<LuaBridgeValue>(pImpl_->L, -1, pImpl_->alive);
     lua_pop(pImpl_->L, 1);
     return val;
 }
 
 std::unique_ptr<LuaValue> LuaBridge3Backend::makePointer(void* ptr) {
     lua_pushlightuserdata(pImpl_->L, ptr);
-    auto val = std::make_unique<LuaBridgeValue>(pImpl_->L, -1);
+    auto val = std::make_unique<LuaBridgeValue>(pImpl_->L, -1, pImpl_->alive);
     lua_pop(pImpl_->L, 1);
     return val;
 }
 
 std::unique_ptr<LuaValue> LuaBridge3Backend::createTable() {
     lua_newtable(pImpl_->L);
-    auto val = std::make_unique<LuaBridgeValue>(pImpl_->L, -1);
+    auto val = std::make_unique<LuaBridgeValue>(pImpl_->L, -1, pImpl_->alive);
     lua_pop(pImpl_->L, 1);
     return val;
 }
@@ -919,14 +1007,26 @@ void LuaBridge3Backend::bindTypes(TypeRegistry* registry) {
 
         // Add method closures
         for (const auto& method : desc.methods) {
+            // Copy the method into backend-owned storage with a stable address.
+            // Re-binding an existing entry overwrites it in place so previously
+            // installed metatables keep pointing at a live object.
+            const std::string methodKey = mtName + "::" + method.name;
+            auto& slot = pImpl_->boundMethods_[methodKey];
+            if (slot) {
+                *slot = method;
+            } else {
+                slot = std::make_unique<TypeMethod>(method);
+            }
+            TypeMethod* stableMethod = slot.get();
+
             // Store the invoker as a light userdata in the metatable
             lua_pushstring(pImpl_->L, ("__method_" + method.name).c_str());
-            lua_pushlightuserdata(pImpl_->L, const_cast<TypeMethod*>(&method));
+            lua_pushlightuserdata(pImpl_->L, stableMethod);
             lua_settable(pImpl_->L, -3);
 
             // Add the method as a closure
             lua_pushstring(pImpl_->L, method.name.c_str());
-            lua_pushlightuserdata(pImpl_->L, const_cast<TypeMethod*>(&method));
+            lua_pushlightuserdata(pImpl_->L, stableMethod);
             lua_pushcclosure(pImpl_->L, [](lua_State* L) -> int {
                 // Get method info from upvalue
                 TypeMethod* method = static_cast<TypeMethod*>(lua_touserdata(L, lua_upvalueindex(1)));
@@ -951,51 +1051,68 @@ void LuaBridge3Backend::bindActions(ActionCallbacks* callbacks) {
     if (!callbacks) return;
     
     callbacks->forEachHandler([this](const std::string& name, const ActionCallbacks::Handler& handler) {
-        // Wrap the std::any handler in a C closure
-        // Store the handler in a persistent map
-        int handlerId = static_cast<int>(pImpl_->actionHandlers_.size());
-        pImpl_->actionHandlers_.push_back(handler);
+        // Reuse this name's existing slot if it has one. Appending
+        // unconditionally made actionHandlers_ grow by the full handler set on
+        // every bindActions() call - and bindActions() runs on each
+        // compileAction(), each Workflow::compile() and once per engine clone.
+        int handlerId;
+        auto existing = pImpl_->actionHandlerIds_.find(name);
+        if (existing != pImpl_->actionHandlerIds_.end()) {
+            handlerId = existing->second;
+            pImpl_->actionHandlers_[static_cast<size_t>(handlerId)] = handler;
+        } else {
+            handlerId = static_cast<int>(pImpl_->actionHandlers_.size());
+            pImpl_->actionHandlers_.push_back(handler);
+            pImpl_->actionHandlerIds_[name] = handlerId;
+        }
 
         lua_pushinteger(pImpl_->L, handlerId);
         lua_pushcclosure(pImpl_->L, [](lua_State* L) -> int {
             int hId = static_cast<int>(lua_tointeger(L, lua_upvalueindex(1)));
-            // Need access to backend's handler list - this requires a registry lookup
-            // For simplicity, store a pointer to the backend in a global
-            lua_getglobal(L, "__fastrules_backend_ptr");
-            auto* backend = reinterpret_cast<LuaBridge3Backend**>(lua_touserdata(L, -1));
-            lua_pop(L, 1);
-            if (!backend || !*backend) {
-                luaL_error(L, "Action handler not available");
-                return 0;
+            auto* backend = backendFromRegistry(L);
+            if (!backend) {
+                return luaL_error(L, "Action handler not available");
             }
-            if (hId < 0 || hId >= static_cast<int>((*backend)->pImpl_->actionHandlers_.size())) {
-                luaL_error(L, "Invalid action handler ID");
-                return 0;
+            if (hId < 0 || hId >= static_cast<int>(backend->pImpl_->actionHandlers_.size())) {
+                return luaL_error(L, "Invalid action handler ID");
             }
-            
-            // Build parameter map from Lua arguments - check number before string
-            // because lua_isstring returns true for numbers too
-            int nargs = lua_gettop(L);
-            std::vector<std::any> args;
-            args.reserve(nargs);
-            for (int i = 1; i <= nargs; ++i) {
-                if (lua_isnumber(L, i)) {
-                    args.push_back(lua_tonumber(L, i));
-                } else if (lua_isstring(L, i)) {
-                    args.push_back(std::string(lua_tostring(L, i)));
-                } else if (lua_isboolean(L, i)) {
-                    args.push_back(lua_toboolean(L, i) != 0);
-                } else {
-                    args.push_back(std::any{});
+
+            // See luaPredicateCallHandler: luaL_error/lua_error longjmp past
+            // C++ destructors, so every non-trivial local lives in an inner
+            // scope and the error is only raised once that scope has exited.
+            bool failed = false;
+            {
+                // Build parameter list from Lua arguments - check number before
+                // string because lua_isstring returns true for numbers too
+                int nargs = lua_gettop(L);
+                std::vector<std::any> args;
+                args.reserve(static_cast<size_t>(nargs));
+                for (int i = 1; i <= nargs; ++i) {
+                    if (lua_isnumber(L, i)) {
+                        args.push_back(lua_tonumber(L, i));
+                    } else if (lua_isstring(L, i)) {
+                        args.push_back(std::string(lua_tostring(L, i)));
+                    } else if (lua_isboolean(L, i)) {
+                        args.push_back(lua_toboolean(L, i) != 0);
+                    } else {
+                        args.push_back(std::any{});
+                    }
                 }
-            }
-            
-            try {
-                std::any target;
-                (*backend)->pImpl_->actionHandlers_[hId](target, args);
-            } catch (const std::exception& e) {
-                luaL_error(L, "Action handler error: %s", e.what());
-                return 0;
+
+                try {
+                    std::any target;
+                    backend->pImpl_->actionHandlers_[static_cast<size_t>(hId)](target, args);
+                } catch (const std::exception& e) {
+                    lua_pushfstring(L, "Action handler error: %s", e.what());
+                    failed = true;
+                } catch (...) {
+                    lua_pushliteral(L, "Action handler error: unknown exception");
+                    failed = true;
+                }
+            }  // all C++ objects destroyed here
+
+            if (failed) {
+                return lua_error(L);
             }
             return 0;
         }, 1);

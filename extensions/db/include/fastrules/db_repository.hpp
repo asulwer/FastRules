@@ -83,6 +83,11 @@ public:
     soci::session& session() { return *session_; }
 
 private:
+    /// Load a workflow assuming the caller already holds mutex_.
+    /// Exists so findAll() does not re-acquire the shared_mutex it is holding,
+    /// which is undefined behaviour and can deadlock.
+    std::optional<Workflow> findByIdLocked(int id);
+
     std::shared_ptr<soci::session> session_;
     mutable std::shared_mutex mutex_;
 };
@@ -104,6 +109,9 @@ public:
     soci::session& session() { return *session_; }
 
 private:
+    /// Map a result row to a RuleVersion, tolerating NULL columns.
+    static RuleVersion rowToVersion(soci::row& row, int ruleId);
+
     std::shared_ptr<soci::session> session_;
     mutable std::shared_mutex mutex_;
 };

@@ -63,16 +63,19 @@ public:
      */
     void release(std::unique_ptr<T> obj) {
         if (!obj) return;
-        
+
         std::lock_guard<std::mutex> lock(mutex_);
         if (pool_.size() < maxSize_) {
             // Clear object state before returning to pool (if it's a container)
             // For generic objects, we just return them to the pool
             pool_.push(std::move(obj));
         } else {
-            // Pool is full; destroy the object so it is no longer counted
+            // Pool is full; destroy the object so it is no longer counted.
+            // Guard the decrement: an object handed out from the pool never
+            // incremented allocatedCount_, so decrementing unconditionally
+            // could wrap this unsigned counter around to SIZE_MAX.
             obj.reset();
-            allocatedCount_--;
+            decrementAllocated();
         }
         releasedCount_++;
     }
@@ -107,7 +110,18 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
         while (!pool_.empty()) {
             pool_.pop();
-            allocatedCount_--;
+            decrementAllocated();
+        }
+    }
+
+private:
+    /// Saturating decrement - allocatedCount_ is unsigned and must never wrap.
+    void decrementAllocated() {
+        size_t current = allocatedCount_.load(std::memory_order_relaxed);
+        while (current > 0 &&
+               !allocatedCount_.compare_exchange_weak(current, current - 1,
+                                                      std::memory_order_relaxed)) {
+            // retry with the refreshed value
         }
     }
 };
@@ -170,9 +184,11 @@ public:
             vec->clear();  // Clear data before returning to pool
             pool_.push(std::move(vec));
         } else {
-            // Pool is full; destroy the vector so it is no longer counted
+            // Pool is full; destroy the vector so it is no longer counted.
+            // Saturating: a vector taken from the pool never incremented the
+            // counter, so an unguarded decrement could wrap it to SIZE_MAX.
             vec.reset();
-            allocatedCount_--;
+            decrementAllocated();
         }
         releasedCount_++;
     }
@@ -209,7 +225,18 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
         while (!pool_.empty()) {
             pool_.pop();
-            allocatedCount_--;
+            decrementAllocated();
+        }
+    }
+
+private:
+    /// Saturating decrement - allocatedCount_ is unsigned and must never wrap.
+    void decrementAllocated() {
+        size_t current = allocatedCount_.load(std::memory_order_relaxed);
+        while (current > 0 &&
+               !allocatedCount_.compare_exchange_weak(current, current - 1,
+                                                      std::memory_order_relaxed)) {
+            // retry with the refreshed value
         }
     }
 };

@@ -77,8 +77,10 @@ public:
     }
     RuleVersionHistory& operator=(const RuleVersionHistory& other) {
         if (this != &other) {
-            std::lock_guard<std::mutex> lock(other.mutex_);
-            std::lock_guard<std::mutex> lock2(mutex_);
+            // scoped_lock uses a deadlock-avoiding algorithm; taking the two
+            // mutexes in a fixed source order would deadlock if two threads
+            // ran `a = b` and `b = a` concurrently.
+            std::scoped_lock lock(other.mutex_, mutex_);
             ruleId = other.ruleId;
             ruleName = other.ruleName;
             versions_ = other.versions_;
@@ -122,7 +124,12 @@ private:
     std::unordered_map<std::string, RuleVersionHistory> histories_;
     mutable std::mutex mutex_;
     bool autoSnapshot_ = false;
-    
+
+    /// Snapshot a rule assuming mutex_ is already held by the caller.
+    /// Exists so snapshotWorkflow() does not re-lock the non-recursive mutex_.
+    void snapshotRuleLocked(const Rule& rule, const std::string& author,
+                            const std::string& summary);
+
     [[nodiscard]] std::string generateVersionId() const;
 };
 

@@ -103,10 +103,30 @@ void LuaExpressionValidator::setMaxLength(size_t maxLength) {
     maxLength_ = maxLength;
 }
 
+namespace {
+
+/// True if @p c can appear inside a Lua identifier.
+/// Underscore counts: treating '_' as a boundary made "my_run_count" match the
+/// bare pattern "run", rejecting ordinary parameter names.
+bool isIdentifierChar(char c) {
+    auto uc = static_cast<unsigned char>(c);
+    return std::isalnum(uc) != 0 || c == '_';
+}
+
+/// Lowercase a string. std::tolower must be fed an unsigned char - passing a
+/// plain (possibly negative) char is undefined behaviour for non-ASCII input.
+std::string toLowerAscii(const std::string& s) {
+    std::string out = s;
+    std::transform(out.begin(), out.end(), out.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return out;
+}
+
+} // namespace
+
 void LuaExpressionValidator::checkDangerousPatterns(const std::string& expression) const {
-    std::string lowerExpr = expression;
-    std::transform(lowerExpr.begin(), lowerExpr.end(), lowerExpr.begin(), ::tolower);
-    
+    std::string lowerExpr = toLowerAscii(expression);
+
     // Check for dangerous patterns
     for (const auto& pattern : dangerousPatterns_) {
         // Handle patterns with escaped dots
@@ -119,19 +139,18 @@ void LuaExpressionValidator::checkDangerousPatterns(const std::string& expressio
                 searchPattern.replace(pos, 2, ".");
                 pos += 1;
             }
-            
+
             if (lowerExpr.find(searchPattern) != std::string::npos) {
                 throw ValidationException("Dangerous pattern detected: " + pattern);
             }
         } else {
-            // Word boundary patterns for simple strings
+            // Identifier-boundary match for bare names
             size_t pos = 0;
             while ((pos = lowerExpr.find(pattern, pos)) != std::string::npos) {
-                // Check if it's a word boundary
-                bool isStartBoundary = (pos == 0 || !std::isalnum(lowerExpr[pos - 1]));
-                bool isEndBoundary = (pos + pattern.length() >= lowerExpr.length() || 
-                                    !std::isalnum(lowerExpr[pos + pattern.length()]));
-                
+                bool isStartBoundary = (pos == 0 || !isIdentifierChar(lowerExpr[pos - 1]));
+                bool isEndBoundary = (pos + pattern.length() >= lowerExpr.length() ||
+                                      !isIdentifierChar(lowerExpr[pos + pattern.length()]));
+
                 if (isStartBoundary && isEndBoundary) {
                     throw ValidationException("Dangerous pattern detected: " + pattern);
                 }
@@ -224,20 +243,19 @@ void ParameterValidator::validateName(const std::string& name) const {
     }
     
     // Check for reserved names
-    std::string lowerName = name;
-    std::transform(lowerName.begin(), lowerName.end(), lowerName.begin(), ::tolower);
+    std::string lowerName = toLowerAscii(name);
     if (reservedNames_.find(lowerName) != reservedNames_.end()) {
         throw ValidationException("Parameter name is reserved: " + name);
     }
-    
+
     // Check that name starts with a letter or underscore
-    if (!std::isalpha(name[0]) && name[0] != '_') {
+    if (!std::isalpha(static_cast<unsigned char>(name[0])) && name[0] != '_') {
         throw ValidationException("Parameter name must start with a letter or underscore");
     }
-    
+
     // Check that name contains only valid characters
     for (char c : name) {
-        if (!std::isalnum(c) && c != '_') {
+        if (!isIdentifierChar(c)) {
             throw ValidationException("Parameter name contains invalid characters");
         }
     }
@@ -266,11 +284,11 @@ std::string ParameterValidator::sanitizeName(const std::string& name) const {
     std::string sanitized = name;
     
     // Remove invalid characters
-    sanitized.erase(std::remove_if(sanitized.begin(), sanitized.end(), 
-        [](char c) { return !std::isalnum(c) && c != '_'; }), sanitized.end());
-    
+    sanitized.erase(std::remove_if(sanitized.begin(), sanitized.end(),
+        [](char c) { return !isIdentifierChar(c); }), sanitized.end());
+
     // Ensure it starts with a valid character
-    if (!sanitized.empty() && !std::isalpha(sanitized[0]) && sanitized[0] != '_') {
+    if (!sanitized.empty() && !std::isalpha(static_cast<unsigned char>(sanitized[0])) && sanitized[0] != '_') {
         sanitized = "_" + sanitized;
     }
     

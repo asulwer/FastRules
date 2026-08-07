@@ -4,11 +4,56 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <atomic>
 #include <mutex>
 #include <map>
+#include <sstream>
+#include <stdexcept>
+#include <chrono>
+#include <thread>
 
 namespace fastrules {
 namespace ext {
+
+namespace {
+
+/// Build a temp path unique to this writer.
+///
+/// A fixed "<target>.tmp" is not enough: several repository instances (threads,
+/// or separate processes) may target the same file, and they would then
+/// truncate and rename each other's scratch file. A unique name keeps each
+/// write self-contained; the final rename decides which one wins.
+std::filesystem::path makeTempPath(const std::filesystem::path& target) {
+    static std::atomic<unsigned long long> counter{0};
+    std::ostringstream suffix;
+    suffix << ".tmp." << std::this_thread::get_id() << '.'
+           << counter.fetch_add(1, std::memory_order_relaxed);
+    std::filesystem::path tmp = target;
+    tmp += suffix.str();
+    return tmp;
+}
+
+
+/// Replace @p target with @p tmp, retrying briefly on transient failures.
+///
+/// On Windows a rename over a destination that another thread or process
+/// currently has open (e.g. a concurrent load()) fails with a sharing
+/// violation. That is contention, not corruption, so retry for a short while
+/// before reporting failure.
+void atomicReplace(const std::filesystem::path& tmp, const std::filesystem::path& target) {
+    std::error_code ec;
+    for (int attempt = 0; attempt < 40; ++attempt) {
+        std::filesystem::rename(tmp, target, ec);
+        if (!ec) {
+            return;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+    std::filesystem::remove(tmp, ec);
+    throw std::runtime_error("Failed to replace " + target.string() + " with " + tmp.string());
+}
+
+}  // namespace
 
 // ============================================================================
 // XmlRuleRepository
@@ -17,6 +62,15 @@ namespace ext {
 XmlRuleRepository::XmlRuleRepository(const std::filesystem::path& filepath)
     : filepath_(filepath) {
     load();
+}
+
+XmlRuleRepository::~XmlRuleRepository() {
+    // Honour the "written on destruction" contract shared with
+    // JsonRuleRepository. Never throw out of a destructor.
+    try {
+        flush();
+    } catch (...) {
+    }
 }
 
 void XmlRuleRepository::save(const Rule& rule) {
@@ -55,11 +109,9 @@ void XmlRuleRepository::save(const Rule& rule) {
         }
     }
     
+    // Writes are batched; persisted on flush() or destruction (same contract
+    // as JsonRuleRepository).
     dirty_ = true;
-    if (dirty_) {
-        write();
-        dirty_ = false;
-    }
 }
 
 std::optional<Rule> XmlRuleRepository::findById(int id) {
@@ -149,15 +201,34 @@ void XmlRuleRepository::load() {
 }
 
 void XmlRuleRepository::write() {
-    std::ofstream file(filepath_);
-    if (file.is_open()) {
+    // Write to a temp file then rename, so an interrupted write cannot leave a
+    // truncated rule store. Throws on failure so flush() does not clear
+    // dirty_ for a write that never landed.
+    std::filesystem::path tmp = makeTempPath(filepath_);
+
+    {
+        std::ofstream file(tmp, std::ios::trunc);
+        if (!file.is_open()) {
+            throw std::runtime_error("XmlRuleRepository: cannot open " + tmp.string() + " for writing");
+        }
         doc_.save(file);
+        file.flush();
+        if (!file) {
+            throw std::runtime_error("XmlRuleRepository: failed writing " + tmp.string());
+        }
     }
+
+    atomicReplace(tmp, filepath_);
 }
 
 std::string XmlRuleRepository::toString() const {
     std::lock_guard<std::mutex> lock(mutex_);
-    return doc_.document_element().text().as_string();
+    // Serialise the whole document. The previous implementation returned
+    // document_element().text(), i.e. the character data directly inside
+    // <rules> - which is empty for this schema, so it always returned "".
+    std::ostringstream oss;
+    doc_.save(oss);
+    return oss.str();
 }
 
 void XmlRuleRepository::ruleToXml(const Rule& rule, pugi::xml_node& parent) const {
@@ -166,10 +237,16 @@ void XmlRuleRepository::ruleToXml(const Rule& rule, pugi::xml_node& parent) cons
     if (!rule.name.empty()) {
         node.append_attribute("name") = rule.name.c_str();
     }
+    if (!rule.description.empty()) {
+        node.append_attribute("description") = rule.description.c_str();
+    }
     node.append_attribute("isActive") = rule.isActive;
     node.append_attribute("priority") = rule.priority;
     if (rule.timeout) {
-        node.append_attribute("timeout") = rule.timeout->count();
+        node.append_attribute("timeout") = static_cast<long long>(rule.timeout->count());
+    }
+    if (rule.cacheDuration) {
+        node.append_attribute("cacheDuration") = static_cast<long long>(rule.cacheDuration->count());
     }
     if (rule.dependsOnRuleName) {
         node.append_attribute("dependsOn") = rule.dependsOnRuleName->c_str();
@@ -191,10 +268,16 @@ Rule XmlRuleRepository::xmlToRule(const pugi::xml_node& node) const {
         if (node.attribute("name")) {
             rule.name = node.attribute("name").as_string();
         }
+        if (node.attribute("description")) {
+            rule.description = node.attribute("description").as_string();
+        }
         rule.isActive = node.attribute("isActive").as_bool(true);
         rule.priority = node.attribute("priority").as_int(0);
         if (node.attribute("timeout")) {
-            rule.timeout = std::chrono::milliseconds(node.attribute("timeout").as_int());
+            rule.timeout = std::chrono::milliseconds(node.attribute("timeout").as_llong());
+        }
+        if (node.attribute("cacheDuration")) {
+            rule.cacheDuration = std::chrono::milliseconds(node.attribute("cacheDuration").as_llong());
         }
         if (node.attribute("dependsOn")) {
             rule.dependsOnRuleName = node.attribute("dependsOn").as_string();
