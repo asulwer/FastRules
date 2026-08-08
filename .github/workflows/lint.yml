@@ -35,9 +35,14 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y clang-tidy ninja-build
+          # This job configures with VCPKG_MANIFEST_MODE=OFF and no vcpkg
+          # toolchain, so every dependency must come from apt. lua and spdlog
+          # were missing, which failed configure before clang-tidy ever ran.
+          sudo apt install -y clang-tidy ninja-build liblua5.4-dev libspdlog-dev
 
-      - name: Configure with vcpkg
+      # Named "with vcpkg" historically, but this is a system-package configure.
+      # Tests stay off: only src/ is linted, so doctest is not needed.
+      - name: Configure
         run: |
           cmake -B build -S . \
             -G Ninja \

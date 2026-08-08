@@ -20,28 +20,31 @@ jobs:
       - name: Setup MSVC
         uses: microsoft/setup-msbuild@v2
 
-      - name: Install vcpkg dependencies
-        run: |
-          vcpkg install --triplet x64-windows
-
+      # No separate `vcpkg install` step: the vcpkg toolchain performs the
+      # manifest install during configure, and only then does it know which
+      # optional features to pull in. Running it beforehand installed just the
+      # default features, so doctest / nlohmann-json / pugixml / soci were
+      # missing and configure failed on the first find_package for them.
       - name: Configure (Lua 5.4)
         if: matrix.lua-backend == 'lua54'
         run: |
-          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DFASTRULES_BUILD_EXTENSIONS=ON -DFASTRULES_BUILD_DB=ON -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DFASTRULES_BUILD_TESTS=ON -DFASTRULES_BUILD_EXTENSIONS=ON -DFASTRULES_BUILD_DB=ON -DVCPKG_MANIFEST_FEATURES="tests;json;xml;db" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
 
+      # NOTE: FASTRULES_USE_LUAJIT is not implemented in CMakeLists.txt, so this
+      # leg currently builds the same configuration as lua54. Kept so the matrix
+      # keeps reporting, but it is not yet a genuine second backend.
       - name: Configure (LuaJIT)
         if: matrix.lua-backend == 'luajit'
         run: |
-          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DFASTRULES_BUILD_EXTENSIONS=ON -DFASTRULES_BUILD_DB=ON -DFASTRULES_USE_LUAJIT=ON -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DFASTRULES_BUILD_TESTS=ON -DFASTRULES_BUILD_EXTENSIONS=ON -DFASTRULES_BUILD_DB=ON -DVCPKG_MANIFEST_FEATURES="tests;json;xml;db" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
 
       - name: Build
         run: cmake --build build --config Release
 
-      - name: Test Core
-        run: .\build\Release\fastrules_tests.exe
-
-      - name: Test JSON Extension
-        run: .\build\extensions\json\tests\Release\fastrules-json-tests.exe
+      # ctest is generator-agnostic and picks up the extension suites too,
+      # rather than hard-coding per-target output paths.
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure
 
   build-ubuntu:
     runs-on: ubuntu-latest
@@ -51,17 +54,21 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y liblua5.4-dev doctest-dev nlohmann-json3-dev libpugixml-dev libsqlite3-dev libpq-dev
+          # libspdlog-dev is required: CMakeLists does find_package(spdlog CONFIG
+          # REQUIRED) unconditionally, and its absence was what failed configure.
+          sudo apt install -y liblua5.4-dev libspdlog-dev doctest-dev nlohmann-json3-dev libpugixml-dev libsqlite3-dev libpq-dev
           # SOCI is not in standard Ubuntu repos; skip DB extension on Ubuntu CI
 
       - name: Configure
-        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DFASTRULES_BUILD_EXTENSIONS=ON -DFASTRULES_BUILD_DB=OFF
+        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DFASTRULES_BUILD_TESTS=ON -DFASTRULES_BUILD_EXTENSIONS=ON -DFASTRULES_BUILD_DB=OFF
 
       - name: Build
-        run: cmake --build build --config Release
+        run: cmake --build build
 
+      # Single-config generators put binaries in build/, not build/Release/.
+      # ctest resolves this regardless of generator.
       - name: Test
-        run: ./build/Release/fastrules_tests
+        run: ctest --test-dir build --output-on-failure
 
   sanitizer-tsan:
     runs-on: ubuntu-latest
@@ -71,7 +78,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y clang ninja-build liblua5.4-dev
+          # spdlog and doctest are both required to configure with tests on.
+          sudo apt install -y clang ninja-build liblua5.4-dev libspdlog-dev doctest-dev
 
       - name: Configure with TSan
         run: |
@@ -88,11 +96,14 @@ jobs:
       - name: Build
         run: cmake --build build
 
+      # Ninja is single-config: the binary is build/fastrules_tests, not
+      # build/Release/fastrules_tests. The old path did not exist, and the
+      # trailing `|| true` then discarded the failure - so this job could never
+      # report a race no matter what TSan found.
       - name: Test with ThreadSanitizer
         run: |
-          # TSAN_OPTIONS to suppress known benign races in third-party code
           export TSAN_OPTIONS="detect_deadlocks=1:halt_on_error=0:report_thread_leaks=0"
-          ./build/Release/fastrules_tests || true
+          ./build/fastrules_tests
 
   sanitizer-asan:
     runs-on: ubuntu-latest
@@ -102,7 +113,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y clang ninja-build liblua5.4-dev
+          # spdlog and doctest are both required to configure with tests on.
+          sudo apt install -y clang ninja-build liblua5.4-dev libspdlog-dev doctest-dev
 
       - name: Configure with ASan
         run: |
@@ -119,10 +131,11 @@ jobs:
       - name: Build
         run: cmake --build build
 
+      # Ninja is single-config: binary is build/fastrules_tests.
       - name: Test with AddressSanitizer
         run: |
           export ASAN_OPTIONS="detect_leaks=0:check_initialization_order=1:strict_init_order=1"
-          ./build/Release/fastrules_tests
+          ./build/fastrules_tests
 
   conan-test-package:
     runs-on: ubuntu-latest

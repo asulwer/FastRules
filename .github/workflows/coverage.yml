@@ -15,9 +15,13 @@ jobs:
       - name: Install OpenCppCoverage
         run: choco install opencppcoverage
 
+      # Runs on windows-latest, where dependencies come from vcpkg. Without the
+      # toolchain file this configured against nothing and failed on the first
+      # find_package; without the manifest features the extension and test
+      # dependencies were absent. Coverage also needs the tests themselves.
       - name: Configure with Coverage
         run: |
-          cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug -DFASTRULES_BUILD_COVERAGE=ON -DFASTRULES_BUILD_EXTENSIONS=ON
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug -DFASTRULES_BUILD_COVERAGE=ON -DFASTRULES_BUILD_TESTS=ON -DFASTRULES_BUILD_EXTENSIONS=ON -DVCPKG_MANIFEST_FEATURES="tests;json;xml;db" -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake"
 
       - name: Build
         run: cmake --build build --config Debug

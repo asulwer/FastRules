@@ -110,14 +110,44 @@ FetchContent_Declare(
     GIT_PROGRESS TRUE
 )
 
-# Find vcpkg packages
+# spdlog exports the same config package name from vcpkg, Conan and system
+# packages (libspdlog-dev), so a single lookup works everywhere.
 find_package(spdlog CONFIG REQUIRED)
-find_package(unofficial-lua CONFIG REQUIRED)
-find_package(doctest CONFIG REQUIRED)
 
-# Lua wrapper target: single canonical target regardless of platform or build mode
+# NOTE: doctest is deliberately NOT required here. It is only needed when
+# FASTRULES_BUILD_TESTS is ON, and is looked up inside that guard further down.
+# Requiring it unconditionally meant a plain consumer build - or any CI job that
+# had not installed the test dependency - failed at configure time.
+
+# === Lua discovery ===
+# Each dependency provider exports Lua under a different package and target
+# name, so try them in turn and normalise onto one canonical `lua_static`
+# interface target that the rest of this file links against:
+#   vcpkg  -> package unofficial-lua, target unofficial::lua::lua
+#   Conan  -> package lua,            target lua::lua
+#   system -> no config package; use CMake's bundled FindLua module
+# Hard-coding the vcpkg name made the project impossible to configure under
+# Conan (which conanfile.py advertises) or from distro packages.
 add_library(lua_static INTERFACE)
-target_link_libraries(lua_static INTERFACE unofficial::lua::lua)
+
+find_package(unofficial-lua CONFIG QUIET)
+if(TARGET unofficial::lua::lua)
+    target_link_libraries(lua_static INTERFACE unofficial::lua::lua)
+    set(FASTRULES_LUA_PROVIDER "vcpkg (unofficial-lua)")
+else()
+    find_package(lua CONFIG QUIET)
+    if(TARGET lua::lua)
+        target_link_libraries(lua_static INTERFACE lua::lua)
+        set(FASTRULES_LUA_PROVIDER "Conan (lua)")
+    else()
+        # Bundled FindLua module: covers liblua5.4-dev, Homebrew, etc.
+        find_package(Lua 5.4 MODULE REQUIRED)
+        target_include_directories(lua_static INTERFACE ${LUA_INCLUDE_DIR})
+        target_link_libraries(lua_static INTERFACE ${LUA_LIBRARIES})
+        set(FASTRULES_LUA_PROVIDER "system (FindLua ${LUA_VERSION_STRING})")
+    endif()
+endif()
+message(STATUS "Lua provider: ${FASTRULES_LUA_PROVIDER}")
 
 # Fetch LuaBridge3 (header-only, not available via vcpkg)
 FetchContent_MakeAvailable(luabridge3)
@@ -259,7 +289,9 @@ if(FASTRULES_BUILD_TESTS)
     set(FASTRULES_IN_TREE_TESTS ON)
 
 
-    # doctest is provided by vcpkg
+    # doctest: only needed for the test suite, so it is looked up here rather
+    # than at top level. Provided by the vcpkg "tests" feature, by Conan, or by
+    # a system package (doctest-dev).
     find_package(doctest CONFIG REQUIRED)
 
     file(GLOB FASTRULES_TEST_SOURCES tests/*.cpp)
