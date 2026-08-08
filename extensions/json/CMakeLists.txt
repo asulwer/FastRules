@@ -47,7 +47,14 @@ if(FASTRULES_JSON_BUILD_EXAMPLES)
 endif()
 
 # Tests
-option(FASTRULES_JSON_BUILD_TESTS "Build JSON extension tests" ON)
+# Default to the core project's setting rather than ON. Extension tests need
+# doctest, which a consumer build (FASTRULES_BUILD_TESTS=OFF - e.g. the Conan
+# package, which sets with_tests=False) does not provide. Defaulting to ON made
+# every such build add these targets and then fail linking doctest::doctest.
+if(NOT DEFINED FASTRULES_BUILD_TESTS)
+    set(FASTRULES_BUILD_TESTS OFF)
+endif()
+option(FASTRULES_JSON_BUILD_TESTS "Build JSON extension tests" ${FASTRULES_BUILD_TESTS})
 if(FASTRULES_JSON_BUILD_TESTS AND NOT FASTRULES_IN_TREE_TESTS)
     enable_testing()
     add_subdirectory(tests)

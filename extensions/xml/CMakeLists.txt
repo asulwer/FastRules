@@ -45,7 +45,13 @@ if(FASTRULES_XML_BUILD_EXAMPLES)
 endif()
 
 # Tests
-option(FASTRULES_XML_BUILD_TESTS "Build XML extension tests" ON)
+# Default to the core project's setting rather than ON - see the note in
+# extensions/json/CMakeLists.txt. Extension tests require doctest, which a
+# consumer build with FASTRULES_BUILD_TESTS=OFF does not provide.
+if(NOT DEFINED FASTRULES_BUILD_TESTS)
+    set(FASTRULES_BUILD_TESTS OFF)
+endif()
+option(FASTRULES_XML_BUILD_TESTS "Build XML extension tests" ${FASTRULES_BUILD_TESTS})
 if(FASTRULES_XML_BUILD_TESTS AND NOT FASTRULES_IN_TREE_TESTS)
     enable_testing()
     add_subdirectory(tests)
