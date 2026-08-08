@@ -684,12 +684,17 @@ static int luaPredicateCallHandler(lua_State* L);
 // and we pass the name through the closure upvalue
 
 void LuaBridge3Backend::registerPredicate(const std::string& name, LuaPredicateFunc func) {
-    // Store the predicate function in the predicates map
-    auto [it, inserted] = pImpl_->predicates_.emplace(name, std::move(func));
-    if (!inserted) {
-        it->second = std::move(func);
-    }
-    
+    // Store the predicate function in the predicates map.
+    //
+    // insert_or_assign moves `func` exactly once. The previous
+    // emplace-then-assign form moved it into emplace and, when the key already
+    // existed, moved the now moved-from value again - installing an empty
+    // std::function. Re-registering a predicate therefore silently disabled it:
+    // getPredicate() treats an empty function as absent, so calls to it failed
+    // with "Predicate not found" instead of running.
+    pImpl_->predicates_.insert_or_assign(name, std::move(func));
+
+
     // Create a simple Lua C function that will be called
     // We use a light userdata to store the backend instance pointer
     // and look up the predicate by name at call time
